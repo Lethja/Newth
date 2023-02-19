@@ -4,7 +4,7 @@ int main(int argc, char **argv) {
     int sockfd;
     size_t sendbytes;
     struct sockaddr_in servaddr;
-    char sendline[MAXLINE], recvline[MAXLINE];
+    char sendline[MAX_LINE], recvline[MAX_LINE];
 
     if (argc != 2)
         goto errorOut;
@@ -22,17 +22,17 @@ int main(int argc, char **argv) {
     if (connect(sockfd, (SA *) &servaddr, sizeof(servaddr)) < 0)
         goto errorOut;
 
-    sprintf(sendline, "GET / HTTP/1.1\r\n\r\n");
+    sprintf(sendline, "GET / HTTP/1.1" HTTP_EOL);
     sendbytes = strlen(sendline);
 
     if (write(sockfd, sendline, sendbytes) != sendbytes)
         goto errorOut;
 
-    memset(recvline, 0, MAXLINE);
+    memset(recvline, 0, MAX_LINE);
 
-    while ((read(sockfd, recvline, MAXLINE - 1) > 0)) {
+    while ((read(sockfd, recvline, MAX_LINE - 1) > 0)) {
         printf("%s", recvline);
-        memset(recvline, 0, MAXLINE);
+        memset(recvline, 0, MAX_LINE);
     }
 
     fflush(stdout);
