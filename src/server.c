@@ -82,10 +82,9 @@ char *extractURI(char *request) {
     return path;
 }
 
-void *handleConnection(int clientSocket) {
+void handleConnection(int clientSocket) {
     char buffer[BUFSIZ] = "";
-    size_t bytesRead;
-    int messageSize = 0;
+    size_t bytesRead, messageSize = 0;
     char actualPath[PATH_MAX + 1], *uriPath;
 
     while ((bytesRead = read(clientSocket, buffer + messageSize, sizeof(buffer) - messageSize - 1))) {
@@ -105,13 +104,13 @@ void *handleConnection(int clientSocket) {
 
     if (realpath(buffer, actualPath) == NULL) {
         close(clientSocket);
-        return NULL;
+        return;
     }
 
     FILE *fp = fopen(actualPath, "rb");
     if (fp == NULL) {
         close(clientSocket);
-        return NULL;
+        return;
     }
 
     snprintf((char *) buffer, sizeof(buffer), "HTTP/1.0 200 OK" HTTP_EOL);
@@ -123,7 +122,6 @@ void *handleConnection(int clientSocket) {
 
     close(clientSocket);
     fclose(fp);
-    return NULL;
 }
 
 int main(int argc, char **argv) {
