@@ -1,4 +1,5 @@
-#include <linux/limits.h>
+#include <sys/stat.h>
+#include <time.h>
 #include "platform/unix.h"
 
 int serverSocket;
@@ -23,12 +24,16 @@ int serverStartup(short port) {
     serverAddress.sin_port = htons(port);
 
     if ((bind(newSocket, (SA *) &serverAddress, sizeof(serverAddress))) < 0)
-        exit(1);
+        goto ServerStartupError;
 
     if ((listen(newSocket, 10)) < 0)
-        exit(1);
+        goto ServerStartupError;
 
     return newSocket;
+
+    ServerStartupError:
+    perror("Unable to start server");
+    exit(1);
 }
 
 int acceptConnection(int fromSocket) {
@@ -68,10 +73,16 @@ void convertUrlToPath(char *url) {
     }
 }
 
-char *extractURI(char *request) {
-    char *start = strchr(request, ' ');
-    char *end = strchr(start + 1, ' ');
-    size_t len = end - start;
+char *httpClientReadUri(char *request) {
+    char *start, *end;
+    size_t len;
+
+    start = strchr(request, ' ');
+    if (!start)
+        return NULL;
+
+    end = strchr(start + 1, ' ');
+    len = end - start;
 
     char *path = malloc(len + 1);
     memcpy(path, start + 1, len - 1);
@@ -82,10 +93,82 @@ char *extractURI(char *request) {
     return path;
 }
 
+void httpHeaderWriteDate(int clientSocket) {
+    const char max = 36;
+    char buffer[max];
+    time_t rawTime;
+    struct tm *timeInfo;
+
+    time(&rawTime);
+    timeInfo = gmtime(&rawTime);
+
+    strftime(buffer, max, "Date: %a, %d %b %H:%M:%S GMT\n", timeInfo);
+    write(clientSocket, buffer, strlen(buffer));
+}
+
+void httpHeaderWriteContentLength(int clientSocket, struct stat *st) {
+    const size_t max = 100;
+    char buffer[max];
+    snprintf(buffer, max, "Content-Length: %zu\n", st->st_size);
+    write(clientSocket, buffer, strlen(buffer));
+}
+
+void httpHeaderWriteResponseOK(int clientSocket) {
+    write(clientSocket, "HTTP/1.1 200 OK\n", strlen("HTTP/1.1 200 OK\n"));
+}
+
+void httpHeaderWriteEnd(int clientSocket) {
+    write(clientSocket, HTTP_EOL, strlen(HTTP_EOL));
+}
+
+void httpBodyWriteFile(int clientSocket, FILE *file) {
+    size_t bytesRead;
+    char buffer[BUFSIZ];
+
+    while ((bytesRead = fread(buffer, 1, BUFSIZ, file)) > 0) {
+        write(clientSocket, buffer, bytesRead);
+    }
+}
+
+void handleDir(int clientSocket, char *path, struct stat *st) {
+    /* TODO: Implementation */
+}
+
+void handleFile(int clientSocket, char *path, struct stat *st) {
+    FILE *fp = fopen(path, "rb");
+
+    if (fp == NULL)
+        return;
+
+    /* Headers */
+    httpHeaderWriteResponseOK(clientSocket);
+    httpHeaderWriteDate(clientSocket);
+    httpHeaderWriteContentLength(clientSocket, st);
+    httpHeaderWriteEnd(clientSocket);
+
+    /* Body */
+    httpBodyWriteFile(clientSocket, fp);
+
+    /* Cleanup */
+    fclose(fp);
+}
+
+void handlePath(int clientSocket, char *path) {
+    struct stat st;
+
+    if (stat(path, &st) != 0)
+        return;
+
+    if (S_ISDIR(st.st_mode))
+        handleDir(clientSocket, path, &st);
+    else if (S_ISREG(st.st_mode))
+        handleFile(clientSocket, path, &st);
+}
+
 void handleConnection(int clientSocket) {
     char buffer[BUFSIZ] = "";
     size_t bytesRead, messageSize = 0;
-    char actualPath[PATH_MAX + 1], *uriPath;
+    char *uriPath;
 
     while ((bytesRead = read(clientSocket, buffer + messageSize, sizeof(buffer) - messageSize - 1))) {
         messageSize += bytesRead;
@@ -96,32 +179,13 @@ void handleConnection(int clientSocket) {
     printf("REQUEST: %s\n", buffer);
     fflush(stdout);
 
-    uriPath = extractURI(buffer);
-    strncpy(buffer, uriPath, sizeof(buffer) - 1);
-    free(uriPath);
-
-    printf("URI: %s\n", buffer);
-
-    if (realpath(buffer, actualPath) == NULL) {
-        close(clientSocket);
-        return;
-    }
-
-    FILE *fp = fopen(actualPath, "rb");
-    if (fp == NULL) {
-        close(clientSocket);
-        return;
-    }
-
-    snprintf((char *) buffer, sizeof(buffer), "HTTP/1.0 200 OK" HTTP_EOL);
-    write(clientSocket, (char *) buffer, strlen((char *) buffer));
-
-    while ((bytesRead = fread(buffer, 1, BUFSIZ, fp)) > 0) {
-        write(clientSocket, buffer, bytesRead);
+    uriPath = httpClientReadUri(buffer);
+    if(uriPath) {
+        handlePath(clientSocket, uriPath + 1);
+        free(uriPath);
     }
 
     close(clientSocket);
-    fclose(fp);
 }
 
 int main(int argc, char **argv) {
