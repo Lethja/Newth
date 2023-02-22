@@ -13,7 +13,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#define HTTP_EOL "\r\n\r\n"
+#define HTTP_EOL "\r\n"
 #define MAX_LINE 4096
 #define SA struct sockaddr
 #define SERVER_PORT 8080

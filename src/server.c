@@ -6,9 +6,19 @@ int serverSocket;
 
 void noAction() {}
 
-void shutdownProgram() {
+void closeBindSocket() {
     if (serverSocket)
         shutdown(serverSocket, SHUT_RDWR);
+}
+
+void shutdownCrash() {
+    closeBindSocket();
+    puts("Segfault");
+    exit(1);
+}
+
+void shutdownProgram() {
+    closeBindSocket();
     exit(0);
 }
 
@@ -106,15 +116,39 @@ void httpHeaderWriteDate(int clientSocket) {
     write(clientSocket, buffer, strlen(buffer));
 }
 
-void httpHeaderWriteContentLength(int clientSocket, struct stat *st) {
+void httpHeaderWriteContentLength(int clientSocket, size_t length) {
     const size_t max = 100;
     char buffer[max];
-    snprintf(buffer, max, "Content-Length: %zu\n", st->st_size);
+    snprintf(buffer, max, "Content-Length: %zu\n", length);
     write(clientSocket, buffer, strlen(buffer));
 }
 
-void httpHeaderWriteResponseOK(int clientSocket) {
-    write(clientSocket, "HTTP/1.1 200 OK\n", strlen("HTTP/1.1 200 OK\n"));
+void httpHeaderWriteContentLengthSt(int clientSocket, struct stat *st) {
+    httpHeaderWriteContentLength(clientSocket, st->st_size);
+}
+
+#define WRITESTR(c, str) write(c, str, strlen(str))
+
+void httpHeaderWriteResponse(int clientSocket, short response) {
+    WRITESTR(clientSocket, "HTTP/1.1 ");
+    switch (response) {
+        case 200:
+            WRITESTR(clientSocket, "200 OK\n");
+            break;
+        case 204:
+            WRITESTR(clientSocket, "204 No Content\n");
+            break;
+        case 404:
+            WRITESTR(clientSocket, "404 Not Found\n");
+            break;
+        case 431:
+            WRITESTR(clientSocket, "431 Request Header Fields Too Large\n");
+            break;
+        case 500:
+        default:
+            WRITESTR(clientSocket, "500 Internal Server Error\n");
+            break;
+    }
 }
 
 void httpHeaderWriteEnd(int clientSocket) {
@@ -130,6 +164,10 @@ void httpBodyWriteFile(int clientSocket, FILE *file) {
     }
 }
 
+void httpBodyWriteText(int clientSocket, const char *text) {
+    write(clientSocket, text, strlen(text));
+}
+
 void handleDir(int clientSocket, char *path, struct stat *st) {
     /* TODO: Implementation */
 }
@@ -141,9 +179,9 @@ void handleFile(int clientSocket, char *path, struct stat *st) {
         return;
 
     /* Headers */
-    httpHeaderWriteResponseOK(clientSocket);
+    httpHeaderWriteResponse(clientSocket, 200);
     httpHeaderWriteDate(clientSocket);
-    httpHeaderWriteContentLength(clientSocket, st);
+    httpHeaderWriteContentLengthSt(clientSocket, st);
     httpHeaderWriteEnd(clientSocket);
 
     /* Body */
@@ -156,8 +194,15 @@ void handleFile(int clientSocket, char *path, struct stat *st) {
 void handlePath(int clientSocket, char *path) {
     struct stat st;
 
-    if (stat(path, &st) != 0)
+    if (stat(path, &st) != 0) {
+        const char *body = "Not Found";
+        httpHeaderWriteResponse(clientSocket, 404);
+        httpHeaderWriteDate(clientSocket);
+        httpHeaderWriteContentLength(clientSocket, strlen(body));
+        httpHeaderWriteEnd(clientSocket);
+        httpBodyWriteText(clientSocket, body);
         return;
+    }
 
     if (S_ISDIR(st.st_mode))
         handleDir(clientSocket, path, &st);
@@ -166,13 +211,23 @@ void handlePath(int clientSocket, char *path) {
 }
 
 void handleConnection(int clientSocket) {
-    char buffer[BUFSIZ] = "";
+#define BUFFER_SIZE 4096
+    char buffer[BUFFER_SIZE];
     size_t bytesRead, messageSize = 0;
     char *uriPath;
 
     while ((bytesRead = read(clientSocket, buffer + messageSize, sizeof(buffer) - messageSize - 1))) {
         messageSize += bytesRead;
-        if (messageSize > BUFSIZ - 1 || buffer[messageSize - 1] == '\n') break;
+        if (messageSize > BUFFER_SIZE - 1) {
+            httpHeaderWriteResponse(clientSocket, 431);
+            httpHeaderWriteDate(clientSocket);
+            httpHeaderWriteContentLength(clientSocket, 0);
+            httpHeaderWriteEnd(clientSocket);
+            return;
+        }
+
+        if (buffer[messageSize - 1] == '\n')
+            break;
     }
 
     buffer[messageSize - 1] = 0;
@@ -180,18 +235,18 @@ void handleConnection(int clientSocket) {
     fflush(stdout);
 
     uriPath = httpClientReadUri(buffer);
-    if(uriPath) {
+    if (uriPath) {
         handlePath(clientSocket, uriPath + 1);
         free(uriPath);
     }
-
-    close(clientSocket);
 }
 
 int main(int argc, char **argv) {
     signal(SIGHUP, shutdownProgram);
     signal(SIGINT, shutdownProgram);
     signal(SIGPIPE, noAction);
+    signal(SIGSEGV, shutdownCrash);
+    signal(SIGTERM, shutdownProgram);
 
     serverSocket = serverStartup(SERVER_PORT);
 
