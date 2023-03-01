@@ -1,3 +1,4 @@
+#include "common/http.h"
 #include "platform/unix.h"
 
 int main(int argc, char **argv) {
