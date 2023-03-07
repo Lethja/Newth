@@ -61,18 +61,26 @@ void httpHeaderWriteDate(char header[BUFSIZ]) {
     timeInfo = gmtime(&rawTime);
 
     strftime(buffer, max, "Date: %a, %d %b %Y %H:%M:%S GMT\n", timeInfo);
-    strncat(header, buffer, BUFSIZ);
+    strncat(header, buffer, BUFSIZ-1);
 }
 
 void httpHeaderWriteContentLength(char header[BUFSIZ], size_t length) {
     const size_t max = 100;
     char buffer[max];
     snprintf(buffer, max, "Content-Length: %zu\n", length);
-    strncat(header, buffer, BUFSIZ);
+    strncat(header, buffer, BUFSIZ-1);
 }
 
 void httpHeaderWriteContentLengthSt(char header[BUFSIZ], struct stat *st) {
     httpHeaderWriteContentLength(header, st->st_size);
+}
+
+void httpHeaderWriteLastModified(char header[BUFSIZ], struct stat *st) {
+    const size_t max = 46;
+    char buffer[max];
+
+    strftime(buffer, max, "Last-Modified: %a, %d %b %Y %H:%M:%S GMT\n", gmtime(&st->st_mtim.tv_sec));
+    strncat(header, buffer, BUFSIZ-1);
 }
 
 void httpHeaderWriteResponse(char header[BUFSIZ], short response) {
@@ -99,11 +107,11 @@ void httpHeaderWriteResponse(char header[BUFSIZ], short response) {
     }
 
     snprintf(buffer, max, "HTTP/1.1 %s\n", r);
-    strncat(header, buffer, BUFSIZ);
+    strncat(header, buffer, BUFSIZ-1);
 }
 
 void httpHeaderWriteEnd(char header[BUFSIZ]) {
-    char * r = strrchr(header, '\n');
+    char *r = strrchr(header, '\n');
     strncpy(r, HTTP_EOL, strlen(HTTP_EOL) + 1);
 }
 
@@ -112,12 +120,15 @@ void httpBodyWriteFile(int clientSocket, FILE *file) {
     char buffer[BUFSIZ];
 
     while ((bytesRead = fread(buffer, 1, BUFSIZ, file)) > 0) {
-        write(clientSocket, buffer, bytesRead);
+        if (write(clientSocket, buffer, bytesRead) == -1) {
+            perror("Error writing small file body");
+            break;
+        }
     }
 }
 
-void httpBodyWriteText(int clientSocket, const char *text) {
-    write(clientSocket, text, strlen(text));
+size_t httpBodyWriteText(int clientSocket, const char *text) {
+    return write(clientSocket, text, strlen(text));
 }
 
 void httpHeaderWriteFileName(char header[BUFSIZ], char *path) {
@@ -128,5 +139,5 @@ void httpHeaderWriteFileName(char header[BUFSIZ], char *path) {
         name = path;
 
     snprintf(buffer, max, "Content-Disposition: filename=\"%s\"\n", name);
-    strncat(header, buffer, BUFSIZ);
+    strncat(header, buffer, BUFSIZ-1);
 }

@@ -85,9 +85,19 @@ void handleFile(int clientSocket, char *path, struct stat *st) {
     httpHeaderWriteResponse(header, 200);
     httpHeaderWriteDate(header);
     httpHeaderWriteFileName(header, path);
+    httpHeaderWriteLastModified(header, st);
     httpHeaderWriteContentLengthSt(header, st);
     httpHeaderWriteEnd(header);
-    write(clientSocket, header, strlen(header));
+
+#ifndef NDEBUG
+    printf("%s\n", header);
+#endif
+
+    if (write(clientSocket, header, strlen(header)) == -1) {
+        perror("Error in writing file header");
+        fclose(fp);
+        return;
+    }
 
     /* Body */
     if (st->st_size < BUFSIZ) {
@@ -100,7 +110,7 @@ void handleFile(int clientSocket, char *path, struct stat *st) {
 void handlePath(int clientSocket, char *path) {
     struct stat st;
     const char *body = "Not Found";
-    char *absolutePath, *test = absolutePath = NULL;
+    char *absolutePath = NULL, *test = NULL;
     int r;
     size_t lenA, lenB;
 
@@ -138,7 +148,9 @@ void handlePath(int clientSocket, char *path) {
         httpHeaderWriteDate(bufferOut);
         httpHeaderWriteContentLength(bufferOut, strlen(body));
         httpHeaderWriteEnd(bufferOut);
-        write(clientSocket, bufferOut, strlen(bufferOut));
+        if (write(clientSocket, bufferOut, strlen(bufferOut)) == -1)
+            perror("Error handling 404");
+
         httpBodyWriteText(clientSocket, body);
     }
 }
@@ -157,7 +169,10 @@ void handleConnection(int clientSocket) {
             httpHeaderWriteDate(bufferOut);
             httpHeaderWriteContentLength(bufferOut, 0);
             httpHeaderWriteEnd(bufferOut);
-            write(clientSocket, bufferOut, strlen(bufferOut));
+
+            if (write(clientSocket, bufferOut, strlen(bufferOut)) == -1)
+                perror("Error handling 431");
+
             return;
         }
 
@@ -219,7 +234,7 @@ int main(int argc, char **argv) {
 
     while (1) {
         size_t i;
-        int clientSocket;
+        int clientSocket = -1;
 
         for (i = 0; i < globalFileRoutineArray.size; i++) {
             if (!FileRoutineContinue(&globalFileRoutineArray.array[i]))

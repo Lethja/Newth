@@ -18,11 +18,12 @@ size_t FileRoutineContinue(FileRoutine *self) {
 
     bytesRead = fread(buffer, 1, remaining < BUFSIZ ? remaining : BUFSIZ, self->file);
 
-    if (bytesRead > 0)
+    if (bytesRead > 0) {
         byteWrite = write(self->socket, buffer, bytesRead);
 
-    if(byteWrite == -1)
-        bytesRead = 0;
+        if (byteWrite == -1)
+            bytesRead = 0;
+    }
 
     return bytesRead;
 }
