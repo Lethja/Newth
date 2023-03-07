@@ -1,11 +1,14 @@
 #include "platform/unix.h"
 #include "server/http.h"
+#include "server/routine.h"
 
 #include <sys/stat.h>
-#include <time.h>
 
 int globalServerSocket;
 char *globalRootPath = NULL;
+FileRoutineArray globalFileRoutineArray;
+
+struct timeval globalSelectSleep;
 
 void noAction() {}
 
@@ -42,6 +45,12 @@ int serverStartup(short port) {
     if ((listen(newSocket, 10)) < 0)
         goto ServerStartupError;
 
+    globalFileRoutineArray.size = 0;
+    globalFileRoutineArray.array = NULL;
+
+    globalSelectSleep.tv_sec = 1;
+    globalSelectSleep.tv_usec = 0;
+
     return newSocket;
 
     ServerStartupError:
@@ -66,22 +75,26 @@ void handleDir(int clientSocket, char *path, struct stat *st) {
 }
 
 void handleFile(int clientSocket, char *path, struct stat *st) {
+    char header[BUFSIZ] = "";
     FILE *fp = fopen(path, "rb");
 
     if (fp == NULL)
         return;
 
     /* Headers */
-    httpHeaderWriteResponse(clientSocket, 200);
-    httpHeaderWriteDate(clientSocket);
-    httpHeaderWriteContentLengthSt(clientSocket, st);
-    httpHeaderWriteEnd(clientSocket);
+    httpHeaderWriteResponse(header, 200);
+    httpHeaderWriteDate(header);
+    httpHeaderWriteFileName(header, path);
+    httpHeaderWriteContentLengthSt(header, st);
+    httpHeaderWriteEnd(header);
+    write(clientSocket, header, strlen(header));
 
     /* Body */
-    httpBodyWriteFile(clientSocket, fp);
-
-    /* Cleanup */
-    fclose(fp);
+    if (st->st_size < BUFSIZ) {
+        httpBodyWriteFile(clientSocket, fp);
+        fclose(fp);
+    } else
+        FileRoutineArrayAdd(&globalFileRoutineArray, FileRoutineNew(clientSocket, fp, 0, st->st_size));
 }
 
 void handlePath(int clientSocket, char *path) {
@@ -96,7 +109,7 @@ void handlePath(int clientSocket, char *path) {
 
     lenA = strlen(globalRootPath), lenB = strlen(test);
 
-    if(lenA > lenB)
+    if (lenA > lenB)
         goto handlePathNotFound;
 
     r = memcmp(globalRootPath, test, lenA);
@@ -116,14 +129,18 @@ void handlePath(int clientSocket, char *path) {
     return;
 
     handlePathNotFound:
-    if(test)
+    if (test)
         free(test);
 
-    httpHeaderWriteResponse(clientSocket, 404);
-    httpHeaderWriteDate(clientSocket);
-    httpHeaderWriteContentLength(clientSocket, strlen(body));
-    httpHeaderWriteEnd(clientSocket);
-    httpBodyWriteText(clientSocket, body);
+    {
+        char bufferOut[BUFSIZ] = "";
+        httpHeaderWriteResponse(bufferOut, 404);
+        httpHeaderWriteDate(bufferOut);
+        httpHeaderWriteContentLength(bufferOut, strlen(body));
+        httpHeaderWriteEnd(bufferOut);
+        write(clientSocket, bufferOut, strlen(bufferOut));
+        httpBodyWriteText(clientSocket, body);
+    }
 }
 
 void handleConnection(int clientSocket) {
@@ -135,10 +152,12 @@ void handleConnection(int clientSocket) {
     while ((bytesRead = read(clientSocket, buffer + messageSize, sizeof(buffer) - messageSize - 1))) {
         messageSize += bytesRead;
         if (messageSize > BUFFER_SIZE - 1) {
-            httpHeaderWriteResponse(clientSocket, 431);
-            httpHeaderWriteDate(clientSocket);
-            httpHeaderWriteContentLength(clientSocket, 0);
-            httpHeaderWriteEnd(clientSocket);
+            char bufferOut[BUFSIZ] = "";
+            httpHeaderWriteResponse(bufferOut, 431);
+            httpHeaderWriteDate(bufferOut);
+            httpHeaderWriteContentLength(bufferOut, 0);
+            httpHeaderWriteEnd(bufferOut);
+            write(clientSocket, bufferOut, strlen(bufferOut));
             return;
         }
 
@@ -201,9 +220,18 @@ int main(int argc, char **argv) {
     while (1) {
         size_t i;
         int clientSocket;
+
+        for (i = 0; i < globalFileRoutineArray.size; i++) {
+            if (!FileRoutineContinue(&globalFileRoutineArray.array[i]))
+                FileRoutineArrayDel(&globalFileRoutineArray, &globalFileRoutineArray.array[i]);
+        }
+
+        globalSelectSleep.tv_usec = 0;
+        globalSelectSleep.tv_sec = globalFileRoutineArray.size ? 0 : 60;
+
         readySockets = currentSockets;
 
-        if (select(FD_SETSIZE, &readySockets, NULL, NULL, NULL) < 0) {
+        if (select(FD_SETSIZE, &readySockets, NULL, NULL, &globalSelectSleep) < 0) {
             perror("Select");
             exit(1);
         }

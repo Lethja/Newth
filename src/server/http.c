@@ -51,8 +51,8 @@ char *httpClientReadUri(char *request) {
     return path;
 }
 
-void httpHeaderWriteDate(int clientSocket) {
-    const char max = 36;
+void httpHeaderWriteDate(char header[BUFSIZ]) {
+    const char max = 37;
     char buffer[max];
     time_t rawTime;
     struct tm *timeInfo;
@@ -60,47 +60,51 @@ void httpHeaderWriteDate(int clientSocket) {
     time(&rawTime);
     timeInfo = gmtime(&rawTime);
 
-    strftime(buffer, max, "Date: %a, %d %b %H:%M:%S GMT\n", timeInfo);
-    write(clientSocket, buffer, strlen(buffer));
+    strftime(buffer, max, "Date: %a, %d %b %Y %H:%M:%S GMT\n", timeInfo);
+    strncat(header, buffer, BUFSIZ);
 }
 
-void httpHeaderWriteContentLength(int clientSocket, size_t length) {
+void httpHeaderWriteContentLength(char header[BUFSIZ], size_t length) {
     const size_t max = 100;
     char buffer[max];
     snprintf(buffer, max, "Content-Length: %zu\n", length);
-    write(clientSocket, buffer, strlen(buffer));
+    strncat(header, buffer, BUFSIZ);
 }
 
-void httpHeaderWriteContentLengthSt(int clientSocket, struct stat *st) {
-    httpHeaderWriteContentLength(clientSocket, st->st_size);
+void httpHeaderWriteContentLengthSt(char header[BUFSIZ], struct stat *st) {
+    httpHeaderWriteContentLength(header, st->st_size);
 }
 
-#define WRITESTR(c, str) write(c, str, strlen(str))
+void httpHeaderWriteResponse(char header[BUFSIZ], short response) {
+    const size_t max = 128;
+    char buffer[max], *r;
 
-void httpHeaderWriteResponse(int clientSocket, short response) {
-    WRITESTR(clientSocket, "HTTP/1.1 ");
     switch (response) {
         case 200:
-            WRITESTR(clientSocket, "200 OK\n");
+            r = "200 OK";
             break;
         case 204:
-            WRITESTR(clientSocket, "204 No Content\n");
+            r = "204 No Content";
             break;
         case 404:
-            WRITESTR(clientSocket, "404 Not Found\n");
+            r = "404 Not Found";
             break;
         case 431:
-            WRITESTR(clientSocket, "431 Request Header Fields Too Large\n");
+            r = "431 Request Header Fields Too Large";
             break;
         case 500:
         default:
-            WRITESTR(clientSocket, "500 Internal Server Error\n");
+            r = "500 Internal Server Error";
             break;
     }
+
+    snprintf(buffer, max, "HTTP/1.1 %s\n", r);
+    strncat(header, buffer, BUFSIZ);
 }
 
-void httpHeaderWriteEnd(int clientSocket) {
-    write(clientSocket, HTTP_EOL, strlen(HTTP_EOL));
+void httpHeaderWriteEnd(char header[BUFSIZ]) {
+    char * r = strrchr(header, '\n');
+    strncpy(r, HTTP_EOL, strlen(HTTP_EOL) + 1);
 }
 
 void httpBodyWriteFile(int clientSocket, FILE *file) {
@@ -114,4 +118,15 @@ void httpBodyWriteFile(int clientSocket, FILE *file) {
 
 void httpBodyWriteText(int clientSocket, const char *text) {
     write(clientSocket, text, strlen(text));
+}
+
+void httpHeaderWriteFileName(char header[BUFSIZ], char *path) {
+    const size_t max = FILENAME_MAX;
+    char buffer[max];
+    char *name = strrchr(path, '/');
+    if (!name)
+        name = path;
+
+    snprintf(buffer, max, "Content-Disposition: filename=\"%s\"\n", name);
+    strncat(header, buffer, BUFSIZ);
 }
