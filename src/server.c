@@ -7,15 +7,18 @@
 int globalServerSocket;
 char *globalRootPath = NULL;
 FileRoutineArray globalFileRoutineArray;
-size_t connections = 0;
-
+fd_set currentSockets;
 struct timeval globalSelectSleep;
 
 void noAction() {}
 
 void closeBindSocket() {
-    if (globalServerSocket)
-        shutdown(globalServerSocket, SHUT_RDWR);
+    int i;
+    for (i = 0; i < FD_SETSIZE; i++) {
+        if (FD_ISSET(i, &currentSockets)) {
+            shutdown(i, SHUT_RDWR);
+        }
+    }
 }
 
 void shutdownCrash() {
@@ -48,9 +51,6 @@ int serverStartup(short port) {
 
     globalFileRoutineArray.size = 0;
     globalFileRoutineArray.array = NULL;
-
-    globalSelectSleep.tv_sec = 1;
-    globalSelectSleep.tv_usec = 0;
 
     return newSocket;
 
@@ -177,6 +177,9 @@ char handleConnection(int clientSocket) {
     char *uriPath;
 
     while ((bytesRead = read(clientSocket, buffer + messageSize, sizeof(buffer) - messageSize - 1))) {
+        if (bytesRead == -1)
+            return 1;
+
         messageSize += bytesRead;
         if (messageSize > BUFFER_SIZE - 1) {
             char bufferOut[BUFSIZ] = "";
@@ -185,8 +188,8 @@ char handleConnection(int clientSocket) {
             httpHeaderWriteContentLength(bufferOut, 0);
             httpHeaderWriteEnd(bufferOut);
 
-            if (write(clientSocket, bufferOut, strlen(bufferOut)) == -1){
-                perror("Error handling 431");
+
+            if (write(clientSocket, bufferOut, strlen(bufferOut)) == -1) {
                 return 1;
             }
 
@@ -196,6 +199,9 @@ char handleConnection(int clientSocket) {
         if (buffer[messageSize - 1] == '\n')
             break;
     }
+
+    if (messageSize == 0)
+        return 1;
 
     buffer[messageSize - 1] = 0;
 
@@ -247,21 +253,21 @@ int main(int argc, char **argv) {
 
     globalServerSocket = serverStartup(SERVER_PORT);
 
-    fd_set currentSockets, readySockets;
+    fd_set readySockets;
     FD_ZERO(&currentSockets);
     FD_SET(globalServerSocket, &currentSockets);
 
     while (1) {
-        size_t i;
-        int clientSocket = 0;
+        int i;
 
         for (i = 0; i < globalFileRoutineArray.size; i++) {
-            if (!FileRoutineContinue(&globalFileRoutineArray.array[i]))
+            if (!FileRoutineContinue(&globalFileRoutineArray.array[i])) {
                 FileRoutineArrayDel(&globalFileRoutineArray, &globalFileRoutineArray.array[i]);
+            }
         }
 
-        globalSelectSleep.tv_usec = connections ? 500 : 0;
-        globalSelectSleep.tv_sec = globalFileRoutineArray.size || connections ? 0 : 60;
+        globalSelectSleep.tv_usec = 0;
+        globalSelectSleep.tv_sec = globalFileRoutineArray.size ? 0 : 60;
 
         readySockets = currentSockets;
 
@@ -273,12 +279,13 @@ int main(int argc, char **argv) {
         for (i = 0; i < FD_SETSIZE; i++) {
             if (FD_ISSET(i, &readySockets)) {
                 if (i == globalServerSocket) {
-                    clientSocket = acceptConnection(globalServerSocket);
+                    int clientSocket = acceptConnection(globalServerSocket);
                     FD_SET(clientSocket, &currentSockets);
-                    connections++;
-                } else if (clientSocket) {
-                    handleConnection(clientSocket);
-                    FD_CLR(i, &currentSockets);
+                } else {
+                    if (handleConnection(i)) {
+                        close(i);
+                        FD_CLR(i, &currentSockets);
+                    }
                 }
             }
         }
