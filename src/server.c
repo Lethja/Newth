@@ -7,6 +7,7 @@
 int globalServerSocket;
 char *globalRootPath = NULL;
 FileRoutineArray globalFileRoutineArray;
+size_t connections = 0;
 
 struct timeval globalSelectSleep;
 
@@ -62,11 +63,17 @@ int acceptConnection(int fromSocket) {
     socklen_t addrSize = sizeof(struct sockaddr_in);
     int clientSocket;
     struct sockaddr_in clientAddress;
-    char address[16] = "";
 
     clientSocket = accept(fromSocket, (SA *) &clientAddress, &addrSize);
-    inet_ntop(AF_INET, &clientAddress.sin_addr, address, sizeof(address));
-    fprintf(stdout, "%s\n", address);
+
+#ifndef NDEBUG
+    {
+        char address[16] = "";
+        inet_ntop(AF_INET, &clientAddress.sin_addr, address, sizeof(address));
+        fprintf(stdout, "Connection opened for: %s\n", address);
+    }
+#endif
+
     return clientSocket;
 }
 
@@ -74,12 +81,14 @@ void handleDir(int clientSocket, char *path, struct stat *st) {
     /* TODO: Implementation */
 }
 
-void handleFile(int clientSocket, char *path, struct stat *st) {
+char handleFile(int clientSocket, char *path, struct stat *st) {
     char header[BUFSIZ] = "";
     FILE *fp = fopen(path, "rb");
 
-    if (fp == NULL)
-        return;
+    if (fp == NULL) {
+        perror("Error in opening file");
+        return 1;
+    }
 
     /* Headers */
     httpHeaderWriteResponse(header, 200);
@@ -90,27 +99,28 @@ void handleFile(int clientSocket, char *path, struct stat *st) {
     httpHeaderWriteEnd(header);
 
 #ifndef NDEBUG
-    printf("%s\n", header);
+    printf("HTTP HEAD REPLY:\n%s\n", header);
 #endif
 
     if (write(clientSocket, header, strlen(header)) == -1) {
         perror("Error in writing file header");
-        fclose(fp);
-        return;
+        return 1;
     }
 
     /* Body */
     if (st->st_size < BUFSIZ) {
         httpBodyWriteFile(clientSocket, fp);
         fclose(fp);
+        return 0;
     } else
         FileRoutineArrayAdd(&globalFileRoutineArray, FileRoutineNew(clientSocket, fp, 0, st->st_size));
+    return 0;
 }
 
-void handlePath(int clientSocket, char *path) {
+char handlePath(int clientSocket, char *path) {
     struct stat st;
     const char *body = "Not Found";
-    char *absolutePath = NULL, *test = NULL;
+    char *absolutePath = NULL, *test = NULL, e = 0;
     int r;
     size_t lenA, lenB;
 
@@ -135,8 +145,9 @@ void handlePath(int clientSocket, char *path) {
     if (S_ISDIR(st.st_mode))
         handleDir(clientSocket, path, &st);
     else if (S_ISREG(st.st_mode))
-        handleFile(clientSocket, path, &st);
-    return;
+        e = handleFile(clientSocket, path, &st);
+
+    return e;
 
     handlePathNotFound:
     if (test)
@@ -148,15 +159,19 @@ void handlePath(int clientSocket, char *path) {
         httpHeaderWriteDate(bufferOut);
         httpHeaderWriteContentLength(bufferOut, strlen(body));
         httpHeaderWriteEnd(bufferOut);
-        if (write(clientSocket, bufferOut, strlen(bufferOut)) == -1)
+        if (write(clientSocket, bufferOut, strlen(bufferOut)) == -1) {
             perror("Error handling 404");
+            return 1;
+        }
 
         httpBodyWriteText(clientSocket, body);
+        return 0;
     }
 }
 
-void handleConnection(int clientSocket) {
+char handleConnection(int clientSocket) {
 #define BUFFER_SIZE 4096
+    char r = 0;
     char buffer[BUFFER_SIZE];
     size_t bytesRead, messageSize = 0;
     char *uriPath;
@@ -170,10 +185,12 @@ void handleConnection(int clientSocket) {
             httpHeaderWriteContentLength(bufferOut, 0);
             httpHeaderWriteEnd(bufferOut);
 
-            if (write(clientSocket, bufferOut, strlen(bufferOut)) == -1)
+            if (write(clientSocket, bufferOut, strlen(bufferOut)) == -1){
                 perror("Error handling 431");
+                return 1;
+            }
 
-            return;
+            return 0;
         }
 
         if (buffer[messageSize - 1] == '\n')
@@ -183,15 +200,17 @@ void handleConnection(int clientSocket) {
     buffer[messageSize - 1] = 0;
 
 #ifndef NDEBUG
-    printf("REQUEST: %s\n", buffer);
+    printf("HTTP HEAD REQUEST:\n%s\n", buffer);
     fflush(stdout);
 #endif
 
     uriPath = httpClientReadUri(buffer);
     if (uriPath) {
-        handlePath(clientSocket, uriPath + 1);
+        r = handlePath(clientSocket, uriPath + 1);
         free(uriPath);
     }
+
+    return r;
 }
 
 static inline void connectProgramSignals(void) {
@@ -234,15 +253,15 @@ int main(int argc, char **argv) {
 
     while (1) {
         size_t i;
-        int clientSocket = -1;
+        int clientSocket = 0;
 
         for (i = 0; i < globalFileRoutineArray.size; i++) {
             if (!FileRoutineContinue(&globalFileRoutineArray.array[i]))
                 FileRoutineArrayDel(&globalFileRoutineArray, &globalFileRoutineArray.array[i]);
         }
 
-        globalSelectSleep.tv_usec = 0;
-        globalSelectSleep.tv_sec = globalFileRoutineArray.size ? 0 : 60;
+        globalSelectSleep.tv_usec = connections ? 500 : 0;
+        globalSelectSleep.tv_sec = globalFileRoutineArray.size || connections ? 0 : 60;
 
         readySockets = currentSockets;
 
@@ -256,7 +275,8 @@ int main(int argc, char **argv) {
                 if (i == globalServerSocket) {
                     clientSocket = acceptConnection(globalServerSocket);
                     FD_SET(clientSocket, &currentSockets);
-                } else {
+                    connections++;
+                } else if (clientSocket) {
                     handleConnection(clientSocket);
                     FD_CLR(i, &currentSockets);
                 }
