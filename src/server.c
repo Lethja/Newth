@@ -3,6 +3,7 @@
 #include "server/routine.h"
 
 #include <sys/stat.h>
+#include <dirent.h>
 
 int globalServerSocket;
 char *globalRootPath = NULL;
@@ -77,8 +78,40 @@ int acceptConnection(int fromSocket) {
     return clientSocket;
 }
 
-void handleDir(int clientSocket, char *path, struct stat *st) {
-    /* TODO: Implementation */
+char handleDir(int clientSocket, char *path, struct stat *st) {
+    char buf[BUFSIZ] = "";
+    struct dirent *entry;
+    DIR *dir = opendir(path);
+
+    if (dir == NULL) {
+        httpHeaderWriteResponse(buf, 404);
+        httpHeaderWriteEnd(buf);
+        if (write(clientSocket, buf, strlen(buf)) == -1)
+            return 1;
+
+        return 0;
+    }
+
+    /* Headers */
+    httpHeaderWriteResponse(buf, 200);
+    httpHeaderWriteDate(buf);
+    httpHeaderWriteLastModified(buf, st);
+    httpHeaderWriteEnd(buf);
+    write(clientSocket, buf, strlen(buf));
+
+    memset(buf, 0, sizeof(buf));
+
+    while ((entry = readdir(dir))) {
+        if (entry->d_name[0] == '.')
+            continue;
+
+        snprintf(buf, BUFSIZ, "%s\n", entry->d_name);
+        write(clientSocket, buf, strlen(buf));
+    }
+
+    closedir(dir);
+
+    return 0;
 }
 
 char handleFile(int clientSocket, char *path, struct stat *st) {
@@ -120,38 +153,38 @@ char handleFile(int clientSocket, char *path, struct stat *st) {
 char handlePath(int clientSocket, char *path) {
     struct stat st;
     const char *body = "Not Found";
-    char *absolutePath = NULL, *test = NULL, e = 0;
+    char *absolutePath = NULL, e = 0;
     int r;
     size_t lenA, lenB;
 
-    if (!(test = realpath(path, absolutePath)))
+    if (path[0] == '\0')
+        absolutePath = globalRootPath;
+    else if (!(absolutePath = realpath(path, NULL)))
         goto handlePathNotFound;
 
-    lenA = strlen(globalRootPath), lenB = strlen(test);
+    lenA = strlen(globalRootPath), lenB = strlen(absolutePath);
 
     if (lenA > lenB)
         goto handlePathNotFound;
 
-    r = memcmp(globalRootPath, test, lenA);
-    free(test);
-    test = NULL;
+    r = memcmp(globalRootPath, absolutePath, lenA);
 
-    if (r)
-        goto handlePathNotFound;
-
-    if (stat(path, &st) != 0)
+    if (r || stat(absolutePath, &st) != 0)
         goto handlePathNotFound;
 
     if (S_ISDIR(st.st_mode))
-        handleDir(clientSocket, path, &st);
+        e = handleDir(clientSocket, absolutePath, &st);
     else if (S_ISREG(st.st_mode))
-        e = handleFile(clientSocket, path, &st);
+        e = handleFile(clientSocket, absolutePath, &st);
+
+    if (absolutePath != globalRootPath)
+        free(absolutePath);
 
     return e;
 
     handlePathNotFound:
-    if (test)
-        free(test);
+    if (absolutePath && absolutePath != globalRootPath)
+        free(absolutePath);
 
     {
         char bufferOut[BUFSIZ] = "";
@@ -212,7 +245,11 @@ char handleConnection(int clientSocket) {
 
     uriPath = httpClientReadUri(buffer);
     if (uriPath) {
-        r = handlePath(clientSocket, uriPath + 1);
+        if (uriPath[0] != '/')
+            r = 1;
+        else
+            r = handlePath(clientSocket, uriPath + 1);
+
         free(uriPath);
     }
 
