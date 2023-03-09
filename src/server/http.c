@@ -64,6 +64,11 @@ void httpHeaderWriteDate(char header[BUFSIZ]) {
     strncat(header, buffer, BUFSIZ-1);
 }
 
+void httpHeaderWriteChunkedEncoding(char header[BUFSIZ]) {
+    const char *chunked = "Transfer-Encoding: chunked\n";
+    strncat(header, chunked, strlen(chunked));
+}
+
 void httpHeaderWriteContentLength(char header[BUFSIZ], size_t length) {
     const size_t max = 100;
     char buffer[max];

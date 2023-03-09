@@ -96,6 +96,7 @@ char handleDir(int clientSocket, char *path, struct stat *st) {
     httpHeaderWriteResponse(buf, 200);
     httpHeaderWriteDate(buf);
     httpHeaderWriteLastModified(buf, st);
+    httpHeaderWriteChunkedEncoding(buf);
     httpHeaderWriteEnd(buf);
     write(clientSocket, buf, strlen(buf));
 
@@ -105,11 +106,16 @@ char handleDir(int clientSocket, char *path, struct stat *st) {
         if (entry->d_name[0] == '.')
             continue;
 
-        snprintf(buf, BUFSIZ, "%s\n", entry->d_name);
+        /* Stream chunk encoding */
+        snprintf(buf, BUFSIZ, "%zx\r\n%s\n\r\n", strlen(entry->d_name) + 1, entry->d_name);
         write(clientSocket, buf, strlen(buf));
     }
 
     closedir(dir);
+
+    /* End of chunk encoding */
+    buf[0] = '0', buf[1] = buf[3] = '\r', buf[2] = buf[4] = '\n', buf[5] = '\0';
+    write(clientSocket, buf, strlen(buf));
 
     return 0;
 }

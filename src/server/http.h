@@ -13,6 +13,8 @@ void httpBodyWriteFile(int clientSocket, FILE *file);
 
 size_t httpBodyWriteText(int clientSocket, const char *text);
 
+void httpHeaderWriteChunkedEncoding(char header[BUFSIZ]);
+
 void httpHeaderWriteContentLength(char header[BUFSIZ], size_t length);
 
 void httpHeaderWriteContentLengthSt(char header[BUFSIZ], struct stat *st);
