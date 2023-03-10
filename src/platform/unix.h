@@ -17,7 +17,7 @@
 #define SA struct sockaddr
 #define SERVER_PORT 8080
 
-static inline char *pathCombine(char *path1, char *path2) {
+__attribute__((unused)) static inline char *pathCombine(char *path1, char *path2) {
     const char pathDivider = '/';
     size_t a = strlen(path1), b = strlen(path2), path2Jump = 1;
     char *path1End = strrchr(path1, pathDivider), *returnPath;
