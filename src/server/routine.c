@@ -44,8 +44,12 @@ void FileRoutineArrayAdd(FileRoutineArray *self, FileRoutine fileRoutine) {
 
 void FileRoutineArrayDel(FileRoutineArray *self, FileRoutine *fileRoutine) {
     size_t i;
+    int r;
+
     for (i = 0; i < self->size; i++) {
-        if (&self->array[i] == fileRoutine)
+        r = memcmp((void *) &self->array[i], (void *) fileRoutine, sizeof(FileRoutine));
+
+        if (r)
             continue;
 
         FileRoutineFree(&self->array[i]);

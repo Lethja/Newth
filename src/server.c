@@ -78,10 +78,12 @@ int acceptConnection(int fromSocket) {
     return clientSocket;
 }
 
-char handleDir(int clientSocket, char *path, struct stat *st) {
+char handleDir(int clientSocket, char *realPath, struct stat *st) {
+    char *webPath = realPath + strlen(globalRootPath);
     char buf[BUFSIZ] = "";
+    char pathBuf[BUFSIZ] = "";
     struct dirent *entry;
-    DIR *dir = opendir(path);
+    DIR *dir = opendir(realPath);
 
     if (dir == NULL) {
         httpHeaderWriteResponse(buf, 404);
@@ -102,16 +104,29 @@ char handleDir(int clientSocket, char *path, struct stat *st) {
 
     memset(buf, 0, sizeof(buf));
 
+    htmlHeaderWrite(buf, realPath);
+    htmlListStart(buf);
+    httpBodyWriteChunk(clientSocket, buf);
+
     while ((entry = readdir(dir))) {
         if (entry->d_name[0] == '.')
             continue;
 
-        /* Stream chunk encoding */
-        snprintf(buf, BUFSIZ, "%zx\r\n%s\n\r\n", strlen(entry->d_name) + 1, entry->d_name);
-        write(clientSocket, buf, strlen(buf));
+        memcpy(pathBuf, webPath, strlen(webPath) + 1);
+        strncat(pathBuf, "/", BUFSIZ - 1);
+        strncat(pathBuf, entry->d_name, BUFSIZ - 1);
+
+        htmlListWritePathLink(buf, pathBuf);
+        httpBodyWriteChunk(clientSocket, buf);
     }
 
     closedir(dir);
+
+    memset(buf, 0, BUFSIZ);
+
+    htmlListEnd(buf);
+    htmlFooterWrite(buf);
+    httpBodyWriteChunk(clientSocket, buf);
 
     /* End of chunk encoding */
     buf[0] = '0', buf[1] = buf[3] = '\r', buf[2] = buf[4] = '\n', buf[5] = '\0';

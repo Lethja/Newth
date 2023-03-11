@@ -7,7 +7,19 @@
 #include <stddef.h>
 #include <sys/stat.h>
 
+void htmlHeaderWrite(char buffer[BUFSIZ], char *title);
+
+void htmlListStart(char buffer[BUFSIZ]);
+
+void htmlListEnd(char buffer[BUFSIZ]);
+
+void htmlFooterWrite(char buffer[BUFSIZ]);
+
+void htmlListWritePathLink(char buffer[BUFSIZ], char *webPath);
+
 char *httpClientReadUri(char *request);
+
+size_t httpBodyWriteChunk(int clientSocket, char buffer[BUFSIZ]);
 
 void httpBodyWriteFile(int clientSocket, FILE *file);
 
