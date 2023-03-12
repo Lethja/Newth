@@ -89,7 +89,7 @@ char handleDir(int clientSocket, char *realPath, struct stat *st) {
         httpHeaderWriteResponse(buf, 404);
         httpHeaderWriteEnd(buf);
         if (write(clientSocket, buf, strlen(buf)) == -1)
-            return 1;
+            goto handleDirAbort;
 
         return 0;
     }
@@ -100,39 +100,51 @@ char handleDir(int clientSocket, char *realPath, struct stat *st) {
     httpHeaderWriteLastModified(buf, st);
     httpHeaderWriteChunkedEncoding(buf);
     httpHeaderWriteEnd(buf);
-    write(clientSocket, buf, strlen(buf));
+
+    if (write(clientSocket, buf, strlen(buf)) == -1)
+        goto handleDirAbort;
 
     memset(buf, 0, sizeof(buf));
 
     htmlHeaderWrite(buf, realPath);
     htmlListStart(buf);
-    httpBodyWriteChunk(clientSocket, buf);
+
+    if (httpBodyWriteChunk(clientSocket, buf))
+        goto handleDirAbort;
 
     while ((entry = readdir(dir))) {
+        size_t pathLen, entryLen;
         if (entry->d_name[0] == '.')
             continue;
 
-        memcpy(pathBuf, webPath, strlen(webPath) + 1);
-        strncat(pathBuf, "/", BUFSIZ - 1);
-        strncat(pathBuf, entry->d_name, BUFSIZ - 1);
+        pathLen = strlen(webPath), entryLen = strlen(entry->d_name);
 
-        htmlListWritePathLink(buf, pathBuf);
-        httpBodyWriteChunk(clientSocket, buf);
+        if (pathLen + entryLen + 2 < BUFSIZ) {
+            memcpy(pathBuf, webPath, pathLen);
+            pathBuf[pathLen ? pathLen : 0] = '/';
+            memcpy(pathLen ? pathBuf + pathLen + 1 : pathBuf + 1, entry->d_name, entryLen + 1);
+
+            htmlListWritePathLink(buf, pathBuf);
+            if (httpBodyWriteChunk(clientSocket, buf))
+                goto handleDirAbort;
+        }
     }
 
     closedir(dir);
-
-    memset(buf, 0, BUFSIZ);
+    dir = NULL;
 
     htmlListEnd(buf);
     htmlFooterWrite(buf);
-    httpBodyWriteChunk(clientSocket, buf);
-
-    /* End of chunk encoding */
-    buf[0] = '0', buf[1] = buf[3] = '\r', buf[2] = buf[4] = '\n', buf[5] = '\0';
-    write(clientSocket, buf, strlen(buf));
+    if (httpBodyWriteChunk(clientSocket, buf) || httpBodyWriteChunkEnding(clientSocket))
+        goto handleDirAbort;
 
     return 0;
+
+    handleDirAbort:
+    if (dir)
+        closedir(dir);
+
+    return 1;
 }
 
 char handleFile(int clientSocket, char *path, struct stat *st) {
@@ -156,19 +168,23 @@ char handleFile(int clientSocket, char *path, struct stat *st) {
     printf("HTTP HEAD REPLY:\n%s\n", header);
 #endif
 
-    if (write(clientSocket, header, strlen(header)) == -1) {
-        perror("Error in writing file header");
-        return 1;
-    }
+    if (write(clientSocket, header, strlen(header)) == -1)
+        goto handleFileAbort;
 
     /* Body */
     if (st->st_size < BUFSIZ) {
-        httpBodyWriteFile(clientSocket, fp);
+        if (httpBodyWriteFile(clientSocket, fp))
+            goto handleFileAbort;
         fclose(fp);
         return 0;
     } else
         FileRoutineArrayAdd(&globalFileRoutineArray, FileRoutineNew(clientSocket, fp, 0, st->st_size));
     return 0;
+
+    handleFileAbort:
+    if (fp)
+        fclose(fp);
+    return 1;
 }
 
 char handlePath(int clientSocket, char *path) {
@@ -218,7 +234,9 @@ char handlePath(int clientSocket, char *path) {
             return 1;
         }
 
-        httpBodyWriteText(clientSocket, body);
+        if (httpBodyWriteText(clientSocket, body))
+            return 1;
+
         return 0;
     }
 }

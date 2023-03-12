@@ -171,12 +171,12 @@ void htmlListStart(char buffer[BUFSIZ]) {
 
 void htmlListEnd(char buffer[BUFSIZ]) {
     const char *listEnd = "\t\t</UL>\n";
-    strncat(buffer, listEnd, BUFSIZ - 1);
+    strcpy(buffer, listEnd);
 }
 
 void htmlFooterWrite(char buffer[BUFSIZ]) {
-    strncat(buffer, "\t</BODY>\n"
-                    "</HTML>\n", BUFSIZ - 1);
+    const char *htmlEnd = "\t</BODY>\n" "</HTML>\n";
+    strcat(buffer, htmlEnd);
 }
 
 void htmlListWritePathLink(char buffer[BUFSIZ], char *webPath) {
@@ -192,16 +192,16 @@ void htmlListWritePathLink(char buffer[BUFSIZ], char *webPath) {
     snprintf(buffer, BUFSIZ, "\t\t\t<LI><A HREF=\"%s\">%s</A></LI>\n", linkPath, filePath + 1);
 }
 
-void httpBodyWriteFile(int clientSocket, FILE *file) {
+size_t httpBodyWriteFile(int clientSocket, FILE *file) {
     size_t bytesRead;
     char buffer[BUFSIZ];
 
     while ((bytesRead = fread(buffer, 1, BUFSIZ, file)) > 0) {
-        if (write(clientSocket, buffer, bytesRead) == -1) {
-            perror("Error writing small file body");
-            break;
-        }
+        if (write(clientSocket, buffer, bytesRead) == -1)
+            return 1;
     }
+
+    return 0;
 }
 
 size_t httpBodyWriteChunk(int clientSocket, char buffer[BUFSIZ]) {
@@ -209,21 +209,30 @@ size_t httpBodyWriteChunk(int clientSocket, char buffer[BUFSIZ]) {
 
     if (strlen(buffer) < BUFSIZ / 2) {
         snprintf(internalBuffer, BUFSIZ, "%zx\r\n%s\r\n", strlen(buffer), buffer);
-        return write(clientSocket, internalBuffer, strlen(internalBuffer));
+        if (write(clientSocket, internalBuffer, strlen(internalBuffer)) == -1)
+            return 1;
     } else {
         char hold = buffer[BUFSIZ / 2];
         snprintf(internalBuffer, BUFSIZ, "%x\r\n%s\r\n", BUFSIZ / 2, buffer);
         if (write(clientSocket, internalBuffer, strlen(internalBuffer)) == -1)
-            return -1;
+            return 1;
 
         buffer[BUFSIZ / 2] = hold;
         snprintf(internalBuffer, BUFSIZ, "%zx\r\n%s\r\n", strlen(&buffer[BUFSIZ / 2]), &buffer[BUFSIZ / 2]);
-        return write(clientSocket, internalBuffer, strlen(internalBuffer));
+        if (write(clientSocket, internalBuffer, strlen(internalBuffer)) == -1)
+            return 1;
     }
+
+    return 0;
+}
+
+size_t httpBodyWriteChunkEnding(int clientSocket) {
+    const char *chunkEnding = "0\r\n\r\n";
+    return write(clientSocket, chunkEnding, strlen(chunkEnding)) == -1;
 }
 
 size_t httpBodyWriteText(int clientSocket, const char *text) {
-    return write(clientSocket, text, strlen(text));
+    return write(clientSocket, text, strlen(text)) == -1;
 }
 
 void httpHeaderWriteFileName(char header[BUFSIZ], char *path) {

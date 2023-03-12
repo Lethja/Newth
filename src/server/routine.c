@@ -44,20 +44,23 @@ void FileRoutineArrayAdd(FileRoutineArray *self, FileRoutine fileRoutine) {
 
 void FileRoutineArrayDel(FileRoutineArray *self, FileRoutine *fileRoutine) {
     size_t i;
-    int r;
 
     for (i = 0; i < self->size; i++) {
-        r = memcmp((void *) &self->array[i], (void *) fileRoutine, sizeof(FileRoutine));
-
-        if (r)
+        if (&self->array[i] != fileRoutine)
             continue;
 
         FileRoutineFree(&self->array[i]);
+
         if (i + 1 < self->size)
             memmove(&self->array[i], &self->array[i + 1], sizeof(FileRoutine) * (self->size - i));
 
         self->size--;
-        self->array = realloc(self->array, sizeof(FileRoutine) * self->size);
+
+        if (self->size)
+            self->array = realloc(self->array, sizeof(FileRoutine) * self->size);
+        else
+            free(self->array);
+
         return;
     }
 }
