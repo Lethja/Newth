@@ -1,3 +1,4 @@
+#include "../platform/platform.h"
 #include "http.h"
 
 #include <ctype.h>
@@ -8,7 +9,7 @@
 #include <time.h>
 #include <linux/limits.h>
 
-inline char HexToAscii(const char *hex) {
+static inline char HexToAscii(const char *hex) {
     char value = 0;
     unsigned char i;
     for (i = 0; i < 2; i++) {
@@ -21,7 +22,7 @@ inline char HexToAscii(const char *hex) {
     return value;
 }
 
-inline void AsciiToHex(char ascii, char out[4]) {
+static inline void AsciiToHex(char ascii, char out[4]) {
     if (isalnum(ascii))
         out[0] = ascii, out[1] = '\0';
     else
@@ -66,7 +67,7 @@ void convertUrlToPath(char *url) {
 }
 
 char *httpClientReadUri(char *request) {
-    char *start, *end;
+    char *start, *end, *path;
     size_t len;
 
     start = strchr(request, ' ');
@@ -76,7 +77,7 @@ char *httpClientReadUri(char *request) {
     end = strchr(start + 1, ' ');
     len = end - start;
 
-    char *path = malloc(len + 1);
+    path = malloc(len + 1);
     memcpy(path, start + 1, len - 1);
     path[len - 1] = '\0';
 
@@ -86,15 +87,15 @@ char *httpClientReadUri(char *request) {
 }
 
 void httpHeaderWriteDate(char header[BUFSIZ]) {
-    const char max = 37;
-    char buffer[max];
+#define WRITE_DATE_MAX 37
+    char buffer[WRITE_DATE_MAX];
     time_t rawTime;
     struct tm *timeInfo;
 
     time(&rawTime);
     timeInfo = gmtime(&rawTime);
 
-    strftime(buffer, max, "Date: %a, %d %b %Y %H:%M:%S GMT\n", timeInfo);
+    strftime(buffer, WRITE_DATE_MAX, "Date: %a, %d %b %Y %H:%M:%S GMT\n", timeInfo);
     strncat(header, buffer, BUFSIZ - 1);
 }
 
@@ -104,9 +105,9 @@ void httpHeaderWriteChunkedEncoding(char header[BUFSIZ]) {
 }
 
 void httpHeaderWriteContentLength(char header[BUFSIZ], size_t length) {
-    const size_t max = 100;
-    char buffer[max];
-    snprintf(buffer, max, "Content-Length: %zu\n", length);
+#define CONTENT_LENGTH_MAX 100
+    char buffer[CONTENT_LENGTH_MAX];
+    snprintf(buffer, CONTENT_LENGTH_MAX, "Content-Length: %lu\n", (unsigned long) length);
     strncat(header, buffer, BUFSIZ - 1);
 }
 
@@ -115,16 +116,16 @@ void httpHeaderWriteContentLengthSt(char header[BUFSIZ], struct stat *st) {
 }
 
 void httpHeaderWriteLastModified(char header[BUFSIZ], struct stat *st) {
-    const size_t max = 46;
-    char buffer[max];
+#define LAST_MODIFIED_MAX 46
+    char buffer[LAST_MODIFIED_MAX];
 
-    strftime(buffer, max, "Last-Modified: %a, %d %b %Y %H:%M:%S GMT\n", gmtime(&st->st_mtim.tv_sec));
+    strftime(buffer, LAST_MODIFIED_MAX, "Last-Modified: %a, %d %b %Y %H:%M:%S GMT\n", gmtime(&st->st_mtim.tv_sec));
     strncat(header, buffer, BUFSIZ - 1);
 }
 
 void httpHeaderWriteResponse(char header[BUFSIZ], short response) {
-    const size_t max = 128;
-    char buffer[max], *r;
+#define RESPONSE_MAX 128
+    char buffer[RESPONSE_MAX], *r;
 
     switch (response) {
         case 200:
@@ -145,7 +146,7 @@ void httpHeaderWriteResponse(char header[BUFSIZ], short response) {
             break;
     }
 
-    snprintf(buffer, max, "HTTP/1.1 %s\n", r);
+    snprintf(buffer, RESPONSE_MAX, "HTTP/1.1 %s\n", r);
     strncat(header, buffer, BUFSIZ - 1);
 }
 
@@ -205,10 +206,10 @@ size_t httpBodyWriteFile(int clientSocket, FILE *file) {
 }
 
 size_t httpBodyWriteChunk(int clientSocket, char buffer[BUFSIZ]) {
-    const char hexMax = 32;
+#define HEX_MAX 32
     size_t bufLen = strlen(buffer), hexLen;
-    char hex[hexMax];
-    snprintf(hex, hexMax, "%zx\r\n", bufLen);
+    char hex[HEX_MAX];
+    snprintf(hex, HEX_MAX, "%lx\r\n", (unsigned long) bufLen);
     hexLen = strlen(hex);
 
     /* Reduce system calls if possible */
@@ -216,7 +217,7 @@ size_t httpBodyWriteChunk(int clientSocket, char buffer[BUFSIZ]) {
         memmove(buffer + hexLen, buffer, bufLen);
         memcpy(buffer + hexLen + bufLen, "\r\n", 3);
         memcpy(buffer, hex, hexLen);
-        if(write(clientSocket, buffer, hexLen + bufLen + 2) == -1)
+        if (write(clientSocket, buffer, hexLen + bufLen + 2) == -1)
             return 1;
     } else if (write(clientSocket, hex, hexLen) == -1 || write(clientSocket, buffer, bufLen) == -1)
         return 1;
@@ -234,12 +235,14 @@ size_t httpBodyWriteText(int clientSocket, const char *text) {
 }
 
 void httpHeaderWriteFileName(char header[BUFSIZ], char *path) {
-    const size_t max = FILENAME_MAX;
-    char buffer[max];
+    char buffer[FILENAME_MAX];
     char *name = strrchr(path, '/');
+
     if (!name)
         name = path;
+    else
+        name++;
 
-    snprintf(buffer, max, "Content-Disposition: filename=\"%s\"\n", name);
+    snprintf(buffer, FILENAME_MAX, "Content-Disposition: filename=\"%s\"\n", name);
     strncat(header, buffer, BUFSIZ - 1);
 }

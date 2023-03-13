@@ -1,3 +1,4 @@
+#include "platform/platform.h"
 #include "platform/unix.h"
 #include "server/http.h"
 #include "server/routine.h"
@@ -7,31 +8,38 @@
 
 int globalServerSocket;
 char *globalRootPath = NULL;
-FileRoutineArray globalFileRoutineArray;
+RoutineArray globalFileRoutineArray;
+RoutineArray globalDirRoutineArray;
 fd_set currentSockets;
 struct timeval globalSelectSleep;
 
-void noAction() {}
-
-void closeBindSocket() {
+void closeBindSocket(void) {
     int i;
     for (i = 0; i < FD_SETSIZE; i++) {
-        if (FD_ISSET(i, &currentSockets)) {
+        if (FD_ISSET(i, &currentSockets))
             shutdown(i, SHUT_RDWR);
-        }
     }
 }
 
-void shutdownCrash() {
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnusedParameter"
+
+void noAction(int signal) {}
+
+
+void shutdownCrash(int signal) {
     closeBindSocket();
-    puts("Segfault");
+    printf("Emergency shutdown: %d", signal);
     exit(1);
 }
 
-void shutdownProgram() {
+void shutdownProgram(int signal) {
     closeBindSocket();
+    printf("Graceful shutdown: %d", signal);
     exit(0);
 }
+
+#pragma clang diagnostic pop
 
 int serverStartup(short port) {
     int newSocket;
@@ -50,8 +58,8 @@ int serverStartup(short port) {
     if ((listen(newSocket, 10)) < 0)
         goto ServerStartupError;
 
-    globalFileRoutineArray.size = 0;
-    globalFileRoutineArray.array = NULL;
+    globalFileRoutineArray.size = globalDirRoutineArray.size = 0;
+    globalFileRoutineArray.array = globalDirRoutineArray.array = NULL;
 
     return newSocket;
 
@@ -81,8 +89,6 @@ int acceptConnection(int fromSocket) {
 char handleDir(int clientSocket, char *realPath, struct stat *st) {
     char *webPath = realPath + strlen(globalRootPath);
     char buf[BUFSIZ] = "";
-    char pathBuf[BUFSIZ] = "";
-    struct dirent *entry;
     DIR *dir = opendir(realPath);
 
     if (dir == NULL) {
@@ -106,37 +112,13 @@ char handleDir(int clientSocket, char *realPath, struct stat *st) {
 
     memset(buf, 0, sizeof(buf));
 
-    htmlHeaderWrite(buf, realPath);
+    htmlHeaderWrite(buf, webPath[0] == '\0' ? "/" : webPath);
     htmlListStart(buf);
 
     if (httpBodyWriteChunk(clientSocket, buf))
         goto handleDirAbort;
 
-    while ((entry = readdir(dir))) {
-        size_t pathLen, entryLen;
-        if (entry->d_name[0] == '.')
-            continue;
-
-        pathLen = strlen(webPath), entryLen = strlen(entry->d_name);
-
-        if (pathLen + entryLen + 2 < BUFSIZ) {
-            memcpy(pathBuf, webPath, pathLen);
-            pathBuf[pathLen ? pathLen : 0] = '/';
-            memcpy(pathLen ? pathBuf + pathLen + 1 : pathBuf + 1, entry->d_name, entryLen + 1);
-
-            htmlListWritePathLink(buf, pathBuf);
-            if (httpBodyWriteChunk(clientSocket, buf))
-                goto handleDirAbort;
-        }
-    }
-
-    closedir(dir);
-    dir = NULL;
-
-    htmlListEnd(buf);
-    htmlFooterWrite(buf);
-    if (httpBodyWriteChunk(clientSocket, buf) || httpBodyWriteChunkEnding(clientSocket))
-        goto handleDirAbort;
+    DirectoryRoutineArrayAdd(&globalDirRoutineArray, DirectoryRoutineNew(clientSocket, dir, webPath));
 
     return 0;
 
@@ -313,6 +295,7 @@ static inline void setRootPath(char *path) {
 }
 
 int main(int argc, char **argv) {
+    fd_set readySockets;
     connectProgramSignals();
 
     if (argc > 1) {
@@ -329,21 +312,28 @@ int main(int argc, char **argv) {
 
     globalServerSocket = serverStartup(SERVER_PORT);
 
-    fd_set readySockets;
     FD_ZERO(&currentSockets);
     FD_SET(globalServerSocket, &currentSockets);
 
     while (1) {
         int i;
 
+        for (i = 0; i < globalDirRoutineArray.size; i++) {
+            DirectoryRoutine *directoryRoutine = (DirectoryRoutine *) globalDirRoutineArray.array;
+            if (!DirectoryRoutineContinue(&directoryRoutine[i])) {
+                DirectoryRoutineArrayDel(&globalDirRoutineArray, &directoryRoutine[i]);
+            }
+        }
+
         for (i = 0; i < globalFileRoutineArray.size; i++) {
-            if (!FileRoutineContinue(&globalFileRoutineArray.array[i])) {
-                FileRoutineArrayDel(&globalFileRoutineArray, &globalFileRoutineArray.array[i]);
+            FileRoutine *fileRoutine = (FileRoutine *) globalFileRoutineArray.array;
+            if (!FileRoutineContinue(&fileRoutine[i])) {
+                FileRoutineArrayDel(&globalFileRoutineArray, &fileRoutine[i]);
             }
         }
 
         globalSelectSleep.tv_usec = 0;
-        globalSelectSleep.tv_sec = globalFileRoutineArray.size ? 0 : 60;
+        globalSelectSleep.tv_sec = globalFileRoutineArray.size || globalDirRoutineArray.size ? 0 : 60;
 
         readySockets = currentSockets;
 
