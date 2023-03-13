@@ -205,23 +205,21 @@ size_t httpBodyWriteFile(int clientSocket, FILE *file) {
 }
 
 size_t httpBodyWriteChunk(int clientSocket, char buffer[BUFSIZ]) {
-    char internalBuffer[BUFSIZ];
+    const char hexMax = 32;
+    size_t bufLen = strlen(buffer), hexLen;
+    char hex[hexMax];
+    snprintf(hex, hexMax, "%zx\r\n", bufLen);
+    hexLen = strlen(hex);
 
-    if (strlen(buffer) < BUFSIZ / 2) {
-        snprintf(internalBuffer, BUFSIZ, "%zx\r\n%s\r\n", strlen(buffer), buffer);
-        if (write(clientSocket, internalBuffer, strlen(internalBuffer)) == -1)
+    /* Reduce system calls if possible */
+    if (bufLen + hexLen + 3 < BUFSIZ) {
+        memmove(buffer + hexLen, buffer, bufLen);
+        memcpy(buffer + hexLen + bufLen, "\r\n", 3);
+        memcpy(buffer, hex, hexLen);
+        if(write(clientSocket, buffer, hexLen + bufLen + 2) == -1)
             return 1;
-    } else {
-        char hold = buffer[BUFSIZ / 2];
-        snprintf(internalBuffer, BUFSIZ, "%x\r\n%s\r\n", BUFSIZ / 2, buffer);
-        if (write(clientSocket, internalBuffer, strlen(internalBuffer)) == -1)
-            return 1;
-
-        buffer[BUFSIZ / 2] = hold;
-        snprintf(internalBuffer, BUFSIZ, "%zx\r\n%s\r\n", strlen(&buffer[BUFSIZ / 2]), &buffer[BUFSIZ / 2]);
-        if (write(clientSocket, internalBuffer, strlen(internalBuffer)) == -1)
-            return 1;
-    }
+    } else if (write(clientSocket, hex, hexLen) == -1 || write(clientSocket, buffer, bufLen) == -1)
+        return 1;
 
     return 0;
 }
