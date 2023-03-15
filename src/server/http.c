@@ -161,6 +161,15 @@ void htmlHeaderWrite(char buffer[BUFSIZ], char *title) {
                              "<HTML>\n"
                              "\t<HEAD>\n"
                              "\t\t<TITLE>%s</TITLE>\n"
+                             "\t\t<STYLE TYPE=\"text/css\">\n"
+                             "\t\t*{\n"
+                             "\t\t\tfont-family: monospace;\n"
+                             "\t\t}\n"
+                             "\t\t\n"
+                             "\t\ta:hover,tr:hover{\n"
+                             "\t\t\tfont-weight: bold;\n"
+                             "\t\t}\n"
+                             "\t\t</STYLE>\n"
                              "\t</HEAD>\n\n"
                              "\t<BODY>\n", title);
 }
@@ -237,15 +246,17 @@ static inline size_t getPathCount(const char *path) {
 void htmlBreadCrumbWrite(char buffer[BUFSIZ], const char *webPath) {
     size_t i, max = getPathCount(webPath) + 1;
 
+    strncat(buffer, "\t\t<DIV>\n", 9);
+
     for (i = 0; i < max; ++i) {
         char internalBuffer[BUFSIZ], linkPath[PATH_MAX], displayPath[PATH_MAX];
         getPathName(webPath, i, linkPath, displayPath);
         convertPathToUrl(linkPath, PATH_MAX);
-        snprintf(internalBuffer, BUFSIZ, "\t\t<A HREF=\"%s\">%s</A>\n", linkPath, displayPath);
+        snprintf(internalBuffer, BUFSIZ, "\t\t\t<A HREF=\"%s\">%s</A>\n", linkPath, displayPath);
         strncat(buffer, internalBuffer, strlen(internalBuffer) + 1);
     }
 
-    strncat(buffer, "\t\t<HR>\n", 8);
+    strncat(buffer, "\t\t</DIV>\n\t\t<HR>\n", 16);
 }
 
 size_t httpBodyWriteFile(int clientSocket, FILE *file) {
