@@ -193,6 +193,61 @@ void htmlListWritePathLink(char buffer[BUFSIZ], char *webPath) {
     snprintf(buffer, BUFSIZ, "\t\t\t<LI><A HREF=\"%s\">%s</A></LI>\n", linkPath, filePath + 1);
 }
 
+static inline void getPathName(const char *path, size_t maxPaths, char linkPath[PATH_MAX], char displayPath[PATH_MAX]) {
+    size_t i, max = strlen(path) + 1, currentPath = 0;
+    memcpy(linkPath, path, max);
+
+    for (i = 0; i < max; ++i) {
+        if (linkPath[i] == '/') {
+            if (currentPath == maxPaths) {
+                if (i == 0) {
+                    linkPath[1] = '\0';
+                    memcpy(displayPath, linkPath, 2);
+                    return;
+                } else
+                    linkPath[i + 1] = '\0';
+
+                getPathNameRewind:
+                if(linkPath[i] == '/')
+                    linkPath--;
+
+                for (;; --i) {
+                    if (linkPath[i] == '/') {
+                        memcpy(displayPath, &linkPath[i + 1], strlen(&linkPath[i + 1]) + 1);
+                        return;
+                    }
+                }
+            } else
+                ++currentPath;
+        }
+    }
+    goto getPathNameRewind;
+}
+
+static inline size_t getPathCount(const char *path) {
+    size_t r = 0;
+    while (*path != '\0') {
+        if (*path == '/')
+            ++r;
+        ++path;
+    }
+    return r;
+}
+
+void htmlBreadCrumbWrite(char buffer[BUFSIZ], const char *webPath) {
+    size_t i, max = getPathCount(webPath) + 1;
+
+    for (i = 0; i < max; ++i) {
+        char internalBuffer[BUFSIZ], linkPath[PATH_MAX], displayPath[PATH_MAX];
+        getPathName(webPath, i, linkPath, displayPath);
+        convertPathToUrl(linkPath, PATH_MAX);
+        snprintf(internalBuffer, BUFSIZ, "\t\t<A HREF=\"%s\">%s</A>\n", linkPath, displayPath);
+        strncat(buffer, internalBuffer, strlen(internalBuffer) + 1);
+    }
+
+    strncat(buffer, "\t\t<HR>\n", 8);
+}
+
 size_t httpBodyWriteFile(int clientSocket, FILE *file) {
     size_t bytesRead;
     char buffer[BUFSIZ];

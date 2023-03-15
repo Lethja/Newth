@@ -113,6 +113,7 @@ char handleDir(int clientSocket, char *realPath, struct stat *st) {
     memset(buf, 0, sizeof(buf));
 
     htmlHeaderWrite(buf, webPath[0] == '\0' ? "/" : webPath);
+    htmlBreadCrumbWrite(buf, webPath[0] == '\0' ? "/" : webPath);
     htmlListStart(buf);
 
     if (httpBodyWriteChunk(clientSocket, buf))

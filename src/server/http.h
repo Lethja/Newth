@@ -10,6 +10,13 @@
 #pragma region HTML
 
 /**
+ * Write a breadcrumb of the webpath
+ * @param buffer Concat: The buffer to write the bread crumb to
+ * @param webPath In: The path to convert into a bread crumb
+ */
+void htmlBreadCrumbWrite(char buffer[BUFSIZ], const char *webPath);
+
+/**
  * Write a basic HTML4 header with a title
  * @param buffer Out: The array to write into
  * @param title In: The title to set in the HTML4 <TITLE> tag
