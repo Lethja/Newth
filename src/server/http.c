@@ -7,7 +7,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
-#include <linux/limits.h>
 
 static inline char HexToAscii(const char *hex) {
     char value = 0;
@@ -190,7 +189,7 @@ void htmlFooterWrite(char buffer[BUFSIZ]) {
 }
 
 void htmlListWritePathLink(char buffer[BUFSIZ], char *webPath) {
-    char linkPath[PATH_MAX], *filePath = strrchr(webPath, '/');
+    char linkPath[FILENAME_MAX], *filePath = strrchr(webPath, '/');
     size_t pathLen = strlen(webPath) + 1;
 
     if (filePath[0] == '\0')
@@ -198,11 +197,11 @@ void htmlListWritePathLink(char buffer[BUFSIZ], char *webPath) {
 
     memcpy(linkPath, webPath, pathLen);
 
-    convertPathToUrl(linkPath, PATH_MAX);
+    convertPathToUrl(linkPath, FILENAME_MAX);
     snprintf(buffer, BUFSIZ, "\t\t\t<LI><A HREF=\"%s\">%s</A></LI>\n", linkPath, filePath + 1);
 }
 
-static inline void getPathName(const char *path, size_t maxPaths, char linkPath[PATH_MAX], char displayPath[PATH_MAX]) {
+static inline void getPathName(const char *path, size_t maxPaths, char linkPath[FILENAME_MAX], char displayPath[FILENAME_MAX]) {
     size_t i, max = strlen(path) + 1, currentPath = 0;
     memcpy(linkPath, path, max);
 
@@ -217,7 +216,7 @@ static inline void getPathName(const char *path, size_t maxPaths, char linkPath[
                     linkPath[i + 1] = '\0';
 
                 getPathNameRewind:
-                if(linkPath[i] == '/')
+                if (linkPath[i] == '/')
                     linkPath--;
 
                 for (;; --i) {
@@ -230,7 +229,11 @@ static inline void getPathName(const char *path, size_t maxPaths, char linkPath[
                 ++currentPath;
         }
     }
-    goto getPathNameRewind;
+
+    if (currentPath)
+        goto getPathNameRewind;
+    else
+        memcpy(displayPath, linkPath, max);
 }
 
 static inline size_t getPathCount(const char *path) {
@@ -249,9 +252,9 @@ void htmlBreadCrumbWrite(char buffer[BUFSIZ], const char *webPath) {
     strncat(buffer, "\t\t<DIV>\n", 9);
 
     for (i = 0; i < max; ++i) {
-        char internalBuffer[BUFSIZ], linkPath[PATH_MAX], displayPath[PATH_MAX];
+        char internalBuffer[BUFSIZ], linkPath[FILENAME_MAX], displayPath[FILENAME_MAX];
         getPathName(webPath, i, linkPath, displayPath);
-        convertPathToUrl(linkPath, PATH_MAX);
+        convertPathToUrl(linkPath, FILENAME_MAX);
         snprintf(internalBuffer, BUFSIZ, "\t\t\t<A HREF=\"%s\">%s</A>\n", linkPath, displayPath);
         strncat(buffer, internalBuffer, strlen(internalBuffer) + 1);
     }
