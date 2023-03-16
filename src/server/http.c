@@ -201,38 +201,38 @@ void htmlListWritePathLink(char buffer[BUFSIZ], char *webPath) {
     snprintf(buffer, BUFSIZ, "\t\t\t<LI><A HREF=\"%s\">%s</A></LI>\n", linkPath, filePath + 1);
 }
 
-static inline void getPathName(const char *path, size_t maxPaths, char linkPath[FILENAME_MAX], char displayPath[FILENAME_MAX]) {
+static inline void
+getPathName(const char *path, size_t maxPaths, char linkPath[FILENAME_MAX], char displayPath[FILENAME_MAX]) {
     size_t i, max = strlen(path) + 1, currentPath = 0;
     memcpy(linkPath, path, max);
 
     for (i = 0; i < max; ++i) {
-        if (linkPath[i] == '/') {
-            if (currentPath == maxPaths) {
-                if (i == 0) {
+        if (linkPath[i] != '/')
+            continue;
+        else {
+            if (currentPath != maxPaths)
+                currentPath++;
+            else {
+                if (i)
+                    linkPath[i + 1] = '\0';
+                else {
                     linkPath[1] = '\0';
                     memcpy(displayPath, linkPath, 2);
                     return;
-                } else
-                    linkPath[i + 1] = '\0';
-
-                getPathNameRewind:
-                if (linkPath[i] == '/')
-                    linkPath--;
-
-                for (;; --i) {
-                    if (linkPath[i] == '/') {
-                        memcpy(displayPath, &linkPath[i + 1], strlen(&linkPath[i + 1]) + 1);
-                        return;
-                    }
                 }
-            } else
-                ++currentPath;
+
+                break;
+            }
         }
     }
 
-    if (currentPath)
-        goto getPathNameRewind;
-    else
+    if (currentPath) {
+        do
+            --i;
+        while (linkPath[i] != '/');
+
+        memcpy(displayPath, &linkPath[i + 1], max - i + 1);
+    } else
         memcpy(displayPath, linkPath, max);
 }
 
