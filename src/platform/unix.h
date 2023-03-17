@@ -17,18 +17,20 @@
 #define SA struct sockaddr
 #define SERVER_PORT 8080
 
-__attribute__((unused)) static inline char *pathCombine(char *path1, char *path2) {
+static inline char *pathCombine(char *path1, char *path2) {
     const char pathDivider = '/';
     size_t a = strlen(path1), b = strlen(path2), path2Jump = 1;
-    char *path1End = strrchr(path1, pathDivider), *returnPath;
+    char *returnPath;
 
-    if (path1End != path1 + a)
+    if (path1[a - 1] != pathDivider && path2[0] != pathDivider)
         path2Jump++;
 
     returnPath = malloc(a + b + path2Jump);
     memcpy(returnPath, path1, a);
-    returnPath[a + 1] = pathDivider;
-    memcpy(returnPath + a + path2Jump, path2, b + 1);
+    if (path2Jump > 1)
+        returnPath[a] = pathDivider;
+
+    memcpy(returnPath + a + path2Jump - 1, path2, b + 1);
 
     return returnPath;
 }

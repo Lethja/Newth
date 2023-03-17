@@ -61,6 +61,8 @@ int serverStartup(short port) {
     globalFileRoutineArray.size = globalDirRoutineArray.size = 0;
     globalFileRoutineArray.array = globalDirRoutineArray.array = NULL;
 
+    printf("Server started on path '%s'\n", globalRootPath);
+
     return newSocket;
 
     ServerStartupError:
@@ -178,8 +180,14 @@ char handlePath(int clientSocket, char *path) {
 
     if (path[0] == '\0')
         absolutePath = globalRootPath;
-    else if (!(absolutePath = realpath(path, NULL)))
-        goto handlePathNotFound;
+    else {
+        char *combinePath = pathCombine(globalRootPath, path);
+        if (!(absolutePath = realpath(combinePath, NULL))) {
+            free(combinePath);
+            goto handlePathNotFound;
+        }
+        free(combinePath);
+    }
 
     lenA = strlen(globalRootPath), lenB = strlen(absolutePath);
 
@@ -213,7 +221,7 @@ char handlePath(int clientSocket, char *path) {
         httpHeaderWriteContentLength(&socketBuffer, strlen(body));
         httpHeaderWriteEnd(&socketBuffer);
 
-        if (httpBodyWriteText(&socketBuffer, body))
+        if (httpBodyWriteText(&socketBuffer, body) || socketBufferFlush(&socketBuffer))
             return 1;
 
         return 0;
