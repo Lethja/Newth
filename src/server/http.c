@@ -225,6 +225,11 @@ getPathName(const char *path, size_t maxPaths, char linkPath[FILENAME_MAX], char
         }
     }
 
+    if(linkPath[i - 1] == '\0') {
+        --i;
+        linkPath[i] = '/';
+    }
+
     if (currentPath) {
         do
             --i;
