@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <dirent.h>
+#include "sockbufr.h"
 
 typedef struct FileRoutine {
     FILE *file;
@@ -12,7 +13,7 @@ typedef struct FileRoutine {
 
 typedef struct DirectoryRoutine {
     DIR *directory;
-    int socket;
+    SocketBuffer socketBuffer;
     char webPath[PATH_MAX];
 } DirectoryRoutine;
 

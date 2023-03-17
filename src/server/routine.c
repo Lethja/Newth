@@ -27,21 +27,27 @@ size_t DirectoryRoutineContinue(DirectoryRoutine *self) {
                 memcpy(pathLen ? pathBuf + pathLen + 1 : pathBuf + 1, entry->d_name, entryLen + 1);
 
                 htmlListWritePathLink(buffer, pathBuf);
-                if (httpBodyWriteChunk(self->socket, buffer))
+                if (httpBodyWriteChunk(&self->socketBuffer, buffer))
                     return 0;
 
                 bytesWrite += strlen(buffer);
             }
         } else {
             char buffer[BUFSIZ];
+            buffer[0] = '\0';
+
             htmlListEnd(buffer);
             htmlFooterWrite(buffer);
-            if (!httpBodyWriteChunk(self->socket, buffer))
-                httpBodyWriteChunkEnding(self->socket);
+            if (!httpBodyWriteChunk(&self->socketBuffer, buffer))
+                httpBodyWriteChunkEnding(&self->socketBuffer);
+
+            socketBufferFlush(&self->socketBuffer);
 
             return 0;
         }
     }
+
+    socketBufferFlush(&self->socketBuffer);
 
     return bytesWrite;
 }
@@ -49,7 +55,7 @@ size_t DirectoryRoutineContinue(DirectoryRoutine *self) {
 DirectoryRoutine DirectoryRoutineNew(int socket, DIR *dir, const char *webPath) {
     size_t i;
     DirectoryRoutine self;
-    self.directory = dir, self.socket = socket;
+    self.directory = dir, self.socketBuffer = socketBufferNew(socket);
 
     for (i = 0; i < PATH_MAX; ++i) {
         self.webPath[i] = webPath[i];

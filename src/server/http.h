@@ -2,6 +2,7 @@
 #define OPEN_WEB_HTTP_H
 
 #include "../common/http.h"
+#include "sockbufr.h"
 
 #include <stdio.h>
 #include <stddef.h>
@@ -69,14 +70,14 @@ char *httpClientReadUri(char *request);
  * @param buffer In: The contents chunk body
  * @return 0 on success, other on error
  */
-size_t httpBodyWriteChunk(int clientSocket, char buffer[BUFSIZ]);
+size_t httpBodyWriteChunk(SocketBuffer *socketBuffer, char buffer[BUFSIZ]);
 
 /**
  * Write the end of a HTTP chunk request
  * @param clientSocket In: the TCP socket to send the last chunk on
  * @return 0 on success, other on error
  */
-size_t httpBodyWriteChunkEnding(int clientSocket);
+size_t httpBodyWriteChunkEnding(SocketBuffer *socketBuffer);
 
 /**
  * Send the entirety of a file over TCP
@@ -84,7 +85,7 @@ size_t httpBodyWriteChunkEnding(int clientSocket);
  * @param file In: The file to be sent over TCP
  * @return 0 on success, other on error
  */
-size_t httpBodyWriteFile(int clientSocket, FILE *file);
+size_t httpBodyWriteFile(SocketBuffer *socketBuffer, FILE *file);
 
 /**
  * Send the entirety of a string over TCP
@@ -92,7 +93,7 @@ size_t httpBodyWriteFile(int clientSocket, FILE *file);
  * @param text In: The string to sent over TCP
  * @return 0 on success, other on error
  */
-size_t httpBodyWriteText(int clientSocket, const char *text);
+size_t httpBodyWriteText(SocketBuffer *socketBuffer, const char *text);
 
 #pragma endregion
 
@@ -102,55 +103,53 @@ size_t httpBodyWriteText(int clientSocket, const char *text);
  * Write the HTTP 1.1 header Transfer-Encoding: chunked
  * @param header Concat: The buffer to write the HTTP header to
  */
-void httpHeaderWriteChunkedEncoding(char header[BUFSIZ]);
+void httpHeaderWriteChunkedEncoding(SocketBuffer *socketBuffer);
 
 /**
  * Write the HTTP header Content-Length
  * @param header Concat: The buffer to write the HTTP header to
  * @param length In: Content length in bytes
  */
-void httpHeaderWriteContentLength(char header[BUFSIZ], size_t length);
+void httpHeaderWriteContentLength(SocketBuffer *socketBuffer, size_t length);
 
 /**
  * Write the HTTP header Content-Length using the files size
  * @param header Concat: The buffer to write the HTTP header to
  * @param st In: The status structure of a file you intend to send
  */
-void httpHeaderWriteContentLengthSt(char header[BUFSIZ], struct stat *st);
+void httpHeaderWriteContentLengthSt(SocketBuffer *socketBuffer, struct stat *st);
 
 /**
  * Write HTTP date header
  * @param header Concat: The buffer to write the HTTP header to
  */
-void httpHeaderWriteDate(char header[BUFSIZ]);
+void httpHeaderWriteDate(SocketBuffer *socketBuffer);
 
 /**
  * Write HTTP header end
  * @param header Concat: The buffer to write the HTTP header to
  */
-void httpHeaderWriteEnd(char header[BUFSIZ]);
+void httpHeaderWriteEnd(SocketBuffer *socketBuffer);
 
 /**
  * Write HTTP Content-Disposition header with contents filename
  * @param header Concat: The buffer to write the HTTP header to
  * @param path In: The filename to write
  */
-void httpHeaderWriteFileName(char header[BUFSIZ], char *path);
+void httpHeaderWriteFileName(SocketBuffer *socketBuffer, char *path);
 
 /**
  * Write HTTP Last-Modified header using the files modification date
  * @param header Concat: The buffer to write the HTTP header to
  * @param st In: The status structure of a file you intend to send
  */
-void httpHeaderWriteLastModified(char header[BUFSIZ], struct stat *st);
+void httpHeaderWriteLastModified(SocketBuffer *socketBuffer, struct stat *st);
 
 /**
  * Write HTTP header response code
  * @param header Concat: The buffer to write the HTTP header to
  * @param response The HTTP response code to write such as 200 or 404
  */
-void httpHeaderWriteResponse(char header[BUFSIZ], short response);
-
-#pragma endregion
+void httpHeaderWriteResponse(SocketBuffer *socketBuffer, short response);
 
 #endif /*OPEN_WEB_HTTP_H */

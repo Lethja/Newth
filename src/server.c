@@ -88,36 +88,32 @@ int acceptConnection(int fromSocket) {
 
 char handleDir(int clientSocket, char *realPath, struct stat *st) {
     char *webPath = realPath + strlen(globalRootPath);
-    char buf[BUFSIZ] = "";
+    char buf[BUFSIZ];
+    SocketBuffer socketBuffer = socketBufferNew(clientSocket);
     DIR *dir = opendir(realPath);
 
     if (dir == NULL) {
-        httpHeaderWriteResponse(buf, 404);
-        httpHeaderWriteEnd(buf);
-        if (write(clientSocket, buf, strlen(buf)) == -1)
-            goto handleDirAbort;
+        httpHeaderWriteResponse(&socketBuffer, 404);
+        httpHeaderWriteEnd(&socketBuffer);
 
         return 0;
     }
 
     /* Headers */
-    httpHeaderWriteResponse(buf, 200);
-    httpHeaderWriteDate(buf);
-    httpHeaderWriteLastModified(buf, st);
-    httpHeaderWriteChunkedEncoding(buf);
-    httpHeaderWriteEnd(buf);
-
-    if (write(clientSocket, buf, strlen(buf)) == -1)
+    httpHeaderWriteResponse(&socketBuffer, 200);
+    httpHeaderWriteDate(&socketBuffer);
+    httpHeaderWriteLastModified(&socketBuffer, st);
+    httpHeaderWriteChunkedEncoding(&socketBuffer);
+    httpHeaderWriteEnd(&socketBuffer);
+    if (socketBufferFlush(&socketBuffer))
         goto handleDirAbort;
-
-    memset(buf, 0, sizeof(buf));
 
     htmlHeaderWrite(buf, webPath[0] == '\0' ? "/" : webPath);
     htmlBreadCrumbWrite(buf, webPath[0] == '\0' ? "/" : webPath);
     htmlListStart(buf);
 
-    if (httpBodyWriteChunk(clientSocket, buf))
-        goto handleDirAbort;
+    if (httpBodyWriteChunk(&socketBuffer, buf) || socketBufferFlush(&socketBuffer))
+        return 1;
 
     DirectoryRoutineArrayAdd(&globalDirRoutineArray, DirectoryRoutineNew(clientSocket, dir, webPath));
 
@@ -131,7 +127,7 @@ char handleDir(int clientSocket, char *realPath, struct stat *st) {
 }
 
 char handleFile(int clientSocket, char *path, struct stat *st) {
-    char header[BUFSIZ] = "";
+    SocketBuffer socketBuffer = socketBufferNew(clientSocket);
     FILE *fp = fopen(path, "rb");
 
     if (fp == NULL) {
@@ -140,23 +136,18 @@ char handleFile(int clientSocket, char *path, struct stat *st) {
     }
 
     /* Headers */
-    httpHeaderWriteResponse(header, 200);
-    httpHeaderWriteDate(header);
-    httpHeaderWriteFileName(header, path);
-    httpHeaderWriteLastModified(header, st);
-    httpHeaderWriteContentLengthSt(header, st);
-    httpHeaderWriteEnd(header);
+    httpHeaderWriteResponse(&socketBuffer, 200);
+    httpHeaderWriteDate(&socketBuffer);
+    httpHeaderWriteFileName(&socketBuffer, path);
+    httpHeaderWriteLastModified(&socketBuffer, st);
+    httpHeaderWriteContentLengthSt(&socketBuffer, st);
+    httpHeaderWriteEnd(&socketBuffer);
 
-#ifndef NDEBUG
-    printf("HTTP HEAD REPLY:\n%s\n", header);
-#endif
-
-    if (write(clientSocket, header, strlen(header)) == -1)
-        goto handleFileAbort;
+    socketBufferFlush(&socketBuffer);
 
     /* Body */
     if (st->st_size < BUFSIZ) {
-        if (httpBodyWriteFile(clientSocket, fp))
+        if (httpBodyWriteFile(&socketBuffer, fp))
             goto handleFileAbort;
         fclose(fp);
         return 0;
@@ -207,17 +198,14 @@ char handlePath(int clientSocket, char *path) {
         free(absolutePath);
 
     {
-        char bufferOut[BUFSIZ] = "";
-        httpHeaderWriteResponse(bufferOut, 404);
-        httpHeaderWriteDate(bufferOut);
-        httpHeaderWriteContentLength(bufferOut, strlen(body));
-        httpHeaderWriteEnd(bufferOut);
-        if (write(clientSocket, bufferOut, strlen(bufferOut)) == -1) {
-            perror("Error handling 404");
-            return 1;
-        }
+        SocketBuffer socketBuffer = socketBufferNew(clientSocket);
 
-        if (httpBodyWriteText(clientSocket, body))
+        httpHeaderWriteResponse(&socketBuffer, 404);
+        httpHeaderWriteDate(&socketBuffer);
+        httpHeaderWriteContentLength(&socketBuffer, strlen(body));
+        httpHeaderWriteEnd(&socketBuffer);
+
+        if (httpBodyWriteText(&socketBuffer, body))
             return 1;
 
         return 0;
@@ -225,9 +213,8 @@ char handlePath(int clientSocket, char *path) {
 }
 
 char handleConnection(int clientSocket) {
-#define BUFFER_SIZE 4096
     char r = 0;
-    char buffer[BUFFER_SIZE];
+    char buffer[BUFSIZ];
     size_t bytesRead, messageSize = 0;
     char *uriPath;
 
@@ -236,17 +223,14 @@ char handleConnection(int clientSocket) {
             return 1;
 
         messageSize += bytesRead;
-        if (messageSize > BUFFER_SIZE - 1) {
-            char bufferOut[BUFSIZ] = "";
-            httpHeaderWriteResponse(bufferOut, 431);
-            httpHeaderWriteDate(bufferOut);
-            httpHeaderWriteContentLength(bufferOut, 0);
-            httpHeaderWriteEnd(bufferOut);
+        if (messageSize > BUFSIZ - 1) {
+            SocketBuffer socketBuffer;
 
-
-            if (write(clientSocket, bufferOut, strlen(bufferOut)) == -1) {
-                return 1;
-            }
+            httpHeaderWriteResponse(&socketBuffer, 431);
+            httpHeaderWriteDate(&socketBuffer);
+            httpHeaderWriteContentLength(&socketBuffer, 0);
+            httpHeaderWriteEnd(&socketBuffer);
+            socketBufferFlush(&socketBuffer);
 
             return 0;
         }

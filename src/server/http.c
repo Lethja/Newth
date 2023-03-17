@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <time.h>
 
 static inline char HexToAscii(const char *hex) {
@@ -85,8 +84,8 @@ char *httpClientReadUri(char *request) {
     return path;
 }
 
-void httpHeaderWriteDate(char header[BUFSIZ]) {
-#define WRITE_DATE_MAX 37
+void httpHeaderWriteDate(SocketBuffer *socketBuffer) {
+#define WRITE_DATE_MAX 39
     char buffer[WRITE_DATE_MAX];
     time_t rawTime;
     struct tm *timeInfo;
@@ -94,35 +93,36 @@ void httpHeaderWriteDate(char header[BUFSIZ]) {
     time(&rawTime);
     timeInfo = gmtime(&rawTime);
 
-    strftime(buffer, WRITE_DATE_MAX, "Date: %a, %d %b %Y %H:%M:%S GMT\n", timeInfo);
-    strncat(header, buffer, BUFSIZ - 1);
+    strftime(buffer, WRITE_DATE_MAX, "Date: %a, %d %b %Y %H:%M:%S GMT" HTTP_EOL, timeInfo);
+    socketBufferWrite(socketBuffer, buffer);
 }
 
-void httpHeaderWriteChunkedEncoding(char header[BUFSIZ]) {
-    const char *chunked = "Transfer-Encoding: chunked\n";
-    strncat(header, chunked, strlen(chunked));
+void httpHeaderWriteChunkedEncoding(SocketBuffer *socketBuffer) {
+    const char *chunked = "Transfer-Encoding: chunked" HTTP_EOL;
+    socketBufferWrite(socketBuffer, chunked);
 }
 
-void httpHeaderWriteContentLength(char header[BUFSIZ], size_t length) {
+void httpHeaderWriteContentLength(SocketBuffer *socketBuffer, size_t length) {
 #define CONTENT_LENGTH_MAX 100
     char buffer[CONTENT_LENGTH_MAX];
-    snprintf(buffer, CONTENT_LENGTH_MAX, "Content-Length: %lu\n", (unsigned long) length);
-    strncat(header, buffer, BUFSIZ - 1);
+    snprintf(buffer, CONTENT_LENGTH_MAX, "Content-Length: %lu" HTTP_EOL, (unsigned long) length);
+    socketBufferWrite(socketBuffer, buffer);
 }
 
-void httpHeaderWriteContentLengthSt(char header[BUFSIZ], struct stat *st) {
-    httpHeaderWriteContentLength(header, st->st_size);
+void httpHeaderWriteContentLengthSt(SocketBuffer *socketBuffer, struct stat *st) {
+    httpHeaderWriteContentLength(socketBuffer, st->st_size);
 }
 
-void httpHeaderWriteLastModified(char header[BUFSIZ], struct stat *st) {
-#define LAST_MODIFIED_MAX 46
+void httpHeaderWriteLastModified(SocketBuffer *socketBuffer, struct stat *st) {
+#define LAST_MODIFIED_MAX 47
     char buffer[LAST_MODIFIED_MAX];
 
-    strftime(buffer, LAST_MODIFIED_MAX, "Last-Modified: %a, %d %b %Y %H:%M:%S GMT\n", gmtime(&st->st_mtim.tv_sec));
-    strncat(header, buffer, BUFSIZ - 1);
+    strftime(buffer, LAST_MODIFIED_MAX, "Last-Modified: %a, %d %b %Y %H:%M:%S GMT" HTTP_EOL,
+             gmtime(&st->st_mtim.tv_sec));
+    socketBufferWrite(socketBuffer, buffer);
 }
 
-void httpHeaderWriteResponse(char header[BUFSIZ], short response) {
+void httpHeaderWriteResponse(SocketBuffer *socketBuffer, short response) {
 #define RESPONSE_MAX 128
     char buffer[RESPONSE_MAX], *r;
 
@@ -145,13 +145,12 @@ void httpHeaderWriteResponse(char header[BUFSIZ], short response) {
             break;
     }
 
-    snprintf(buffer, RESPONSE_MAX, "HTTP/1.1 %s\n", r);
-    strncat(header, buffer, BUFSIZ - 1);
+    snprintf(buffer, RESPONSE_MAX, "HTTP/1.1 %s" HTTP_EOL, r);
+    socketBufferWrite(socketBuffer, buffer);
 }
 
-void httpHeaderWriteEnd(char header[BUFSIZ]) {
-    char *r = strrchr(header, '\n');
-    strncpy(r, HTTP_EOL, strlen(HTTP_EOL) + 1);
+void httpHeaderWriteEnd(SocketBuffer *socketBuffer) {
+    socketBufferWrite(socketBuffer, HTTP_EOL);
 }
 
 void htmlHeaderWrite(char buffer[BUFSIZ], char *title) {
@@ -180,7 +179,7 @@ void htmlListStart(char buffer[BUFSIZ]) {
 
 void htmlListEnd(char buffer[BUFSIZ]) {
     const char *listEnd = "\t\t</UL>\n";
-    strcpy(buffer, listEnd);
+    strcat(buffer, listEnd);
 }
 
 void htmlFooterWrite(char buffer[BUFSIZ]) {
@@ -239,7 +238,7 @@ getPathName(const char *path, size_t maxPaths, char linkPath[FILENAME_MAX], char
 static inline size_t getPathCount(const char *path) {
     size_t r = 0;
     while (*path != '\0') {
-        if (*path == '/')
+        if (path[0] == '/' && path[1] != '\0')
             ++r;
         ++path;
     }
@@ -252,58 +251,50 @@ void htmlBreadCrumbWrite(char buffer[BUFSIZ], const char *webPath) {
     strncat(buffer, "\t\t<DIV>\n", 9);
 
     for (i = 0; i < max; ++i) {
-        char internalBuffer[BUFSIZ], linkPath[FILENAME_MAX], displayPath[FILENAME_MAX];
+        char internalBuffer[8210], linkPath[FILENAME_MAX], displayPath[FILENAME_MAX];
         getPathName(webPath, i, linkPath, displayPath);
         convertPathToUrl(linkPath, FILENAME_MAX);
-        snprintf(internalBuffer, BUFSIZ, "\t\t\t<A HREF=\"%s\">%s</A>\n", linkPath, displayPath);
-        strncat(buffer, internalBuffer, strlen(internalBuffer) + 1);
+        snprintf(internalBuffer, 8210, "\t\t\t<A HREF=\"%s\">%s</A>\n", linkPath, displayPath);
+        strncat(buffer, internalBuffer, BUFSIZ - 1);
     }
 
-    strncat(buffer, "\t\t</DIV>\n\t\t<HR>\n", 16);
+    strncat(buffer, "\t\t</DIV>\n\t\t<HR>\n", 17);
 }
 
-size_t httpBodyWriteFile(int clientSocket, FILE *file) {
-    size_t bytesRead;
+size_t httpBodyWriteFile(SocketBuffer *socketBuffer, FILE *file) {
     char buffer[BUFSIZ];
 
-    while ((bytesRead = fread(buffer, 1, BUFSIZ, file)) > 0) {
-        if (write(clientSocket, buffer, bytesRead) == -1)
+    while (fread(buffer, 1, BUFSIZ, file) > 0) {
+        if (socketBufferWrite(socketBuffer, buffer))
             return 1;
     }
 
-    return 0;
-}
-
-size_t httpBodyWriteChunk(int clientSocket, char buffer[BUFSIZ]) {
-#define HEX_MAX 32
-    size_t bufLen = strlen(buffer), hexLen;
-    char hex[HEX_MAX];
-    snprintf(hex, HEX_MAX, "%lx\r\n", (unsigned long) bufLen);
-    hexLen = strlen(hex);
-
-    /* Reduce system calls if possible */
-    if (bufLen + hexLen + 3 < BUFSIZ) {
-        memmove(buffer + hexLen, buffer, bufLen);
-        memcpy(buffer + hexLen + bufLen, "\r\n", 3);
-        memcpy(buffer, hex, hexLen);
-        if (write(clientSocket, buffer, hexLen + bufLen + 2) == -1)
-            return 1;
-    } else if (write(clientSocket, hex, hexLen) == -1 || write(clientSocket, buffer, bufLen) == -1)
+    if (socketBufferFlush(socketBuffer))
         return 1;
 
     return 0;
 }
 
-size_t httpBodyWriteChunkEnding(int clientSocket) {
-    const char *chunkEnding = "0\r\n\r\n";
-    return write(clientSocket, chunkEnding, strlen(chunkEnding)) == -1;
+size_t httpBodyWriteChunk(SocketBuffer *socketBuffer, char buffer[BUFSIZ]) {
+#define HEX_MAX 32
+    size_t bufLen = strlen(buffer);
+    char internalBuffer[HEX_MAX + BUFSIZ + 1];
+    snprintf(internalBuffer, sizeof(internalBuffer), "%zx\r\n%s\r\n", bufLen, buffer);
+    return socketBufferWrite(socketBuffer, internalBuffer);
 }
 
-size_t httpBodyWriteText(int clientSocket, const char *text) {
-    return write(clientSocket, text, strlen(text)) == -1;
+size_t httpBodyWriteChunkEnding(SocketBuffer *socketBuffer) {
+    const char *chunkEnding = "0" HTTP_EOL HTTP_EOL;
+    if (socketBufferWrite(socketBuffer, chunkEnding))
+        return 1;
+    return socketBufferFlush(socketBuffer);
 }
 
-void httpHeaderWriteFileName(char header[BUFSIZ], char *path) {
+size_t httpBodyWriteText(SocketBuffer *socketBuffer, const char *text) {
+    return socketBufferWrite(socketBuffer, text);
+}
+
+void httpHeaderWriteFileName(SocketBuffer *socketBuffer, char *path) {
     char buffer[FILENAME_MAX];
     char *name = strrchr(path, '/');
 
@@ -313,5 +304,5 @@ void httpHeaderWriteFileName(char header[BUFSIZ], char *path) {
         name++;
 
     snprintf(buffer, FILENAME_MAX, "Content-Disposition: filename=\"%s\"\n", name);
-    strncat(header, buffer, BUFSIZ - 1);
+    socketBufferWrite(socketBuffer, buffer);
 }
