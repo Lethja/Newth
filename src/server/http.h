@@ -11,7 +11,7 @@
 #pragma region HTML
 
 /**
- * Write a breadcrumb of the webpath
+ * Write a breadcrumb of the webPath
  * @param buffer Concat: The buffer to write the bread crumb to
  * @param webPath In: The path to convert into a bread crumb
  */
@@ -66,22 +66,22 @@ char *httpClientReadUri(char *request);
 
 /**
  * Write a HTTP 1.1 chunk
- * @param clientSocket In: the TCP socket to send the chunk on
+ * @param socketBuffer In: the TCP socket buffer to append the chunk to
  * @param buffer In: The contents chunk body
  * @return 0 on success, other on error
  */
 size_t httpBodyWriteChunk(SocketBuffer *socketBuffer, char buffer[BUFSIZ]);
 
 /**
- * Write the end of a HTTP chunk request
- * @param clientSocket In: the TCP socket to send the last chunk on
+ * Write the end of a HTTP chunk request and flush
+ * @param socketBuffer In: the TCP socket buffer to append the last chunk onto and flush
  * @return 0 on success, other on error
  */
 size_t httpBodyWriteChunkEnding(SocketBuffer *socketBuffer);
 
 /**
  * Send the entirety of a file over TCP
- * @param clientSocket In: The TCP socket to send the file over
+ * @param socketBuffer In: The TCP socket buffer to send the file over
  * @param file In: The file to be sent over TCP
  * @return 0 on success, other on error
  */
@@ -89,7 +89,7 @@ size_t httpBodyWriteFile(SocketBuffer *socketBuffer, FILE *file);
 
 /**
  * Send the entirety of a string over TCP
- * @param clientSocket In: The TCP socket to send the string over
+ * @param socketBuffer In: The TCP socket buffer to append text to
  * @param text In: The string to sent over TCP
  * @return 0 on success, other on error
  */
@@ -101,53 +101,61 @@ size_t httpBodyWriteText(SocketBuffer *socketBuffer, const char *text);
 
 /**
  * Write the HTTP 1.1 header Transfer-Encoding: chunked
- * @param header Concat: The buffer to write the HTTP header to
+ * @param socketBuffer In: The socketBuffer to write to
  */
 void httpHeaderWriteChunkedEncoding(SocketBuffer *socketBuffer);
 
 /**
  * Write the HTTP header Content-Length
- * @param header Concat: The buffer to write the HTTP header to
+ * @param socketBuffer In: The socketBuffer to write to
  * @param length In: Content length in bytes
  */
 void httpHeaderWriteContentLength(SocketBuffer *socketBuffer, size_t length);
 
 /**
  * Write the HTTP header Content-Length using the files size
- * @param header Concat: The buffer to write the HTTP header to
+ * @param socketBuffer In: The socketBuffer to write to
  * @param st In: The status structure of a file you intend to send
  */
 void httpHeaderWriteContentLengthSt(SocketBuffer *socketBuffer, struct stat *st);
 
 /**
+ * Write the HTTP header Content-Type
+ * @param socketBuffer In: The socketBuffer to write to
+ * @param type In: The string with the type in it without the semicolon
+ * @param charSet In: The string with the character set in it
+ */
+void httpHeaderWriteContentType(SocketBuffer *socketBuffer, char *type, char *charSet);
+
+/**
  * Write HTTP date header
- * @param header Concat: The buffer to write the HTTP header to
+ * @param socketBuffer In: The socketBuffer to write to
  */
 void httpHeaderWriteDate(SocketBuffer *socketBuffer);
 
 /**
  * Write HTTP header end
- * @param header Concat: The buffer to write the HTTP header to
+ * @param socketBuffer In: The socketBuffer to write to
  */
 void httpHeaderWriteEnd(SocketBuffer *socketBuffer);
 
 /**
  * Write HTTP Content-Disposition header with contents filename
- * @param header Concat: The buffer to write the HTTP header to
+ * @param socketBuffer In: The socketBuffer to write to
  * @param path In: The filename to write
  */
 void httpHeaderWriteFileName(SocketBuffer *socketBuffer, char *path);
 
 /**
  * Write HTTP Last-Modified header using the files modification date
- * @param header Concat: The buffer to write the HTTP header to
+ * @param socketBuffer In: The socketBuffer to write to
  * @param st In: The status structure of a file you intend to send
  */
 void httpHeaderWriteLastModified(SocketBuffer *socketBuffer, struct stat *st);
 
 /**
  * Write HTTP header response code
- * @param header Concat: The buffer to write the HTTP header to
+ * @param socketBuffer In: The socketBuffer to write to
  * @param response The HTTP response code to write such as 200 or 404
  */
 void httpHeaderWriteResponse(SocketBuffer *socketBuffer, short response);

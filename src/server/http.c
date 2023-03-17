@@ -122,6 +122,12 @@ void httpHeaderWriteLastModified(SocketBuffer *socketBuffer, struct stat *st) {
     socketBufferWrite(socketBuffer, buffer);
 }
 
+void httpHeaderWriteContentType(SocketBuffer *socketBuffer, char *type, char *charSet) {
+    char buffer[256];
+    snprintf(buffer, 256, "Content-Type: %s; %s" HTTP_EOL, type, charSet);
+    socketBufferWrite(socketBuffer, buffer);
+}
+
 void httpHeaderWriteResponse(SocketBuffer *socketBuffer, short response) {
 #define RESPONSE_MAX 128
     char buffer[RESPONSE_MAX], *r;
@@ -269,6 +275,10 @@ void htmlBreadCrumbWrite(char buffer[BUFSIZ], const char *webPath) {
         getPathName(webPath, i, linkPath, displayPath);
         convertPathToUrl(linkPath, FILENAME_MAX);
         snprintf(internalBuffer, 8210, "\t\t\t<A HREF=\"%s\">%s</A>\n", linkPath, displayPath);
+
+        if (strlen(buffer) + strlen(internalBuffer) + 1 > BUFSIZ - 17)
+            break;
+
         strncat(buffer, internalBuffer, BUFSIZ - 1);
     }
 

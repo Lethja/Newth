@@ -103,17 +103,25 @@ char handleDir(int clientSocket, char *realPath, struct stat *st) {
     httpHeaderWriteResponse(&socketBuffer, 200);
     httpHeaderWriteDate(&socketBuffer);
     httpHeaderWriteLastModified(&socketBuffer, st);
+    httpHeaderWriteContentType(&socketBuffer, "text/html", "");
     httpHeaderWriteChunkedEncoding(&socketBuffer);
     httpHeaderWriteEnd(&socketBuffer);
-    if (socketBufferFlush(&socketBuffer))
+    htmlHeaderWrite(buf, webPath[0] == '\0' ? "/" : webPath);
+
+    if (httpBodyWriteChunk(&socketBuffer, buf) || socketBufferFlush(&socketBuffer))
         goto handleDirAbort;
 
-    htmlHeaderWrite(buf, webPath[0] == '\0' ? "/" : webPath);
+    buf[0] = '\0';
     htmlBreadCrumbWrite(buf, webPath[0] == '\0' ? "/" : webPath);
+
+    if (httpBodyWriteChunk(&socketBuffer, buf))
+        goto handleDirAbort;
+
+    buf[0] = '\0';
     htmlListStart(buf);
 
     if (httpBodyWriteChunk(&socketBuffer, buf) || socketBufferFlush(&socketBuffer))
-        return 1;
+        goto handleDirAbort;
 
     DirectoryRoutineArrayAdd(&globalDirRoutineArray, DirectoryRoutineNew(clientSocket, dir, webPath));
 
