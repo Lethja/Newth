@@ -16,15 +16,22 @@ size_t DirectoryRoutineContinue(DirectoryRoutine *self) {
             char buffer[BUFSIZ];
             char pathBuf[BUFSIZ];
 
+            /* Omit hidden files */
             if (entry->d_name[0] == '.')
                 continue;
 
             entryLen = strlen(entry->d_name);
 
-            if (pathLen + entryLen + 2 < BUFSIZ) {
+            if (pathLen + entryLen + 3 < BUFSIZ) {
                 memcpy(pathBuf, self->webPath, pathLen);
                 pathBuf[pathLen ? pathLen : 0] = '/';
                 memcpy(pathLen ? pathBuf + pathLen + 1 : pathBuf + 1, entry->d_name, entryLen + 1);
+
+                /* Append '/' on the end of directory entries */
+                if (entry->d_type == DT_DIR) {
+                    size_t len = strlen(pathBuf);
+                    pathBuf[len] = '/', pathBuf[len + 1] = '\0';
+                }
 
                 htmlListWritePathLink(buffer, pathBuf);
                 if (httpBodyWriteChunk(&self->socketBuffer, buffer))

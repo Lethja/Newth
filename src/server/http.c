@@ -188,13 +188,22 @@ void htmlFooterWrite(char buffer[BUFSIZ]) {
 }
 
 void htmlListWritePathLink(char buffer[BUFSIZ], char *webPath) {
-    char linkPath[FILENAME_MAX], *filePath = strrchr(webPath, '/');
-    size_t pathLen = strlen(webPath) + 1;
-
-    if (filePath[0] == '\0')
-        filePath = linkPath;
+    char linkPath[FILENAME_MAX], *filePath = NULL;
+    size_t pathLen = strlen(webPath) + 1, i;
 
     memcpy(linkPath, webPath, pathLen);
+
+    /* Find the second last '/' in the webPath, use it as the name of the HTML link */
+    for (i = pathLen - 3; i > 0; --i) {
+        if (webPath[i] == '/') {
+            filePath = &webPath[i];
+            break;
+        }
+    }
+
+    /* If a filePath couldn't be set, use the full path */
+    if (filePath == NULL)
+        filePath = webPath;
 
     convertPathToUrl(linkPath, FILENAME_MAX);
     snprintf(buffer, BUFSIZ, "\t\t\t<LI><A HREF=\"%s\">%s</A></LI>\n", linkPath, filePath + 1);
@@ -225,7 +234,7 @@ getPathName(const char *path, size_t maxPaths, char linkPath[FILENAME_MAX], char
         }
     }
 
-    if(linkPath[i - 1] == '\0') {
+    if (linkPath[i - 1] == '\0') {
         --i;
         linkPath[i] = '/';
     }
@@ -284,7 +293,7 @@ size_t httpBodyWriteChunk(SocketBuffer *socketBuffer, char buffer[BUFSIZ]) {
 #define HEX_MAX 32
     size_t bufLen = strlen(buffer);
     char internalBuffer[HEX_MAX + BUFSIZ + 1];
-    snprintf(internalBuffer, sizeof(internalBuffer), "%zx\r\n%s\r\n", bufLen, buffer);
+    snprintf(internalBuffer, sizeof(internalBuffer), "%lx\r\n%s\r\n", bufLen, buffer);
     return socketBufferWrite(socketBuffer, internalBuffer);
 }
 
