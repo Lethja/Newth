@@ -108,7 +108,7 @@ void DirectoryRoutineArrayDel(RoutineArray *self, DirectoryRoutine *directoryRou
         if (i + 1 < self->size)
             memmove(&array[i], &array[i + 1], sizeof(DirectoryRoutine) * (self->size - i));
 
-        self->size--;
+        --self->size;
 
         if (self->size)
             self->array = realloc(self->array, sizeof(DirectoryRoutine) * self->size);
@@ -174,7 +174,7 @@ void FileRoutineArrayDel(RoutineArray *self, FileRoutine *fileRoutine) {
         if (i + 1 < self->size)
             memmove(&array[i], &array[i + 1], sizeof(FileRoutine) * (self->size - i));
 
-        self->size--;
+        --self->size;
 
         if (self->size)
             self->array = realloc(self->array, sizeof(FileRoutine) * self->size);

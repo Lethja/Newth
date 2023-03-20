@@ -60,7 +60,7 @@ void convertUrlToPath(char *url) {
                 memmove(&url[1], &url[3], strlen(url) - 2);
             }
         }
-        url++;
+        ++url;
     }
 }
 
@@ -235,7 +235,7 @@ getPathName(const char *path, size_t maxPaths, char linkPath[FILENAME_MAX], char
             continue;
         else {
             if (currentPath != maxPaths)
-                currentPath++;
+                ++currentPath;
             else {
                 if (i)
                     linkPath[i + 1] = '\0';
@@ -335,7 +335,7 @@ void httpHeaderWriteFileName(SocketBuffer *socketBuffer, char *path) {
     if (!name)
         name = path;
     else
-        name++;
+        ++name;
 
     snprintf(buffer, FILENAME_MAX, "Content-Disposition: filename=\"%s\"\n", name);
     socketBufferWrite(socketBuffer, buffer);
