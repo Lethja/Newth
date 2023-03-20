@@ -38,10 +38,15 @@ size_t DirectoryRoutineContinue(DirectoryRoutine *self) {
                     return 0;
 
                 bytesWrite += strlen(buffer);
+                ++self->count;
             }
         } else {
             char buffer[BUFSIZ];
             buffer[0] = '\0';
+
+            /* If the directory is empty, say so */
+            if (!self->count)
+                strcpy(buffer, "\t\t\t<LI>Empty Directory</LI>\n");
 
             htmlListEnd(buffer);
             htmlFooterWrite(buffer);
@@ -62,7 +67,7 @@ size_t DirectoryRoutineContinue(DirectoryRoutine *self) {
 DirectoryRoutine DirectoryRoutineNew(int socket, DIR *dir, const char *webPath) {
     size_t i;
     DirectoryRoutine self;
-    self.directory = dir, self.socketBuffer = socketBufferNew(socket);
+    self.directory = dir, self.socketBuffer = socketBufferNew(socket), self.count = 0;
 
     for (i = 0; i < PATH_MAX; ++i) {
         self.webPath[i] = webPath[i];

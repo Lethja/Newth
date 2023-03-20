@@ -12,6 +12,7 @@ typedef struct FileRoutine {
 } FileRoutine;
 
 typedef struct DirectoryRoutine {
+    size_t count;
     DIR *directory;
     SocketBuffer socketBuffer;
     char webPath[PATH_MAX];

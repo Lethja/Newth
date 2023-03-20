@@ -94,12 +94,8 @@ char handleDir(int clientSocket, char *realPath, struct stat *st) {
     SocketBuffer socketBuffer = socketBufferNew(clientSocket);
     DIR *dir = opendir(realPath);
 
-    if (dir == NULL) {
-        httpHeaderWriteResponse(&socketBuffer, 404);
-        httpHeaderWriteEnd(&socketBuffer);
-
-        return 0;
-    }
+    if (dir == NULL)
+        return httpHeaderHandleError(&socketBuffer, 404);
 
     /* Headers */
     httpHeaderWriteResponse(&socketBuffer, 200);
@@ -173,7 +169,6 @@ char handleFile(int clientSocket, char *path, struct stat *st) {
 
 char handlePath(int clientSocket, char *path) {
     struct stat st;
-    const char *body = "Not Found";
     char *absolutePath = NULL, e = 0;
     int r;
     size_t lenA, lenB;
@@ -215,16 +210,7 @@ char handlePath(int clientSocket, char *path) {
 
     {
         SocketBuffer socketBuffer = socketBufferNew(clientSocket);
-
-        httpHeaderWriteResponse(&socketBuffer, 404);
-        httpHeaderWriteDate(&socketBuffer);
-        httpHeaderWriteContentLength(&socketBuffer, strlen(body));
-        httpHeaderWriteEnd(&socketBuffer);
-
-        if (httpBodyWriteText(&socketBuffer, body) || socketBufferFlush(&socketBuffer))
-            return 1;
-
-        return 0;
+        return httpHeaderHandleError(&socketBuffer, 404);
     }
 }
 

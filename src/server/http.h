@@ -160,4 +160,12 @@ void httpHeaderWriteLastModified(SocketBuffer *socketBuffer, struct stat *st);
  */
 void httpHeaderWriteResponse(SocketBuffer *socketBuffer, short response);
 
+/**
+ * Helper function for writing entire HTTP error replies under non-special circumstances
+ * @param socketBuffer Socket buffer to write the error response to
+ * @param error Error code to respond with
+ * @return 0 on success, error on other
+ */
+char httpHeaderHandleError(SocketBuffer *socketBuffer, short error);
+
 #endif /*OPEN_WEB_HTTP_H */

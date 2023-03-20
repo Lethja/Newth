@@ -128,10 +128,8 @@ void httpHeaderWriteContentType(SocketBuffer *socketBuffer, char *type, char *ch
     socketBufferWrite(socketBuffer, buffer);
 }
 
-void httpHeaderWriteResponse(SocketBuffer *socketBuffer, short response) {
-#define RESPONSE_MAX 128
-    char buffer[RESPONSE_MAX], *r;
-
+char *httpHeaderGetResponse(short response) {
+    char *r;
     switch (response) {
         case 200:
             r = "200 OK";
@@ -150,9 +148,21 @@ void httpHeaderWriteResponse(SocketBuffer *socketBuffer, short response) {
             r = "500 Internal Server Error";
             break;
     }
+    return r;
+}
 
-    snprintf(buffer, RESPONSE_MAX, "HTTP/1.1 %s" HTTP_EOL, r);
+void inline httpHeaderWriteResponseStr(SocketBuffer *socketBuffer, const char *response) {
+#define RESPONSE_MAX 128
+    char buffer[RESPONSE_MAX];
+
+    snprintf(buffer, RESPONSE_MAX, "HTTP/1.1 %s" HTTP_EOL, response);
     socketBufferWrite(socketBuffer, buffer);
+}
+
+void httpHeaderWriteResponse(SocketBuffer *socketBuffer, short response) {
+#define RESPONSE_MAX 128
+    char *r = httpHeaderGetResponse(response);
+    httpHeaderWriteResponseStr(socketBuffer, r);
 }
 
 void httpHeaderWriteEnd(SocketBuffer *socketBuffer) {
@@ -329,4 +339,31 @@ void httpHeaderWriteFileName(SocketBuffer *socketBuffer, char *path) {
 
     snprintf(buffer, FILENAME_MAX, "Content-Disposition: filename=\"%s\"\n", name);
     socketBufferWrite(socketBuffer, buffer);
+}
+
+char httpHeaderHandleError(SocketBuffer *socketBuffer, short error) {
+#ifndef NDEBUG
+    switch (error) {
+        case 200:
+        case 204:
+        case 206:
+        case 304:
+            printf("Warning: valid HTTP request %d is in error path\n", error);
+            break;
+        default:
+            printf("Warning: error HTTP request %d\n", error);
+    }
+#endif
+
+    {
+        char *errMsg = httpHeaderGetResponse(error);
+        httpHeaderWriteResponseStr(socketBuffer, errMsg);
+        httpHeaderWriteDate(socketBuffer);
+        httpHeaderWriteContentLength(socketBuffer, strlen(errMsg));
+        httpHeaderWriteEnd(socketBuffer);
+
+        if (httpBodyWriteText(socketBuffer, errMsg) || socketBufferFlush(socketBuffer))
+            return 1;
+    }
+    return 0;
 }
