@@ -5,22 +5,22 @@
 #include <dirent.h>
 #include <sys/stat.h>
 
-char platformIsEntryDirectory(char *rootPath, char* webPath, struct dirent *entry) {
+char platformIsEntryDirectory(char *rootPath, char *webPath, struct dirent *entry) {
     struct stat st;
     char *a, *b = NULL;
 
     a = platformPathCombine(rootPath, webPath);
 
-    if(!a)
+    if (!a)
         return 0;
 
     b = platformPathCombine(a, entry->d_name);
-    if(!b)
+    if (!b)
         goto platformIsEntryDirectoryFail;
 
     free(a), a = NULL;
 
-    if(stat(b, &st))
+    if (stat(b, &st))
         goto platformIsEntryDirectoryFail;
 
     free(b);
@@ -34,4 +34,5 @@ char platformIsEntryDirectory(char *rootPath, char* webPath, struct dirent *entr
 
     return 0;
 }
+
 #endif

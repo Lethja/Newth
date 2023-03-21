@@ -117,8 +117,7 @@ void httpHeaderWriteLastModified(SocketBuffer *socketBuffer, struct stat *st) {
 #define LAST_MODIFIED_MAX 47
     char buffer[LAST_MODIFIED_MAX];
 
-    strftime(buffer, LAST_MODIFIED_MAX, "Last-Modified: %a, %d %b %Y %H:%M:%S GMT" HTTP_EOL,
-             gmtime(&st->st_mtime));
+    strftime(buffer, LAST_MODIFIED_MAX, "Last-Modified: %a, %d %b %Y %H:%M:%S GMT" HTTP_EOL, gmtime(&st->st_mtime));
     socketBufferWrite(socketBuffer, buffer);
 }
 

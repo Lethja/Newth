@@ -52,7 +52,7 @@ int platformAcceptConnection(int fromSocket);
 
 #ifdef _DIRENT_HAVE_D_TYPE
 
-#define IS_ENTRY_DIRECTORY(rootPath, webPath, entry) x->d_type == DT_DIR
+#define IS_ENTRY_DIRECTORY(rootPath, webPath, entry) entry->d_type == DT_DIR
 
 #else
 
@@ -60,7 +60,7 @@ int platformAcceptConnection(int fromSocket);
 
 #include <dirent.h>
 
-char platformIsEntryDirectory(char *rootPath, char* webPath, struct dirent *entry);
+char platformIsEntryDirectory(char *rootPath, char *webPath, struct dirent *entry);
 
 #endif /* _DIRENT_HAVE_D_TYPE */
 

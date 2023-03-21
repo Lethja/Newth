@@ -17,7 +17,6 @@ struct timeval globalSelectSleep;
 
 void noAction(int signal) {}
 
-
 void shutdownCrash(int signal) {
     platformCloseBindSockets(&currentSockets);
     printf("Emergency shutdown: %d", signal);
