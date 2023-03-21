@@ -1,5 +1,4 @@
 #include "platform/platform.h"
-#include "platform/unix.h"
 #include "server/http.h"
 #include "server/routine.h"
 

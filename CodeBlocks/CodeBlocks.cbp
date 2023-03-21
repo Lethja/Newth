@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="CodeBlocks" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Server Debug Unix">
+				<Option platforms="Unix;Mac;" />
+				<Option output="bin/unix/Debug/server" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/unix/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Server Release Nix">
+				<Option platforms="Unix;Mac;" />
+				<Option output="bin/unix/Release/CodeBlocks" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/unix/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+			<Target title="Server Debug W32">
+				<Option platforms="Windows;" />
+				<Option output="bin/w32/Debug/CodeBlocks" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/w32/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Server Release W32">
+				<Option platforms="Windows;" />
+				<Option output="bin/w32/Release/CodeBlocks" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/w32/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-Wno-unknown-pragmas" />
+		</Compiler>
+		<Unit filename="../src/client.c">
+			<Option compilerVar="CC" />
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="../src/common/http.h" />
+		<Unit filename="../src/platform/platform.h" />
+		<Unit filename="../src/platform/unix.h">
+			<Option target="Server Debug Unix" />
+			<Option target="Server Release Nix" />
+		</Unit>
+		<Unit filename="../src/platform/ws2.h">
+			<Option target="Server Debug W32" />
+			<Option target="Server Release W32" />
+		</Unit>
+		<Unit filename="../src/server.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/server/http.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/server/http.h" />
+		<Unit filename="../src/server/routine.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/server/routine.h" />
+		<Unit filename="../src/server/sockbufr.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/server/sockbufr.h" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

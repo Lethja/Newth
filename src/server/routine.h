@@ -15,7 +15,7 @@ typedef struct DirectoryRoutine {
     size_t count;
     DIR *directory;
     SocketBuffer socketBuffer;
-    char webPath[PATH_MAX];
+    char webPath[FILENAME_MAX];
 } DirectoryRoutine;
 
 typedef struct RoutineArray {
