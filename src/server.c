@@ -12,14 +12,6 @@ RoutineArray globalDirRoutineArray;
 fd_set currentSockets;
 struct timeval globalSelectSleep;
 
-void closeBindSocket(void) {
-    int i;
-    for (i = 0; i < FD_SETSIZE; i++) {
-        if (FD_ISSET(i, &currentSockets))
-            shutdown(i, SHUT_RDWR);
-    }
-}
-
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "UnusedParameter"
 
@@ -27,47 +19,18 @@ void noAction(int signal) {}
 
 
 void shutdownCrash(int signal) {
-    closeBindSocket();
+    platformCloseBindSockets(&currentSockets);
     printf("Emergency shutdown: %d", signal);
     exit(1);
 }
 
 void shutdownProgram(int signal) {
-    closeBindSocket();
+    platformCloseBindSockets(&currentSockets);
     printf("Graceful shutdown: %d", signal);
     exit(0);
 }
 
 #pragma clang diagnostic pop
-
-int serverStartup(short port) {
-    int newSocket;
-    struct sockaddr_in serverAddress;
-
-    if ((newSocket = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-        exit(1);
-
-    serverAddress.sin_family = AF_INET;
-    serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
-    serverAddress.sin_port = htons(port);
-
-    if ((bind(newSocket, (SA *) &serverAddress, sizeof(serverAddress))) < 0)
-        goto ServerStartupError;
-
-    if ((listen(newSocket, 10)) < 0)
-        goto ServerStartupError;
-
-    globalFileRoutineArray.size = globalDirRoutineArray.size = 0;
-    globalFileRoutineArray.array = globalDirRoutineArray.array = NULL;
-
-    printf("Server started on path '%s'\n", globalRootPath);
-
-    return newSocket;
-
-    ServerStartupError:
-    perror("Unable to start server");
-    exit(1);
-}
 
 int acceptConnection(int fromSocket) {
     socklen_t addrSize = sizeof(struct sockaddr_in);
@@ -175,7 +138,7 @@ char handlePath(int clientSocket, char *path) {
     if (path[0] == '\0')
         absolutePath = globalRootPath;
     else {
-        char *combinePath = pathCombine(globalRootPath, path);
+        char *combinePath = platformPathCombine(globalRootPath, path);
         if (!(absolutePath = realpath(combinePath, NULL))) {
             free(combinePath);
             goto handlePathNotFound;
@@ -263,14 +226,6 @@ char handleConnection(int clientSocket) {
     return r;
 }
 
-static inline void connectProgramSignals(void) {
-    signal(SIGHUP, shutdownProgram);
-    signal(SIGINT, shutdownProgram);
-    signal(SIGPIPE, noAction);
-    signal(SIGSEGV, shutdownCrash);
-    signal(SIGTERM, shutdownProgram);
-}
-
 static inline void setRootPath(char *path) {
     char *test = realpath(path, globalRootPath);
     if (!test) {
@@ -282,7 +237,8 @@ static inline void setRootPath(char *path) {
 
 int main(int argc, char **argv) {
     fd_set readySockets;
-    connectProgramSignals();
+
+    platformConnectSignals(noAction, shutdownCrash, shutdownProgram);
 
     if (argc > 1) {
         setRootPath(argv[1]);
@@ -296,10 +252,16 @@ int main(int argc, char **argv) {
         free(buf);
     }
 
-    globalServerSocket = serverStartup(SERVER_PORT);
+    if (platformServerStartup(&globalServerSocket, SERVER_PORT)) {
+        perror("Unable to start server");
+        return 1;
+    }
 
     FD_ZERO(&currentSockets);
     FD_SET(globalServerSocket, &currentSockets);
+
+    globalFileRoutineArray.size = globalDirRoutineArray.size = 0;
+    globalFileRoutineArray.array = globalDirRoutineArray.array = NULL;
 
     while (1) {
         int i;
