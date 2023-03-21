@@ -45,6 +45,24 @@ int platformServerStartup(int *listenSocket, short port) {
     return 0;
 }
 
+int platformAcceptConnection(int fromSocket) {
+    socklen_t addrSize = sizeof(struct sockaddr_in);
+    int clientSocket;
+    struct sockaddr_in clientAddress;
+
+    clientSocket = accept(fromSocket, (SA *) &clientAddress, &addrSize);
+
+#ifndef NDEBUG
+    {
+        char address[16] = "";
+        inet_ntop(AF_INET, &clientAddress.sin_addr, address, sizeof(address));
+        fprintf(stdout, "Connection opened for: %s\n", address);
+    }
+#endif
+
+    return clientSocket;
+}
+
 void platformConnectSignals(void(*noAction)(int), void(*shutdownCrash)(int), void(*shutdownProgram)(int)) {
     signal(SIGPIPE, noAction);
     signal(SIGSEGV, shutdownCrash);

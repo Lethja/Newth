@@ -15,4 +15,3 @@
 
 #define MAX_LINE 4096
 #define SA struct sockaddr
-#define SERVER_PORT 8080

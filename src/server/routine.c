@@ -3,6 +3,7 @@
 #include <string.h>
 #include "routine.h"
 #include "http.h"
+#include "../platform/platform.h"
 
 size_t DirectoryRoutineContinue(DirectoryRoutine *self) {
     const size_t max = 10;
@@ -28,7 +29,7 @@ size_t DirectoryRoutineContinue(DirectoryRoutine *self) {
                 memcpy(pathLen ? pathBuf + pathLen + 1 : pathBuf + 1, entry->d_name, entryLen + 1);
 
                 /* Append '/' on the end of directory entries */
-                if (entry->d_type == DT_DIR) {
+                if (IS_ENTRY_DIRECTORY(self->rootPath, self->webPath, entry)) {
                     size_t len = strlen(pathBuf);
                     pathBuf[len] = '/', pathBuf[len + 1] = '\0';
                 }
@@ -64,12 +65,12 @@ size_t DirectoryRoutineContinue(DirectoryRoutine *self) {
     return bytesWrite;
 }
 
-DirectoryRoutine DirectoryRoutineNew(int socket, DIR *dir, const char *webPath) {
+DirectoryRoutine DirectoryRoutineNew(int socket, DIR *dir, const char *webPath, char *rootPath) {
     size_t i;
     DirectoryRoutine self;
-    self.directory = dir, self.socketBuffer = socketBufferNew(socket), self.count = 0;
+    self.directory = dir, self.socketBuffer = socketBufferNew(socket), self.count = 0, self.rootPath = rootPath;
 
-    for (i = 0; i < PATH_MAX; ++i) {
+    for (i = 0; i < FILENAME_MAX; ++i) {
         self.webPath[i] = webPath[i];
         if (webPath[i] == '\0')
             break;

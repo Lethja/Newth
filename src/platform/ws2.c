@@ -27,3 +27,7 @@ int platformServerStartup(int *listenSocket, short port) {
 
 void platformConnectSignals(void(*noAction)(int), void(*shutdownCrash)(int), void(*shutdownProgram)(int)) {
 }
+
+int platformAcceptConnection(int fromSocket) {
+    return 0;
+}

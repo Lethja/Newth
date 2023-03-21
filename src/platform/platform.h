@@ -1,6 +1,8 @@
 #ifndef OPEN_WEB_PLATFORM_H
 #define OPEN_WEB_PLATFORM_H
 
+#define SERVER_PORT 8080
+
 #ifndef __STDC_VERSION__
 #define inline
 #endif
@@ -8,6 +10,7 @@
 #ifdef _WIN32
 
 #include "ws2.h"
+#define realpath(N,R) _fullpath((R),(N),_MAX_PATH)
 
 #else
 
@@ -44,5 +47,21 @@ int platformServerStartup(int *listenSocket, short port);
  * @param shutdownProgram The function to callback on graceful exiting signals
  */
 void platformConnectSignals(void(*noAction)(int), void(*shutdownCrash)(int), void(*shutdownProgram)(int));
+
+int platformAcceptConnection(int fromSocket);
+
+#ifdef _DIRENT_HAVE_D_TYPE
+
+#define IS_ENTRY_DIRECTORY(rootPath, webPath, entry) x->d_type == DT_DIR
+
+#else
+
+#define IS_ENTRY_DIRECTORY(rootPath, webPath, entry) platformIsEntryDirectory(rootPath, webPath, entry)
+
+#include <dirent.h>
+
+char platformIsEntryDirectory(char *rootPath, char* webPath, struct dirent *entry);
+
+#endif /* _DIRENT_HAVE_D_TYPE */
 
 #endif /* OPEN_WEB_PLATFORM_H */

@@ -32,24 +32,6 @@ void shutdownProgram(int signal) {
 
 #pragma clang diagnostic pop
 
-int acceptConnection(int fromSocket) {
-    socklen_t addrSize = sizeof(struct sockaddr_in);
-    int clientSocket;
-    struct sockaddr_in clientAddress;
-
-    clientSocket = accept(fromSocket, (SA *) &clientAddress, &addrSize);
-
-#ifndef NDEBUG
-    {
-        char address[16] = "";
-        inet_ntop(AF_INET, &clientAddress.sin_addr, address, sizeof(address));
-        fprintf(stdout, "Connection opened for: %s\n", address);
-    }
-#endif
-
-    return clientSocket;
-}
-
 char handleDir(int clientSocket, char *realPath, struct stat *st) {
     char *webPath = realPath + strlen(globalRootPath);
     char buf[BUFSIZ];
@@ -83,7 +65,7 @@ char handleDir(int clientSocket, char *realPath, struct stat *st) {
     if (httpBodyWriteChunk(&socketBuffer, buf) || socketBufferFlush(&socketBuffer))
         goto handleDirAbort;
 
-    DirectoryRoutineArrayAdd(&globalDirRoutineArray, DirectoryRoutineNew(clientSocket, dir, webPath));
+    DirectoryRoutineArrayAdd(&globalDirRoutineArray, DirectoryRoutineNew(clientSocket, dir, webPath, globalRootPath));
 
     return 0;
 
@@ -227,11 +209,12 @@ char handleConnection(int clientSocket) {
 }
 
 static inline void setRootPath(char *path) {
-    char *test = realpath(path, globalRootPath);
+    char *test = realpath(path, NULL);
     if (!test) {
         printf("No such directory \"%s\"\n", path);
         exit(1);
     }
+
     globalRootPath = test;
 }
 
@@ -293,7 +276,7 @@ int main(int argc, char **argv) {
         for (i = 0; i < FD_SETSIZE; i++) {
             if (FD_ISSET(i, &readySockets)) {
                 if (i == globalServerSocket) {
-                    int clientSocket = acceptConnection(globalServerSocket);
+                    int clientSocket = platformAcceptConnection(globalServerSocket);
                     FD_SET(clientSocket, &currentSockets);
                 } else {
                     if (handleConnection(i)) {
