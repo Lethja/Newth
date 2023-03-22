@@ -13,5 +13,4 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#define MAX_LINE 4096
-#define SA struct sockaddr
+#define SOCKET int

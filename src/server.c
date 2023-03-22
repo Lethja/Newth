@@ -5,7 +5,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 
-int globalServerSocket;
+SOCKET globalServerSocket;
 char *globalRootPath = NULL;
 RoutineArray globalFileRoutineArray;
 RoutineArray globalDirRoutineArray;

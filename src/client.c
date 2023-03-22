@@ -1,5 +1,7 @@
 #include "common/http.h"
-#include "platform/unix.h"
+#include "platform/platform.h"
+
+#include <stdio.h>
 
 int main(int argc, char **argv) {
     int socketFd;
