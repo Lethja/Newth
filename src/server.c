@@ -31,7 +31,7 @@ void shutdownProgram(int signal) {
 
 #pragma clang diagnostic pop
 
-char handleDir(int clientSocket, char *realPath, struct stat *st) {
+char handleDir(SOCKET clientSocket, char *realPath, struct stat *st) {
     char *webPath = realPath + strlen(globalRootPath);
     char buf[BUFSIZ];
     SocketBuffer socketBuffer = socketBufferNew(clientSocket);
@@ -75,7 +75,7 @@ char handleDir(int clientSocket, char *realPath, struct stat *st) {
     return 1;
 }
 
-char handleFile(int clientSocket, char *path, struct stat *st) {
+char handleFile(SOCKET clientSocket, char *path, struct stat *st) {
     SocketBuffer socketBuffer = socketBufferNew(clientSocket);
     FILE *fp = fopen(path, "rb");
 
@@ -110,7 +110,7 @@ char handleFile(int clientSocket, char *path, struct stat *st) {
     return 1;
 }
 
-char handlePath(int clientSocket, char *path) {
+char handlePath(SOCKET clientSocket, char *path) {
     struct stat st;
     char *absolutePath = NULL, e = 0;
     int r;
@@ -157,13 +157,13 @@ char handlePath(int clientSocket, char *path) {
     }
 }
 
-char handleConnection(int clientSocket) {
+char handleConnection(SOCKET clientSocket) {
     char r = 0;
     char buffer[BUFSIZ];
     size_t bytesRead, messageSize = 0;
     char *uriPath;
 
-    while ((bytesRead = read(clientSocket, buffer + messageSize, sizeof(buffer) - messageSize - 1))) {
+    while ((bytesRead = recv(clientSocket, buffer + messageSize, (int) (sizeof(buffer) - messageSize - 1), 0))) {
         if (bytesRead == -1)
             return 1;
 
@@ -246,7 +246,7 @@ int main(int argc, char **argv) {
     globalFileRoutineArray.array = globalDirRoutineArray.array = NULL;
 
     while (1) {
-        int i;
+        SOCKET i;
 
         for (i = 0; i < globalDirRoutineArray.size; i++) {
             DirectoryRoutine *directoryRoutine = (DirectoryRoutine *) globalDirRoutineArray.array;
@@ -275,11 +275,11 @@ int main(int argc, char **argv) {
         for (i = 0; i < FD_SETSIZE; i++) {
             if (FD_ISSET(i, &readySockets)) {
                 if (i == globalServerSocket) {
-                    int clientSocket = platformAcceptConnection(globalServerSocket);
+                    SOCKET clientSocket = platformAcceptConnection(globalServerSocket);
                     FD_SET(clientSocket, &currentSockets);
                 } else {
                     if (handleConnection(i)) {
-                        close(i);
+                        closesocket(i);
                         FD_CLR(i, &currentSockets);
                     }
                 }

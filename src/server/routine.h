@@ -8,7 +8,7 @@
 typedef struct FileRoutine {
     FILE *file;
     off_t start, end;
-    int socket;
+    SOCKET socket;
 } FileRoutine;
 
 typedef struct DirectoryRoutine {
@@ -26,7 +26,7 @@ typedef struct RoutineArray {
 
 size_t DirectoryRoutineContinue(DirectoryRoutine *self);
 
-DirectoryRoutine DirectoryRoutineNew(int socket, DIR *dir, const char *webPath, char *rootPath);
+DirectoryRoutine DirectoryRoutineNew(SOCKET socket, DIR *dir, const char *webPath, char *rootPath);
 
 void DirectoryRoutineArrayAdd(RoutineArray *self, DirectoryRoutine directoryRoutine);
 
@@ -34,7 +34,7 @@ void DirectoryRoutineFree(DirectoryRoutine *self);
 
 void DirectoryRoutineArrayDel(RoutineArray *self, DirectoryRoutine *directoryRoutine);
 
-FileRoutine FileRoutineNew(int socket, FILE *file, off_t start, off_t end);
+FileRoutine FileRoutineNew(SOCKET socket, FILE *file, off_t start, off_t end);
 
 size_t FileRoutineContinue(FileRoutine *self);
 

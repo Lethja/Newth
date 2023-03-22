@@ -1,11 +1,13 @@
 #ifndef OPEN_WEB_SOCKET_BUFFER_H
 #define OPEN_WEB_SOCKET_BUFFER_H
 
+#include "../platform/platform.h"
+
 #include <stdio.h>
 
 typedef struct SocketBuffer {
-    int clientSocket;
-    size_t idx;
+    SOCKET clientSocket;
+    SOCK_BUF_TYPE idx;
     char buffer[BUFSIZ];
 } SocketBuffer;
 
@@ -16,7 +18,7 @@ typedef struct SocketBuffer {
  * @note One socket buffer per socket please
  * @note if you've called socketBufferWrite() be sure to call socketBufferFlush() before leaving scope of declaration
  */
-SocketBuffer socketBufferNew(int clientSocket);
+SocketBuffer socketBufferNew(SOCKET clientSocket);
 
 /**
  * Flush any data left in the TCP socket buffer out of memory and onto the network

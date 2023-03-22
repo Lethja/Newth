@@ -25,8 +25,12 @@ size_t DirectoryRoutineContinue(DirectoryRoutine *self) {
 
             if (pathLen + entryLen + 3 < BUFSIZ) {
                 memcpy(pathBuf, self->webPath, pathLen);
-                pathBuf[pathLen ? pathLen : 0] = '/';
-                memcpy(pathLen ? pathBuf + pathLen + 1 : pathBuf + 1, entry->d_name, entryLen + 1);
+                FORCE_FORWARD_SLASH(pathBuf);
+                if (pathBuf[pathLen - 1] != '/') {
+                    pathBuf[pathLen ? pathLen : 0] = '/';
+                    memcpy(pathLen ? pathBuf + pathLen + 1 : pathBuf + 1, entry->d_name, entryLen + 1);
+                } else
+                    memcpy(pathBuf + pathLen, entry->d_name, entryLen + 1);
 
                 /* Append '/' on the end of directory entries */
                 if (IS_ENTRY_DIRECTORY(self->rootPath, self->webPath, entry)) {
@@ -65,7 +69,7 @@ size_t DirectoryRoutineContinue(DirectoryRoutine *self) {
     return bytesWrite;
 }
 
-DirectoryRoutine DirectoryRoutineNew(int socket, DIR *dir, const char *webPath, char *rootPath) {
+DirectoryRoutine DirectoryRoutineNew(SOCKET socket, DIR *dir, const char *webPath, char *rootPath) {
     size_t i;
     DirectoryRoutine self;
     self.directory = dir, self.socketBuffer = socketBufferNew(socket), self.count = 0, self.rootPath = rootPath;
@@ -120,7 +124,7 @@ void DirectoryRoutineArrayDel(RoutineArray *self, DirectoryRoutine *directoryRou
     }
 }
 
-FileRoutine FileRoutineNew(int socket, FILE *file, off_t start, off_t end) {
+FileRoutine FileRoutineNew(SOCKET socket, FILE *file, off_t start, off_t end) {
     FileRoutine self;
     self.file = file, self.start = start, self.end = end, self.socket = socket;
     fseek(self.file, self.start, SEEK_SET);
@@ -136,7 +140,7 @@ size_t FileRoutineContinue(FileRoutine *self) {
     bytesRead = fread(buffer, 1, remaining < BUFSIZ ? remaining : BUFSIZ, self->file);
 
     if (bytesRead > 0) {
-        byteWrite = write(self->socket, buffer, bytesRead);
+        byteWrite = send(self->socket, buffer, (SOCK_BUF_TYPE) bytesRead, 0);
 
         if (byteWrite == -1)
             bytesRead = 0;

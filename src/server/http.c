@@ -228,6 +228,7 @@ static inline void
 getPathName(const char *path, size_t maxPaths, char linkPath[FILENAME_MAX], char displayPath[FILENAME_MAX]) {
     size_t i, max = strlen(path) + 1, currentPath = 0;
     memcpy(linkPath, path, max);
+    FORCE_FORWARD_SLASH(linkPath);
 
     for (i = 0; i < max; ++i) {
         if (linkPath[i] != '/')

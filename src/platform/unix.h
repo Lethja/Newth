@@ -14,3 +14,5 @@
 #include <unistd.h>
 
 #define SOCKET int
+#define SOCK_BUF_TYPE size_t
+#define FORCE_FORWARD_SLASH(path)

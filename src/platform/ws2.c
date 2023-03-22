@@ -33,20 +33,53 @@ void platformCloseBindSockets(fd_set *sockets) {
 }
 
 int platformServerStartup(SOCKET *listenSocket, short port) {
-    struct sockaddr_in serverAddress;
+    struct addrinfo *result = NULL;
+    struct addrinfo hints;
+    char portStr[6] = "";
+    WSADATA wsaData;
+    int iResult;
 
-    if ((*listenSocket = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+    iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    if (iResult)
         return 1;
 
-    serverAddress.sin_family = AF_INET;
-    serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
-    serverAddress.sin_port = htons(port);
+    ZeroMemory(&hints, sizeof(hints));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+    hints.ai_flags = AI_PASSIVE;
 
-    if ((bind(*listenSocket, (SA *) &serverAddress, sizeof(serverAddress))) < 0)
-        return 1;
+    snprintf(portStr, 6, "%d", port);
 
-    if ((listen(*listenSocket, 10)) < 0)
+    iResult = getaddrinfo(NULL, portStr, &hints, &result);
+    if (iResult) {
+        WSACleanup();
         return 1;
+    }
+
+    *listenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+    if (*listenSocket == INVALID_SOCKET) {
+        freeaddrinfo(result);
+        WSACleanup();
+        return 1;
+    }
+
+    iResult = bind(*listenSocket, result->ai_addr, (int) result->ai_addrlen);
+    if (iResult == SOCKET_ERROR) {
+        freeaddrinfo(result);
+        closesocket(*listenSocket);
+        WSACleanup();
+        return 1;
+    }
+
+    freeaddrinfo(result);
+
+    iResult = listen(*listenSocket, SOMAXCONN);
+    if (iResult == SOCKET_ERROR) {
+        closesocket(*listenSocket);
+        WSACleanup();
+        return 1;
+    }
 
     return 0;
 }
@@ -67,12 +100,22 @@ SOCKET platformAcceptConnection(SOCKET fromSocket) {
 
 #ifndef NDEBUG
     {
+/*
         char address[16] = "";
         WSAAddressToStringA((SA *) &clientAddress.sin_addr, sizeof(clientAddress.sin_addr),
                             NULL, address, (LPDWORD) sizeof(address));
         fprintf(stdout, "Connection opened for: %s\n", address);
+*/
     }
 #endif
 
     return clientSocket;
+}
+
+void platformPathForceForwardSlash(char *path) {
+    while (*path != '\0') {
+        if (*path == '\\')
+            *path = '/';
+        ++path;
+    }
 }

@@ -2,7 +2,7 @@
 #include <unistd.h>
 #include "sockbufr.h"
 
-SocketBuffer socketBufferNew(int clientSocket) {
+SocketBuffer socketBufferNew(SOCKET clientSocket) {
     SocketBuffer self;
     self.clientSocket = clientSocket, self.idx = 0;
     memset(self.buffer, 0, BUFSIZ);
@@ -11,7 +11,7 @@ SocketBuffer socketBufferNew(int clientSocket) {
 
 size_t socketBufferFlush(SocketBuffer *self) {
     if (self->idx) {
-        if (write(self->clientSocket, self->buffer, self->idx) == -1)
+        if (send(self->clientSocket, self->buffer, self->idx, 0) == -1)
             return 1;
     }
 
@@ -22,7 +22,7 @@ size_t socketBufferFlush(SocketBuffer *self) {
 size_t socketBufferWrite(SocketBuffer *self, const char *data) {
     while (*data != '\0') {
         if (self->idx == BUFSIZ) {
-            if (write(self->clientSocket, self->buffer, self->idx) == -1)
+            if (send(self->clientSocket, self->buffer, self->idx, 0) == -1)
                 return 1;
             self->idx = 0;
         }
