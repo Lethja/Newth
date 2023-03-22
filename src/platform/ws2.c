@@ -33,46 +33,30 @@ void platformCloseBindSockets(fd_set *sockets) {
 }
 
 int platformServerStartup(SOCKET *listenSocket, short port) {
-    struct addrinfo *result = NULL;
-    struct addrinfo hints;
-    char portStr[6] = "";
+    struct sockaddr_in serverAddress;
     WSADATA wsaData;
     int iResult;
 
-    iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    iResult = WSAStartup(MAKEWORD(2, 0), &wsaData);
     if (iResult)
         return 1;
 
-    ZeroMemory(&hints, sizeof(hints));
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_protocol = IPPROTO_TCP;
-    hints.ai_flags = AI_PASSIVE;
-
-    snprintf(portStr, 6, "%d", port);
-
-    iResult = getaddrinfo(NULL, portStr, &hints, &result);
-    if (iResult) {
-        WSACleanup();
-        return 1;
-    }
-
-    *listenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+    *listenSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (*listenSocket == INVALID_SOCKET) {
-        freeaddrinfo(result);
         WSACleanup();
         return 1;
     }
 
-    iResult = bind(*listenSocket, result->ai_addr, (int) result->ai_addrlen);
+    serverAddress.sin_family = AF_INET;
+    serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
+    serverAddress.sin_port = htons(port);
+
+    iResult = bind(*listenSocket, (struct sockaddr *) &serverAddress, (int) sizeof(serverAddress));
     if (iResult == SOCKET_ERROR) {
-        freeaddrinfo(result);
         closesocket(*listenSocket);
         WSACleanup();
         return 1;
     }
-
-    freeaddrinfo(result);
 
     iResult = listen(*listenSocket, SOMAXCONN);
     if (iResult == SOCKET_ERROR) {

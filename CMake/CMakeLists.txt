@@ -20,6 +20,6 @@ target_compile_definitions(client PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
 target_compile_definitions(server PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
 
 if (WIN32)
-    target_link_libraries(client libwsock32.a Ws2_32.a)
-    target_link_libraries(server libwsock32.a Ws2_32.a)
+    target_link_libraries(client libwsock32.a)
+    target_link_libraries(server libwsock32.a)
 endif ()
