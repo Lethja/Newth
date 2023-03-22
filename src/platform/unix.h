@@ -1,3 +1,6 @@
+#ifndef OPEN_WEB_PLATFORM_UNIX_2_H
+#define OPEN_WEB_PLATFORM_UNIX_2_H
+
 #include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -13,6 +16,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#define CLOSE_SOCKET(x) close(x)
 #define SOCKET int
 #define SOCK_BUF_TYPE size_t
 #define FORCE_FORWARD_SLASH(path)
+
+#endif /* OPEN_WEB_PLATFORM_UNIX_2_H */

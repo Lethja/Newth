@@ -279,7 +279,7 @@ int main(int argc, char **argv) {
                     FD_SET(clientSocket, &currentSockets);
                 } else {
                     if (handleConnection(i)) {
-                        closesocket(i);
+                        CLOSE_SOCKET(i);
                         FD_CLR(i, &currentSockets);
                     }
                 }

@@ -1,3 +1,4 @@
+#include "platform.h"
 #include "unix.h"
 
 char *platformPathCombine(char *path1, char *path2) {
