@@ -7,10 +7,12 @@
 #include <dirent.h>
 
 SOCKET globalServerSocket;
+SOCKET globalMaxSocket = 0;
+fd_set currentSockets;
+
 char *globalRootPath = NULL;
 RoutineArray globalFileRoutineArray;
 RoutineArray globalDirRoutineArray;
-fd_set currentSockets;
 struct timeval globalSelectSleep;
 
 #pragma clang diagnostic push
@@ -19,13 +21,13 @@ struct timeval globalSelectSleep;
 void noAction(int signal) {}
 
 void shutdownCrash(int signal) {
-    platformCloseBindSockets(&currentSockets);
+    platformCloseBindSockets(&currentSockets, globalMaxSocket);
     printf("Emergency shutdown: %d\n", signal);
     exit(1);
 }
 
 void shutdownProgram(int signal) {
-    platformCloseBindSockets(&currentSockets);
+    platformCloseBindSockets(&currentSockets, globalMaxSocket);
     printf("Graceful shutdown: %d\n", signal);
     exit(0);
 }
@@ -233,7 +235,6 @@ static inline void setRootPath(char *path) {
 
 int main(int argc, char **argv) {
     fd_set readySockets;
-    SOCKET maxSocket = 0;
 
     platformConnectSignals(noAction, shutdownCrash, shutdownProgram);
 
@@ -254,7 +255,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    maxSocket = globalServerSocket;
+    globalMaxSocket = globalServerSocket;
     FD_ZERO(&currentSockets);
     FD_SET(globalServerSocket, &currentSockets);
 
@@ -283,17 +284,17 @@ int main(int argc, char **argv) {
 
         readySockets = currentSockets;
 
-        if (select(maxSocket + 1, &readySockets, NULL, NULL, &globalSelectSleep) < 0) {
+        if (select(globalMaxSocket + 1, &readySockets, NULL, NULL, &globalSelectSleep) < 0) {
             perror("Select");
             exit(1);
         }
 
-        for (i = 0; i <= maxSocket; i++) {
+        for (i = 0; i <= globalMaxSocket; i++) {
             if (FD_ISSET(i, &readySockets)) {
                 if (i == globalServerSocket) {
                     SOCKET clientSocket = platformAcceptConnection(globalServerSocket);
-                    if(clientSocket > maxSocket)
-                        maxSocket = clientSocket;
+                    if(clientSocket > globalMaxSocket)
+                        globalMaxSocket = clientSocket;
 
                     FD_SET(clientSocket, &currentSockets);
                 } else {

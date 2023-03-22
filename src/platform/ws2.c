@@ -23,12 +23,12 @@ char *platformPathCombine(char *path1, char *path2) {
     return returnPath;
 }
 
-void platformCloseBindSockets(fd_set *sockets) {
-    int i;
-    for (i = 0; i < FD_SETSIZE; i++) {
-        if (FD_ISSET(i, sockets))
-            shutdown(i, SD_BOTH);
-        closesocket(i);
+void platformCloseBindSockets(fd_set *sockets, SOCKET max) {
+    SOCKET i;
+    for (i = 0; i <= max; i++) {
+        if (FD_ISSET(i, sockets)) {
+            closesocket(i);
+        }
     }
     WSACleanup();
 }

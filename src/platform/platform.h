@@ -30,8 +30,9 @@ char *platformPathCombine(char *path1, char *path2);
 /**
  * Close any open sockets in the file descriptor
  * @param sockets the fd_set to close all open sockets on
+ * @param max the maximum socket number select() has seen in the session
  */
-void platformCloseBindSockets(fd_set *sockets);
+void platformCloseBindSockets(fd_set *sockets, SOCKET max);
 
 /**
  * Start up the server

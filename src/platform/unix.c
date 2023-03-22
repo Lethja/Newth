@@ -19,11 +19,11 @@ char *platformPathCombine(char *path1, char *path2) {
     return returnPath;
 }
 
-void platformCloseBindSockets(fd_set *sockets) {
+void platformCloseBindSockets(fd_set *sockets, SOCKET max) {
     int i;
-    for (i = 0; i < FD_SETSIZE; i++) {
+    for (i = 0; i <= max; i++) {
         if (FD_ISSET(i, sockets))
-            shutdown(i, SHUT_RDWR);
+            close(i);
     }
 }
 
