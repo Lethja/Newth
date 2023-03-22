@@ -2,6 +2,7 @@
 
 #include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 char *platformPathCombine(char *path1, char *path2) {
     const char pathDivider = '/', pathDivider2 = '\\';
@@ -51,7 +52,7 @@ int platformServerStartup(SOCKET *listenSocket, short port) {
     serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
     serverAddress.sin_port = htons(port);
 
-    iResult = bind(*listenSocket, (struct sockaddr *) &serverAddress, (int) sizeof(serverAddress));
+    iResult = bind(*listenSocket, (SA *) &serverAddress, (int) sizeof(SA));
     if (iResult == SOCKET_ERROR) {
         closesocket(*listenSocket);
         WSACleanup();

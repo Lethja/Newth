@@ -2,6 +2,7 @@
 #include "server/http.h"
 #include "server/routine.h"
 
+#include <stdlib.h>
 #include <sys/stat.h>
 #include <dirent.h>
 
@@ -19,13 +20,13 @@ void noAction(int signal) {}
 
 void shutdownCrash(int signal) {
     platformCloseBindSockets(&currentSockets);
-    printf("Emergency shutdown: %d", signal);
+    printf("Emergency shutdown: %d\n", signal);
     exit(1);
 }
 
 void shutdownProgram(int signal) {
     platformCloseBindSockets(&currentSockets);
-    printf("Graceful shutdown: %d", signal);
+    printf("Graceful shutdown: %d\n", signal);
     exit(0);
 }
 
@@ -134,8 +135,21 @@ char handlePath(SOCKET clientSocket, char *path) {
 
     r = memcmp(globalRootPath, absolutePath, lenA);
 
-    if (r || stat(absolutePath, &st) != 0)
+    if (r)
         goto handlePathNotFound;
+
+#ifdef _WIN32
+    if(absolutePath[lenB - 1] == '\\')
+        absolutePath[lenB - 1] = '\0';
+#endif /* _WIN32 */
+
+    r = stat(absolutePath, &st);
+    if (r) {
+        perror(absolutePath);
+        goto handlePathNotFound;
+    }
+
+    FORCE_FORWARD_SLASH(absolutePath);
 
     if (S_ISDIR(st.st_mode))
         e = handleDir(clientSocket, absolutePath, &st);
@@ -219,6 +233,7 @@ static inline void setRootPath(char *path) {
 
 int main(int argc, char **argv) {
     fd_set readySockets;
+    SOCKET maxSocket = 0;
 
     platformConnectSignals(noAction, shutdownCrash, shutdownProgram);
 
@@ -239,6 +254,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
+    maxSocket = globalServerSocket;
     FD_ZERO(&currentSockets);
     FD_SET(globalServerSocket, &currentSockets);
 
@@ -267,15 +283,18 @@ int main(int argc, char **argv) {
 
         readySockets = currentSockets;
 
-        if (select(FD_SETSIZE, &readySockets, NULL, NULL, &globalSelectSleep) < 0) {
+        if (select(maxSocket + 1, &readySockets, NULL, NULL, &globalSelectSleep) < 0) {
             perror("Select");
             exit(1);
         }
 
-        for (i = 0; i < FD_SETSIZE; i++) {
+        for (i = 0; i <= maxSocket; i++) {
             if (FD_ISSET(i, &readySockets)) {
                 if (i == globalServerSocket) {
                     SOCKET clientSocket = platformAcceptConnection(globalServerSocket);
+                    if(clientSocket > maxSocket)
+                        maxSocket = clientSocket;
+
                     FD_SET(clientSocket, &currentSockets);
                 } else {
                     if (handleConnection(i)) {

@@ -3,6 +3,7 @@
 #ifndef _DIRENT_HAVE_D_TYPE
 
 #include <dirent.h>
+#include <stdlib.h>
 #include <sys/stat.h>
 
 char platformIsEntryDirectory(char *rootPath, char *webPath, struct dirent *entry) {
