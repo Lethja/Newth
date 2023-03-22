@@ -104,3 +104,11 @@ void platformPathForceForwardSlash(char *path) {
         ++path;
     }
 }
+
+void platformPathForceBackwardSlash(char *path) {
+    while (*path != '\0') {
+        if (*path == '/')
+            *path = '\\';
+        ++path;
+    }
+}

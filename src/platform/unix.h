@@ -1,5 +1,5 @@
-#ifndef OPEN_WEB_PLATFORM_UNIX_2_H
-#define OPEN_WEB_PLATFORM_UNIX_2_H
+#ifndef OPEN_WEB_PLATFORM_UNIX_H
+#define OPEN_WEB_PLATFORM_UNIX_H
 
 #include <arpa/inet.h>
 #include <errno.h>
@@ -20,5 +20,6 @@
 #define SOCKET int
 #define SOCK_BUF_TYPE size_t
 #define FORCE_FORWARD_SLASH(path)
+#define FORCE_BACKWARD_SLASH(path)
 
-#endif /* OPEN_WEB_PLATFORM_UNIX_2_H */
+#endif /* OPEN_WEB_PLATFORM_UNIX_H */

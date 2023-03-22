@@ -135,6 +135,8 @@ char handlePath(SOCKET clientSocket, char *path) {
     if (lenA > lenB)
         goto handlePathNotFound;
 
+    FORCE_BACKWARD_SLASH(globalRootPath);
+
     r = memcmp(globalRootPath, absolutePath, lenA);
 
     if (r)

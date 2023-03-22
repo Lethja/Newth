@@ -9,6 +9,7 @@
 #define FD_SETSIZE 1024
 #define SOCK_BUF_TYPE int
 #define FORCE_FORWARD_SLASH(path) platformPathForceForwardSlash(path)
+#define FORCE_BACKWARD_SLASH(path) platformPathForceBackwardSlash(path)
 
 #include <windows.h>
 #include <winsock2.h>
@@ -18,5 +19,7 @@
 #include "platform.h"
 
 void platformPathForceForwardSlash(char *path);
+
+void platformPathForceBackwardSlash(char *path);
 
 #endif /* OPEN_WEB_PLATFORM_WIN_SOCK_2_H */
