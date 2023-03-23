@@ -55,8 +55,8 @@ int platformAcceptConnection(int fromSocket) {
 
 #ifndef NDEBUG
     {
-        char address[16] = "";
-        inet_ntop(AF_INET, &clientAddress.sin_addr, address, sizeof(address));
+        char address[INET6_ADDRSTRLEN] = "";
+        inet_ntop(clientAddress.sin_family, &clientAddress.sin_addr, address, sizeof(address));
         fprintf(stdout, "Connection opened for: %s\n", address);
     }
 #endif
@@ -70,4 +70,17 @@ void platformConnectSignals(void(*noAction)(int), void(*shutdownCrash)(int), voi
     signal(SIGHUP, shutdownProgram);
     signal(SIGINT, shutdownProgram);
     signal(SIGTERM, shutdownProgram);
+}
+
+void platformGetIpString(struct sockaddr *addr, char ipStr[INET6_ADDRSTRLEN]) {
+    if (addr->sa_family == AF_INET) {
+        struct sockaddr_in *s4 = (struct sockaddr_in *) addr;
+        char *ip = inet_ntoa(s4->sin_addr);
+        strcpy(ipStr, ip);
+    } else if (addr->sa_family == AF_INET6) {
+        struct sockaddr_in6 *s6 = (struct sockaddr_in6 *) addr;
+        inet_ntop(s6->sin6_family, &s6->sin6_addr, ipStr, INET6_ADDRSTRLEN);
+    } else {
+        strcpy(ipStr, "???");
+    }
 }

@@ -50,7 +50,7 @@ int platformServerStartup(SOCKET *listenSocket, short port);
  */
 void platformConnectSignals(void(*noAction)(int), void(*shutdownCrash)(int), void(*shutdownProgram)(int));
 
-char *platformGetIp4String(struct in_addr* addr);
+void platformGetIpString(struct sockaddr* addr, char ipStr[INET6_ADDRSTRLEN]);
 
 SOCKET platformAcceptConnection(SOCKET fromSocket);
 

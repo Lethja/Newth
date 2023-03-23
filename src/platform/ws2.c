@@ -113,6 +113,18 @@ void platformPathForceBackwardSlash(char *path) {
     }
 }
 
-char *platformGetIp4String(struct in_addr* addr) {
-    return inet_ntoa(*addr);
+void platformGetIpString(struct sockaddr *addr, char ipStr[INET6_ADDRSTRLEN]) {
+    if (addr->sa_family == AF_INET) {
+        struct sockaddr_in *s4 = (struct sockaddr_in *) addr;
+        char *ip = inet_ntoa(s4->sin_addr);
+        strcpy(ipStr, ip);
+        /* TODO: dynamically load inet_ntop support */
+        /*
+    } else if (addr->sa_family == AF_INET6) {
+        struct sockaddr_in6 *s6 = (struct sockaddr_in6 *) addr;
+        inet_ntop(s6->sin6_family, &s6->sin6_addr, ipStr, INET6_ADDRSTRLEN);
+        */
+    } else {
+        strcpy(ipStr, "???");
+    }
 }

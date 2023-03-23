@@ -176,19 +176,16 @@ char handlePath(SOCKET clientSocket, char *path) {
 }
 
 char handleConnection(SOCKET clientSocket) {
-    char r = 0;
+    char r = 0, ip[INET6_ADDRSTRLEN];
     char buffer[BUFSIZ];
     size_t bytesRead, messageSize = 0;
     char *uriPath;
     struct sockaddr_storage sock;
     socklen_t sockLen = sizeof(sock);
 
-    getpeername(clientSocket, (struct sockaddr*) &sock, &sockLen);
-    struct sockaddr_in *s = (struct sockaddr_in *)&sock;
-    char * ip = platformGetIp4String(&s->sin_addr);
-    if(ip)
-        free(ip);
-
+    /* TODO: Make IP callback it's own function */
+    getpeername(clientSocket, (struct sockaddr *) &sock, &sockLen);
+    platformGetIpString((struct sockaddr *) &sock, ip);
     printf("%s\n", ip);
 
     while ((bytesRead = recv(clientSocket, buffer + messageSize, (int) (sizeof(buffer) - messageSize - 1), 0))) {
@@ -305,7 +302,7 @@ int main(int argc, char **argv) {
             if (FD_ISSET(i, &readySockets)) {
                 if (i == globalServerSocket) {
                     SOCKET clientSocket = platformAcceptConnection(globalServerSocket);
-                    if(clientSocket > globalMaxSocket)
+                    if (clientSocket > globalMaxSocket)
                         globalMaxSocket = clientSocket;
 
                     FD_SET(clientSocket, &currentSockets);
