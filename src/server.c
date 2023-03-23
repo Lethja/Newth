@@ -242,7 +242,17 @@ static inline void setRootPath(char *path) {
     globalRootPath = test;
 }
 
+static void printAdapterInformation(void) {
+    AdapterAddressArray *adapters = platformGetAdapterInformation();
+    size_t i;
+    for (i = 0; i < adapters->size; ++i)
+        printf("%s:\t%s\n", adapters->adapterAddress[i].name, adapters->adapterAddress[i].addr);
+
+    platformFreeAdapterInformation(adapters);
+}
+
 int main(int argc, char **argv) {
+    AdapterAddressArray *adapters;
     fd_set readySockets;
 
     platformConnectSignals(noAction, shutdownCrash, shutdownProgram);
@@ -270,6 +280,8 @@ int main(int argc, char **argv) {
 
     globalFileRoutineArray.size = globalDirRoutineArray.size = 0;
     globalFileRoutineArray.array = globalDirRoutineArray.array = NULL;
+
+    printAdapterInformation();
 
     while (1) {
         SOCKET i;

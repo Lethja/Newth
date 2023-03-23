@@ -64,6 +64,8 @@ void platformGetIpString(struct sockaddr *addr, char ipStr[INET6_ADDRSTRLEN]);
 
 AdapterAddressArray *platformGetAdapterInformation(void);
 
+void platformFreeAdapterInformation(AdapterAddressArray *array);
+
 SOCKET platformAcceptConnection(SOCKET fromSocket);
 
 #ifdef _DIRENT_HAVE_D_TYPE

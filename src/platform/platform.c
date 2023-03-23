@@ -37,3 +37,8 @@ char platformIsEntryDirectory(char *rootPath, char *webPath, struct dirent *entr
 }
 
 #endif
+
+void platformFreeAdapterInformation(AdapterAddressArray *array) {
+    free(array->adapterAddress);
+    free(array);
+}
