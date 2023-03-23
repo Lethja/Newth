@@ -1,3 +1,4 @@
+#include <ifaddrs.h>
 #include "platform.h"
 #include "unix.h"
 
@@ -83,4 +84,38 @@ void platformGetIpString(struct sockaddr *addr, char ipStr[INET6_ADDRSTRLEN]) {
     } else {
         strcpy(ipStr, "???");
     }
+}
+
+AdapterAddressArray *platformGetAdapterInformation(void) {
+    struct AdapterAddressArray *array;
+    struct ifaddrs *ifap, *ifa;
+    char addr[INET6_ADDRSTRLEN];
+    if (getifaddrs(&ifap)) {
+        return NULL;
+    }
+
+    array = malloc(sizeof(AdapterAddress));
+    array->size = 0;
+
+    for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+        if (ifa->ifa_addr->sa_family == AF_INET) {
+            struct sockaddr_in *sa = (struct sockaddr_in *) ifa->ifa_addr;
+            char *ip4 = inet_ntoa(sa->sin_addr);
+            strcpy(addr, ip4);
+        } else if (ifa->ifa_addr->sa_family == AF_INET6) {
+            struct sockaddr_in6 *sa = (struct sockaddr_in6 *) ifa->ifa_addr;
+            inet_ntop(sa->sin6_family, &sa->sin6_addr, addr, INET6_ADDRSTRLEN);
+        } else continue;
+
+        array->adapterAddress = realloc(array->adapterAddress, sizeof(AdapterAddress) * (array->size + 1));
+
+        strncpy(array->adapterAddress[array->size].name, ifa->ifa_name, INET6_ADDRSTRLEN - 1);
+        array->adapterAddress[array->size].name[INET6_ADDRSTRLEN - 1] = '\0';
+
+        strncpy(array->adapterAddress[array->size].addr, addr, INET6_ADDRSTRLEN - 1);
+        array->adapterAddress[array->size].addr[INET6_ADDRSTRLEN - 1] = '\0';
+    }
+    freeifaddrs(ifap);
+
+    return array;
 }

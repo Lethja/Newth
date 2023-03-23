@@ -19,6 +19,16 @@
 
 #endif
 
+typedef struct AdapterAddress {
+    char name[INET6_ADDRSTRLEN];
+    char addr[INET6_ADDRSTRLEN];
+} AdapterAddress;
+
+typedef struct AdapterAddressArray {
+    size_t size;
+    AdapterAddress *adapterAddress;
+} AdapterAddressArray;
+
 /**
  * Combine two path strings together
  * @param path1 The string to combine on the left
@@ -50,7 +60,9 @@ int platformServerStartup(SOCKET *listenSocket, short port);
  */
 void platformConnectSignals(void(*noAction)(int), void(*shutdownCrash)(int), void(*shutdownProgram)(int));
 
-void platformGetIpString(struct sockaddr* addr, char ipStr[INET6_ADDRSTRLEN]);
+void platformGetIpString(struct sockaddr *addr, char ipStr[INET6_ADDRSTRLEN]);
+
+AdapterAddressArray *platformGetAdapterInformation(void);
 
 SOCKET platformAcceptConnection(SOCKET fromSocket);
 
