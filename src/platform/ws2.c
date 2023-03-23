@@ -112,3 +112,7 @@ void platformPathForceBackwardSlash(char *path) {
         ++path;
     }
 }
+
+char *platformGetIp4String(struct in_addr* addr) {
+    return inet_ntoa(*addr);
+}

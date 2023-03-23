@@ -50,6 +50,8 @@ int platformServerStartup(SOCKET *listenSocket, short port);
  */
 void platformConnectSignals(void(*noAction)(int), void(*shutdownCrash)(int), void(*shutdownProgram)(int));
 
+char *platformGetIp4String(struct in_addr* addr);
+
 SOCKET platformAcceptConnection(SOCKET fromSocket);
 
 #ifdef _DIRENT_HAVE_D_TYPE

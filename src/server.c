@@ -180,6 +180,16 @@ char handleConnection(SOCKET clientSocket) {
     char buffer[BUFSIZ];
     size_t bytesRead, messageSize = 0;
     char *uriPath;
+    struct sockaddr_storage sock;
+    socklen_t sockLen = sizeof(sock);
+
+    getpeername(clientSocket, (struct sockaddr*) &sock, &sockLen);
+    struct sockaddr_in *s = (struct sockaddr_in *)&sock;
+    char * ip = platformGetIp4String(&s->sin_addr);
+    if(ip)
+        free(ip);
+
+    printf("%s\n", ip);
 
     while ((bytesRead = recv(clientSocket, buffer + messageSize, (int) (sizeof(buffer) - messageSize - 1), 0))) {
         if (bytesRead == -1)
