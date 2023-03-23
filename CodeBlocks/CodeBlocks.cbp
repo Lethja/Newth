@@ -40,6 +40,7 @@
 				</Compiler>
 				<Linker>
 					<Add library="libwsock32" />
+					<Add library="Iphlpapi" />
 				</Linker>
 			</Target>
 			<Target title="Server Release W32">
@@ -48,12 +49,14 @@
 				<Option object_output="obj/w32/Release/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
+				<Option use_console_runner="0" />
 				<Compiler>
 					<Add option="-O2" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
 					<Add library="libwsock32" />
+					<Add library="Iphlpapi" />
 				</Linker>
 			</Target>
 		</Build>

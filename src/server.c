@@ -252,7 +252,6 @@ static void printAdapterInformation(void) {
 }
 
 int main(int argc, char **argv) {
-    AdapterAddressArray *adapters;
     fd_set readySockets;
 
     platformConnectSignals(noAction, shutdownCrash, shutdownProgram);
