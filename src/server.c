@@ -244,9 +244,16 @@ static inline void setRootPath(char *path) {
 
 static void printAdapterInformation(void) {
     AdapterAddressArray *adapters = platformGetAdapterInformation();
-    size_t i;
-    for (i = 0; i < adapters->size; ++i)
-        printf("%s:\t%s\n", adapters->adapterAddress[i].name, adapters->adapterAddress[i].addr);
+    size_t i, j;
+    for (i = 0; i < adapters->size; ++i) {
+        printf("%s:\n", adapters->adapter[i].name);
+        for(j = 0; j < adapters->adapter[i].addresses.size; ++j) {
+            if(!adapters->adapter[i].addresses.array[j].type)
+                printf("\thttp://%s:%d\n", adapters->adapter[i].addresses.array[j].address, SERVER_PORT);
+            else
+                printf("\thttp://[%s]:%d\n", adapters->adapter[i].addresses.array[j].address, SERVER_PORT);
+        }
+    }
 
     platformFreeAdapterInformation(adapters);
 }

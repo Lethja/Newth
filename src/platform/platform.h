@@ -19,14 +19,26 @@
 
 #endif
 
-typedef struct AdapterAddress {
-    char name[INET6_ADDRSTRLEN];
-    char addr[INET6_ADDRSTRLEN];
-} AdapterAddress;
+#define ADAPTER_NAME_LENGTH 128
+
+typedef struct Address {
+    short type;
+    char address[INET6_ADDRSTRLEN];
+} Address;
+
+typedef struct AddressArray {
+    size_t size;
+    Address *array;
+} AddressArray;
+
+typedef struct Adapter {
+    char name[ADAPTER_NAME_LENGTH];
+    AddressArray addresses;
+} NetworkAdapter;
 
 typedef struct AdapterAddressArray {
     size_t size;
-    AdapterAddress *adapterAddress;
+    NetworkAdapter *adapter;
 } AdapterAddressArray;
 
 /**
@@ -65,6 +77,9 @@ void platformGetIpString(struct sockaddr *addr, char ipStr[INET6_ADDRSTRLEN]);
 AdapterAddressArray *platformGetAdapterInformation(void);
 
 void platformFreeAdapterInformation(AdapterAddressArray *array);
+
+void platformFindOrCreateAdapterIp(AdapterAddressArray *array, char adapter[ADAPTER_NAME_LENGTH], short type,
+                                   char ip[INET6_ADDRSTRLEN]);
 
 SOCKET platformAcceptConnection(SOCKET fromSocket);
 

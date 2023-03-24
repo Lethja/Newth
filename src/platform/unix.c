@@ -114,16 +114,7 @@ AdapterAddressArray *platformGetAdapterInformation(void) {
 
         } else continue;
 
-        array->adapterAddress = array->size ? realloc(array->adapterAddress, sizeof(AdapterAddress) * (array->size + 1))
-                                            : malloc(sizeof(AdapterAddress));
-
-        strncpy(array->adapterAddress[array->size].name, ifa->ifa_name, INET6_ADDRSTRLEN - 1);
-        array->adapterAddress[array->size].name[INET6_ADDRSTRLEN - 1] = '\0';
-
-        strncpy(array->adapterAddress[array->size].addr, addr, INET6_ADDRSTRLEN - 1);
-        array->adapterAddress[array->size].addr[INET6_ADDRSTRLEN - 1] = '\0';
-
-        ++array->size;
+        platformFindOrCreateAdapterIp(array, ifa->ifa_name, ifa->ifa_addr->sa_family == AF_INET6, addr);
     }
     freeifaddrs(ifap);
 

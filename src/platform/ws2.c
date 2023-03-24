@@ -153,25 +153,12 @@ AdapterAddressArray *platformGetAdapterInformation(void) {
         array->size = 0;
 
         while (pAdapter) {
-            if ((strcmp(pAdapter->IpAddressList.IpAddress.String, "0.0.0.0")) != 0) {
-                array->adapterAddress = array->size ? realloc(array->adapterAddress,
-                                                              sizeof(AdapterAddress) * (array->size + 1)) : malloc(
-                        sizeof(AdapterAddress));
+            /* TODO: IPV6 */
+            char ip[INET6_ADDRSTRLEN];
+            strncpy(ip, pAdapter->IpAddressList.IpAddress.String, INET6_ADDRSTRLEN);
 
-                strncpy(array->adapterAddress[array->size].name, pAdapter->Description, INET6_ADDRSTRLEN - 1);
-                if (strlen(pAdapter->Description) >= INET_ADDRSTRLEN) {
-                    array->adapterAddress[array->size].name[INET6_ADDRSTRLEN - 5] = '.';
-                    array->adapterAddress[array->size].name[INET6_ADDRSTRLEN - 4] = '.';
-                    array->adapterAddress[array->size].name[INET6_ADDRSTRLEN - 3] = '.';
-                    array->adapterAddress[array->size].name[INET6_ADDRSTRLEN - 2] = ' ';
-                    array->adapterAddress[array->size].name[INET6_ADDRSTRLEN - 1] = '\0';
-                }
-
-                strncpy(array->adapterAddress[array->size].addr, pAdapter->IpAddressList.IpAddress.String,
-                        INET6_ADDRSTRLEN - 1);
-                array->adapterAddress[array->size].addr[INET6_ADDRSTRLEN - 1] = '\0';
-
-                ++array->size;
+            if ((strcmp(ip, "0.0.0.0")) != 0) {
+                platformFindOrCreateAdapterIp(array, pAdapter->Description, 0, ip);
             }
 
             pAdapter = pAdapter->Next;
