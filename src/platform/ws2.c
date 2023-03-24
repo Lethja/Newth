@@ -132,38 +132,34 @@ void platformGetIpString(struct sockaddr *addr, char ipStr[INET6_ADDRSTRLEN]) {
 
 AdapterAddressArray *platformGetAdapterInformation(void) {
     AdapterAddressArray *array = NULL;
-    PIP_ADAPTER_INFO pAdapterInfo;
+    PIP_ADAPTER_INFO pAdapterInfo = NULL;
     PIP_ADAPTER_INFO pAdapter = NULL;
-    int dwRetVal = 0;
+    ULONG dwRetVal, ulOutBufLen = sizeof(IP_ADAPTER_INFO);
 
-    ULONG ulOutBufLen = sizeof (IP_ADAPTER_INFO);
-    pAdapterInfo = (IP_ADAPTER_INFO *) malloc(sizeof (IP_ADAPTER_INFO));
-    if(pAdapterInfo == NULL)
-    {
+    pAdapterInfo = (IP_ADAPTER_INFO *) malloc(sizeof(IP_ADAPTER_INFO));
+    if (pAdapterInfo == NULL) {
         printf("Error fetching 'GetAdaptersinfo'\n");
     }
-    if(GetAdaptersInfo(
-        pAdapterInfo, &ulOutBufLen) == ERROR_BUFFER_OVERFLOW)
-    {
+    if (GetAdaptersInfo(pAdapterInfo, &ulOutBufLen) == ERROR_BUFFER_OVERFLOW) {
         free(pAdapterInfo);
         pAdapterInfo = (IP_ADAPTER_INFO *) malloc(ulOutBufLen);
-        if(pAdapterInfo == NULL)
-        {
+        if (pAdapterInfo == NULL) {
             printf("Error fetching 'GetAdaptersinfo'\n");
         }
     }
-    if((dwRetVal = GetAdaptersInfo(pAdapterInfo, &ulOutBufLen)) == NO_ERROR) {
+    if ((dwRetVal = GetAdaptersInfo(pAdapterInfo, &ulOutBufLen)) == NO_ERROR) {
         pAdapter = pAdapterInfo;
         array = malloc(sizeof(AdapterAddressArray));
         array->size = 0;
 
         while (pAdapter) {
-            if((strcmp(pAdapter->IpAddressList.IpAddress.String,"0.0.0.0")) != 0) {
-                array->adapterAddress = array->size ? realloc(array->adapterAddress, sizeof(AdapterAddress) * (array->size + 1))
-                 : malloc(sizeof(AdapterAddress));
+            if ((strcmp(pAdapter->IpAddressList.IpAddress.String, "0.0.0.0")) != 0) {
+                array->adapterAddress = array->size ? realloc(array->adapterAddress,
+                                                              sizeof(AdapterAddress) * (array->size + 1)) : malloc(
+                        sizeof(AdapterAddress));
 
                 strncpy(array->adapterAddress[array->size].name, pAdapter->Description, INET6_ADDRSTRLEN - 1);
-                if(strlen(pAdapter->Description) >= INET_ADDRSTRLEN) {
+                if (strlen(pAdapter->Description) >= INET_ADDRSTRLEN) {
                     array->adapterAddress[array->size].name[INET6_ADDRSTRLEN - 5] = '.';
                     array->adapterAddress[array->size].name[INET6_ADDRSTRLEN - 4] = '.';
                     array->adapterAddress[array->size].name[INET6_ADDRSTRLEN - 3] = '.';
@@ -171,7 +167,8 @@ AdapterAddressArray *platformGetAdapterInformation(void) {
                     array->adapterAddress[array->size].name[INET6_ADDRSTRLEN - 1] = '\0';
                 }
 
-                strncpy(array->adapterAddress[array->size].addr, pAdapter->IpAddressList.IpAddress.String, INET6_ADDRSTRLEN - 1);
+                strncpy(array->adapterAddress[array->size].addr, pAdapter->IpAddressList.IpAddress.String,
+                        INET6_ADDRSTRLEN - 1);
                 array->adapterAddress[array->size].addr[INET6_ADDRSTRLEN - 1] = '\0';
 
                 ++array->size;
@@ -179,9 +176,9 @@ AdapterAddressArray *platformGetAdapterInformation(void) {
 
             pAdapter = pAdapter->Next;
         }
-    }
-    else
-        printf("GetAdaptersInfo failed with error: %d\n", dwRetVal);
+    } else
+        printf("GetAdaptersInfo failed with error: %ld\n", dwRetVal);
+
     if (pAdapterInfo)
         free(pAdapterInfo);
 
