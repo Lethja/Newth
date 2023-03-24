@@ -193,8 +193,8 @@ char handleConnection(SOCKET clientSocket) {
             return 1;
 
         messageSize += bytesRead;
-        if (messageSize > BUFSIZ - 1) {
-            SocketBuffer socketBuffer;
+        if (messageSize >= BUFSIZ - 1) {
+            SocketBuffer socketBuffer = socketBufferNew(clientSocket);
 
             httpHeaderWriteResponse(&socketBuffer, 431);
             httpHeaderWriteDate(&socketBuffer);
@@ -202,7 +202,7 @@ char handleConnection(SOCKET clientSocket) {
             httpHeaderWriteEnd(&socketBuffer);
             socketBufferFlush(&socketBuffer);
 
-            return 0;
+            return 1;
         }
 
         if (buffer[messageSize - 1] == '\n')
