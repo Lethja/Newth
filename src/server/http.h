@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <sys/stat.h>
+#include <time.h>
 
 #pragma region HTML
 
@@ -58,7 +59,24 @@ void htmlListWritePathLink(char buffer[BUFSIZ], char *webPath);
  * @param request In: The URL to convert
  * @return Free: The decoded representation of URL
  */
-char *httpClientReadUri(char *request);
+char *httpClientReadUri(const char *request);
+
+/**
+ * Convert 'If-Modified-Since' header to a tm struct for comparing
+ * @param request In: the entire header buffer
+ * @param tm Out: the struct to put valid data into
+ * @return 0 on success, other on error
+ */
+char httpHeaderReadIfModifiedSince(const char *request, struct tm *tm);
+
+/**
+ * Convert 'Range' header to a set of off_t types
+ * @param request In: the entire header buffer
+ * @param start Out: The start of the range
+ * @param end Out: The end of the range
+ * @return 0 on success, other on error
+ */
+char httpHeaderReadRange(const char *request, off_t *start, off_t *end);
 
 #pragma endregion
 
@@ -83,9 +101,11 @@ size_t httpBodyWriteChunkEnding(SocketBuffer *socketBuffer);
  * Send the entirety of a file over TCP
  * @param socketBuffer In: The TCP socket buffer to send the file over
  * @param file In: The file to be sent over TCP
+ * @param start In: The offset to start the transfer at
+ * @param finish In: The offset to stop the transfer at
  * @return 0 on success, other on error
  */
-size_t httpBodyWriteFile(SocketBuffer *socketBuffer, FILE *file);
+size_t httpBodyWriteFile(SocketBuffer *socketBuffer, FILE *file, off_t start, off_t finish);
 
 /**
  * Send the entirety of a string over TCP
@@ -154,6 +174,15 @@ void httpHeaderWriteFileName(SocketBuffer *socketBuffer, char *path);
 void httpHeaderWriteLastModified(SocketBuffer *socketBuffer, struct stat *st);
 
 /**
+ * Write a HTTP
+ * @param socketBuffer
+ * @param start
+ * @param finish
+ * @param fileLength
+ */
+void httpHeaderWriteRange(SocketBuffer *socketBuffer, off_t start, off_t finish, off_t fileLength);
+
+/**
  * Write HTTP header response code
  * @param socketBuffer In: The socketBuffer to write to
  * @param response The HTTP response code to write such as 200 or 404
@@ -168,4 +197,4 @@ void httpHeaderWriteResponse(SocketBuffer *socketBuffer, short response);
  */
 char httpHeaderHandleError(SocketBuffer *socketBuffer, short error);
 
-#endif /*OPEN_WEB_HTTP_H */
+#endif /* OPEN_WEB_HTTP_H */

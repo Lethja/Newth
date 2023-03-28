@@ -64,7 +64,7 @@ void convertUrlToPath(char *url) {
     }
 }
 
-char *httpClientReadUri(char *request) {
+char *httpClientReadUri(const char *request) {
     char *start, *end, *path;
     size_t len;
 
@@ -82,6 +82,163 @@ char *httpClientReadUri(char *request) {
     convertUrlToPath(path);
 
     return path;
+}
+
+static inline void httpHeaderDataClamp(char **str, size_t *length) {
+    char *end;
+    do {
+        switch (**str) {
+            case ' ':
+            case ':':
+            case '\t':
+                ++*str;
+                continue;
+            case '\r':
+            case '\n':
+                *length = 0;
+                return;
+            default:
+                break;
+        }
+        break;
+    } while (**str != '\0');
+
+    end = strchr(*str, '\r');
+    if (!end) {
+        end = strchr(*str, '\n');
+        if (!end)
+            *length = 0;
+    }
+
+    *length = end - *str;
+}
+
+
+static inline int ValidHttpDateStr(const char *date) {
+    return date[3] == ',' && date[4] == ' ' && date[7] == ' ' && date[11] == ' ' && date[16] == ' ' &&
+           date[19] == ':' && date[22] == ':' && date[25] == ' ';
+}
+
+char httpHeaderReadIfModifiedSince(const char *request, struct tm *tm) {
+#define READ_DATE_MAX 39
+    const char *headerValue = "If-Modified-Since";
+    size_t length;
+    char *data = strstr(request, headerValue);
+
+    if (data) {
+        data += strlen(headerValue);
+        httpHeaderDataClamp(&data, &length);
+
+        if (length && length < READ_DATE_MAX && ValidHttpDateStr(data)) {
+            char date[READ_DATE_MAX];
+            char day[4] = "", month[4] = "";
+            strncpy(date, data, READ_DATE_MAX);
+            date[length] = '\0';
+            if (sscanf(date, "%3s, %d %3s %d %d:%d:%d GMT", day, &tm->tm_mday, month,
+                       &tm->tm_year, /* NOLINT(cert-err34-c) */
+                       &tm->tm_hour, /* NOLINT(cert-err34-c) */
+                       &tm->tm_min, &tm->tm_sec)) {
+                switch (toupper(day[0])) {
+                    case 'F':
+                        tm->tm_wday = 5;
+                        break;
+                    case 'M':
+                        tm->tm_wday = 1;
+                        break;
+                    case 'S':
+                        tm->tm_wday = toupper(day[1]) == 'A' ? 6 : 0;
+                        break;
+                    case 'T':
+                        tm->tm_wday = toupper(day[1]) == 'U' ? 2 : 4;
+                        break;
+                    case 'W':
+                        tm->tm_wday = 3;
+                        break;
+                    default:
+                        return 1;
+                }
+
+                switch (toupper(month[0])) {
+                    case 'A':
+                        tm->tm_mon = toupper(month[1]) == 'P' ? 3 : 7;
+                        break;
+                    case 'D':
+                        tm->tm_mon = 11;
+                        break;
+                    case 'F':
+                        tm->tm_mon = 1;
+                        break;
+                    case 'J':
+                        tm->tm_mon = toupper(month[1]) == 'A' ? 0 : toupper(month[3]) == 'L' ? 6 : 5;
+                        break;
+                    case 'M':
+                        tm->tm_mon = toupper(month[2]) == 'R' ? 2 : 4;
+                        break;
+                    case 'N':
+                        tm->tm_mon = 10;
+                        break;
+                    case 'O':
+                        tm->tm_mon = 9;
+                        break;
+                    case 'S':
+                        tm->tm_mon = 8;
+                        break;
+                    default:
+                        return 1;
+                }
+
+                tm->tm_year -= 1900;
+                return 0;
+            }
+        }
+    }
+
+    return 1;
+}
+
+char httpHeaderReadRange(const char *request, off_t *start, off_t *end) {
+#define MAX_RANGE_STR_BUF 128
+    const char *headerValue = "Range", *parameter = "bytes=";
+    size_t strLength;
+    char *data = strstr(request, headerValue);
+
+    if (data) {
+        char range[MAX_RANGE_STR_BUF], *dash, *equ;
+        data += strlen(headerValue);
+        httpHeaderDataClamp(&data, &strLength);
+
+        if (strLength >= MAX_RANGE_STR_BUF - 1)
+            return 1;
+
+        strncpy(range, data, strLength);
+        range[strLength] = '\0';
+        data = strstr(range, parameter);
+        if (!data)
+            return 1;
+
+        data += strlen(parameter);
+        equ = strchr(range, '=');
+        dash = strchr(range, '-');
+
+        if (!equ || !dash)
+            return 1;
+
+        *equ = *dash = '\0';
+
+        if (equ + 1 != dash)
+            *start = atol(equ + 1);
+        if (dash[1] != '\0')
+            *end = atol(dash + 1);
+        return 0;
+    }
+    return 1;
+}
+
+void httpHeaderWriteRange(SocketBuffer *socketBuffer, off_t start, off_t finish, off_t fileLength) {
+    char buf[128];
+    snprintf(buf, 128, "Content-Range: bytes %lu-%lu/%lu" HTTP_EOL, start, finish == fileLength ? finish - 1 : finish,
+             fileLength);
+    socketBufferWrite(socketBuffer, buf);
 }
 
 void httpHeaderWriteDate(SocketBuffer *socketBuffer) {
@@ -135,6 +292,12 @@ char *httpHeaderGetResponse(short response) {
             break;
         case 204:
             r = "204 No Content";
+            break;
+        case 206:
+            r = "206 Partial Content";
+            break;
+        case 304:
+            r = "304 Not Modified";
             break;
         case 404:
             r = "404 Not Found";
@@ -294,10 +457,16 @@ void htmlBreadCrumbWrite(char buffer[BUFSIZ], const char *webPath) {
     strncat(buffer, "\t\t</DIV>\n\t\t<HR>\n", 17);
 }
 
-size_t httpBodyWriteFile(SocketBuffer *socketBuffer, FILE *file) {
+size_t httpBodyWriteFile(SocketBuffer *socketBuffer, FILE *file, off_t start, off_t finish) {
     char buffer[BUFSIZ];
+    off_t length = finish - start;
+    unsigned long bytesRead;
 
-    while (fread(buffer, 1, BUFSIZ, file) > 0) {
+    if (start)
+        fseek(file, start, SEEK_SET);
+
+    while ((bytesRead = fread(buffer, 1, length, file)) > 0) {
+        length -= (off_t) bytesRead;
         if (socketBufferWrite(socketBuffer, buffer))
             return 1;
     }

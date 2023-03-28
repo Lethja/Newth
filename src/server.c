@@ -78,33 +78,48 @@ char handleDir(SOCKET clientSocket, char *realPath, struct stat *st) {
     return 1;
 }
 
-char handleFile(SOCKET clientSocket, char *path, struct stat *st) {
+char handleFile(SOCKET clientSocket, const char *header, char *path, struct stat *st) {
     SocketBuffer socketBuffer = socketBufferNew(clientSocket);
     FILE *fp = fopen(path, "rb");
+    off_t start, finish;
+    char e;
 
     if (fp == NULL) {
         perror("Error in opening file");
         return 1;
     }
 
+    start = finish = 0;
+    e = httpHeaderReadRange(header, &start, &finish);
+
     /* Headers */
-    httpHeaderWriteResponse(&socketBuffer, 200);
+    httpHeaderWriteResponse(&socketBuffer, e ? 200 : 206);
     httpHeaderWriteDate(&socketBuffer);
     httpHeaderWriteFileName(&socketBuffer, path);
     httpHeaderWriteLastModified(&socketBuffer, st);
-    httpHeaderWriteContentLengthSt(&socketBuffer, st);
-    httpHeaderWriteEnd(&socketBuffer);
 
+    if (e)
+        httpHeaderWriteContentLengthSt(&socketBuffer, st);
+    else {
+        /* Handle the end of the byte range being out of range or unspecified */
+        if (finish >= st->st_size || finish == 0)
+            finish = st->st_size;
+
+        httpHeaderWriteContentLength(&socketBuffer, finish - start);
+        httpHeaderWriteRange(&socketBuffer, start, finish, st->st_size);
+    }
+
+    httpHeaderWriteEnd(&socketBuffer);
     socketBufferFlush(&socketBuffer);
 
     /* Body */
     if (st->st_size < BUFSIZ) {
-        if (httpBodyWriteFile(&socketBuffer, fp))
+        if (httpBodyWriteFile(&socketBuffer, fp, start, e ? st->st_size : finish))
             goto handleFileAbort;
         fclose(fp);
         return 0;
     } else
-        FileRoutineArrayAdd(&globalFileRoutineArray, FileRoutineNew(clientSocket, fp, 0, st->st_size));
+        FileRoutineArrayAdd(&globalFileRoutineArray, FileRoutineNew(clientSocket, fp, start, e ? finish : st->st_size));
     return 0;
 
     handleFileAbort:
@@ -113,8 +128,9 @@ char handleFile(SOCKET clientSocket, char *path, struct stat *st) {
     return 1;
 }
 
-char handlePath(SOCKET clientSocket, char *path) {
+char handlePath(SOCKET clientSocket, const char *header, char *path) {
     struct stat st;
+    struct tm tm;
     char *absolutePath = NULL, e = 0;
     int r;
     size_t lenA, lenB;
@@ -155,10 +171,32 @@ char handlePath(SOCKET clientSocket, char *path) {
 
     FORCE_FORWARD_SLASH(absolutePath);
 
+    if (!httpHeaderReadIfModifiedSince(header, &tm)) {
+        struct tm mt;
+        mt = *gmtime(&st.st_mtime);
+
+        if (tm.tm_year == mt.tm_year && tm.tm_mon == mt.tm_mon && tm.tm_mday == mt.tm_mday &&
+            tm.tm_hour == mt.tm_hour && tm.tm_min == mt.tm_min && tm.tm_sec == mt.tm_sec) {
+            SocketBuffer socketBuffer = socketBufferNew(clientSocket);
+
+            if (absolutePath != globalRootPath)
+                free(absolutePath);
+
+            httpHeaderWriteResponse(&socketBuffer, 304);
+            httpHeaderWriteDate(&socketBuffer);
+            httpHeaderWriteEnd(&socketBuffer);
+
+            if (socketBufferFlush(&socketBuffer))
+                return 1;
+
+            return 0;
+        }
+    }
+
     if (S_ISDIR(st.st_mode))
         e = handleDir(clientSocket, absolutePath, &st);
     else if (S_ISREG(st.st_mode))
-        e = handleFile(clientSocket, absolutePath, &st);
+        e = handleFile(clientSocket, header, absolutePath, &st);
 
     if (absolutePath != globalRootPath)
         free(absolutePath);
@@ -224,7 +262,7 @@ char handleConnection(SOCKET clientSocket) {
         if (uriPath[0] != '/')
             r = 1;
         else
-            r = handlePath(clientSocket, uriPath + 1);
+            r = handlePath(clientSocket, buffer, uriPath + 1);
 
         free(uriPath);
     }
@@ -247,8 +285,8 @@ static void printAdapterInformation(void) {
     size_t i, j;
     for (i = 0; i < adapters->size; ++i) {
         printf("%s:\n", adapters->adapter[i].name);
-        for(j = 0; j < adapters->adapter[i].addresses.size; ++j) {
-            if(!adapters->adapter[i].addresses.array[j].type)
+        for (j = 0; j < adapters->adapter[i].addresses.size; ++j) {
+            if (!adapters->adapter[i].addresses.array[j].type)
                 printf("\thttp://%s:%d\n", adapters->adapter[i].addresses.array[j].address, SERVER_PORT);
             else
                 printf("\thttp://[%s]:%d\n", adapters->adapter[i].addresses.array[j].address, SERVER_PORT);
