@@ -14,7 +14,9 @@ add_executable(client ../src/client.c ../src/platform/unix.h ../src/common/http.
 add_executable(server ../src/server.c ../src/platform/unix.h ../src/server/http.c
         ../src/server/http.h ../src/common/http.h ../src/server/routine.c ../src/server/routine.h
         ../src/server/sockbufr.c ../src/server/sockbufr.h
-        ../src/platform/platform.c ../src/platform/platform.h ${PLATFORM_SRC})
+        ../src/platform/platform.c ../src/platform/platform.h
+        ../src/server/event.c ../src/server/event.h
+        ${PLATFORM_SRC})
 
 target_compile_definitions(client PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
 target_compile_definitions(server PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")

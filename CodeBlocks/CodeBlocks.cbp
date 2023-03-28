@@ -106,6 +106,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../src/server/sockbufr.h" />
+        <Unit filename="../src/server/event.c">
+            <Option compilerVar="CC" />
+        </Unit>
+        <Unit filename="../src/server/event.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />
