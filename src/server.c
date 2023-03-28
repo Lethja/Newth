@@ -1,4 +1,5 @@
 #include "platform/platform.h"
+#include "server/event.h"
 #include "server/http.h"
 #include "server/routine.h"
 
@@ -41,7 +42,7 @@ char handleDir(SOCKET clientSocket, char *realPath, struct stat *st) {
     DIR *dir = opendir(realPath);
 
     if (dir == NULL)
-        return httpHeaderHandleError(&socketBuffer, 404);
+        return httpHeaderHandleError(&socketBuffer, webPath, httpGet, 404);
 
     /* Headers */
     httpHeaderWriteResponse(&socketBuffer, 200);
@@ -50,6 +51,7 @@ char handleDir(SOCKET clientSocket, char *realPath, struct stat *st) {
     httpHeaderWriteContentType(&socketBuffer, "text/html", "");
     httpHeaderWriteChunkedEncoding(&socketBuffer);
     httpHeaderWriteEnd(&socketBuffer);
+    eventHttpRespondInvoke(&socketBuffer.clientSocket, webPath, httpGet, 200);
     htmlHeaderWrite(buf, webPath[0] == '\0' ? "/" : webPath);
 
     if (httpBodyWriteChunk(&socketBuffer, buf) || socketBufferFlush(&socketBuffer))
@@ -111,6 +113,7 @@ char handleFile(SOCKET clientSocket, const char *header, char *path, struct stat
 
     httpHeaderWriteEnd(&socketBuffer);
     socketBufferFlush(&socketBuffer);
+    eventHttpRespondInvoke(&socketBuffer.clientSocket, path, httpGet, 200);
 
     /* Body */
     if (st->st_size < BUFSIZ) {
@@ -185,6 +188,7 @@ char handlePath(SOCKET clientSocket, const char *header, char *path) {
             httpHeaderWriteResponse(&socketBuffer, 304);
             httpHeaderWriteDate(&socketBuffer);
             httpHeaderWriteEnd(&socketBuffer);
+            eventHttpRespondInvoke(&socketBuffer.clientSocket, path, httpGet, 304);
 
             if (socketBufferFlush(&socketBuffer))
                 return 1;
@@ -209,22 +213,23 @@ char handlePath(SOCKET clientSocket, const char *header, char *path) {
 
     {
         SocketBuffer socketBuffer = socketBufferNew(clientSocket);
-        return httpHeaderHandleError(&socketBuffer, 404);
+        return httpHeaderHandleError(&socketBuffer, path, httpGet, 404);
     }
 }
 
 char handleConnection(SOCKET clientSocket) {
-    char r = 0, ip[INET6_ADDRSTRLEN];
+    char r = 0 /*, ip[INET6_ADDRSTRLEN] */;
     char buffer[BUFSIZ];
     size_t bytesRead, messageSize = 0;
     char *uriPath;
+    /*
     struct sockaddr_storage sock;
     socklen_t sockLen = sizeof(sock);
 
-    /* TODO: Make IP callback it's own function */
     getpeername(clientSocket, (struct sockaddr *) &sock, &sockLen);
     platformGetIpString((struct sockaddr *) &sock, ip);
     printf("%s\n", ip);
+    */
 
     while ((bytesRead = recv(clientSocket, buffer + messageSize, (int) (sizeof(buffer) - messageSize - 1), 0))) {
         if (bytesRead == -1)
@@ -239,6 +244,7 @@ char handleConnection(SOCKET clientSocket) {
             httpHeaderWriteContentLength(&socketBuffer, 0);
             httpHeaderWriteEnd(&socketBuffer);
             socketBufferFlush(&socketBuffer);
+            eventHttpRespondInvoke(&socketBuffer.clientSocket, "", httpUnknown, 431);
 
             return 1;
         }
@@ -257,6 +263,7 @@ char handleConnection(SOCKET clientSocket) {
     fflush(stdout);
 #endif
 
+    /* TODO: Get HTTP type here */
     uriPath = httpClientReadUri(buffer);
     if (uriPath) {
         if (uriPath[0] != '/')

@@ -15,7 +15,8 @@ typedef struct eventHttpFinish {
 typedef struct eventHttpRespond {
     SOCKET *clientSocket;
     short *response;
-    char *path;
+    const char *path;
+    char *type;
 } eventHttpRespond;
 
 typedef struct eventSocketOpen {
@@ -28,6 +29,6 @@ typedef struct eventSocketClose {
 
 void eventHttpRespondSetCallback(void (*callback)(eventHttpRespond *));
 
-void eventHttpRespondInvoke(eventHttpRespond *event);
+void eventHttpRespondInvoke(SOCKET *clientSocket, const char *path, char type, short respond);
 
 #endif /* OPEN_WEB_EVENT_H */

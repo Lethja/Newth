@@ -6,7 +6,10 @@ void eventHttpRespondSetCallback(void (*callback)(eventHttpRespond *)) {
     eventHttpRespondCallback = callback;
 }
 
-void eventHttpRespondInvoke(eventHttpRespond *event) {
-    if (eventHttpRespondCallback)
-        eventHttpRespondCallback(event);
+void eventHttpRespondInvoke(SOCKET *clientSocket, const char *path, char type, short respond) {
+    if (eventHttpRespondCallback) {
+        eventHttpRespond st;
+        st.clientSocket = clientSocket, st.type = &type, st.response = &respond, st.path = path;
+        eventHttpRespondCallback(&st);
+    }
 }

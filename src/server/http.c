@@ -1,4 +1,5 @@
 #include "../platform/platform.h"
+#include "event.h"
 #include "http.h"
 
 #include <ctype.h>
@@ -509,7 +510,7 @@ void httpHeaderWriteFileName(SocketBuffer *socketBuffer, char *path) {
     socketBufferWrite(socketBuffer, buffer);
 }
 
-char httpHeaderHandleError(SocketBuffer *socketBuffer, short error) {
+char httpHeaderHandleError(SocketBuffer *socketBuffer, const char *path, char type, short error) {
 #ifndef NDEBUG
     switch (error) {
         case 200:
@@ -529,6 +530,7 @@ char httpHeaderHandleError(SocketBuffer *socketBuffer, short error) {
         httpHeaderWriteDate(socketBuffer);
         httpHeaderWriteContentLength(socketBuffer, strlen(errMsg));
         httpHeaderWriteEnd(socketBuffer);
+        eventHttpRespondInvoke(&socketBuffer->clientSocket, path, type, error);
 
         if (httpBodyWriteText(socketBuffer, errMsg) || socketBufferFlush(socketBuffer))
             return 1;
