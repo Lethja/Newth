@@ -99,6 +99,7 @@ char handleFile(SOCKET clientSocket, const char *header, char *realPath, struct 
     httpHeaderWriteDate(&socketBuffer);
     httpHeaderWriteFileName(&socketBuffer, realPath);
     httpHeaderWriteLastModified(&socketBuffer, st);
+    httpHeaderWriteAcceptRanges(&socketBuffer);
 
     if (e)
         httpHeaderWriteContentLengthSt(&socketBuffer, st);

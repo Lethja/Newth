@@ -124,6 +124,12 @@ size_t httpBodyWriteText(SocketBuffer *socketBuffer, const char *text);
 #pragma region HTTP headers
 
 /**
+ * Write HTTP header Accept-Ranges: bytes to indicate 206 support for this page to the client
+ * @param socketBuffer In: The socketBuffer to write to
+ */
+void httpHeaderWriteAcceptRanges(SocketBuffer *socketBuffer);
+
+/**
  * Write the HTTP 1.1 header Transfer-Encoding: chunked
  * @param socketBuffer In: The socketBuffer to write to
  */

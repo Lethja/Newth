@@ -235,6 +235,11 @@ char httpHeaderReadRange(const char *request, off_t *start, off_t *end) {
     return 1;
 }
 
+void httpHeaderWriteAcceptRanges(SocketBuffer *socketBuffer) {
+    const char *str = "Accept-Ranges: bytes" HTTP_EOL;
+    socketBufferWrite(socketBuffer, str);
+}
+
 void httpHeaderWriteRange(SocketBuffer *socketBuffer, off_t start, off_t finish, off_t fileLength) {
     char buf[128];
     snprintf(buf, 128, "Content-Range: bytes %lu-%lu/%lu" HTTP_EOL, start, finish == fileLength ? finish - 1 : finish,
