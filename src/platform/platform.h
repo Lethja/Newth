@@ -74,6 +74,8 @@ void platformConnectSignals(void(*noAction)(int), void(*shutdownCrash)(int), voi
 
 void platformGetIpString(struct sockaddr *addr, char ipStr[INET6_ADDRSTRLEN]);
 
+unsigned short platformGetPort(struct sockaddr *addr);
+
 AdapterAddressArray *platformGetAdapterInformation(void);
 
 void platformFreeAdapterInformation(AdapterAddressArray *array);

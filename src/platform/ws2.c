@@ -130,6 +130,18 @@ void platformGetIpString(struct sockaddr *addr, char ipStr[INET6_ADDRSTRLEN]) {
     }
 }
 
+unsigned short platformGetPort(struct sockaddr *addr) {
+    if (addr->sa_family == AF_INET) {
+        struct sockaddr_in *s4 = (struct sockaddr_in *) addr;
+        return ntohs(s4->sin_port);
+    } /* else if (addr->sa_family == AF_INET6) {
+        struct sockaddr_in *s6 = (struct sockaddr_in *) addr;
+        return ntohs(s6->sin_port);
+    } */
+
+    return 0;
+}
+
 AdapterAddressArray *platformGetAdapterInformation(void) {
     AdapterAddressArray *array = NULL;
     PIP_ADAPTER_INFO pAdapterInfo = NULL;

@@ -80,11 +80,11 @@ char handleDir(SOCKET clientSocket, char *realPath, struct stat *st) {
     return 1;
 }
 
-char handleFile(SOCKET clientSocket, const char *header, char *path, struct stat *st) {
+char handleFile(SOCKET clientSocket, const char *header, char *realPath, struct stat *st) {
     SocketBuffer socketBuffer = socketBufferNew(clientSocket);
-    FILE *fp = fopen(path, "rb");
+    FILE *fp = fopen(realPath, "rb");
     off_t start, finish;
-    char e;
+    char e, *webPath;
 
     if (fp == NULL) {
         perror("Error in opening file");
@@ -97,7 +97,7 @@ char handleFile(SOCKET clientSocket, const char *header, char *path, struct stat
     /* Headers */
     httpHeaderWriteResponse(&socketBuffer, e ? 200 : 206);
     httpHeaderWriteDate(&socketBuffer);
-    httpHeaderWriteFileName(&socketBuffer, path);
+    httpHeaderWriteFileName(&socketBuffer, realPath);
     httpHeaderWriteLastModified(&socketBuffer, st);
 
     if (e)
@@ -113,7 +113,8 @@ char handleFile(SOCKET clientSocket, const char *header, char *path, struct stat
 
     httpHeaderWriteEnd(&socketBuffer);
     socketBufferFlush(&socketBuffer);
-    eventHttpRespondInvoke(&socketBuffer.clientSocket, path, httpGet, 200);
+    webPath = realPath + strlen(globalRootPath);
+    eventHttpRespondInvoke(&socketBuffer.clientSocket, webPath, httpGet, 200);
 
     /* Body */
     if (st->st_size < BUFSIZ) {
@@ -122,7 +123,7 @@ char handleFile(SOCKET clientSocket, const char *header, char *path, struct stat
         fclose(fp);
         return 0;
     } else
-        FileRoutineArrayAdd(&globalFileRoutineArray, FileRoutineNew(clientSocket, fp, start, e ? finish : st->st_size));
+        FileRoutineArrayAdd(&globalFileRoutineArray, FileRoutineNew(clientSocket, fp, start, e ? st->st_size : finish));
     return 0;
 
     handleFileAbort:
@@ -287,6 +288,37 @@ static inline void setRootPath(char *path) {
     globalRootPath = test;
 }
 
+static void printHttpEvent(eventHttpRespond *event) {
+    struct sockaddr_storage sock;
+    socklen_t sockLen = sizeof(sock);
+    unsigned short port;
+    char type;
+    char ip[INET6_ADDRSTRLEN];
+
+    switch (*event->type) {
+        case httpGet:
+            type = 'G';
+            break;
+        case httpHead:
+            type = 'H';
+            break;
+        case httpPost:
+            type = 'P';
+            break;
+        default:
+            type = '?';
+            break;
+    }
+
+    getpeername(*event->clientSocket, (struct sockaddr *) &sock, &sockLen);
+    platformGetIpString((struct sockaddr *) &sock, ip);
+    port = platformGetPort((struct sockaddr *) &sock);
+    if (sock.ss_family == AF_INET)
+        printf("%c%d:%s:%u/%s\n", type, *event->response, ip, port, event->path);
+    else
+        printf("%c%d:[%s]:%u/%s\n", type, *event->response, ip, port, event->path);
+}
+
 static void printAdapterInformation(void) {
     AdapterAddressArray *adapters = platformGetAdapterInformation();
     size_t i, j;
@@ -333,6 +365,7 @@ int main(int argc, char **argv) {
     globalFileRoutineArray.array = globalDirRoutineArray.array = NULL;
 
     printAdapterInformation();
+    eventHttpRespondSetCallback(printHttpEvent);
 
     while (1) {
         SOCKET i;
