@@ -316,20 +316,34 @@ static void printHttpEvent(eventHttpRespond *event) {
     port = platformGetPort((struct sockaddr *) &sock);
     if (sock.ss_family == AF_INET)
         printf("%c%d:%s:%u/%s\n", type, *event->response, ip, port, event->path);
-    else
+    else if (sock.ss_family == AF_INET6)
         printf("%c%d:[%s]:%u/%s\n", type, *event->response, ip, port, event->path);
 }
 
-static void printAdapterInformation(void) {
+unsigned short getPort(const SOCKET *listenSocket) {
+    socklen_t sockLen;
+    struct sockaddr_storage sock;
+    getsockname(*listenSocket, (struct sockaddr *) &sock, &sockLen);
+    if (sock.ss_family == AF_INET) {
+        struct sockaddr_in *addr = (struct sockaddr_in *) &sock;
+        return ntohs(addr->sin_port);
+    } else if (sock.ss_family == AF_INET6) {
+        struct sockaddr_in6 *addr = (struct sockaddr_in6 *) &sock;
+        return ntohs(addr->sin6_port);
+    }
+    return 0;
+}
+
+static void printAdapterInformation(unsigned short port) {
     AdapterAddressArray *adapters = platformGetAdapterInformation();
     size_t i, j;
     for (i = 0; i < adapters->size; ++i) {
         printf("%s:\n", adapters->adapter[i].name);
         for (j = 0; j < adapters->adapter[i].addresses.size; ++j) {
             if (!adapters->adapter[i].addresses.array[j].type)
-                printf("\thttp://%s:%d\n", adapters->adapter[i].addresses.array[j].address, SERVER_PORT);
+                printf("\thttp://%s:%u\n", adapters->adapter[i].addresses.array[j].address, port);
             else
-                printf("\thttp://[%s]:%d\n", adapters->adapter[i].addresses.array[j].address, SERVER_PORT);
+                printf("\thttp://[%s]:%u\n", adapters->adapter[i].addresses.array[j].address, port);
         }
     }
 
@@ -365,7 +379,7 @@ int main(int argc, char **argv) {
     globalFileRoutineArray.size = globalDirRoutineArray.size = 0;
     globalFileRoutineArray.array = globalDirRoutineArray.array = NULL;
 
-    printAdapterInformation();
+    printAdapterInformation(getPort(&globalServerSocket));
     eventHttpRespondSetCallback(printHttpEvent);
 
     while (1) {

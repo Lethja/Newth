@@ -42,6 +42,16 @@ typedef struct AdapterAddressArray {
 } AdapterAddressArray;
 
 /**
+ * Bind one of any ports mentioned in a string
+ * @param listenSocket The socket to attempt to bind a listen port to
+ * @param sockaddr The socket address structure get use as binding infomation
+ * @param socketSize The size of sockaddr
+ * @param port A string with all the potential ports in it
+ * @return 0 on successful bind, otherwise error
+ */
+char platformBindPort(const SOCKET *listenSocket, SA *sockaddr, char *port);
+
+/**
  * Combine two path strings together
  * @param path1 The string to combine on the left
  * @param path2 The string to combine on the right

@@ -36,9 +36,8 @@ int platformServerStartup(int *listenSocket, short port) {
 
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
-    serverAddress.sin_port = htons(port);
 
-    if ((bind(*listenSocket, (SA *) &serverAddress, sizeof(serverAddress))) < 0)
+    if (platformBindPort(listenSocket, (struct sockaddr *) &serverAddress, "0"))
         return 1;
 
     if ((listen(*listenSocket, 10)) < 0)
