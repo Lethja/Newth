@@ -28,7 +28,7 @@ void platformCloseBindSockets(fd_set *sockets, SOCKET max) {
     }
 }
 
-int platformServerStartup(int *listenSocket, short port) {
+int platformServerStartup(int *listenSocket, char *ports) {
     struct sockaddr_in serverAddress;
 
     if ((*listenSocket = socket(AF_INET, SOCK_STREAM, 0)) < 0)
@@ -37,7 +37,7 @@ int platformServerStartup(int *listenSocket, short port) {
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
 
-    if (platformBindPort(listenSocket, (struct sockaddr *) &serverAddress, "0"))
+    if (platformBindPort(listenSocket, (struct sockaddr *) &serverAddress, ports))
         return 1;
 
     if ((listen(*listenSocket, 10)) < 0)

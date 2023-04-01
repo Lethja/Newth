@@ -85,12 +85,19 @@ char platformBindPort(const SOCKET *listenSocket, SA *sockaddr, char *port) {
     char *last = port;
 
     while (*port != '\0') {
+        char portStr[6] = "";
+        size_t strLen;
         switch (*port) {
             case ',': /* Divider */
                 errno = 0;
-                *port = '\0';
-                out[0] = strtoul(last, NULL, 10);
-                *port = ',';
+                strLen = port - last + 1;
+                if (strLen > sizeof(portStr)) {
+                    last = port += 1;
+                    break;
+                }
+
+                strncpy(portStr, last, strLen - 1);
+                out[0] = strtoul(portStr, NULL, 10);
                 last = port += 1;
                 if (!errno && out[0] < USHRT_MAX && portSize < PORT_SIZE_MAX) {
                     portList[portSize] = out[0];
@@ -113,14 +120,14 @@ char platformBindPort(const SOCKET *listenSocket, SA *sockaddr, char *port) {
     if (portSize) {
         if (sockaddr->sa_family == AF_INET) {
             struct sockaddr_in *sock = (struct sockaddr_in *) sockaddr;
-            for (i = 0; i < portSize; ++i) {
+            for (i = 0; i <= portSize; ++i) {
                 sock->sin_port = htons(portList[i]);
                 if (bind(*listenSocket, (SA *) sock, sizeof(struct sockaddr_in)) == 0)
                     return 0;
             }
         } else if (sockaddr->sa_family == AF_INET6) {
             struct sockaddr_in6 *sock = (struct sockaddr_in6 *) sockaddr;
-            for (i = 0; i < portSize; ++i) {
+            for (i = 0; i <= portSize; ++i) {
                 sock->sin6_port = htons(portList[i]);
                 if (bind(*listenSocket, (SA *) sock, sizeof(struct sockaddr_in6)) == 0)
                     return 0;
@@ -128,4 +135,43 @@ char platformBindPort(const SOCKET *listenSocket, SA *sockaddr, char *port) {
         }
     }
     return -1;
+}
+
+int platformArgvGetFlag(int argc, char **argv, char shortFlag, char *longFlag, char **optArg) {
+    int i;
+    for (i = 1; i < argc; ++i) {
+        if (argv[i][0] == '-') {
+            switch (argv[i][1]) {
+                case '-':
+                    if (longFlag) {
+                        if (strncmp(longFlag, &argv[i][2], strlen(longFlag)) == 0) {
+                            if (optArg) {
+                                char *equ = strchr(argv[i], '=');
+                                if (equ)
+                                    *optArg = &equ[1];
+                                else if (i + 1 < argc && argv[i + 1][0] != '-')
+                                    *optArg = argv[i + 1];
+                            }
+
+                            return i;
+                        }
+                    }
+                case '\0':
+                    continue;
+                default:
+                    if (shortFlag != '\0' && argv[i][1] == shortFlag) {
+                        if (optArg) {
+                            if (argv[i][2] == '\0' && i + 1 < argc && argv[i + 1][0] != '-')
+                                *optArg = argv[i + 1];
+                            else if (argv[i][2] != '\0')
+                                *optArg = &argv[i][2];
+                            return i;
+                        }
+                    }
+                    break;
+            }
+        }
+    }
+
+    return 0;
 }

@@ -42,6 +42,17 @@ typedef struct AdapterAddressArray {
 } AdapterAddressArray;
 
 /**
+ * Get the argv position of the flag parameter (and optionally the argument)
+ * @param argc argc from main()
+ * @param argv argv from main()
+ * @param shortFlag The short flag to look for or '\0' to omit
+ * @param longFlag The long flag to look for or NULL to omit
+ * @param optArg The argument of the flag or NULL if there wasn't one
+ * @return The position of the flag in argv or 0 if the flag couldn't be found
+ */
+int platformArgvGetFlag(int argc, char **argv, char shortFlag, char *longFlag, char **optArg);
+
+/**
  * Bind one of any ports mentioned in a string
  * @param listenSocket The socket to attempt to bind a listen port to
  * @param sockaddr The socket address structure get use as binding infomation
@@ -69,10 +80,10 @@ void platformCloseBindSockets(fd_set *sockets, SOCKET max);
 /**
  * Start up the server
  * @param listenSocket Out: the socket the server has been bound to
- * @param port In: The port to bind to
+ * @param ports In: A port of comma seperated ports to try to bind to from left to right
  * @return 0 on success, other on error
  */
-int platformServerStartup(SOCKET *listenSocket, short port);
+int platformServerStartup(SOCKET *listenSocket, char *ports);
 
 /**
  * Attach signals to comment interrupts
@@ -80,20 +91,20 @@ int platformServerStartup(SOCKET *listenSocket, short port);
  * @param shutdownCrash The function to callback on crashes
  * @param shutdownProgram The function to callback on graceful exiting signals
  */
-void platformConnectSignals(void(*noAction)(int), void(*shutdownCrash)(int), void(*shutdownProgram)(int));
+        void platformConnectSignals(void(*noAction)(int), void(*shutdownCrash)(int), void(*shutdownProgram)(int));
 
-void platformGetIpString(struct sockaddr *addr, char ipStr[INET6_ADDRSTRLEN]);
+        void platformGetIpString(struct sockaddr *addr, char ipStr[INET6_ADDRSTRLEN]);
 
-unsigned short platformGetPort(struct sockaddr *addr);
+        unsigned short platformGetPort(struct sockaddr *addr);
 
-AdapterAddressArray *platformGetAdapterInformation(void);
+        AdapterAddressArray *platformGetAdapterInformation(void);
 
-void platformFreeAdapterInformation(AdapterAddressArray *array);
+        void platformFreeAdapterInformation(AdapterAddressArray *array);
 
-void platformFindOrCreateAdapterIp(AdapterAddressArray *array, char adapter[ADAPTER_NAME_LENGTH], short type,
-                                   char ip[INET6_ADDRSTRLEN]);
+        void platformFindOrCreateAdapterIp(AdapterAddressArray *array, char adapter[ADAPTER_NAME_LENGTH], short type,
+                                           char ip[INET6_ADDRSTRLEN]);
 
-SOCKET platformAcceptConnection(SOCKET fromSocket);
+        SOCKET platformAcceptConnection(SOCKET fromSocket);
 
 #ifdef _DIRENT_HAVE_D_TYPE
 
@@ -105,7 +116,7 @@ SOCKET platformAcceptConnection(SOCKET fromSocket);
 
 #include <dirent.h>
 
-char platformIsEntryDirectory(char *rootPath, char *webPath, struct dirent *entry);
+        char platformIsEntryDirectory(char *rootPath, char *webPath, struct dirent *entry);
 
 #endif /* _DIRENT_HAVE_D_TYPE */
 

@@ -321,9 +321,13 @@ static void printHttpEvent(eventHttpRespond *event) {
 }
 
 unsigned short getPort(const SOCKET *listenSocket) {
-    socklen_t sockLen;
     struct sockaddr_storage sock;
-    getsockname(*listenSocket, (struct sockaddr *) &sock, &sockLen);
+    socklen_t sockLen = sizeof(sock);
+    if (getsockname(*listenSocket, (struct sockaddr *) &sock, &sockLen) == -1) {
+        perror("Unable to get socket port");
+        return 0;
+    }
+
     if (sock.ss_family == AF_INET) {
         struct sockaddr_in *addr = (struct sockaddr_in *) &sock;
         return ntohs(addr->sin_port);
@@ -367,9 +371,17 @@ int main(int argc, char **argv) {
         free(buf);
     }
 
-    if (platformServerStartup(&globalServerSocket, SERVER_PORT)) {
-        perror("Unable to start server");
-        return 1;
+    {
+        /* Get the list of ports then try to bind one */
+        char *ports = getenv("TH_HTTP_PORT");
+        platformArgvGetFlag(argc, argv, 'p', "port", &ports);
+        if (!ports)
+            ports = "0";
+
+        if (platformServerStartup(&globalServerSocket, ports)) {
+            perror("Unable to start server");
+            return 1;
+        }
     }
 
     globalMaxSocket = globalServerSocket;

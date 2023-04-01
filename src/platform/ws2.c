@@ -34,7 +34,7 @@ void platformCloseBindSockets(fd_set *sockets, SOCKET max) {
     WSACleanup();
 }
 
-int platformServerStartup(SOCKET *listenSocket, short port) {
+int platformServerStartup(SOCKET *listenSocket, char *ports) {
     struct sockaddr_in serverAddress;
     WSADATA wsaData;
     int iResult;
@@ -51,10 +51,8 @@ int platformServerStartup(SOCKET *listenSocket, short port) {
 
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
-    serverAddress.sin_port = htons(port);
 
-    iResult = bind(*listenSocket, (SA *) &serverAddress, (int) sizeof(SA));
-    if (iResult == SOCKET_ERROR) {
+    if (platformBindPort(listenSocket, (struct sockaddr *) &serverAddress, ports)) {
         closesocket(*listenSocket);
         WSACleanup();
         return 1;
@@ -83,17 +81,6 @@ SOCKET platformAcceptConnection(SOCKET fromSocket) {
     struct sockaddr_in clientAddress;
 
     clientSocket = accept(fromSocket, (SA *) &clientAddress, &addrSize);
-
-#ifndef NDEBUG
-    {
-/*
-        char address[16] = "";
-        WSAAddressToStringA((SA *) &clientAddress.sin_addr, sizeof(clientAddress.sin_addr),
-                            NULL, address, (LPDWORD) sizeof(address));
-        fprintf(stdout, "Connection opened for: %s\n", address);
-*/
-    }
-#endif
 
     return clientSocket;
 }
