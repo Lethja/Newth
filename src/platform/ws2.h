@@ -9,6 +9,7 @@
 #define SOCK_BUF_TYPE int
 #define FORCE_FORWARD_SLASH(path) platformPathForceForwardSlash(path)
 #define FORCE_BACKWARD_SLASH(path) platformPathForceBackwardSlash(path)
+#define sa_family_t short
 
 #include <windows.h>
 #include <winsock2.h>
