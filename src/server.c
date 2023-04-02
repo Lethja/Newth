@@ -131,9 +131,11 @@ char handleFile(SOCKET clientSocket, const char *header, char *realPath, char ht
         if (httpBodyWriteFile(&socketBuffer, fp, start, e ? st->st_size : finish))
             goto handleFileAbort;
         fclose(fp);
+        eventHttpFinishInvoke(&socketBuffer.clientSocket, webPath, httpType, 0);
         return 0;
     } else
-        FileRoutineArrayAdd(&globalFileRoutineArray, FileRoutineNew(clientSocket, fp, start, e ? st->st_size : finish));
+        FileRoutineArrayAdd(&globalFileRoutineArray,
+                            FileRoutineNew(clientSocket, fp, start, e ? st->st_size : finish, webPath));
     return 0;
 
     handleFileAbort:
@@ -317,9 +319,9 @@ static void printHttpEvent(eventHttpRespond *event) {
     platformGetIpString((struct sockaddr *) &sock, ip);
     port = platformGetPort((struct sockaddr *) &sock);
     if (sock.ss_family == AF_INET)
-        printf("%c%d:%s:%u/%s\n", type, *event->response, ip, port, event->path);
+        printf("%c%03d:%s:%u/%s\n", type, *event->response, ip, port, event->path);
     else if (sock.ss_family == AF_INET6)
-        printf("%c%d:[%s]:%u/%s\n", type, *event->response, ip, port, event->path);
+        printf("%c%03d:[%s]:%u/%s\n", type, *event->response, ip, port, event->path);
 }
 
 unsigned short getPort(const SOCKET *listenSocket) {
@@ -395,6 +397,7 @@ int main(int argc, char **argv) {
 
     printAdapterInformation("http", getPort(&globalServerSocket));
     eventHttpRespondSetCallback(printHttpEvent);
+    eventHttpFinishSetCallback(printHttpEvent);
 
     while (1) {
         SOCKET i;

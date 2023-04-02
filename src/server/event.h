@@ -29,6 +29,10 @@ typedef struct eventSocketClose {
 
 void eventHttpRespondSetCallback(void (*callback)(eventHttpRespond *));
 
+void eventHttpFinishSetCallback(void (*callback)(eventHttpRespond *));
+
 void eventHttpRespondInvoke(SOCKET *clientSocket, const char *path, char type, short respond);
+
+void eventHttpFinishInvoke(SOCKET *clientSocket, const char *path, char type, short respond);
 
 #endif /* OPEN_WEB_EVENT_H */

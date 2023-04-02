@@ -4,6 +4,7 @@
 #include "routine.h"
 #include "http.h"
 #include "../platform/platform.h"
+#include "event.h"
 
 size_t DirectoryRoutineContinue(DirectoryRoutine *self) {
     const size_t max = 10;
@@ -59,6 +60,8 @@ size_t DirectoryRoutineContinue(DirectoryRoutine *self) {
                 httpBodyWriteChunkEnding(&self->socketBuffer);
 
             socketBufferFlush(&self->socketBuffer);
+
+            eventHttpFinishInvoke(&self->socketBuffer.clientSocket, self->webPath, httpGet, 0);
 
             return 0;
         }
@@ -124,9 +127,10 @@ void DirectoryRoutineArrayDel(RoutineArray *self, DirectoryRoutine *directoryRou
     }
 }
 
-FileRoutine FileRoutineNew(SOCKET socket, FILE *file, off_t start, off_t end) {
+FileRoutine FileRoutineNew(SOCKET socket, FILE *file, off_t start, off_t end, char webPath[FILENAME_MAX]) {
     FileRoutine self;
     self.file = file, self.start = start, self.end = end, self.socket = socket;
+    memcpy(self.webPath, webPath, FILENAME_MAX);
     fseek(self.file, self.start, SEEK_SET);
     return self;
 }
@@ -144,6 +148,8 @@ size_t FileRoutineContinue(FileRoutine *self) {
 
         if (byteWrite == -1)
             bytesRead = 0;
+    } else {
+        eventHttpFinishInvoke(&self->socket, self->webPath, httpGet, 0);
     }
 
     return bytesRead;
