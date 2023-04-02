@@ -25,11 +25,11 @@ size_t DirectoryRoutineContinue(DirectoryRoutine *self) {
             if (pathLen + entryLen + 3 < BUFSIZ) {
                 memcpy(pathBuf, self->webPath, pathLen);
                 FORCE_FORWARD_SLASH(pathBuf);
-                if (pathBuf[pathLen - 1] != '/') {
+                if (pathBuf[pathLen ? pathLen - 1 : 0] != '/') {
                     pathBuf[pathLen ? pathLen : 0] = '/';
                     memcpy(pathLen ? pathBuf + pathLen + 1 : pathBuf + 1, entry->d_name, entryLen + 1);
                 } else
-                    memcpy(pathBuf + pathLen, entry->d_name, entryLen + 1);
+                    memcpy(pathBuf + pathLen + 1, entry->d_name, entryLen + 1);
 
                 /* Append '/' on the end of directory entries */
                 if (IS_ENTRY_DIRECTORY(self->rootPath, self->webPath, entry)) {
@@ -129,7 +129,7 @@ char DirectoryRoutineArrayDel(RoutineArray *self, DirectoryRoutine *directoryRou
 FileRoutine FileRoutineNew(SOCKET socket, FILE *file, off_t start, off_t end, char webPath[FILENAME_MAX]) {
     FileRoutine self;
     self.file = file, self.start = start, self.end = end, self.socket = socket;
-    memcpy(self.webPath, webPath, FILENAME_MAX);
+    strncpy(self.webPath, webPath, FILENAME_MAX);
     fseek(self.file, self.start, SEEK_SET);
     return self;
 }
