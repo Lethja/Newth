@@ -515,7 +515,7 @@ void httpHeaderWriteFileName(SocketBuffer *socketBuffer, char *path) {
     socketBufferWrite(socketBuffer, buffer);
 }
 
-char httpHeaderHandleError(SocketBuffer *socketBuffer, const char *path, char type, short error) {
+char httpHeaderHandleError(SocketBuffer *socketBuffer, const char *path, char httpType, short error) {
 #ifndef NDEBUG
     switch (error) {
         case 200:
@@ -535,10 +535,23 @@ char httpHeaderHandleError(SocketBuffer *socketBuffer, const char *path, char ty
         httpHeaderWriteDate(socketBuffer);
         httpHeaderWriteContentLength(socketBuffer, strlen(errMsg));
         httpHeaderWriteEnd(socketBuffer);
-        eventHttpRespondInvoke(&socketBuffer->clientSocket, path, type, error);
+        eventHttpRespondInvoke(&socketBuffer->clientSocket, path, httpType, error);
 
         if (httpBodyWriteText(socketBuffer, errMsg) || socketBufferFlush(socketBuffer))
             return 1;
     }
     return 0;
+}
+
+httpType httpClientReadType(const char *request) {
+    switch (toupper(request[0])) {
+        case 'G':
+            return httpGet;
+        case 'H':
+            return httpHead;
+        case 'P':
+            return httpPost;
+        default:
+            return httpUnknown;
+    }
 }

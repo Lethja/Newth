@@ -9,9 +9,9 @@
 #include <sys/stat.h>
 #include <time.h>
 
-enum httpType {
+typedef enum httpType {
     httpGet, httpHead, httpPost, httpUnknown
-};
+} httpType;
 
 #pragma region HTML
 
@@ -64,6 +64,13 @@ void htmlListWritePathLink(char buffer[BUFSIZ], char *webPath);
  * @return Free: The decoded representation of URL
  */
 char *httpClientReadUri(const char *request);
+
+/**
+ * Get the type of request from the buffer of a request
+ * @param request In: The socket buffer to read the request from
+ * @return httpUnknown on error otherwise a vaild httpType enum
+ */
+httpType httpClientReadType(const char *request);
 
 /**
  * Convert 'If-Modified-Since' header to a tm struct for comparing
@@ -203,10 +210,10 @@ void httpHeaderWriteResponse(SocketBuffer *socketBuffer, short response);
  * Helper function for writing entire HTTP error replies under non-special circumstances
  * @param socketBuffer Socket buffer to write the error response to
  * @param path the web path that this error is a response to
- * @param type the http type that this error is a response to
+ * @param httpType the http type that this error is a response to
  * @param error Error code to respond with
  * @return 0 on success, error on other
  */
-char httpHeaderHandleError(SocketBuffer *socketBuffer, const char *path, char type, short error);
+char httpHeaderHandleError(SocketBuffer *socketBuffer, const char *path, char httpType, short error);
 
 #endif /* OPEN_WEB_HTTP_H */

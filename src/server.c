@@ -35,7 +35,7 @@ void shutdownProgram(int signal) {
 
 #pragma clang diagnostic pop
 
-char handleDir(SOCKET clientSocket, char *realPath, struct stat *st) {
+char handleDir(SOCKET clientSocket, char *realPath, char type, struct stat *st) {
     char *webPath = realPath + strlen(globalRootPath);
     char buf[BUFSIZ];
     SocketBuffer socketBuffer = socketBufferNew(clientSocket);
@@ -51,7 +51,13 @@ char handleDir(SOCKET clientSocket, char *realPath, struct stat *st) {
     httpHeaderWriteContentType(&socketBuffer, "text/html", "");
     httpHeaderWriteChunkedEncoding(&socketBuffer);
     httpHeaderWriteEnd(&socketBuffer);
-    eventHttpRespondInvoke(&socketBuffer.clientSocket, webPath, httpGet, 200);
+    eventHttpRespondInvoke(&socketBuffer.clientSocket, webPath, type, 200);
+
+    if (type == httpHead) {
+        if (socketBufferFlush(&socketBuffer))
+            goto handleDirAbort;
+    }
+
     htmlHeaderWrite(buf, webPath[0] == '\0' ? "/" : webPath);
 
     if (httpBodyWriteChunk(&socketBuffer, buf) || socketBufferFlush(&socketBuffer))
@@ -80,7 +86,7 @@ char handleDir(SOCKET clientSocket, char *realPath, struct stat *st) {
     return 1;
 }
 
-char handleFile(SOCKET clientSocket, const char *header, char *realPath, struct stat *st) {
+char handleFile(SOCKET clientSocket, const char *header, char *realPath, char httpType, struct stat *st) {
     SocketBuffer socketBuffer = socketBufferNew(clientSocket);
     FILE *fp = fopen(realPath, "rb");
     off_t start, finish;
@@ -115,7 +121,10 @@ char handleFile(SOCKET clientSocket, const char *header, char *realPath, struct 
     httpHeaderWriteEnd(&socketBuffer);
     socketBufferFlush(&socketBuffer);
     webPath = realPath + strlen(globalRootPath);
-    eventHttpRespondInvoke(&socketBuffer.clientSocket, webPath, httpGet, 200);
+    eventHttpRespondInvoke(&socketBuffer.clientSocket, webPath, httpType, 200);
+
+    if (httpType == httpHead)
+        return 0;
 
     /* Body */
     if (st->st_size < BUFSIZ) {
@@ -176,6 +185,8 @@ char handlePath(SOCKET clientSocket, const char *header, char *path) {
 
     FORCE_FORWARD_SLASH(absolutePath);
 
+    e = httpClientReadType(header);
+
     if (!httpHeaderReadIfModifiedSince(header, &tm)) {
         struct tm mt;
         mt = *gmtime(&st.st_mtime);
@@ -190,7 +201,7 @@ char handlePath(SOCKET clientSocket, const char *header, char *path) {
             httpHeaderWriteResponse(&socketBuffer, 304);
             httpHeaderWriteDate(&socketBuffer);
             httpHeaderWriteEnd(&socketBuffer);
-            eventHttpRespondInvoke(&socketBuffer.clientSocket, path, httpGet, 304);
+            eventHttpRespondInvoke(&socketBuffer.clientSocket, path, e, 304);
 
             if (socketBufferFlush(&socketBuffer))
                 return 1;
@@ -200,9 +211,9 @@ char handlePath(SOCKET clientSocket, const char *header, char *path) {
     }
 
     if (S_ISDIR(st.st_mode))
-        e = handleDir(clientSocket, absolutePath, &st);
+        e = handleDir(clientSocket, absolutePath, e, &st);
     else if (S_ISREG(st.st_mode))
-        e = handleFile(clientSocket, header, absolutePath, &st);
+        e = handleFile(clientSocket, header, absolutePath, e, &st);
 
     if (absolutePath != globalRootPath)
         free(absolutePath);
@@ -215,23 +226,15 @@ char handlePath(SOCKET clientSocket, const char *header, char *path) {
 
     {
         SocketBuffer socketBuffer = socketBufferNew(clientSocket);
-        return httpHeaderHandleError(&socketBuffer, path, httpGet, 404);
+        return httpHeaderHandleError(&socketBuffer, path, e, 404);
     }
 }
 
 char handleConnection(SOCKET clientSocket) {
-    char r = 0 /*, ip[INET6_ADDRSTRLEN] */;
+    char r = 0;
     char buffer[BUFSIZ];
     size_t bytesRead, messageSize = 0;
     char *uriPath;
-    /*
-    struct sockaddr_storage sock;
-    socklen_t sockLen = sizeof(sock);
-
-    getpeername(clientSocket, (struct sockaddr *) &sock, &sockLen);
-    platformGetIpString((struct sockaddr *) &sock, ip);
-    printf("%s\n", ip);
-    */
 
     while ((bytesRead = recv(clientSocket, buffer + messageSize, (int) (sizeof(buffer) - messageSize - 1), 0))) {
         if (bytesRead == -1)
@@ -265,7 +268,6 @@ char handleConnection(SOCKET clientSocket) {
     fflush(stdout);
 #endif
 
-    /* TODO: Get HTTP type here */
     uriPath = httpClientReadUri(buffer);
     if (uriPath) {
         if (uriPath[0] != '/')
@@ -338,16 +340,16 @@ unsigned short getPort(const SOCKET *listenSocket) {
     return 0;
 }
 
-static void printAdapterInformation(unsigned short port) {
+static void printAdapterInformation(char *protocol, unsigned short port) {
     AdapterAddressArray *adapters = platformGetAdapterInformation();
     size_t i, j;
     for (i = 0; i < adapters->size; ++i) {
         printf("%s:\n", adapters->adapter[i].name);
         for (j = 0; j < adapters->adapter[i].addresses.size; ++j) {
             if (!adapters->adapter[i].addresses.array[j].type)
-                printf("\thttp://%s:%u\n", adapters->adapter[i].addresses.array[j].address, port);
+                printf("\t%s://%s:%u\n", protocol, adapters->adapter[i].addresses.array[j].address, port);
             else
-                printf("\thttp://[%s]:%u\n", adapters->adapter[i].addresses.array[j].address, port);
+                printf("\t%s://[%s]:%u\n", protocol, adapters->adapter[i].addresses.array[j].address, port);
         }
     }
 
@@ -391,7 +393,7 @@ int main(int argc, char **argv) {
     globalFileRoutineArray.size = globalDirRoutineArray.size = 0;
     globalFileRoutineArray.array = globalDirRoutineArray.array = NULL;
 
-    printAdapterInformation(getPort(&globalServerSocket));
+    printAdapterInformation("http", getPort(&globalServerSocket));
     eventHttpRespondSetCallback(printHttpEvent);
 
     while (1) {
