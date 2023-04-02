@@ -1,6 +1,7 @@
 #include <ifaddrs.h>
 #include "platform.h"
 #include "unix.h"
+#include "../server/event.h"
 
 char *platformPathCombine(char *path1, char *path2) {
     const char pathDivider = '/';
@@ -23,8 +24,11 @@ char *platformPathCombine(char *path1, char *path2) {
 void platformCloseBindSockets(fd_set *sockets, SOCKET max) {
     int i;
     for (i = 0; i <= max; i++) {
-        if (FD_ISSET(i, sockets))
+        if (FD_ISSET(i, sockets)) {
+            eventSocketCloseInvoke(&i);
             close(i);
+        }
+
     }
 }
 
@@ -53,13 +57,7 @@ int platformAcceptConnection(int fromSocket) {
 
     clientSocket = accept(fromSocket, (SA *) &clientAddress, &addrSize);
 
-#ifndef NDEBUG
-    {
-        char address[INET6_ADDRSTRLEN] = "";
-        inet_ntop(clientAddress.sin_family, &clientAddress.sin_addr, address, sizeof(address));
-        fprintf(stdout, "Connection opened for: %s\n", address);
-    }
-#endif
+    eventSocketAcceptInvoke(&clientSocket);
 
     return clientSocket;
 }

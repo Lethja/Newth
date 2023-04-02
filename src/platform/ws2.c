@@ -1,4 +1,5 @@
 #include "ws2.h"
+#include "../server/event.h"
 
 #include <iphlpapi.h>
 #include <signal.h>
@@ -28,6 +29,7 @@ void platformCloseBindSockets(fd_set *sockets, SOCKET max) {
     SOCKET i;
     for (i = 0; i <= max; i++) {
         if (FD_ISSET(i, sockets)) {
+            eventSocketCloseInvoke(&i);
             closesocket(i);
         }
     }
@@ -81,6 +83,8 @@ SOCKET platformAcceptConnection(SOCKET fromSocket) {
     struct sockaddr_in clientAddress;
 
     clientSocket = accept(fromSocket, (SA *) &clientAddress, &addrSize);
+
+    eventSocketAcceptInvoke(&clientSocket);
 
     return clientSocket;
 }

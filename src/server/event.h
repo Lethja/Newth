@@ -3,15 +3,6 @@
 
 #include "../platform/platform.h"
 
-typedef struct eventHttpBytesSent {
-    SOCKET *clientSocket;
-    off_t bytesSent;
-} eventHttpBytesSent;
-
-typedef struct eventHttpFinish {
-    SOCKET *clientSocket;
-} eventHttpFinish;
-
 typedef struct eventHttpRespond {
     SOCKET *clientSocket;
     short *response;
@@ -19,20 +10,20 @@ typedef struct eventHttpRespond {
     char *type;
 } eventHttpRespond;
 
-typedef struct eventSocketOpen {
-    SOCKET *clientSocket;
-} eventSocketOpen;
-
-typedef struct eventSocketClose {
-    SOCKET *clientSocket;
-} eventSocketClose;
-
 void eventHttpRespondSetCallback(void (*callback)(eventHttpRespond *));
 
 void eventHttpFinishSetCallback(void (*callback)(eventHttpRespond *));
 
+void eventSocketAcceptSetCallback(void (*callback)(SOCKET *));
+
+void eventSocketCloseSetCallback(void (*callback)(SOCKET *));
+
 void eventHttpRespondInvoke(SOCKET *clientSocket, const char *path, char type, short respond);
 
 void eventHttpFinishInvoke(SOCKET *clientSocket, const char *path, char type, short respond);
+
+void eventSocketAcceptInvoke(SOCKET *clientSocket);
+
+void eventSocketCloseInvoke(SOCKET *clientSocket);
 
 #endif /* OPEN_WEB_EVENT_H */

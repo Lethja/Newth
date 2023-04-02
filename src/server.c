@@ -288,6 +288,34 @@ static inline void setRootPath(char *path) {
     globalRootPath = test;
 }
 
+static void printSocketAccept(SOCKET *sock) { /* NOLINT(readability-non-const-parameter) */
+    struct sockaddr_storage ss;
+    socklen_t sockLen = sizeof(ss);
+    char ip[INET6_ADDRSTRLEN];
+    unsigned short port;
+    getpeername(*sock, (struct sockaddr *) &ss, &sockLen);
+    platformGetIpString((struct sockaddr *) &ss, ip);
+    port = platformGetPort((struct sockaddr *) &ss);
+    if (ss.ss_family == AF_INET)
+        printf("TSYN:%s:%u\n", ip, port);
+    else if (ss.ss_family == AF_INET6)
+        printf("TSYN:[%s]:%u\n", ip, port);
+}
+
+static void printSocketClose(SOCKET *sock) { /* NOLINT(readability-non-const-parameter) */
+    struct sockaddr_storage ss;
+    socklen_t sockLen = sizeof(ss);
+    char ip[INET6_ADDRSTRLEN];
+    unsigned short port;
+    getpeername(*sock, (struct sockaddr *) &ss, &sockLen);
+    platformGetIpString((struct sockaddr *) &ss, ip);
+    port = platformGetPort((struct sockaddr *) &ss);
+    if (ss.ss_family == AF_INET)
+        printf("TRST:%s:%u\n", ip, port);
+    else if (ss.ss_family == AF_INET6)
+        printf("TRST:[%s]:%u\n", ip, port);
+}
+
 static void printHttpEvent(eventHttpRespond *event) {
     struct sockaddr_storage sock;
     socklen_t sockLen = sizeof(sock);
@@ -393,6 +421,8 @@ int main(int argc, char **argv) {
     printAdapterInformation("http", getPort(&globalServerSocket));
     eventHttpRespondSetCallback(printHttpEvent);
     eventHttpFinishSetCallback(printHttpEvent);
+    eventSocketAcceptSetCallback(printSocketAccept);
+    eventSocketCloseSetCallback(printSocketClose);
 
     while (1) {
         SOCKET i;
@@ -431,6 +461,7 @@ int main(int argc, char **argv) {
                     FD_SET(clientSocket, &currentSockets);
                 } else {
                     if (handleConnection(i)) {
+                        eventSocketCloseInvoke(&i);
                         CLOSE_SOCKET(i);
                         FD_CLR(i, &currentSockets);
                     }

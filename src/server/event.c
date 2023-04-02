@@ -4,12 +4,24 @@ void (*eventHttpRespondCallback)(eventHttpRespond *) = NULL;
 
 void (*eventHttpFinishCallback)(eventHttpRespond *) = NULL;
 
+void (*eventSocketAcceptCallback)(SOCKET *) = NULL;
+
+void (*eventSocketCloseCallback)(SOCKET *) = NULL;
+
 void eventHttpRespondSetCallback(void (*callback)(eventHttpRespond *)) {
     eventHttpRespondCallback = callback;
 }
 
 void eventHttpFinishSetCallback(void (*callback)(eventHttpRespond *)) {
     eventHttpFinishCallback = callback;
+}
+
+void eventSocketAcceptSetCallback(void (*callback)(SOCKET *)) {
+    eventSocketAcceptCallback = callback;
+}
+
+void eventSocketCloseSetCallback(void (*callback)(SOCKET *)) {
+    eventSocketCloseCallback = callback;
 }
 
 void eventHttpRespondInvoke(SOCKET *clientSocket, const char *path, char type, short respond) {
@@ -28,4 +40,14 @@ void eventHttpFinishInvoke(SOCKET *clientSocket, const char *path, char type, sh
                 path[0] == '/' ? path + 1 : path;
         eventHttpFinishCallback(&st);
     }
+}
+
+void eventSocketAcceptInvoke(SOCKET *clientSocket) {
+    if (eventSocketAcceptCallback)
+        eventSocketAcceptCallback(clientSocket);
+}
+
+void eventSocketCloseInvoke(SOCKET *clientSocket) {
+    if (eventSocketCloseCallback)
+        eventSocketCloseCallback(clientSocket);
 }
