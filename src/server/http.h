@@ -87,7 +87,7 @@ char httpHeaderReadIfModifiedSince(const char *request, struct tm *tm);
  * @param end Out: The end of the range
  * @return 0 on success, other on error
  */
-char httpHeaderReadRange(const char *request, off_t *start, off_t *end, off_t *max);
+char httpHeaderReadRange(const char *request, off_t *start, off_t *end, const off_t *max);
 
 #pragma endregion
 

@@ -175,3 +175,15 @@ int platformArgvGetFlag(int argc, char **argv, char shortFlag, char *longFlag, c
 
     return 0;
 }
+
+char platformHeapResize(void **heap, size_t elementSize, size_t elementNumber) {
+    size_t allocSize = elementSize * elementNumber;
+    if (*heap && allocSize) {
+        void *test = realloc(*heap, allocSize);
+        if (test) {
+            *heap = test;
+            return 0;
+        }
+    }
+    return 1;
+}

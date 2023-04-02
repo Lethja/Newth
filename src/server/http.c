@@ -197,7 +197,7 @@ char httpHeaderReadIfModifiedSince(const char *request, struct tm *tm) {
     return 1;
 }
 
-char httpHeaderReadRange(const char *request, off_t *start, off_t *end, off_t *max) {
+char httpHeaderReadRange(const char *request, off_t *start, off_t *end, const off_t *max) {
 #define MAX_RANGE_STR_BUF 128
     const char *headerValue = "Range", *parameter = "bytes=";
     size_t strLength;

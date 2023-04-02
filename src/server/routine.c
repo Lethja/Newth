@@ -84,24 +84,25 @@ DirectoryRoutine DirectoryRoutineNew(SOCKET socket, DIR *dir, const char *webPat
     return self;
 }
 
-void DirectoryRoutineArrayAdd(RoutineArray *self, DirectoryRoutine directoryRoutine) {
+char DirectoryRoutineArrayAdd(RoutineArray *self, DirectoryRoutine directoryRoutine) {
     DirectoryRoutine *array;
     self->size++;
     if (self->size == 1)
         self->array = malloc(sizeof(DirectoryRoutine));
-    else
-        self->array = realloc(self->array, sizeof(DirectoryRoutine) * self->size);
+    else if (platformHeapResize((void **) &self->array, sizeof(DirectoryRoutine), self->size))
+        return 1;
 
     array = (DirectoryRoutine *) self->array;
-
     memcpy(&array[self->size - 1], &directoryRoutine, sizeof(DirectoryRoutine));
+
+    return 0;
 }
 
 void DirectoryRoutineFree(DirectoryRoutine *self) {
     closedir(self->directory);
 }
 
-void DirectoryRoutineArrayDel(RoutineArray *self, DirectoryRoutine *directoryRoutine) {
+char DirectoryRoutineArrayDel(RoutineArray *self, DirectoryRoutine *directoryRoutine) {
     size_t i;
     DirectoryRoutine *array = (DirectoryRoutine *) self->array;
 
@@ -117,12 +118,12 @@ void DirectoryRoutineArrayDel(RoutineArray *self, DirectoryRoutine *directoryRou
         --self->size;
 
         if (self->size)
-            self->array = realloc(self->array, sizeof(DirectoryRoutine) * self->size);
+            platformHeapResize((void **) &self->array, sizeof(DirectoryRoutine), self->size);
         else
             free(self->array);
 
-        return;
     }
+    return 0;
 }
 
 FileRoutine FileRoutineNew(SOCKET socket, FILE *file, off_t start, off_t end, char webPath[FILENAME_MAX]) {
@@ -157,20 +158,21 @@ void FileRoutineFree(FileRoutine *self) {
     fclose(self->file);
 }
 
-void FileRoutineArrayAdd(RoutineArray *self, FileRoutine fileRoutine) {
+char FileRoutineArrayAdd(RoutineArray *self, FileRoutine fileRoutine) {
     FileRoutine *array;
     self->size++;
     if (self->size == 1)
         self->array = malloc(sizeof(FileRoutine));
-    else
-        self->array = realloc(self->array, sizeof(FileRoutine) * self->size);
+    else if (platformHeapResize((void **) &self->array, sizeof(FileRoutine), self->size))
+        return 1;
 
     array = (FileRoutine *) self->array;
-
     memcpy(&array[self->size - 1], &fileRoutine, sizeof(FileRoutine));
+
+    return 0;
 }
 
-void FileRoutineArrayDel(RoutineArray *self, FileRoutine *fileRoutine) {
+char FileRoutineArrayDel(RoutineArray *self, FileRoutine *fileRoutine) {
     size_t i;
     FileRoutine *array = (FileRoutine *) self->array;
 
@@ -186,10 +188,9 @@ void FileRoutineArrayDel(RoutineArray *self, FileRoutine *fileRoutine) {
         --self->size;
 
         if (self->size)
-            self->array = realloc(self->array, sizeof(FileRoutine) * self->size);
+            platformHeapResize((void **) &self->array, sizeof(FileRoutine), self->size);
         else
             free(self->array);
-
-        return;
     }
+    return 0;
 }

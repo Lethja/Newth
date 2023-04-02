@@ -63,6 +63,16 @@ int platformArgvGetFlag(int argc, char **argv, char shortFlag, char *longFlag, c
 char platformBindPort(const SOCKET *listenSocket, SA *sockAddr, char *port);
 
 /**
+ * Wrapper around reallocation that gracefully hands control back to the caller in the event of a failure
+ * @param heap [in/out] pointer to the allocation pointer
+ * @param elementSize [in] size of the elements being allocated
+ * @param elementNumber [in] number of elements to allocate
+ * @return 0 on success other on allocation error
+ * @note in the event of an allocation error the existing allocation will remain unchanged
+ */
+char platformHeapResize(void **heap, size_t elementSize, size_t elementNumber);
+
+/**
  * Combine two path strings together
  * @param path1 The string to combine on the left
  * @param path2 The string to combine on the right

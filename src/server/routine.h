@@ -29,11 +29,11 @@ size_t DirectoryRoutineContinue(DirectoryRoutine *self);
 
 DirectoryRoutine DirectoryRoutineNew(SOCKET socket, DIR *dir, const char *webPath, char *rootPath);
 
-void DirectoryRoutineArrayAdd(RoutineArray *self, DirectoryRoutine directoryRoutine);
+char DirectoryRoutineArrayAdd(RoutineArray *self, DirectoryRoutine directoryRoutine);
 
 void DirectoryRoutineFree(DirectoryRoutine *self);
 
-void DirectoryRoutineArrayDel(RoutineArray *self, DirectoryRoutine *directoryRoutine);
+char DirectoryRoutineArrayDel(RoutineArray *self, DirectoryRoutine *directoryRoutine);
 
 FileRoutine FileRoutineNew(SOCKET socket, FILE *file, off_t start, off_t end, char webPath[FILENAME_MAX]);
 
@@ -41,8 +41,8 @@ size_t FileRoutineContinue(FileRoutine *self);
 
 void FileRoutineFree(FileRoutine *self);
 
-void FileRoutineArrayAdd(RoutineArray *self, FileRoutine fileRoutine);
+char FileRoutineArrayAdd(RoutineArray *self, FileRoutine fileRoutine);
 
-void FileRoutineArrayDel(RoutineArray *self, FileRoutine *fileRoutine);
+char FileRoutineArrayDel(RoutineArray *self, FileRoutine *fileRoutine);
 
 #endif /* OPEN_WEB_ROUTINE_H */
