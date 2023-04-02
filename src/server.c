@@ -155,7 +155,7 @@ char handlePath(SOCKET clientSocket, const char *header, char *path) {
         absolutePath = globalRootPath;
     else {
         char *combinePath = platformPathCombine(globalRootPath, path);
-        if (!(absolutePath = realpath(combinePath, NULL))) {
+        if (!(absolutePath = platformRealPath(combinePath))) {
             free(combinePath);
             goto handlePathNotFound;
         }
@@ -284,7 +284,7 @@ char handleConnection(SOCKET clientSocket) {
 }
 
 static inline void setRootPath(char *path) {
-    char *test = realpath(path, NULL);
+    char *test = platformRealPath(path);
     if (!test) {
         printf("No such directory \"%s\"\n", path);
         exit(1);

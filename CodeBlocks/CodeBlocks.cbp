@@ -37,9 +37,11 @@
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
+					<Add option="-m32" />
 					<Add option="-g" />
 				</Compiler>
 				<Linker>
+					<Add option="-m32" />
 					<Add library="libwsock32" />
 					<Add library="Iphlpapi" />
 				</Linker>
@@ -53,10 +55,47 @@
 				<Option use_console_runner="0" />
 				<Compiler>
 					<Add option="-O2" />
+					<Add option="-m32" />
 					<Add option="-DNDEBUG=1" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
+					<Add option="-m32" />
+					<Add library="libwsock32" />
+					<Add library="Iphlpapi" />
+				</Linker>
+			</Target>
+			<Target title="Server Debug W64">
+				<Option platforms="Windows;" />
+				<Option output="bin/w32/Debug/server" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/w32/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-m64" />
+					<Add option="-g" />
+				</Compiler>
+				<Linker>
+					<Add option="-m64" />
+					<Add library="libwsock32" />
+					<Add library="Iphlpapi" />
+				</Linker>
+			</Target>
+			<Target title="Server Release W64">
+				<Option platforms="Windows;" />
+				<Option output="bin/w32/Release/server" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/w32/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Option use_console_runner="0" />
+				<Compiler>
+					<Add option="-O2" />
+					<Add option="-m64" />
+					<Add option="-DNDEBUG=1" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+					<Add option="-m64" />
 					<Add library="libwsock32" />
 					<Add library="Iphlpapi" />
 				</Linker>
@@ -64,6 +103,7 @@
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
+			<Add option="-ansi" />
 			<Add option="-Wno-unknown-pragmas" />
 		</Compiler>
 		<Unit filename="../src/client.c">
@@ -88,10 +128,14 @@
 			<Option compilerVar="CC" />
 			<Option target="Server Debug W32" />
 			<Option target="Server Release W32" />
+			<Option target="Server Release W64" />
+			<Option target="Server Debug W64" />
 		</Unit>
 		<Unit filename="../src/platform/ws2.h">
 			<Option target="Server Debug W32" />
 			<Option target="Server Release W32" />
+			<Option target="Server Release W64" />
+			<Option target="Server Debug W64" />
 		</Unit>
 		<Unit filename="../src/server.c">
 			<Option compilerVar="CC" />

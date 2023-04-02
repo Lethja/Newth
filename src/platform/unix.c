@@ -131,3 +131,7 @@ AdapterAddressArray *platformGetAdapterInformation(void) {
 
     return array;
 }
+
+char *platformRealPath(char *path) {
+    return realpath(path, NULL);
+}

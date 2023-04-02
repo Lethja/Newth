@@ -70,6 +70,8 @@ char platformBindPort(const SOCKET *listenSocket, SA *sockaddr, char *port);
  */
 char *platformPathCombine(char *path1, char *path2);
 
+char *platformRealPath(char *path);
+
 /**
  * Close any open sockets in the file descriptor
  * @param sockets the fd_set to close all open sockets on

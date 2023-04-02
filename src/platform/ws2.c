@@ -170,3 +170,14 @@ AdapterAddressArray *platformGetAdapterInformation(void) {
 
     return array;
 }
+
+char *platformRealPath(char *path) {
+    char *buf = malloc(MAX_PATH);
+    DWORD e = GetFullPathName(path, MAX_PATH, buf, NULL);
+
+    if(e != 0)
+        return buf;
+
+    free(buf);
+    return NULL;
+}
