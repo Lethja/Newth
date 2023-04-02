@@ -22,7 +22,7 @@
 #define ADAPTER_NAME_LENGTH 128
 
 typedef struct Address {
-    short type;
+    sa_family_t type;
     char address[INET6_ADDRSTRLEN];
 } Address;
 
@@ -55,12 +55,12 @@ int platformArgvGetFlag(int argc, char **argv, char shortFlag, char *longFlag, c
 /**
  * Bind one of any ports mentioned in a string
  * @param listenSocket The socket to attempt to bind a listen port to
- * @param sockaddr The socket address structure get use as binding infomation
- * @param socketSize The size of sockaddr
+ * @param sockAddr The socket address structure get use as binding information
+ * @param socketSize The size of sockAddr
  * @param port A string with all the potential ports in it
  * @return 0 on successful bind, otherwise error
  */
-char platformBindPort(const SOCKET *listenSocket, SA *sockaddr, char *port);
+char platformBindPort(const SOCKET *listenSocket, SA *sockAddr, char *port);
 
 /**
  * Combine two path strings together
@@ -93,20 +93,20 @@ int platformServerStartup(SOCKET *listenSocket, char *ports);
  * @param shutdownCrash The function to callback on crashes
  * @param shutdownProgram The function to callback on graceful exiting signals
  */
-        void platformConnectSignals(void(*noAction)(int), void(*shutdownCrash)(int), void(*shutdownProgram)(int));
+void platformConnectSignals(void(*noAction)(int), void(*shutdownCrash)(int), void(*shutdownProgram)(int));
 
-        void platformGetIpString(struct sockaddr *addr, char ipStr[INET6_ADDRSTRLEN]);
+void platformGetIpString(struct sockaddr *addr, char ipStr[INET6_ADDRSTRLEN]);
 
-        unsigned short platformGetPort(struct sockaddr *addr);
+unsigned short platformGetPort(struct sockaddr *addr);
 
-        AdapterAddressArray *platformGetAdapterInformation(void);
+AdapterAddressArray *platformGetAdapterInformation(void);
 
-        void platformFreeAdapterInformation(AdapterAddressArray *array);
+void platformFreeAdapterInformation(AdapterAddressArray *array);
 
-        void platformFindOrCreateAdapterIp(AdapterAddressArray *array, char adapter[ADAPTER_NAME_LENGTH], short type,
-                                           char ip[INET6_ADDRSTRLEN]);
+void platformFindOrCreateAdapterIp(AdapterAddressArray *array, char adapter[ADAPTER_NAME_LENGTH], sa_family_t type,
+                                   char ip[INET6_ADDRSTRLEN]);
 
-        SOCKET platformAcceptConnection(SOCKET fromSocket);
+SOCKET platformAcceptConnection(SOCKET fromSocket);
 
 #ifdef _DIRENT_HAVE_D_TYPE
 
@@ -118,7 +118,7 @@ int platformServerStartup(SOCKET *listenSocket, char *ports);
 
 #include <dirent.h>
 
-        char platformIsEntryDirectory(char *rootPath, char *webPath, struct dirent *entry);
+char platformIsEntryDirectory(char *rootPath, char *webPath, struct dirent *entry);
 
 #endif /* _DIRENT_HAVE_D_TYPE */
 

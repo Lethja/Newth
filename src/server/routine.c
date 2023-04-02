@@ -1,9 +1,7 @@
-#include <unistd.h>
 #include <malloc.h>
 #include <string.h>
 #include "routine.h"
 #include "http.h"
-#include "../platform/platform.h"
 #include "event.h"
 
 size_t DirectoryRoutineContinue(DirectoryRoutine *self) {

@@ -1,5 +1,4 @@
 #include <string.h>
-#include <unistd.h>
 #include "sockbufr.h"
 
 SocketBuffer socketBufferNew(SOCKET clientSocket) {

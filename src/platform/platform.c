@@ -48,7 +48,7 @@ void platformFreeAdapterInformation(AdapterAddressArray *array) {
     free(array);
 }
 
-void platformFindOrCreateAdapterIp(AdapterAddressArray *array, char adapter[ADAPTER_NAME_LENGTH], short type,
+void platformFindOrCreateAdapterIp(AdapterAddressArray *array, char adapter[ADAPTER_NAME_LENGTH], sa_family_t type,
                                    char ip[INET6_ADDRSTRLEN]) {
     size_t i, j;
     for (i = 0; i < array->size; ++i) {
@@ -77,7 +77,7 @@ void platformFindOrCreateAdapterIp(AdapterAddressArray *array, char adapter[ADAP
     strncpy(array->adapter[i].addresses.array[j].address, ip, INET6_ADDRSTRLEN);
 }
 
-char platformBindPort(const SOCKET *listenSocket, SA *sockaddr, char *port) {
+char platformBindPort(const SOCKET *listenSocket, SA *sockAddr, char *port) {
 #define PORT_SIZE_MAX 2048
     size_t portSize = 0, i;
     unsigned short portList[PORT_SIZE_MAX];
@@ -118,15 +118,15 @@ char platformBindPort(const SOCKET *listenSocket, SA *sockaddr, char *port) {
     }
 
     if (portSize) {
-        if (sockaddr->sa_family == AF_INET) {
-            struct sockaddr_in *sock = (struct sockaddr_in *) sockaddr;
+        if (sockAddr->sa_family == AF_INET) {
+            struct sockaddr_in *sock = (struct sockaddr_in *) sockAddr;
             for (i = 0; i <= portSize; ++i) {
                 sock->sin_port = htons(portList[i]);
                 if (bind(*listenSocket, (SA *) sock, sizeof(struct sockaddr_in)) == 0)
                     return 0;
             }
-        } else if (sockaddr->sa_family == AF_INET6) {
-            struct sockaddr_in6 *sock = (struct sockaddr_in6 *) sockaddr;
+        } else if (sockAddr->sa_family == AF_INET6) {
+            struct sockaddr_in6 *sock = (struct sockaddr_in6 *) sockAddr;
             for (i = 0; i <= portSize; ++i) {
                 sock->sin6_port = htons(portList[i]);
                 if (bind(*listenSocket, (SA *) sock, sizeof(struct sockaddr_in6)) == 0)

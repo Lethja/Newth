@@ -98,7 +98,7 @@ char handleFile(SOCKET clientSocket, const char *header, char *realPath, char ht
     }
 
     start = finish = 0;
-    e = httpHeaderReadRange(header, &start, &finish);
+    e = httpHeaderReadRange(header, &start, &finish, &st->st_size);
 
     /* Headers */
     httpHeaderWriteResponse(&socketBuffer, e ? 200 : 206);
@@ -121,7 +121,7 @@ char handleFile(SOCKET clientSocket, const char *header, char *realPath, char ht
     httpHeaderWriteEnd(&socketBuffer);
     socketBufferFlush(&socketBuffer);
     webPath = realPath + strlen(globalRootPath);
-    eventHttpRespondInvoke(&socketBuffer.clientSocket, webPath, httpType, 200);
+    eventHttpRespondInvoke(&socketBuffer.clientSocket, webPath, httpType, e ? 200 : 206);
 
     if (httpType == httpHead)
         return 0;
@@ -264,11 +264,6 @@ char handleConnection(SOCKET clientSocket) {
         return 1;
 
     buffer[messageSize - 1] = 0;
-
-#ifndef NDEBUG
-    printf("HTTP HEAD REQUEST:\n%s\n", buffer);
-    fflush(stdout);
-#endif
 
     uriPath = httpClientReadUri(buffer);
     if (uriPath) {

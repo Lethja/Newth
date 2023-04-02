@@ -135,7 +135,7 @@ char httpHeaderReadIfModifiedSince(const char *request, struct tm *tm) {
             char day[4] = "", month[4] = "";
             strncpy(date, data, READ_DATE_MAX);
             date[length] = '\0';
-            if (sscanf(date, "%3s, %d %3s %d %d:%d:%d GMT", day, &tm->tm_mday, month,
+            if (sscanf(date, "%3s, %d %3s %d %d:%d:%d GMT", day, &tm->tm_mday, month, /* NOLINT(cert-err34-c) */
                        &tm->tm_year, /* NOLINT(cert-err34-c) */
                        &tm->tm_hour, /* NOLINT(cert-err34-c) */
                        &tm->tm_min, &tm->tm_sec)) {
@@ -197,7 +197,7 @@ char httpHeaderReadIfModifiedSince(const char *request, struct tm *tm) {
     return 1;
 }
 
-char httpHeaderReadRange(const char *request, off_t *start, off_t *end) {
+char httpHeaderReadRange(const char *request, off_t *start, off_t *end, off_t *max) {
 #define MAX_RANGE_STR_BUF 128
     const char *headerValue = "Range", *parameter = "bytes=";
     size_t strLength;
@@ -227,9 +227,12 @@ char httpHeaderReadRange(const char *request, off_t *start, off_t *end) {
         *equ = *dash = '\0';
 
         if (equ + 1 != dash)
-            *start = atol(equ + 1);
+            *start = atol(equ + 1); /* NOLINT(cert-err34-c) */
         if (dash[1] != '\0')
-            *end = atol(dash + 1);
+            *end = atol(dash + 1); /* NOLINT(cert-err34-c) */
+        if (*end == 0)
+            *end = *max;
+
         return 0;
     }
     return 1;
