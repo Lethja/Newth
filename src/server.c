@@ -21,19 +21,26 @@ struct timeval globalSelectSleep;
 
 void noAction(int signal) {}
 
+#pragma clang diagnostic pop
+
 void shutdownCrash(int signal) {
-    platformCloseBindSockets(&currentSockets, globalMaxSocket);
-    printf("Emergency shutdown: %d\n", signal);
-    exit(1);
+    switch (signal) {
+        default: /* Close like normal unless something has gone catastrophically wrong */
+            platformCloseBindSockets(&currentSockets, globalMaxSocket);
+            printf("Emergency shutdown: %d\n", signal);
+            /* Fallthrough */
+        case SIGABRT:
+        case SIGSEGV:
+            exit(1);
+    }
 }
 
 void shutdownProgram(int signal) {
+    if (signal == SIGINT)
+        printf("\n"); /* Put next message on a different line from ^C */
     platformCloseBindSockets(&currentSockets, globalMaxSocket);
-    printf("Graceful shutdown: %d\n", signal);
     exit(0);
 }
-
-#pragma clang diagnostic pop
 
 char handleDir(SOCKET clientSocket, char *realPath, char type, struct stat *st) {
     char *webPath = realPath + strlen(globalRootPath);
