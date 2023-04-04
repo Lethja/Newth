@@ -129,7 +129,7 @@ char DirectoryRoutineArrayDel(RoutineArray *self, DirectoryRoutine *directoryRou
 FileRoutine FileRoutineNew(SOCKET socket, FILE *file, off_t start, off_t end, char webPath[FILENAME_MAX]) {
     FileRoutine self;
     self.file = file, self.start = start, self.end = end, self.socket = socket;
-    strncpy(self.webPath, webPath, FILENAME_MAX);
+    strncpy(self.webPath, webPath, FILENAME_MAX - 1);
     fseek(self.file, self.start, SEEK_SET);
     return self;
 }

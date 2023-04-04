@@ -67,7 +67,7 @@
 			</Target>
 			<Target title="Server Debug W64">
 				<Option platforms="Windows;" />
-				<Option output="bin/w32/Debug/server" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/w64/Debug/server" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/w32/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
@@ -83,7 +83,7 @@
 			</Target>
 			<Target title="Server Release W64">
 				<Option platforms="Windows;" />
-				<Option output="bin/w32/Release/server" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/w64/Release/server" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/w32/Release/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
@@ -136,6 +136,12 @@
 			<Option target="Server Release W32" />
 			<Option target="Server Release W64" />
 			<Option target="Server Debug W64" />
+		</Unit>
+		<Unit filename="../src/platform/ws2/ipv6.h">
+			<Option target="Server Debug W32" />
+			<Option target="Server Release W32" />
+			<Option target="Server Debug W64" />
+			<Option target="Server Release W64" />
 		</Unit>
 		<Unit filename="../src/server.c">
 			<Option compilerVar="CC" />

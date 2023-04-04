@@ -40,11 +40,13 @@ char platformIsEntryDirectory(char *rootPath, char *webPath, struct dirent *entr
 #endif
 
 void platformFreeAdapterInformation(AdapterAddressArray *array) {
-    size_t i;
-    for (i = 0; i < array->size; ++i)
-        free(array->adapter[i].addresses.array);
+    if (array->size) {
+        size_t i;
+        for (i = 0; i < array->size; ++i)
+            free(array->adapter[i].addresses.array);
 
-    free(array->adapter);
+        free(array->adapter);
+    }
     free(array);
 }
 

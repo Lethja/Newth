@@ -5,11 +5,12 @@
 
 #define WIN32_LEAN_AND_MEAN
 #define CLOSE_SOCKET(x) closesocket(x)
-#define FD_SETSIZE 1024
 #define SOCK_BUF_TYPE int
 #define FORCE_FORWARD_SLASH(path) platformPathForceForwardSlash(path)
 #define FORCE_BACKWARD_SLASH(path) platformPathForceBackwardSlash(path)
 #define sa_family_t short
+
+#include <signal.h>
 
 #include <windows.h>
 #include <winsock2.h>
@@ -18,8 +19,18 @@
 
 #include "platform.h"
 
+#ifndef IPV6_V6ONLY
+#define IPV6_V6ONLY 27
+#endif
+
+#ifndef GAA_FLAG_INCLUDE_PREFIX
+#define GAA_FLAG_INCLUDE_PREFIX 0x0010
+#endif
+
 void platformPathForceForwardSlash(char *path);
 
 void platformPathForceBackwardSlash(char *path);
+
+void ipv6NTop(const void *inAddr6, char *ipStr);
 
 #endif /* OPEN_WEB_PLATFORM_WIN_SOCK_2_H */

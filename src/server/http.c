@@ -361,7 +361,7 @@ void htmlHeaderWrite(char buffer[BUFSIZ], char *title) {
 
 void htmlListStart(char buffer[BUFSIZ]) {
     const char *listStart = "\t\t<UL>\n";
-    strncat(buffer, listStart, strlen(listStart));
+    strncat(buffer, listStart, strlen(listStart) + 1);
 }
 
 void htmlListEnd(char buffer[BUFSIZ]) {

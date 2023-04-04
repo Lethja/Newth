@@ -27,6 +27,7 @@ void shutdownCrash(int signal) {
     switch (signal) {
         default: /* Close like normal unless something has gone catastrophically wrong */
             platformCloseBindSockets(&currentSockets, globalMaxSocket);
+            platformIpStackExit();
             printf("Emergency shutdown: %d\n", signal);
             /* Fallthrough */
         case SIGABRT:
@@ -39,6 +40,7 @@ void shutdownProgram(int signal) {
     if (signal == SIGINT)
         printf("\n"); /* Put next message on a different line from ^C */
     platformCloseBindSockets(&currentSockets, globalMaxSocket);
+    platformIpStackExit();
     exit(0);
 }
 
@@ -421,8 +423,14 @@ int main(int argc, char **argv) {
         else if (platformArgvGetFlag(argc, argv, '6', "ipv6", NULL))
             family = AF_INET6;
 
+        if (platformIpStackInit()) {
+            perror("Unable to network stack");
+            return 1;
+        }
+
         if (platformServerStartup(&globalServerSocket, family, ports)) {
             perror("Unable to start server");
+            platformIpStackExit();
             return 1;
         }
 

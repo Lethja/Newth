@@ -157,3 +157,10 @@ AdapterAddressArray *platformGetAdapterInformation(sa_family_t family) {
 char *platformRealPath(char *path) {
     return realpath(path, NULL);
 }
+
+void platformIpStackExit(void) {
+}
+
+int platformIpStackInit(void) {
+    return 0;
+}

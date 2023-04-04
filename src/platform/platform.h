@@ -19,7 +19,7 @@
 
 #endif
 
-#define ADAPTER_NAME_LENGTH 128
+#define ADAPTER_NAME_LENGTH 512
 
 typedef struct Address {
     sa_family_t type;
@@ -88,6 +88,17 @@ char *platformRealPath(char *path);
  * @param max the maximum socket number select() has seen in the session
  */
 void platformCloseBindSockets(fd_set *sockets, SOCKET max);
+
+/**
+ * Free any memory resources that platformServerProgramInit() allocated
+ */
+void platformIpStackExit(void);
+
+/**
+ * Allocate any memory resources that this platform may need to run network services
+ * @return 0 on success, other on error
+ */
+int platformIpStackInit(void);
 
 /**
  * Start up the server
