@@ -92,10 +92,11 @@ void platformCloseBindSockets(fd_set *sockets, SOCKET max);
 /**
  * Start up the server
  * @param listenSocket Out: the socket the server has been bound to
+ * @param family protocol to start the server under
  * @param ports In: A port of comma seperated ports to try to bind to from left to right
  * @return 0 on success, other on error
  */
-int platformServerStartup(SOCKET *listenSocket, char *ports);
+int platformServerStartup(SOCKET *listenSocket, sa_family_t family, char *ports);
 
 /**
  * Attach signals to comment interrupts
@@ -105,11 +106,11 @@ int platformServerStartup(SOCKET *listenSocket, char *ports);
  */
 void platformConnectSignals(void(*noAction)(int), void(*shutdownCrash)(int), void(*shutdownProgram)(int));
 
-void platformGetIpString(struct sockaddr *addr, char ipStr[INET6_ADDRSTRLEN]);
+void platformGetIpString(struct sockaddr *addr, char ipStr[INET6_ADDRSTRLEN], sa_family_t *family);
 
 unsigned short platformGetPort(struct sockaddr *addr);
 
-AdapterAddressArray *platformGetAdapterInformation(void);
+AdapterAddressArray *platformGetAdapterInformation(sa_family_t family);
 
 void platformFreeAdapterInformation(AdapterAddressArray *array);
 

@@ -105,7 +105,7 @@ void platformPathForceBackwardSlash(char *path) {
     }
 }
 
-void platformGetIpString(struct sockaddr *addr, char ipStr[INET6_ADDRSTRLEN]) {
+void platformGetIpString(struct sockaddr *addr, char ipStr[INET6_ADDRSTRLEN], sa_family_t *family) {
     if (addr->sa_family == AF_INET) {
         struct sockaddr_in *s4 = (struct sockaddr_in *) addr;
         char *ip = inet_ntoa(s4->sin_addr);
@@ -133,7 +133,7 @@ unsigned short platformGetPort(struct sockaddr *addr) {
     return 0;
 }
 
-AdapterAddressArray *platformGetAdapterInformation(void) {
+AdapterAddressArray *platformGetAdapterInformation(sa_family_t family) {
     AdapterAddressArray *array = NULL;
     PIP_ADAPTER_INFO pAdapterInfo = NULL;
     PIP_ADAPTER_INFO pAdapter = NULL;

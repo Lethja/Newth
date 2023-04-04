@@ -298,34 +298,37 @@ static inline void setRootPath(char *path) {
 static void printSocketAccept(SOCKET *sock) { /* NOLINT(readability-non-const-parameter) */
     struct sockaddr_storage ss;
     socklen_t sockLen = sizeof(ss);
+    sa_family_t family;
     char ip[INET6_ADDRSTRLEN];
     unsigned short port;
     getpeername(*sock, (struct sockaddr *) &ss, &sockLen);
-    platformGetIpString((struct sockaddr *) &ss, ip);
+    platformGetIpString((struct sockaddr *) &ss, ip, &family);
     port = platformGetPort((struct sockaddr *) &ss);
-    if (ss.ss_family == AF_INET)
+    if (family == AF_INET)
         printf("TSYN:%s:%u\n", ip, port);
-    else if (ss.ss_family == AF_INET6)
+    else if (family == AF_INET6)
         printf("TSYN:[%s]:%u\n", ip, port);
 }
 
 static void printSocketClose(SOCKET *sock) { /* NOLINT(readability-non-const-parameter) */
     struct sockaddr_storage ss;
     socklen_t sockLen = sizeof(ss);
+    sa_family_t family;
     char ip[INET6_ADDRSTRLEN];
     unsigned short port;
     getpeername(*sock, (struct sockaddr *) &ss, &sockLen);
-    platformGetIpString((struct sockaddr *) &ss, ip);
+    platformGetIpString((struct sockaddr *) &ss, ip, &family);
     port = platformGetPort((struct sockaddr *) &ss);
-    if (ss.ss_family == AF_INET)
+    if (family == AF_INET)
         printf("TRST:%s:%u\n", ip, port);
-    else if (ss.ss_family == AF_INET6)
+    else if (family == AF_INET6)
         printf("TRST:[%s]:%u\n", ip, port);
 }
 
 static void printHttpEvent(eventHttpRespond *event) {
     struct sockaddr_storage sock;
     socklen_t sockLen = sizeof(sock);
+    sa_family_t family;
     unsigned short port;
     char type;
     char ip[INET6_ADDRSTRLEN];
@@ -346,11 +349,11 @@ static void printHttpEvent(eventHttpRespond *event) {
     }
 
     getpeername(*event->clientSocket, (struct sockaddr *) &sock, &sockLen);
-    platformGetIpString((struct sockaddr *) &sock, ip);
+    platformGetIpString((struct sockaddr *) &sock, ip, &family);
     port = platformGetPort((struct sockaddr *) &sock);
-    if (sock.ss_family == AF_INET)
+    if (family == AF_INET)
         printf("%c%03d:%s:%u/%s\n", type, *event->response, ip, port, event->path);
-    else if (sock.ss_family == AF_INET6)
+    else if (family == AF_INET6)
         printf("%c%03d:[%s]:%u/%s\n", type, *event->response, ip, port, event->path);
 }
 
@@ -372,8 +375,8 @@ unsigned short getPort(const SOCKET *listenSocket) {
     return 0;
 }
 
-static void printAdapterInformation(char *protocol, unsigned short port) {
-    AdapterAddressArray *adapters = platformGetAdapterInformation();
+static void printAdapterInformation(char *protocol, sa_family_t family, unsigned short port) {
+    AdapterAddressArray *adapters = platformGetAdapterInformation(family);
     size_t i, j;
     for (i = 0; i < adapters->size; ++i) {
         printf("%s:\n", adapters->adapter[i].name);
@@ -406,16 +409,24 @@ int main(int argc, char **argv) {
     }
 
     {
+        sa_family_t family = AF_UNSPEC;
         /* Get the list of ports then try to bind one */
         char *ports = getenv("TH_HTTP_PORT");
         platformArgvGetFlag(argc, argv, 'p', "port", &ports);
         if (!ports)
             ports = "0";
 
-        if (platformServerStartup(&globalServerSocket, ports)) {
+        if (platformArgvGetFlag(argc, argv, '4', "ipv4", NULL))
+            family = AF_INET;
+        else if (platformArgvGetFlag(argc, argv, '6', "ipv6", NULL))
+            family = AF_INET6;
+
+        if (platformServerStartup(&globalServerSocket, family, ports)) {
             perror("Unable to start server");
             return 1;
         }
+
+        printAdapterInformation("http", family, getPort(&globalServerSocket));
     }
 
     globalMaxSocket = globalServerSocket;
@@ -425,7 +436,6 @@ int main(int argc, char **argv) {
     globalFileRoutineArray.size = globalDirRoutineArray.size = 0;
     globalFileRoutineArray.array = globalDirRoutineArray.array = NULL;
 
-    printAdapterInformation("http", getPort(&globalServerSocket));
     eventHttpRespondSetCallback(printHttpEvent);
     eventHttpFinishSetCallback(printHttpEvent);
     eventSocketAcceptSetCallback(printSocketAccept);

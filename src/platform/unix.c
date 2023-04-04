@@ -32,14 +32,32 @@ void platformCloseBindSockets(fd_set *sockets, SOCKET max) {
     }
 }
 
-int platformServerStartup(int *listenSocket, char *ports) {
-    struct sockaddr_in serverAddress;
+int platformServerStartup(int *listenSocket, sa_family_t family, char *ports) {
+    struct sockaddr_storage serverAddress;
+    switch (family) {
+        default:
+        case AF_INET: {
+            struct sockaddr_in *sock = (struct sockaddr_in *) &serverAddress;
+            if ((*listenSocket = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+                return 1;
 
-    if ((*listenSocket = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-        return 1;
+            sock->sin_family = AF_INET;
+            sock->sin_addr.s_addr = htonl(INADDR_ANY);
+            break;
+        }
+        case AF_INET6:
+        case AF_UNSPEC: {
+            struct sockaddr_in6 *sock = (struct sockaddr_in6 *) &serverAddress;
+            size_t v6Only = family == AF_INET6;
+            if ((*listenSocket = socket(AF_INET6, SOCK_STREAM, 0)) < 0)
+                return 1;
 
-    serverAddress.sin_family = AF_INET;
-    serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
+            sock->sin6_family = AF_INET6;
+            sock->sin6_addr = in6addr_any;
+            setsockopt(*listenSocket, IPPROTO_IPV6, IPV6_V6ONLY, &v6Only, sizeof(v6Only));
+            break;
+        }
+    }
 
     if (platformBindPort(listenSocket, (struct sockaddr *) &serverAddress, ports))
         return 1;
@@ -70,17 +88,23 @@ void platformConnectSignals(void(*noAction)(int), void(*shutdownCrash)(int), voi
     signal(SIGTERM, shutdownProgram);
 }
 
-void platformGetIpString(struct sockaddr *addr, char ipStr[INET6_ADDRSTRLEN]) {
+void platformGetIpString(struct sockaddr *addr, char ipStr[INET6_ADDRSTRLEN], sa_family_t *family) {
     if (addr->sa_family == AF_INET) {
         struct sockaddr_in *s4 = (struct sockaddr_in *) addr;
         char *ip = inet_ntoa(s4->sin_addr);
         strcpy(ipStr, ip);
+        *family = AF_INET;
     } else if (addr->sa_family == AF_INET6) {
+        const char ipv4[8] = "::ffff:";
         struct sockaddr_in6 *s6 = (struct sockaddr_in6 *) addr;
         inet_ntop(s6->sin6_family, &s6->sin6_addr, ipStr, INET6_ADDRSTRLEN);
-    } else {
+        if (strncmp(ipStr, ipv4, sizeof(ipv4) - 1) == 0) {
+            memmove(ipStr, &ipStr[7], INET_ADDRSTRLEN);
+            *family = AF_INET;
+        } else
+            *family = AF_INET6;
+    } else
         strcpy(ipStr, "???");
-    }
 }
 
 unsigned short platformGetPort(struct sockaddr *addr) {
@@ -95,7 +119,7 @@ unsigned short platformGetPort(struct sockaddr *addr) {
     return 0;
 }
 
-AdapterAddressArray *platformGetAdapterInformation(void) {
+AdapterAddressArray *platformGetAdapterInformation(sa_family_t family) {
     struct AdapterAddressArray *array;
     struct ifaddrs *ifap, *ifa;
     char addr[INET6_ADDRSTRLEN];
@@ -107,7 +131,7 @@ AdapterAddressArray *platformGetAdapterInformation(void) {
     array->size = 0;
 
     for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-        if (ifa->ifa_addr->sa_family == AF_INET) {
+        if (ifa->ifa_addr->sa_family == AF_INET && family != AF_INET6) {
             struct sockaddr_in *sa = (struct sockaddr_in *) ifa->ifa_addr;
             char *ip4 = inet_ntoa(sa->sin_addr);
             if (strncmp(ip4, "127", 3) != 0)
@@ -115,7 +139,7 @@ AdapterAddressArray *platformGetAdapterInformation(void) {
             else
                 continue;
 
-        } else if (ifa->ifa_addr->sa_family == AF_INET6) {
+        } else if (ifa->ifa_addr->sa_family == AF_INET6 && family != AF_INET) {
             struct sockaddr_in6 *sa = (struct sockaddr_in6 *) ifa->ifa_addr;
             inet_ntop(sa->sin6_family, &sa->sin6_addr, addr, INET6_ADDRSTRLEN);
             if (strncmp(addr, "::", 2) == 0)

@@ -165,8 +165,8 @@ int platformArgvGetFlag(int argc, char **argv, char shortFlag, char *longFlag, c
                                 *optArg = argv[i + 1];
                             else if (argv[i][2] != '\0')
                                 *optArg = &argv[i][2];
-                            return i;
                         }
+                        return i;
                     }
                     break;
             }
