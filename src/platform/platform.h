@@ -128,6 +128,8 @@ void platformFreeAdapterInformation(AdapterAddressArray *array);
 void platformFindOrCreateAdapterIp(AdapterAddressArray *array, char adapter[ADAPTER_NAME_LENGTH], sa_family_t type,
                                    char ip[INET6_ADDRSTRLEN]);
 
+int platformOfficiallySupportsIpv6(void);
+
 SOCKET platformAcceptConnection(SOCKET fromSocket);
 
 #ifdef _DIRENT_HAVE_D_TYPE

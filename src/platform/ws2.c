@@ -44,7 +44,6 @@ void platformCloseBindSockets(fd_set *sockets, SOCKET max) {
     WSACleanup();
 }
 
-/*
 static char platformVersionAbove(int major, int minor) {
     DWORD dwVersion;
     DWORD dwMajorVersion;
@@ -62,7 +61,6 @@ static char platformVersionAbove(int major, int minor) {
     else
         return 0;
 }
-*/
 
 void platformIpStackExit(void) {
     WSACleanup();
@@ -77,6 +75,12 @@ int platformIpStackInit(void) {
         getAdapterInformationIpv6 = (adapterInformationIpv6) GetProcAddress(ws2ipv6,
                                                                             "platformGetAdapterInformationIpv6");
     return WSAStartup(MAKEWORD(2, 0), &wsaData);
+}
+
+int platformOfficiallySupportsIpv6(void) {
+    if(platformVersionAbove(6, 0))
+        return 1;
+    return 0;
 }
 
 int platformServerStartup(SOCKET *listenSocket, sa_family_t family, char *ports) {

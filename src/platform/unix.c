@@ -164,3 +164,8 @@ void platformIpStackExit(void) {
 int platformIpStackInit(void) {
     return 0;
 }
+
+int platformOfficiallySupportsIpv6(void) {
+    /* TODO: POSIX IPv6 checks */
+    return 1;
+}

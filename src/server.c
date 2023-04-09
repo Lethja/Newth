@@ -184,7 +184,7 @@ char handlePath(SOCKET clientSocket, const char *header, char *path) {
         goto handlePathNotFound;
 
 #ifdef _WIN32
-    if(absolutePath[lenB - 1] == '\\')
+    if (absolutePath[lenB - 1] == '\\')
         absolutePath[lenB - 1] = '\0';
 #endif /* _WIN32 */
 
@@ -411,17 +411,24 @@ int main(int argc, char **argv) {
     }
 
     {
-        sa_family_t family = AF_UNSPEC;
+        sa_family_t family;
+        char *ports;
+
         /* Get the list of ports then try to bind one */
-        char *ports = getenv("TH_HTTP_PORT");
+        ports = getenv("TH_HTTP_PORT");
         platformArgvGetFlag(argc, argv, 'p', "port", &ports);
         if (!ports)
             ports = "0";
 
+        /* Choose IP standards to run on the socket */
         if (platformArgvGetFlag(argc, argv, '4', "ipv4", NULL))
             family = AF_INET;
         else if (platformArgvGetFlag(argc, argv, '6', "ipv6", NULL))
             family = AF_INET6;
+        else if (platformOfficiallySupportsIpv6() || platformArgvGetFlag(argc, argv, '\0', "dual-stack", NULL))
+            family = AF_UNSPEC;
+        else
+            family = AF_INET;
 
         if (platformIpStackInit()) {
             perror("Unable to network stack");
