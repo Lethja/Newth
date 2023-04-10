@@ -1,4 +1,4 @@
-#include "ws2.h"
+#include "winsock.h"
 #include "../server/event.h"
 
 #include <iphlpapi.h>
@@ -10,8 +10,13 @@ typedef AdapterAddressArray *(*adapterInformationIpv6)(sa_family_t family,
                                                        void (*arrayAdd)(AdapterAddressArray *, char *, sa_family_t,
                                                                         char *), void (*nTop)(const void *, char *));
 
+typedef AdapterAddressArray *(*adapterInformationIpv4)(
+        void (*arrayAdd)(AdapterAddressArray *, char *, sa_family_t, char *));
+
+adapterInformationIpv4 getAdapterInformationIpv4 = NULL;
 adapterInformationIpv6 getAdapterInformationIpv6 = NULL;
-HMODULE ws2ipv6 = NULL;
+HMODULE wsIpv4 = NULL;
+HMODULE wsIpv6 = NULL;
 WSADATA wsaData;
 
 char *platformPathCombine(char *path1, char *path2) {
@@ -64,21 +69,40 @@ static char platformVersionAbove(int major, int minor) {
 
 void platformIpStackExit(void) {
     WSACleanup();
-    if (ws2ipv6)
-        FreeLibrary(ws2ipv6);
+    if (wsIpv6)
+        FreeLibrary(wsIpv6);
 }
 
 int platformIpStackInit(void) {
     /* Runtime link dual-stack functions that are not available in all 32 bit versions of Windows */
-    ws2ipv6 = LoadLibrary(TEXT("thwsipv6.dll"));
-    if (ws2ipv6)
-        getAdapterInformationIpv6 = (adapterInformationIpv6) GetProcAddress(ws2ipv6,
+    wsIpv6 = LoadLibrary(TEXT("thwsipv6.dll"));
+    if (wsIpv6)
+        getAdapterInformationIpv6 = (adapterInformationIpv6) GetProcAddress(wsIpv6,
                                                                             "platformGetAdapterInformationIpv6");
-    return WSAStartup(MAKEWORD(2, 0), &wsaData);
+
+    /* Choose between WinSock 1 (Windows 95 support) and WinSock 2 */
+    wsIpv4 = LoadLibrary(TEXT("thwsock2.dll"));
+    if (wsIpv4)
+        getAdapterInformationIpv4 = (adapterInformationIpv4) GetProcAddress(wsIpv4,
+                                                                            "platformGetAdapterInformationIpv4");
+
+#ifndef WIN64
+    else {
+        wsIpv4 = LoadLibrary(TEXT("thwsock1.dll"));
+        if (wsIpv4)
+            getAdapterInformationIpv4 = (adapterInformationIpv4) GetProcAddress(wsIpv4,
+                                                                                "platformGetAdapterInformationIpv4");
+    }
+#endif
+
+    if (!getAdapterInformationIpv4)
+        return 1;
+
+    return WSAStartup(MAKEWORD(1, 1), &wsaData);
 }
 
 int platformOfficiallySupportsIpv6(void) {
-    if(platformVersionAbove(6, 0))
+    if (platformVersionAbove(6, 0))
         return 1;
     return 0;
 }
@@ -239,51 +263,6 @@ unsigned short platformGetPort(struct sockaddr *addr) {
     return 0;
 }
 
-static AdapterAddressArray *platformGetAdapterInformationIpv4(void) {
-    AdapterAddressArray *array = NULL;
-    PIP_ADAPTER_INFO pAdapterInfo = NULL;
-    PIP_ADAPTER_INFO pAdapter = NULL;
-    ULONG dwRetVal, ulOutBufLen = sizeof(IP_ADAPTER_INFO);
-
-    pAdapterInfo = (IP_ADAPTER_INFO *) malloc(sizeof(IP_ADAPTER_INFO));
-    if (pAdapterInfo == NULL) {
-        printf("Error fetching 'GetAdaptersInfo'\n");
-    }
-
-    if (GetAdaptersInfo(pAdapterInfo, &ulOutBufLen) == ERROR_BUFFER_OVERFLOW) {
-        free(pAdapterInfo);
-        pAdapterInfo = (IP_ADAPTER_INFO *) malloc(ulOutBufLen);
-        if (pAdapterInfo == NULL) {
-            printf("Error fetching 'GetAdaptersInfo'\n");
-        }
-    }
-
-    if ((dwRetVal = GetAdaptersInfo(pAdapterInfo, &ulOutBufLen)) == NO_ERROR) {
-        pAdapter = pAdapterInfo;
-        array = malloc(sizeof(AdapterAddressArray));
-        array->size = 0;
-
-        while (pAdapter) {
-            char ip[INET6_ADDRSTRLEN];
-            strncpy(ip, pAdapter->IpAddressList.IpAddress.String, INET6_ADDRSTRLEN);
-
-            if ((strcmp(ip, "0.0.0.0")) != 0) {
-                char desc[BUFSIZ];
-                strcpy(desc, pAdapter->Description);
-                platformFindOrCreateAdapterIp(array, desc, 0, ip);
-            }
-
-            pAdapter = pAdapter->Next;
-        }
-    } else
-        printf("GetAdaptersInfo failed with error: %ld\n", dwRetVal);
-
-    if (pAdapterInfo)
-        free(pAdapterInfo);
-
-    return array;
-}
-
 AdapterAddressArray *platformGetAdapterInformation(sa_family_t family) {
     switch (family) {
         case AF_UNSPEC:
@@ -292,7 +271,7 @@ AdapterAddressArray *platformGetAdapterInformation(sa_family_t family) {
                     return getAdapterInformationIpv6(family, platformFindOrCreateAdapterIp, ipv6NTop);
         default:
         case AF_INET:
-            return platformGetAdapterInformationIpv4();
+            return getAdapterInformationIpv4(platformFindOrCreateAdapterIp);
     }
 }
 

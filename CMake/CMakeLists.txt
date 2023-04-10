@@ -8,7 +8,7 @@ set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -O2 -s")
 if (UNIX)
     set(PLATFORM_SRC ../src/platform/unix.c ../src/platform/unix.c)
 elseif (WIN32)
-    set(PLATFORM_SRC ../src/platform/ws2.c ../src/platform/ws2.c)
+    set(PLATFORM_SRC ../src/platform/winsock.c ../src/platform/winsock.c)
 endif ()
 
 #add_executable(client ../src/client.c ../src/platform/unix.h ../src/common/http.h ../src/platform/platform.h)
@@ -23,12 +23,16 @@ add_executable(th ../src/server.c ../src/platform/unix.h ../src/server/http.c
 target_compile_definitions(th PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
 
 if (WIN32)
-    add_library(thwsipv6 SHARED ../src/platform/ws2/ipv6.c)
+    add_library(thwsipv6 SHARED ../src/platform/winsock/wsipv6.c)
     target_compile_definitions(thwsipv6 PUBLIC _WIN32_WINNT=0x0A00)
     set_target_properties(thwsipv6 PROPERTIES PREFIX "")
     target_link_libraries(thwsipv6 libwsock32.a iphlpapi)
 
+    add_library(thwsock2 SHARED ../src/platform/winsock/wsock2.c)
+    set_target_properties(thwsock2 PROPERTIES PREFIX "")
+    target_link_libraries(thwsock2 libwsock32.a iphlpapi)
+
 #    target_link_libraries(client libwsock32.a iphlpapi)
-    target_link_libraries(th libwsock32.a iphlpapi)
-    add_dependencies(th thwsipv6)
+    target_link_libraries(th libwsock32.a)
+    add_dependencies(th thwsipv6 thwsock2)
 endif ()

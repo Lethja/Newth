@@ -11,7 +11,7 @@
 
 #ifdef _WIN32
 
-#include "ws2.h"
+#include "winsock.h"
 
 #else
 

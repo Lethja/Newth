@@ -3,7 +3,7 @@
 #include <iptypes.h>
 #include <stdio.h>
 
-#include "ipv6.h"
+#include "wsipv6.h"
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
