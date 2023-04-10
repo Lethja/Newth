@@ -32,7 +32,11 @@ if (WIN32)
     set_target_properties(thwsock2 PROPERTIES PREFIX "")
     target_link_libraries(thwsock2 libwsock32.a iphlpapi)
 
+    add_library(thwsock1 SHARED ../src/platform/winsock/wsock1.c)
+    set_target_properties(thwsock1 PROPERTIES PREFIX "")
+    target_link_libraries(thwsock1 libwsock32.a)
+
 #    target_link_libraries(client libwsock32.a iphlpapi)
     target_link_libraries(th libwsock32.a)
-    add_dependencies(th thwsipv6 thwsock2)
+    add_dependencies(th thwsipv6 thwsock2 thwsock1)
 endif ()
