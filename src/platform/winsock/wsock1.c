@@ -3,37 +3,14 @@
 #include <stdio.h>
 #include <tdiinfo.h>
 
-#ifdef NDEBUG
-#define DEBUG_PRT(x_, ...)
-#else
-#define DEBUG_PRT(x_, ...) printf((x_), __VA_ARGS__ ); fflush(stdout); system("pause")
-#endif
-
 #define WSCTL_TCP_QUERY_INFORMATION 0
-#define IP_MIB_ROUTETABLE_ENTRY_ID  0x101
-
 #define IF_MIB_STATS_ID     1
 #define MAX_PHYSADDR_SIZE   8
-
-#define IP_MIB_STATS_ID             1
 #define IP_MIB_ADDRTABLE_ENTRY_ID   0x102
 
-typedef int (__stdcall *WsControlProc)(DWORD, DWORD, LPVOID, LPDWORD, LPVOID, LPDWORD);
+#pragma region WsControl helper structs
 
-typedef struct IPRouteEntry {
-    ULONG ire_addr;
-    ULONG ire_index;    /* matches if_index in IFEntry and iae_index in IPAddrEntry */
-    ULONG ire_metric;
-    ULONG ire_unk1;
-    ULONG ire_unk2;
-    ULONG ire_unk3;
-    ULONG ire_gw;
-    ULONG ire_unk4;
-    ULONG ire_unk5;
-    ULONG ire_unk6;
-    ULONG ire_mask;
-    ULONG ire_unk7;
-} IPRouteEntry;
+typedef int (__stdcall *WsControlProc)(DWORD, DWORD, LPVOID, LPDWORD, LPVOID, LPDWORD);
 
 typedef struct IFEntry {
     ULONG if_index;
@@ -97,22 +74,70 @@ typedef struct IPAddrEntry {
     USHORT iae_pad;
 } IPAddrEntry;
 
-/* TODO: So much to do. Use https://tangentsoft.com/wskfaq/articles/wscontrol.html as a reference implementation */
+#pragma endregion
+
+#pragma region Network interface collection
+
+typedef struct NIC {
+    ULONG index;
+    char *desc;
+} NIC;
+
+static NIC *networkInterfaces = NULL;
+static size_t networkInterfacesSize = 0;
+
+static void nicAdd(ULONG index, char *desc) {
+    size_t i = networkInterfacesSize;
+    ++networkInterfacesSize;
+    if (networkInterfacesSize) {
+        void *tmp = realloc(networkInterfaces, sizeof(NIC) * networkInterfacesSize);
+        if (tmp)
+            networkInterfaces = tmp;
+    } else {
+        networkInterfaces = malloc(sizeof(NIC) * networkInterfacesSize);
+    }
+
+    networkInterfaces[i].desc = desc;
+    networkInterfaces[i].index = index;
+}
+
+static char *nicFind(ULONG index) {
+    size_t i;
+    for (i = 0; i < networkInterfacesSize; ++i) {
+        if (networkInterfaces[i].index == index)
+            return networkInterfaces[i].desc;
+    }
+    return NULL;
+}
+
+static void nicFree(void) {
+    size_t i;
+    for (i = 0; i < networkInterfacesSize; ++i) {
+        free(networkInterfaces[i].desc);
+    }
+    if (networkInterfaces)
+        free(networkInterfaces), networkInterfaces = NULL;
+    networkInterfacesSize = 0;
+}
+
+#pragma endregion
+
+WsControlProc WsControl;
+
 AdapterAddressArray *
 platformGetAdapterInformationIpv4(void (arrayAdd)(AdapterAddressArray *, char *, sa_family_t, char *)) {
     HMODULE wsock32 = LoadLibrary("wsock32.dll");
-    DEBUG_PRT("wsock32 = %p\n", (void*)wsock32);
     if (wsock32) {
         WSADATA WSAData;
-        WsControlProc WsControl = (WsControlProc) GetProcAddress(wsock32, "WsControl");
-
         int result;
         TCP_REQUEST_QUERY_INFORMATION_EX tcpRequestQueryInfoEx;
         TDIEntityID *entityIds;
         DWORD tcpRequestBufSize, entityIdsBufSize, entityCount, ifCount, i;
 
-        DEBUG_PRT("WsControl = %p\n", (void*)WsControl);
-        if(!WsControl) {
+        AdapterAddressArray *array = NULL;
+
+        WsControl = (WsControlProc) GetProcAddress(wsock32, "WsControl");
+        if (!WsControl) {
             FreeLibrary(wsock32);
             return NULL;
         }
@@ -152,7 +177,6 @@ platformGetAdapterInformationIpv4(void (arrayAdd)(AdapterAddressArray *, char *,
 
         /* print out the interface info for the generic interfaces */
         for (i = 0; i < entityCount; i++) {
-
             if (entityIds[i].tei_entity == IF_ENTITY) {
                 ULONG entityType;
                 DWORD entityTypeSize;
@@ -181,6 +205,7 @@ platformGetAdapterInformationIpv4(void (arrayAdd)(AdapterAddressArray *, char *,
                 if (entityType == IF_MIB) { /* Supports MIB-2 interface. */
                     DWORD ifEntrySize;
                     IFEntry *ifEntry;
+                    char *desc = NULL;
 
                     /* get snmp mib-2 info */
                     tcpRequestQueryInfoEx.ID.toi_class = INFO_CLASS_PROTOCOL;
@@ -204,8 +229,9 @@ platformGetAdapterInformationIpv4(void (arrayAdd)(AdapterAddressArray *, char *,
 
                     /* print interface index and description */
                     *(ifEntry->if_descr + ifEntry->if_descrlen) = 0;
-                    fprintf(stdout, "IF Index %lu  %s\n", ifEntry->if_index, ifEntry->if_descr);
-
+                    desc = malloc(ifEntry->if_descrlen);
+                    strncpy(desc, (char *) ifEntry->if_descr, ifEntry->if_descrlen);
+                    nicAdd(ifEntry->if_index, desc);
                 }
             }
         }
@@ -237,34 +263,11 @@ platformGetAdapterInformationIpv4(void (arrayAdd)(AdapterAddressArray *, char *,
                 }
 
                 if (entityType == CL_NL_IP) {   /* Entity implements IP. */
-                    DWORD ipSnmpInfoSize, ipAddrEntryBufSize, ipRouteEntryBufSize, j;
-                    IPRouteEntry *ipRouteEntry;
-                    IPSNMPInfo ipSnmpInfo;
+                    DWORD ipAddrEntryBufSize, j;
                     IPAddrEntry *ipAddrEntry;
 
-                    /* get ip snmp info */
-                    tcpRequestQueryInfoEx.ID.toi_class = INFO_CLASS_PROTOCOL;
-                    tcpRequestQueryInfoEx.ID.toi_id = IP_MIB_STATS_ID;
-
-
-                    ipSnmpInfoSize = sizeof(ipSnmpInfo);
-
-                    result = WsControl(IPPROTO_TCP, WSCTL_TCP_QUERY_INFORMATION, &tcpRequestQueryInfoEx,
-                                       &tcpRequestBufSize, &ipSnmpInfo, &ipSnmpInfoSize);
-
-                    if (result) {
-                        fprintf(stderr, "%s(%d) WsControl failed (%d)\n", __FILE__, __LINE__, WSAGetLastError());
-                        WSACleanup();
-                        FreeLibrary(wsock32);
-                        return NULL;
-                    }
-
-                    /* print ip snmp info */
-                    fprintf(stdout, "IP NumIfs: %lu\n", ipSnmpInfo.ipsi_numif);
-                    fprintf(stdout, "IP NumAddrs: %lu\n", ipSnmpInfo.ipsi_numaddr);
-                    fprintf(stdout, "IP NumRoutes: %lu\n", ipSnmpInfo.ipsi_numroutes);
-
                     /* get ip address list */
+                    tcpRequestQueryInfoEx.ID.toi_class = INFO_CLASS_PROTOCOL;
                     tcpRequestQueryInfoEx.ID.toi_id = IP_MIB_ADDRTABLE_ENTRY_ID;
 
                     ipAddrEntryBufSize = sizeof(IPAddrEntry) * ifCount;
@@ -280,53 +283,33 @@ platformGetAdapterInformationIpv4(void (arrayAdd)(AdapterAddressArray *, char *,
                         return NULL;
                     }
 
-                    /* print ip address list */
+                    if (ifCount)
+                        array = malloc(sizeof(AdapterAddressArray)), array->size = 0;
+
+                    /* Add ip address if interface is found */
                     for (j = 0; j < ifCount; j++) {
-
-                        unsigned char *addr = (unsigned char *) &ipAddrEntry[j].iae_addr;
-                        unsigned char *mask = (unsigned char *) &ipAddrEntry[j].iae_mask;
-
-                        fprintf(stdout, "IF Index %ld  "
-                                        "Address %d.%d.%d.%d  "
-                                        "Mask %d.%d.%d.%d\n", ipAddrEntry[j].iae_index, addr[0], addr[1], addr[2],
-                                addr[3], mask[0], mask[1], mask[2], mask[3]);
-                    }
-
-                    /* get route table */
-                    tcpRequestQueryInfoEx.ID.toi_id = IP_MIB_ROUTETABLE_ENTRY_ID;
-                    ipRouteEntryBufSize = sizeof(IPRouteEntry) * ipSnmpInfo.ipsi_numroutes;
-                    ipRouteEntry = (IPRouteEntry *) calloc(ipRouteEntryBufSize, 1);
-
-                    result = WsControl(IPPROTO_TCP, WSCTL_TCP_QUERY_INFORMATION, &tcpRequestQueryInfoEx,
-                                       &tcpRequestBufSize, ipRouteEntry, &ipRouteEntryBufSize);
-
-                    if (result) {
-                        fprintf(stderr, "%s(%d) WsControl failed (%d)\n", __FILE__, __LINE__, WSAGetLastError());
-                        WSACleanup();
-                        FreeLibrary(wsock32);
-                        return NULL;
-                    }
-
-                    /* print route table */
-                    for (j = 0; j < ipSnmpInfo.ipsi_numroutes; j++) {
-
-                        unsigned char *addr = (unsigned char *) &ipRouteEntry[j].ire_addr;
-                        unsigned char *gw = (unsigned char *) &ipRouteEntry[j].ire_gw;
-                        unsigned char *mask = (unsigned char *) &ipRouteEntry[j].ire_mask;
-
-                        fprintf(stdout, "Route %d.%d.%d.%d  "
-                                        "IF %ld  "
-                                        "GW %d.%d.%d.%d  "
-                                        "Mask %d.%d.%d.%d  "
-                                        "Metric %ld\n", addr[0], addr[1], addr[2], addr[3], ipRouteEntry[j].ire_index,
-                                gw[0], gw[1], gw[2], gw[3], mask[0], mask[1], mask[2], mask[3],
-                                ipRouteEntry[j].ire_metric);
+                        char *nicStr = nicFind(ipAddrEntry[j].iae_index);
+                        /* If the interface index was found then then this adapter and IP address are valid matches */
+                        if (nicStr) {
+                            char addrStr[INET_ADDRSTRLEN];
+                            unsigned char *addr = (unsigned char *) &ipAddrEntry[j].iae_addr;
+                            if (*addr != 127) { /* Not loop-back interface */
+                                snprintf(addrStr, INET_ADDRSTRLEN, "%d.%d.%d.%d", addr[0], addr[1], addr[2], addr[3]);
+                                arrayAdd(array, nicStr, 0, addrStr);
+                            }
+                        }
                     }
                 }
             }
         }
-        DEBUG_PRT("%s\n", "Good ending");
+        nicFree();
         FreeLibrary(wsock32);
+        if (array) {
+            if (array->size)
+                return array;
+            else
+                free(array);
+        }
     }
     return NULL;
 }
