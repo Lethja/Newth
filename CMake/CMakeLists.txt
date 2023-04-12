@@ -3,7 +3,16 @@ project(Newth C)
 
 set(CMAKE_C_STANDARD 90)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c89 -pedantic -Wall -Wno-unknown-pragmas")
+
+option(FORCE_WIN32 "Force a portable Windows binary" ON)
+
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -O2 -s")
+
+if(WIN32)
+    if(FORCE_WIN32)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m32 -march=i386")
+    endif()
+endif()
 
 if (UNIX)
     set(PLATFORM_SRC ../src/platform/unix.c ../src/platform/unix.c)
@@ -38,5 +47,8 @@ if (WIN32)
 
 #    target_link_libraries(client libwsock32.a iphlpapi)
     target_link_libraries(th libwsock32.a)
-    add_dependencies(th thwsipv6 thwsock2 thwsock1)
+    add_dependencies(th thwsipv6 thwsock2)
+    if(FORCE_WIN32)
+        add_dependencies(th thwsock1)
+    endif()
 endif ()
