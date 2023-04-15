@@ -252,14 +252,11 @@ void httpHeaderWriteRange(SocketBuffer *socketBuffer, off_t start, off_t finish,
 
 void httpHeaderWriteDate(SocketBuffer *socketBuffer) {
 #define WRITE_DATE_MAX 39
-    char buffer[WRITE_DATE_MAX];
-    time_t rawTime;
-    struct tm *timeInfo;
+    char buffer[WRITE_DATE_MAX], time[30];
 
-    time(&rawTime);
-    timeInfo = gmtime(&rawTime);
+    platformGetCurrentTime(time);
 
-    strftime(buffer, WRITE_DATE_MAX, "Date: %a, %d %b %Y %H:%M:%S GMT" HTTP_EOL, timeInfo);
+    snprintf(buffer, WRITE_DATE_MAX, "Date: %s" HTTP_EOL, time);
     socketBufferWrite(socketBuffer, buffer);
 }
 
@@ -281,9 +278,10 @@ void httpHeaderWriteContentLengthSt(SocketBuffer *socketBuffer, struct stat *st)
 
 void httpHeaderWriteLastModified(SocketBuffer *socketBuffer, struct stat *st) {
 #define LAST_MODIFIED_MAX 47
-    char buffer[LAST_MODIFIED_MAX];
+    char buffer[LAST_MODIFIED_MAX], time[30];
 
-    strftime(buffer, LAST_MODIFIED_MAX, "Last-Modified: %a, %d %b %Y %H:%M:%S GMT" HTTP_EOL, gmtime(&st->st_mtime));
+    platformGetTime(&st->st_mtime, time);
+    snprintf(buffer, LAST_MODIFIED_MAX, "Last-Modified: %s" HTTP_EOL, time);
     socketBufferWrite(socketBuffer, buffer);
 }
 

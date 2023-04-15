@@ -155,7 +155,7 @@ char handleFile(SOCKET clientSocket, const char *header, char *realPath, char ht
 
 char handlePath(SOCKET clientSocket, const char *header, char *path) {
     struct stat st;
-    struct tm tm;
+    PlatformTimeStruct tm;
     char *absolutePath = NULL, e = 0;
     int r;
     size_t lenA, lenB;
@@ -199,11 +199,10 @@ char handlePath(SOCKET clientSocket, const char *header, char *path) {
     e = httpClientReadType(header);
 
     if (!httpHeaderReadIfModifiedSince(header, &tm)) {
-        struct tm mt;
-        mt = *gmtime(&st.st_mtime);
+        PlatformTimeStruct mt;
+        platformGetTimeStruct(&st.st_mtime, (void **) &mt);
 
-        if (tm.tm_year == mt.tm_year && tm.tm_mon == mt.tm_mon && tm.tm_mday == mt.tm_mday &&
-            tm.tm_hour == mt.tm_hour && tm.tm_min == mt.tm_min && tm.tm_sec == mt.tm_sec) {
+        if (platformTimeStructEquals(&tm, &mt)) {
             SocketBuffer socketBuffer = socketBufferNew(clientSocket);
 
             if (absolutePath != globalRootPath)

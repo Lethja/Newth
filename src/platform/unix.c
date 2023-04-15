@@ -1,4 +1,5 @@
 #include <ifaddrs.h>
+#include <time.h>
 #include "platform.h"
 #include "unix.h"
 #include "../server/event.h"
@@ -168,4 +169,24 @@ int platformIpStackInit(void) {
 int platformOfficiallySupportsIpv6(void) {
     /* TODO: POSIX IPv6 checks */
     return 1;
+}
+
+void platformGetTime(void *clock, char *time) {
+    struct tm *timeInfo = gmtime(clock);
+    strftime(time, 30, "%a, %d %b %Y %H:%M:%S GMT", timeInfo);
+}
+
+void platformGetCurrentTime(char *timeStr) {
+    time_t rawTime;
+    time(&rawTime);
+    platformGetTime(&rawTime, timeStr);
+}
+
+void platformGetTimeStruct(void *clock, void **timeStructure) {
+    *timeStructure = gmtime(clock);
+}
+
+int platformTimeStructEquals(PlatformTimeStruct *t1, PlatformTimeStruct *t2) {
+    return (t1->tm_year == t2->tm_year && t1->tm_mon == t2->tm_mon && t1->tm_mday == t2->tm_mday &&
+            t1->tm_hour == t2->tm_hour && t1->tm_min == t2->tm_min && t1->tm_sec == t2->tm_sec);
 }

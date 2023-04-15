@@ -285,3 +285,21 @@ char *platformRealPath(char *path) {
     free(buf);
     return NULL;
 }
+
+void platformGetTime(void *clock, char *time) {
+    /* TODO: Get the wall clock time and format it in http format */
+    *time = '\0';
+}
+
+void platformGetCurrentTime(char *time) {
+    platformGetTime(NULL, time);
+}
+
+void platformGetTimeStruct(void *clock, void **timeStructure) {
+    *timeStructure = NULL;
+}
+
+int platformTimeStructEquals(PlatformTimeStruct *t1, PlatformTimeStruct *t2) {
+    /* TODO: Compare two FILETIMEs */
+    return 0;
+}

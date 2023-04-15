@@ -10,6 +10,11 @@
 #define FORCE_BACKWARD_SLASH(path) platformPathForceBackwardSlash(path)
 #define sa_family_t short
 
+#include <winsock2.h>
+#include <windows.h>
+
+typedef FILETIME PlatformTimeStruct;
+
 #include <signal.h>
 
 #include <windows.h>

@@ -130,6 +130,14 @@ void platformFindOrCreateAdapterIp(AdapterAddressArray *array, char adapter[ADAP
 
 int platformOfficiallySupportsIpv6(void);
 
+void platformGetTime(void *clock, char *time);
+
+void platformGetCurrentTime(char *timeStr);
+
+void platformGetTimeStruct(void *clock, void **timeStructure);
+
+int platformTimeStructEquals(PlatformTimeStruct *t1, PlatformTimeStruct *t2);
+
 SOCKET platformAcceptConnection(SOCKET fromSocket);
 
 #ifdef _DIRENT_HAVE_D_TYPE
