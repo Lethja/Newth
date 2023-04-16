@@ -286,9 +286,9 @@ char *platformRealPath(char *path) {
     return NULL;
 }
 
-void platformGetTime(void *clock, char *time) {
+void platformGetTime(void *clock, char *timeStr) {
     /* TODO: Get the wall clock time and format it in http format */
-    *time = '\0';
+    *timeStr = '\0';
 }
 
 void platformGetCurrentTime(char *time) {
@@ -302,4 +302,37 @@ void platformGetTimeStruct(void *clock, void **timeStructure) {
 int platformTimeStructEquals(PlatformTimeStruct *t1, PlatformTimeStruct *t2) {
     /* TODO: Compare two FILETIMEs */
     return 0;
+}
+
+void *platformDirOpen(char *path) {
+    return NULL;
+}
+
+void platformDirClose(void *dirp) {
+}
+
+void *platformDirRead(void *dirp) {
+    return NULL;
+}
+
+char *platformDirEntryGetName(void *entry, size_t *length) {
+    if(length)
+        *length = 0;
+    return NULL;
+}
+
+char platformDirEntryIsHidden(void *entry) {
+    return 0;
+}
+
+char platformDirEntryIsDirectory(char *rootPath, char *webPath, void *entry) {
+    return 0;
+}
+
+char platformTimeGetFromHttpStr(const char *str, PlatformTimeStruct *time) {
+    return 1;
+}
+
+int platformFileStat(const char *path, PlatformFileStat *stat) {
+    return 1;
 }

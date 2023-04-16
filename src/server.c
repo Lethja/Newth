@@ -4,8 +4,6 @@
 #include "server/routine.h"
 
 #include <stdlib.h>
-#include <sys/stat.h>
-#include <dirent.h>
 
 SOCKET globalServerSocket;
 SOCKET globalMaxSocket = 0;
@@ -44,11 +42,11 @@ void shutdownProgram(int signal) {
     exit(0);
 }
 
-char handleDir(SOCKET clientSocket, char *realPath, char type, struct stat *st) {
+char handleDir(SOCKET clientSocket, char *realPath, char type, PlatformFileStat *st) {
     char *webPath = realPath + strlen(globalRootPath);
     char buf[BUFSIZ];
     SocketBuffer socketBuffer = socketBufferNew(clientSocket);
-    DIR *dir = opendir(realPath);
+    DIR *dir = platformDirOpen(realPath);
 
     if (dir == NULL)
         return httpHeaderHandleError(&socketBuffer, webPath, httpGet, 404);
@@ -90,12 +88,12 @@ char handleDir(SOCKET clientSocket, char *realPath, char type, struct stat *st) 
 
     handleDirAbort:
     if (dir)
-        closedir(dir);
+        platformDirClose(dir);
 
     return 1;
 }
 
-char handleFile(SOCKET clientSocket, const char *header, char *realPath, char httpType, struct stat *st) {
+char handleFile(SOCKET clientSocket, const char *header, char *realPath, char httpType, PlatformFileStat *st) {
     SocketBuffer socketBuffer = socketBufferNew(clientSocket);
     FILE *fp = fopen(realPath, "rb");
     off_t start, finish;
@@ -154,7 +152,7 @@ char handleFile(SOCKET clientSocket, const char *header, char *realPath, char ht
 }
 
 char handlePath(SOCKET clientSocket, const char *header, char *path) {
-    struct stat st;
+    PlatformFileStat st;
     PlatformTimeStruct tm;
     char *absolutePath = NULL, e = 0;
     int r;
@@ -188,7 +186,7 @@ char handlePath(SOCKET clientSocket, const char *header, char *path) {
         absolutePath[lenB - 1] = '\0';
 #endif /* _WIN32 */
 
-    r = stat(absolutePath, &st);
+    r = platformFileStat(absolutePath, &st);
     if (r) {
         perror(absolutePath);
         goto handlePathNotFound;

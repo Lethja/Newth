@@ -14,6 +14,17 @@
 #include <windows.h>
 
 typedef FILETIME PlatformTimeStruct;
+typedef WIN32_FIND_DATA PlatformDirEntry;
+typedef struct winSockNativeStat {
+    unsigned long st_size;
+    unsigned int st_mode;
+    FILETIME st_mtime;
+} PlatformFileStat;
+
+typedef struct winSockNativeDir {
+    PlatformDirEntry lastEntry;
+    HANDLE directoryHandle;
+} DIR;
 
 #include <signal.h>
 

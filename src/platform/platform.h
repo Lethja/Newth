@@ -15,7 +15,7 @@
 
 #else
 
-#include "unix.h"
+#include "posix01.h"
 
 #endif
 
@@ -130,28 +130,30 @@ void platformFindOrCreateAdapterIp(AdapterAddressArray *array, char adapter[ADAP
 
 int platformOfficiallySupportsIpv6(void);
 
-void platformGetTime(void *clock, char *time);
+void platformGetTime(void *clock, char *timeStr);
 
 void platformGetCurrentTime(char *timeStr);
 
 void platformGetTimeStruct(void *clock, void **timeStructure);
 
+char platformTimeGetFromHttpStr(const char *str, PlatformTimeStruct *time);
+
 int platformTimeStructEquals(PlatformTimeStruct *t1, PlatformTimeStruct *t2);
 
+void *platformDirOpen(char *path);
+
+void platformDirClose(void *dirp);
+
+void *platformDirRead(void *dirp);
+
+char *platformDirEntryGetName(void *entry, size_t *length);
+
+char platformDirEntryIsHidden(void *entry);
+
+char platformDirEntryIsDirectory(char *rootPath, char *webPath, void *entry);
+
+int platformFileStat(const char *path, PlatformFileStat *fileStat);
+
 SOCKET platformAcceptConnection(SOCKET fromSocket);
-
-#ifdef _DIRENT_HAVE_D_TYPE
-
-#define IS_ENTRY_DIRECTORY(rootPath, webPath, entry) entry->d_type == DT_DIR
-
-#else
-
-#define IS_ENTRY_DIRECTORY(rootPath, webPath, entry) platformIsEntryDirectory(rootPath, webPath, entry)
-
-#include <dirent.h>
-
-char platformIsEntryDirectory(char *rootPath, char *webPath, struct dirent *entry);
-
-#endif /* _DIRENT_HAVE_D_TYPE */
 
 #endif /* OPEN_WEB_PLATFORM_H */

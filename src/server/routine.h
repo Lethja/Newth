@@ -2,7 +2,7 @@
 #define OPEN_WEB_ROUTINE_H
 
 #include <stdio.h>
-#include <dirent.h>
+#include "../platform/platform.h"
 #include "sockbufr.h"
 
 typedef struct FileRoutine {

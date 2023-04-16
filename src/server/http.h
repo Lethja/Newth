@@ -78,7 +78,7 @@ httpType httpClientReadType(const char *request);
  * @param tm Out: the struct to put valid data into
  * @return 0 on success, other on error
  */
-char httpHeaderReadIfModifiedSince(const char *request, struct tm *tm);
+char httpHeaderReadIfModifiedSince(const char *request, PlatformTimeStruct *tm);
 
 /**
  * Convert 'Range' header to a set of off_t types
@@ -154,7 +154,7 @@ void httpHeaderWriteContentLength(SocketBuffer *socketBuffer, size_t length);
  * @param socketBuffer In: The socketBuffer to write to
  * @param st In: The status structure of a file you intend to send
  */
-void httpHeaderWriteContentLengthSt(SocketBuffer *socketBuffer, struct stat *st);
+void httpHeaderWriteContentLengthSt(SocketBuffer *socketBuffer, PlatformFileStat *st);
 
 /**
  * Write the HTTP header Content-Type
@@ -188,7 +188,7 @@ void httpHeaderWriteFileName(SocketBuffer *socketBuffer, char *path);
  * @param socketBuffer In: The socketBuffer to write to
  * @param st In: The status structure of a file you intend to send
  */
-void httpHeaderWriteLastModified(SocketBuffer *socketBuffer, struct stat *st);
+void httpHeaderWriteLastModified(SocketBuffer *socketBuffer, PlatformFileStat *st);
 
 /**
  * Write a HTTP

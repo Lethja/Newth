@@ -1,7 +1,8 @@
 #include <ifaddrs.h>
 #include <time.h>
+#include <ctype.h>
 #include "platform.h"
-#include "unix.h"
+#include "posix01.h"
 #include "../server/event.h"
 
 char *platformPathCombine(char *path1, char *path2) {
@@ -189,4 +190,139 @@ void platformGetTimeStruct(void *clock, void **timeStructure) {
 int platformTimeStructEquals(PlatformTimeStruct *t1, PlatformTimeStruct *t2) {
     return (t1->tm_year == t2->tm_year && t1->tm_mon == t2->tm_mon && t1->tm_mday == t2->tm_mday &&
             t1->tm_hour == t2->tm_hour && t1->tm_min == t2->tm_min && t1->tm_sec == t2->tm_sec);
+}
+
+char platformTimeGetFromHttpStr(const char *str, PlatformTimeStruct *time) {
+    struct tm *tm = time;
+    char day[4] = "", month[4] = "";
+    if (sscanf(str, "%3s, %d %3s %d %d:%d:%d GMT", day, &tm->tm_mday, month, /* NOLINT(cert-err34-c) */
+               &tm->tm_year, /* NOLINT(cert-err34-c) */
+               &tm->tm_hour, /* NOLINT(cert-err34-c) */
+               &tm->tm_min, &tm->tm_sec)) {
+        switch (toupper(day[0])) {
+            case 'F':
+                tm->tm_wday = 5;
+                break;
+            case 'M':
+                tm->tm_wday = 1;
+                break;
+            case 'S':
+                tm->tm_wday = toupper(day[1]) == 'A' ? 6 : 0;
+                break;
+            case 'T':
+                tm->tm_wday = toupper(day[1]) == 'U' ? 2 : 4;
+                break;
+            case 'W':
+                tm->tm_wday = 3;
+                break;
+            default:
+                return 1;
+        }
+
+        switch (toupper(month[0])) {
+            case 'A':
+                tm->tm_mon = toupper(month[1]) == 'P' ? 3 : 7;
+                break;
+            case 'D':
+                tm->tm_mon = 11;
+                break;
+            case 'F':
+                tm->tm_mon = 1;
+                break;
+            case 'J':
+                tm->tm_mon = toupper(month[1]) == 'A' ? 0 : toupper(month[3]) == 'L' ? 6 : 5;
+                break;
+            case 'M':
+                tm->tm_mon = toupper(month[2]) == 'R' ? 2 : 4;
+                break;
+            case 'N':
+                tm->tm_mon = 10;
+                break;
+            case 'O':
+                tm->tm_mon = 9;
+                break;
+            case 'S':
+                tm->tm_mon = 8;
+                break;
+            default:
+                return 1;
+        }
+
+        tm->tm_year -= 1900;
+        return 0;
+    }
+    return 1;
+}
+
+void *platformDirOpen(char *path) {
+    return opendir(path);
+}
+
+void platformDirClose(void *dirp) {
+    closedir(dirp);
+}
+
+void *platformDirRead(void *dirp) {
+    return readdir(dirp);
+}
+
+char *platformDirEntryGetName(void *entry, size_t *length) {
+    struct dirent *d = entry;
+    char *r = d->d_name;
+
+    if (length)
+        *length = strlen(r);
+
+    return r;
+}
+
+char platformDirEntryIsHidden(void *entry) {
+    struct dirent *d = entry;
+    return d->d_name[0] == '.' ? 1 : 0;
+}
+
+char platformDirEntryIsDirectory(char *rootPath, char *webPath, void *entry) {
+    struct dirent *d = entry;
+
+#ifdef _DIRENT_HAVE_D_TYPE
+
+    return d->d_type == DT_DIR ? 1 : 0;
+
+#else
+
+    struct stat st;
+    char *a, *b = NULL;
+
+    a = platformPathCombine(rootPath, webPath);
+
+    if (!a)
+        return 0;
+
+    b = platformPathCombine(a, platformDirEntryGetName(entry, NULL));
+    if (!b)
+        goto platformIsEntryDirectoryFail;
+
+    free(a), a = NULL;
+
+    if (stat(b, &st))
+        goto platformIsEntryDirectoryFail;
+
+    free(b);
+    return S_ISDIR(st.st_mode);
+
+    platformIsEntryDirectoryFail:
+    if (a)
+        free(a);
+    if (b)
+        free(b);
+
+    return 0;
+
+#endif /* _DIRENT_HAVE_D_TYPE */
+
+}
+
+int platformFileStat(const char *path, PlatformFileStat *fileStat) {
+    struct stat *st = fileStat;
+    return stat(path, st);
 }

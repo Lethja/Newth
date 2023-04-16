@@ -7,32 +7,30 @@
 size_t DirectoryRoutineContinue(DirectoryRoutine *self) {
     const size_t max = 10;
     size_t bytesWrite = 0, i, pathLen = strlen(self->webPath);
-    struct dirent *entry;
+    PlatformDirEntry *entry;
 
     for (i = 0; i < max; ++i) {
-        size_t entryLen;
-        entry = readdir(self->directory);
+        entry = platformDirRead(self->directory);
         if (entry) {
-            char buffer[BUFSIZ];
-            char pathBuf[BUFSIZ];
+            size_t entryLen;
+            char buffer[BUFSIZ], pathBuf[BUFSIZ], *entryName;
 
-            /* Omit hidden files */
-            if (entry->d_name[0] == '.')
+            if (platformDirEntryIsHidden(entry))
                 continue;
 
-            entryLen = strlen(entry->d_name);
+            entryName = platformDirEntryGetName(entry, &entryLen);
 
             if (pathLen + entryLen + 3 < BUFSIZ) {
                 memcpy(pathBuf, self->webPath, pathLen);
                 FORCE_FORWARD_SLASH(pathBuf);
                 if (pathBuf[pathLen ? pathLen - 1 : 0] != '/') {
                     pathBuf[pathLen ? pathLen : 0] = '/';
-                    memcpy(pathLen ? pathBuf + pathLen + 1 : pathBuf + 1, entry->d_name, entryLen + 1);
+                    memcpy(pathLen ? pathBuf + pathLen + 1 : pathBuf + 1, entryName, entryLen + 1);
                 } else
-                    memcpy(pathBuf + pathLen + 1, entry->d_name, entryLen + 1);
+                    memcpy(pathBuf + pathLen + 1, entryName, entryLen + 1);
 
                 /* Append '/' on the end of directory entries */
-                if (IS_ENTRY_DIRECTORY(self->rootPath, self->webPath, entry)) {
+                if (platformDirEntryIsDirectory(self->rootPath, self->webPath, entry)) {
                     size_t len = strlen(pathBuf);
                     pathBuf[len] = '/', pathBuf[len + 1] = '\0';
                 }
@@ -99,7 +97,7 @@ char DirectoryRoutineArrayAdd(RoutineArray *self, DirectoryRoutine directoryRout
 }
 
 void DirectoryRoutineFree(DirectoryRoutine *self) {
-    closedir(self->directory);
+    platformDirClose(self->directory);
 }
 
 char DirectoryRoutineArrayDel(RoutineArray *self, DirectoryRoutine *directoryRoutine) {

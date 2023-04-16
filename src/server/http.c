@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
 static inline char HexToAscii(const char *hex) {
     char value = 0;
@@ -120,78 +119,23 @@ static inline int ValidHttpDateStr(const char *date) {
            date[19] == ':' && date[22] == ':' && date[25] == ' ';
 }
 
-char httpHeaderReadIfModifiedSince(const char *request, struct tm *tm) {
+char httpHeaderReadIfModifiedSince(const char *request, PlatformTimeStruct *tm) {
 #define READ_DATE_MAX 39
     const char *headerValue = "If-Modified-Since";
     size_t length;
     char *data = strstr(request, headerValue);
 
-    if (data) {
-        data += strlen(headerValue);
-        httpHeaderDataClamp(&data, &length);
+    if (!data)
+        return 1;
 
-        if (length && length < READ_DATE_MAX && ValidHttpDateStr(data)) {
-            char date[READ_DATE_MAX];
-            char day[4] = "", month[4] = "";
-            strncpy(date, data, READ_DATE_MAX);
-            date[length] = '\0';
-            if (sscanf(date, "%3s, %d %3s %d %d:%d:%d GMT", day, &tm->tm_mday, month, /* NOLINT(cert-err34-c) */
-                       &tm->tm_year, /* NOLINT(cert-err34-c) */
-                       &tm->tm_hour, /* NOLINT(cert-err34-c) */
-                       &tm->tm_min, &tm->tm_sec)) {
-                switch (toupper(day[0])) {
-                    case 'F':
-                        tm->tm_wday = 5;
-                        break;
-                    case 'M':
-                        tm->tm_wday = 1;
-                        break;
-                    case 'S':
-                        tm->tm_wday = toupper(day[1]) == 'A' ? 6 : 0;
-                        break;
-                    case 'T':
-                        tm->tm_wday = toupper(day[1]) == 'U' ? 2 : 4;
-                        break;
-                    case 'W':
-                        tm->tm_wday = 3;
-                        break;
-                    default:
-                        return 1;
-                }
+    data += strlen(headerValue);
+    httpHeaderDataClamp(&data, &length);
 
-                switch (toupper(month[0])) {
-                    case 'A':
-                        tm->tm_mon = toupper(month[1]) == 'P' ? 3 : 7;
-                        break;
-                    case 'D':
-                        tm->tm_mon = 11;
-                        break;
-                    case 'F':
-                        tm->tm_mon = 1;
-                        break;
-                    case 'J':
-                        tm->tm_mon = toupper(month[1]) == 'A' ? 0 : toupper(month[3]) == 'L' ? 6 : 5;
-                        break;
-                    case 'M':
-                        tm->tm_mon = toupper(month[2]) == 'R' ? 2 : 4;
-                        break;
-                    case 'N':
-                        tm->tm_mon = 10;
-                        break;
-                    case 'O':
-                        tm->tm_mon = 9;
-                        break;
-                    case 'S':
-                        tm->tm_mon = 8;
-                        break;
-                    default:
-                        return 1;
-                }
-
-                tm->tm_year -= 1900;
-                return 0;
-            }
-        }
+    if (length && length < READ_DATE_MAX && ValidHttpDateStr(data)) {
+        char date[READ_DATE_MAX];
+        strncpy(date, data, READ_DATE_MAX);
+        date[length] = '\0';
+        return platformTimeGetFromHttpStr(date, tm);
     }
 
     return 1;
@@ -272,11 +216,11 @@ void httpHeaderWriteContentLength(SocketBuffer *socketBuffer, size_t length) {
     socketBufferWrite(socketBuffer, buffer);
 }
 
-void httpHeaderWriteContentLengthSt(SocketBuffer *socketBuffer, struct stat *st) {
+void httpHeaderWriteContentLengthSt(SocketBuffer *socketBuffer, PlatformFileStat *st) {
     httpHeaderWriteContentLength(socketBuffer, st->st_size);
 }
 
-void httpHeaderWriteLastModified(SocketBuffer *socketBuffer, struct stat *st) {
+void httpHeaderWriteLastModified(SocketBuffer *socketBuffer, PlatformFileStat *st) {
 #define LAST_MODIFIED_MAX 47
     char buffer[LAST_MODIFIED_MAX], time[30];
 
