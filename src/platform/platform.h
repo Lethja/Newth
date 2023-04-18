@@ -146,11 +146,11 @@ void platformDirClose(void *dirp);
 
 void *platformDirRead(void *dirp);
 
-char *platformDirEntryGetName(void *entry, size_t *length);
+char *platformDirEntryGetName(PlatformDirEntry *entry, size_t *length);
 
-char platformDirEntryIsHidden(void *entry);
+char platformDirEntryIsHidden(PlatformDirEntry *entry);
 
-char platformDirEntryIsDirectory(char *rootPath, char *webPath, void *entry);
+char platformDirEntryIsDirectory(char *rootPath, char *webPath, PlatformDirEntry *entry);
 
 int platformFileStat(const char *path, PlatformFileStat *fileStat);
 

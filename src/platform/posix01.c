@@ -266,7 +266,7 @@ void *platformDirRead(void *dirp) {
     return readdir(dirp);
 }
 
-char *platformDirEntryGetName(void *entry, size_t *length) {
+char *platformDirEntryGetName(PlatformDirEntry *entry, size_t *length) {
     struct dirent *d = entry;
     char *r = d->d_name;
 
@@ -276,12 +276,12 @@ char *platformDirEntryGetName(void *entry, size_t *length) {
     return r;
 }
 
-char platformDirEntryIsHidden(void *entry) {
+char platformDirEntryIsHidden(PlatformDirEntry *entry) {
     struct dirent *d = entry;
     return d->d_name[0] == '.' ? 1 : 0;
 }
 
-char platformDirEntryIsDirectory(char *rootPath, char *webPath, void *entry) {
+char platformDirEntryIsDirectory(char *rootPath, char *webPath, PlatformDirEntry *entry) {
     struct dirent *d = entry;
 
 #ifdef _DIRENT_HAVE_D_TYPE

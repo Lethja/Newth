@@ -14,7 +14,7 @@
 #include <iphlpapi.h>
 #include <windows.h>
 
-typedef FILETIME PlatformTimeStruct;
+typedef SYSTEMTIME PlatformTimeStruct;
 typedef WIN32_FIND_DATA PlatformDirEntry;
 typedef struct winSockNativeStat {
     unsigned long st_size;
@@ -23,6 +23,7 @@ typedef struct winSockNativeStat {
 } PlatformFileStat;
 
 typedef struct winSockNativeDir {
+    PlatformDirEntry nextEntry;
     PlatformDirEntry lastEntry;
     HANDLE directoryHandle;
 } DIR;

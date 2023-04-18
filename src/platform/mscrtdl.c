@@ -56,6 +56,8 @@ void platformCloseBindSockets(fd_set *sockets, SOCKET max) {
     WSACleanup();
 }
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "ConstantParameter"
 static char platformVersionAbove(int major, int minor) {
     DWORD dwVersion;
     DWORD dwMajorVersion;
@@ -73,6 +75,7 @@ static char platformVersionAbove(int major, int minor) {
     else
         return 0;
 }
+#pragma clang diagnostic pop
 
 void platformIpStackExit(void) {
     WSACleanup();
@@ -90,7 +93,7 @@ int platformIpStackInit(void) {
     if (!filePoint)
         return 1;
 
-    /* Runtime link dual-stack functions that are not available in all 32 bit versions of Windows */
+    /* Runtime link. Dual-stack functions that are not available in all 32 bit versions of Windows */
     *filePoint = '\0';
     strncat(filePoint, "thwsipv6.dll", FILENAME_MAX);
     wsIpv6 = LoadLibrary(TEXT(libAbs));
@@ -110,8 +113,8 @@ int platformIpStackInit(void) {
 
 #ifdef PORTABLE_WIN32
     else {
-            getAdapterInformationIpv4 = platformGetAdapterInformationIpv4;
-            DEBUGPRT("getAdapterInformationIpv4 (Internal) = %p", getAdapterInformationIpv4);
+        getAdapterInformationIpv4 = platformGetAdapterInformationIpv4;
+        DEBUGPRT("getAdapterInformationIpv4 (Internal) = %p", getAdapterInformationIpv4);
     }
 #endif
 
@@ -312,53 +315,234 @@ char *platformRealPath(char *path) {
     return NULL;
 }
 
-void platformGetTime(void *clock, char *timeStr) {
-    /* TODO: Get the wall clock time and format it in http format */
-    *timeStr = '\0';
+static void systemTimeToStr(SYSTEMTIME *timeStruct, char *timeStr) {
+    char day[4], month[4];
+    switch (timeStruct->wDayOfWeek) {
+        case 0:
+            memcpy(&day, "Sun", 4);
+            break;
+        case 1:
+            memcpy(&day, "Mon", 4);
+            break;
+        case 2:
+            memcpy(&day, "Tue", 4);
+            break;
+        case 3:
+            memcpy(&day, "Wed", 4);
+            break;
+        case 4:
+            memcpy(&day, "Thu", 4);
+            break;
+        case 5:
+            memcpy(&day, "Fri", 4);
+            break;
+        case 6:
+            memcpy(&day, "Sat", 4);
+            break;
+    }
+
+    switch (timeStruct->wMonth) {
+        case 1:
+            memcpy(&month, "Jan", 4);
+            break;
+        case 2:
+            memcpy(&month, "Feb", 4);
+            break;
+        case 3:
+            memcpy(&month, "Mar", 4);
+            break;
+        case 4:
+            memcpy(&month, "Apr", 4);
+            break;
+        case 5:
+            memcpy(&month, "May", 4);
+            break;
+        case 6:
+            memcpy(&month, "Jun", 4);
+            break;
+        case 7:
+            memcpy(&month, "Jul", 4);
+            break;
+        case 8:
+            memcpy(&month, "Aug", 4);
+            break;
+        case 9:
+            memcpy(&month, "Sep", 4);
+            break;
+        case 10:
+            memcpy(&month, "Oct", 4);
+            break;
+        case 11:
+            memcpy(&month, "Nov", 4);
+            break;
+        case 12:
+            memcpy(&month, "Dec", 4);
+            break;
+    }
+
+    snprintf(timeStr, 30, "%s, %hu %s %hu %hu:%hu:%hu GMT", day, timeStruct->wDay, month, timeStruct->wYear,
+             timeStruct->wHour, timeStruct->wMonth, timeStruct->wMinute);
 }
 
-void platformGetCurrentTime(char *time) {
-    platformGetTime(NULL, time);
+void platformGetTime(void *clock, char *timeStr) {
+    SYSTEMTIME timeStruct;
+    FileTimeToSystemTime(clock, &timeStruct);
+    systemTimeToStr(&timeStruct, timeStr);
+}
+
+void platformGetCurrentTime(char *timeStr) {
+    SYSTEMTIME timeStruct;
+    GetSystemTime(&timeStruct);
+    systemTimeToStr(&timeStruct, timeStr);
 }
 
 void platformGetTimeStruct(void *clock, void **timeStructure) {
-    *timeStructure = NULL;
+    if (!FileTimeToSystemTime(clock, *timeStructure))
+        *timeStructure = NULL;
 }
 
 int platformTimeStructEquals(PlatformTimeStruct *t1, PlatformTimeStruct *t2) {
-    /* TODO: Compare two FILETIMEs */
-    return 0;
+    return (t1->wYear == t2->wYear && t1->wMonth == t2->wMonth && t1->wDay == t2->wDay && t1->wHour == t2->wHour &&
+            t1->wMinute == t2->wMinute && t1->wMinute == t2->wMinute);
 }
 
 void *platformDirOpen(char *path) {
+    DIR *dir = malloc(sizeof(DIR));
+    size_t len;
+    if (path) {
+        len = strlen(path);
+        /* On DOS/Windows a valid absolute path to a directory shall be at least 3 characters. Example: `C:\` */
+        if (len > 2 && len < FILENAME_MAX - 3) {
+            char searchPath[FILENAME_MAX];
+            strcpy(searchPath, path);
+            strcat(searchPath, "\\*");
+
+            dir->directoryHandle = FindFirstFile(searchPath, &dir->nextEntry);
+            return dir;
+        }
+    }
+
     return NULL;
 }
 
 void platformDirClose(void *dirp) {
+    DIR *dir = dirp;
+    FindClose(dir->directoryHandle);
+    free(dir);
 }
 
 void *platformDirRead(void *dirp) {
+    DIR *dir = dirp;
+    memcpy(&dir->lastEntry, &dir->nextEntry, sizeof(PlatformDirEntry));
+    FindNextFile(dir->directoryHandle, &dir->nextEntry);
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "bugprone-suspicious-string-compare"
+#pragma ide diagnostic ignored "bugprone-suspicious-memory-comparison"
+    if (memcmp(&dir->lastEntry, &dir->nextEntry, sizeof(PlatformDirEntry))) {
+#pragma clang diagnostic pop
+        DEBUGPRT("%s\n", "lastEntry == nextEntry");
+        return &dir->lastEntry;
+    }
+
     return NULL;
 }
 
-char *platformDirEntryGetName(void *entry, size_t *length) {
-    if (length)
-        *length = 0;
+char *platformDirEntryGetName(PlatformDirEntry *entry, size_t *length) {
+    if (entry) {
+        if (length)
+            *length = strlen(entry->cFileName);
+
+        return entry->cFileName;
+    }
+
     return NULL;
 }
 
-char platformDirEntryIsHidden(void *entry) {
-    return 0;
+char platformDirEntryIsHidden(PlatformDirEntry *entry) {
+    if (entry)
+        return (char) ((entry->dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) > 0);
+    return 1;
 }
 
-char platformDirEntryIsDirectory(char *rootPath, char *webPath, void *entry) {
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnusedParameter"
+char platformDirEntryIsDirectory(char *rootPath, char *webPath, PlatformDirEntry *entry) {
+    if (entry)
+        return (char) ((entry->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) > 0);
     return 0;
 }
+#pragma clang diagnostic pop
 
 char platformTimeGetFromHttpStr(const char *str, PlatformTimeStruct *time) {
+    char day[4] = "", month[4] = "";
+    if (sscanf(str, "%3s, %hu %3s %hu %hu:%hu:%hu GMT", day, &time->wDay, month, /* NOLINT(cert-err34-c) */
+               &time->wYear, &time->wHour, &time->wMinute, &time->wSecond)) {
+        switch (toupper(day[0])) {
+            case 'F':
+                time->wDayOfWeek = 5;
+                break;
+            case 'M':
+                time->wDayOfWeek = 1;
+                break;
+            case 'S':
+                time->wDayOfWeek = toupper(day[1]) == 'A' ? 6 : 0;
+                break;
+            case 'T':
+                time->wDayOfWeek = toupper(day[1]) == 'U' ? 2 : 4;
+                break;
+            case 'W':
+                time->wDayOfWeek = 3;
+                break;
+            default:
+                return 1;
+        }
+
+        switch (toupper(month[0])) {
+            case 'A':
+                time->wMonth = toupper(month[1]) == 'P' ? 4 : 8;
+                break;
+            case 'D':
+                time->wMonth = 12;
+                break;
+            case 'F':
+                time->wMonth = 2;
+                break;
+            case 'J':
+                time->wMonth = toupper(month[1]) == 'A' ? 1 : toupper(month[3]) == 'L' ? 7 : 6;
+                break;
+            case 'M':
+                time->wMonth = toupper(month[2]) == 'R' ? 3 : 5;
+                break;
+            case 'N':
+                time->wMonth = 11;
+                break;
+            case 'O':
+                time->wMonth = 10;
+                break;
+            case 'S':
+                time->wMonth = 9;
+                break;
+            default:
+                return 1;
+        }
+
+        time->wMilliseconds = 0;
+        return 0;
+    }
     return 1;
 }
 
 int platformFileStat(const char *path, PlatformFileStat *stat) {
+    DWORD attributes = GetFileAttributes(path);
+    HANDLE handle = CreateFile(path, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, 3, 0, NULL);
+
+    if (handle) {
+        GetFileTime(handle, NULL, NULL, &stat->st_mtime);
+        stat->st_size = GetFileSize(handle, NULL);
+        stat->st_mode = attributes & FILE_ATTRIBUTE_DIRECTORY ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL;
+        CloseHandle(handle);
+        return 0;
+    }
+
     return 1;
 }
