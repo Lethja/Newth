@@ -1,7 +1,7 @@
 #ifndef NEW_TH_WIN_SOCK_2_H
 #define NEW_TH_WIN_SOCK_2_H
 
-#include "../winsock.h"
+#include "../mscrtdl.h"
 
 AdapterAddressArray *platformGetAdapterInformationIpv4(void (arrayAdd)(AdapterAddressArray *, char *, sa_family_t,
                                                                        char *));

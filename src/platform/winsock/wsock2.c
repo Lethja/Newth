@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "wsock2.h"
+#include <iphlpapi.h>
 
 AdapterAddressArray *
 platformGetAdapterInformationIpv4(void (arrayAdd)(AdapterAddressArray *, char *, sa_family_t, char *)) {

@@ -3,7 +3,6 @@
 
 #undef UNICODE
 
-#define WIN32_LEAN_AND_MEAN
 #define CLOSE_SOCKET(x) closesocket(x)
 #define SOCK_BUF_TYPE int
 #define FORCE_FORWARD_SLASH(path) platformPathForceForwardSlash(path)
@@ -11,6 +10,8 @@
 #define sa_family_t short
 
 #include <winsock2.h>
+#include <ws2tcpip.h>
+#include <iphlpapi.h>
 #include <windows.h>
 
 typedef FILETIME PlatformTimeStruct;
@@ -26,14 +27,17 @@ typedef struct winSockNativeDir {
     HANDLE directoryHandle;
 } DIR;
 
-#include <signal.h>
+#ifndef AF_INET6
+#define AF_INET6 23
+#endif
 
-#include <windows.h>
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <iphlpapi.h>
+#ifndef INET_ADDRSTRLEN
+#define INET_ADDRSTRLEN 22
+#endif
 
-#include "platform.h"
+#ifndef INET6_ADDRSTRLEN
+#define INET6_ADDRSTRLEN 65
+#endif
 
 #ifndef IPV6_V6ONLY
 #define IPV6_V6ONLY 27
@@ -42,6 +46,10 @@ typedef struct winSockNativeDir {
 #ifndef GAA_FLAG_INCLUDE_PREFIX
 #define GAA_FLAG_INCLUDE_PREFIX 0x0010
 #endif
+
+#include <signal.h>
+
+#include "platform.h"
 
 void platformPathForceForwardSlash(char *path);
 

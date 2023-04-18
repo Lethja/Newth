@@ -11,7 +11,7 @@
 
 #ifdef _WIN32
 
-#include "winsock.h"
+#include "mscrtdl.h"
 
 #else
 

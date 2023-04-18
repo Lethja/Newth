@@ -1,5 +1,12 @@
-#include "winsock.h"
+#include "mscrtdl.h"
 #include "../server/event.h"
+#include "../common/debug.h"
+
+#ifdef PORTABLE_WIN32
+
+#include "winsock/wsock1.h"
+
+#endif
 
 #include <iphlpapi.h>
 #include <signal.h>
@@ -74,29 +81,47 @@ void platformIpStackExit(void) {
 }
 
 int platformIpStackInit(void) {
+    DEBUGPRT("%s ", "platformIPStackInit");
+    char libAbs[FILENAME_MAX] = "";
+
+    GetModuleFileName(NULL, libAbs, FILENAME_MAX);
+    char *filePoint = strrchr(libAbs, '\\') + 1;
+    DEBUGPRT("libAbs = %s\nfilePoint = %s", libAbs, filePoint);
+    if (!filePoint)
+        return 1;
+
     /* Runtime link dual-stack functions that are not available in all 32 bit versions of Windows */
-    wsIpv6 = LoadLibrary(TEXT("thwsipv6.dll"));
+    *filePoint = '\0';
+    strncat(filePoint, "thwsipv6.dll", FILENAME_MAX);
+    wsIpv6 = LoadLibrary(TEXT(libAbs));
+    DEBUGPRT("wsIpv6 (%s) = %p", libAbs, wsIpv6);
     if (wsIpv6)
         getAdapterInformationIpv6 = (adapterInformationIpv6) GetProcAddress(wsIpv6,
                                                                             "platformGetAdapterInformationIpv6");
 
     /* Choose between WinSock 1 (Windows 95 support) and WinSock 2 */
-    wsIpv4 = LoadLibrary(TEXT("thwsock2.dll"));
+    *filePoint = '\0';
+    strncat(filePoint, "thwsock2.dll", FILENAME_MAX);
+    wsIpv4 = LoadLibrary(TEXT(libAbs));
+    DEBUGPRT("wsIpv4 (%s) = %p", libAbs, wsIpv4);
     if (wsIpv4)
         getAdapterInformationIpv4 = (adapterInformationIpv4) GetProcAddress(wsIpv4,
                                                                             "platformGetAdapterInformationIpv4");
 
-#ifndef WIN64
+#ifdef PORTABLE_WIN32
     else {
-        wsIpv4 = LoadLibrary(TEXT("thwsock1.dll"));
-        if (wsIpv4)
-            getAdapterInformationIpv4 = (adapterInformationIpv4) GetProcAddress(wsIpv4,
-                                                                                "platformGetAdapterInformationIpv4");
+            getAdapterInformationIpv4 = platformGetAdapterInformationIpv4;
+            DEBUGPRT("getAdapterInformationIpv4 (Internal) = %p", getAdapterInformationIpv4);
     }
 #endif
 
-    if (!getAdapterInformationIpv4)
+    if (!getAdapterInformationIpv4) {
+        char err[255] = "";
+        FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), err,
+                      255, NULL);
+        DEBUGPRT("%s %s\n", "No Ipv4 handler could be established:", err);
         return 1;
+    }
 
     return WSAStartup(MAKEWORD(1, 1), &wsaData);
 }
@@ -111,6 +136,7 @@ int platformServerStartup(SOCKET *listenSocket, sa_family_t family, char *ports)
     struct sockaddr_storage serverAddress;
     int iResult;
 
+    DEBUGPRT("%s", "platformServerStartup()");
     /* Force start in IPV4 mode if IPV6 functions cannot be loaded */
     if (family != AF_INET && (!getAdapterInformationIpv6)) {
         if (family == AF_INET6) {
@@ -316,7 +342,7 @@ void *platformDirRead(void *dirp) {
 }
 
 char *platformDirEntryGetName(void *entry, size_t *length) {
-    if(length)
+    if (length)
         *length = 0;
     return NULL;
 }

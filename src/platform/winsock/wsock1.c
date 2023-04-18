@@ -1,4 +1,5 @@
 #include "wsock1.h"
+#include "../../common/debug.h"
 
 #include <stdio.h>
 #include <tdiinfo.h>
@@ -122,11 +123,12 @@ static void nicFree(void) {
 
 #pragma endregion
 
-WsControlProc WsControl;
+WsControlProc WsControlFunc;
 
 AdapterAddressArray *
 platformGetAdapterInformationIpv4(void (arrayAdd)(AdapterAddressArray *, char *, sa_family_t, char *)) {
     HMODULE wsock32 = LoadLibrary("wsock32.dll");
+    DEBUGPRT("wsock32 = %p", wsock32);
     if (wsock32) {
         WSADATA WSAData;
         int result;
@@ -136,13 +138,15 @@ platformGetAdapterInformationIpv4(void (arrayAdd)(AdapterAddressArray *, char *,
 
         AdapterAddressArray *array = NULL;
 
-        WsControl = (WsControlProc) GetProcAddress(wsock32, "WsControl");
-        if (!WsControl) {
+        WsControlFunc = (WsControlProc) GetProcAddress(wsock32, "WsControl");
+        DEBUGPRT("WsControlFunc = %p", WsControlFunc);
+        if (!WsControlFunc) {
             FreeLibrary(wsock32);
             return NULL;
         }
 
         result = WSAStartup(MAKEWORD(1, 1), &WSAData);
+        DEBUGPRT("WSAStartup = %d", result);
         if (result) {
             fprintf(stderr, "WSAStartup failed (%d)\n", result);
             FreeLibrary(wsock32);
@@ -162,11 +166,11 @@ platformGetAdapterInformationIpv4(void (arrayAdd)(AdapterAddressArray *, char *,
 
         entityIds = (TDIEntityID *) calloc(entityIdsBufSize, 1);
 
-        result = WsControl(IPPROTO_TCP, WSCTL_TCP_QUERY_INFORMATION, &tcpRequestQueryInfoEx, &tcpRequestBufSize,
-                           entityIds, &entityIdsBufSize);
-
+        result = WsControlFunc(IPPROTO_TCP, WSCTL_TCP_QUERY_INFORMATION, &tcpRequestQueryInfoEx, &tcpRequestBufSize,
+                               entityIds, &entityIdsBufSize);
+        DEBUGPRT("WsControlFunc(IPPROTO_TCP) = %d", result);
         if (result) {
-            fprintf(stderr, "%s(%d) WsControl failed (%d)\n", __FILE__, __LINE__, WSAGetLastError());
+            fprintf(stderr, "%s(%d) WsControlFunc failed (%d)\n", __FILE__, __LINE__, WSAGetLastError());
             WSACleanup();
             FreeLibrary(wsock32);
             return NULL;
@@ -192,11 +196,11 @@ platformGetAdapterInformationIpv4(void (arrayAdd)(AdapterAddressArray *, char *,
 
                 entityTypeSize = sizeof(entityType);
 
-                result = WsControl(IPPROTO_TCP, WSCTL_TCP_QUERY_INFORMATION, &tcpRequestQueryInfoEx, &tcpRequestBufSize,
-                                   &entityType, &entityTypeSize);
-
+                result = WsControlFunc(IPPROTO_TCP, WSCTL_TCP_QUERY_INFORMATION, &tcpRequestQueryInfoEx,
+                                       &tcpRequestBufSize, &entityType, &entityTypeSize);
+                DEBUGPRT("WsControlFunc(IPPROTO_TCP) = %d", result);
                 if (result) {
-                    fprintf(stderr, "%s(%d) WsControl failed (%d)\n", __FILE__, __LINE__, WSAGetLastError());
+                    fprintf(stderr, "%s(%d) WsControlFunc failed (%d)\n", __FILE__, __LINE__, WSAGetLastError());
                     WSACleanup();
                     FreeLibrary(wsock32);
                     return NULL;
@@ -217,11 +221,11 @@ platformGetAdapterInformationIpv4(void (arrayAdd)(AdapterAddressArray *, char *,
                     ifEntrySize = sizeof(IFEntry) + 128 + 1;
                     ifEntry = (IFEntry *) calloc(ifEntrySize, 1);
 
-                    result = WsControl(IPPROTO_TCP, WSCTL_TCP_QUERY_INFORMATION, &tcpRequestQueryInfoEx,
-                                       &tcpRequestBufSize, ifEntry, &ifEntrySize);
+                    result = WsControlFunc(IPPROTO_TCP, WSCTL_TCP_QUERY_INFORMATION, &tcpRequestQueryInfoEx,
+                                           &tcpRequestBufSize, ifEntry, &ifEntrySize);
 
                     if (result) {
-                        fprintf(stderr, "%s(%d) WsControl failed (%d)\n", __FILE__, __LINE__, WSAGetLastError());
+                        fprintf(stderr, "%s(%d) WsControlFunc failed (%d)\n", __FILE__, __LINE__, WSAGetLastError());
                         WSACleanup();
                         FreeLibrary(wsock32);
                         return NULL;
@@ -252,11 +256,11 @@ platformGetAdapterInformationIpv4(void (arrayAdd)(AdapterAddressArray *, char *,
 
                 entityTypeSize = sizeof(entityType);
 
-                result = WsControl(IPPROTO_TCP, WSCTL_TCP_QUERY_INFORMATION, &tcpRequestQueryInfoEx, &tcpRequestBufSize,
-                                   &entityType, &entityTypeSize);
+                result = WsControlFunc(IPPROTO_TCP, WSCTL_TCP_QUERY_INFORMATION, &tcpRequestQueryInfoEx,
+                                       &tcpRequestBufSize, &entityType, &entityTypeSize);
 
                 if (result) {
-                    fprintf(stderr, "%s(%d) WsControl failed (%d)\n", __FILE__, __LINE__, WSAGetLastError());
+                    fprintf(stderr, "%s(%d) WsControlFunc failed (%d)\n", __FILE__, __LINE__, WSAGetLastError());
                     WSACleanup();
                     FreeLibrary(wsock32);
                     return NULL;
@@ -273,11 +277,11 @@ platformGetAdapterInformationIpv4(void (arrayAdd)(AdapterAddressArray *, char *,
                     ipAddrEntryBufSize = sizeof(IPAddrEntry) * ifCount;
                     ipAddrEntry = (IPAddrEntry *) calloc(ipAddrEntryBufSize, 1);
 
-                    result = WsControl(IPPROTO_TCP, WSCTL_TCP_QUERY_INFORMATION, &tcpRequestQueryInfoEx,
-                                       &tcpRequestBufSize, ipAddrEntry, &ipAddrEntryBufSize);
+                    result = WsControlFunc(IPPROTO_TCP, WSCTL_TCP_QUERY_INFORMATION, &tcpRequestQueryInfoEx,
+                                           &tcpRequestBufSize, ipAddrEntry, &ipAddrEntryBufSize);
 
                     if (result) {
-                        fprintf(stderr, "%s(%d) WsControl failed (%d)\n", __FILE__, __LINE__, WSAGetLastError());
+                        fprintf(stderr, "%s(%d) WsControlFunc failed (%d)\n", __FILE__, __LINE__, WSAGetLastError());
                         WSACleanup();
                         FreeLibrary(wsock32);
                         return NULL;
@@ -289,7 +293,7 @@ platformGetAdapterInformationIpv4(void (arrayAdd)(AdapterAddressArray *, char *,
                     /* Add ip address if interface is found */
                     for (j = 0; j < ifCount; j++) {
                         char *nicStr = nicFind(ipAddrEntry[j].iae_index);
-                        /* If the interface index was found then then this adapter and IP address are valid matches */
+                        /* If the interface index was found then this adapter and IP address are valid matches */
                         if (nicStr) {
                             char addrStr[INET_ADDRSTRLEN];
                             unsigned char *addr = (unsigned char *) &ipAddrEntry[j].iae_addr;
@@ -304,12 +308,15 @@ platformGetAdapterInformationIpv4(void (arrayAdd)(AdapterAddressArray *, char *,
         }
         nicFree();
         FreeLibrary(wsock32);
+        DEBUGPRT("array = %p", array);
         if (array) {
             if (array->size)
                 return array;
             else
                 free(array);
         }
+    } else { /* If all else fails at least do something */
+        fprintf(stderr, "Couldn't load any network adapter information. Are you missing 'thwsock2.dll'?");
     }
     return NULL;
 }
