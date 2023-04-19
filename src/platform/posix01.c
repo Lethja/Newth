@@ -334,3 +334,13 @@ char platformFileStatIsDirectory(PlatformFileStat *stat) {
 char platformFileStatIsFile(PlatformFileStat *stat) {
     return S_ISREG(stat->st_mode);
 }
+
+char *platformGetRootPath(char *path) {
+    char *test = platformRealPath(path);
+    if (!test) {
+        printf("No such directory \"%s\"\n", path);
+        exit(1);
+    }
+
+    return test;
+}

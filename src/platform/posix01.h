@@ -28,5 +28,6 @@ typedef struct stat PlatformFileStat;
 #define SOCK_BUF_TYPE size_t
 #define FORCE_FORWARD_SLASH(path)
 #define FORCE_BACKWARD_SLASH(path)
+#define REMOVE_TRAILING_SLASHES(path, len)
 
 #endif /* OPEN_WEB_PLATFORM_UNIX_H */

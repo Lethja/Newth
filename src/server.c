@@ -181,10 +181,7 @@ char handlePath(SOCKET clientSocket, const char *header, char *path) {
     if (r)
         goto handlePathNotFound;
 
-#ifdef _WIN32
-    if (absolutePath[lenB - 1] == '\\')
-        absolutePath[lenB - 1] = '\0';
-#endif /* _WIN32 */
+    REMOVE_TRAILING_SLASHES(absolutePath, lenB);
 
     r = platformFileStat(absolutePath, &st);
     if (r) {
@@ -282,16 +279,6 @@ char handleConnection(SOCKET clientSocket) {
     }
 
     return r;
-}
-
-static inline void setRootPath(char *path) {
-    char *test = platformRealPath(path);
-    if (!test) {
-        printf("No such directory \"%s\"\n", path);
-        exit(1);
-    }
-
-    globalRootPath = test;
 }
 
 static void printSocketAccept(SOCKET *sock) { /* NOLINT(readability-non-const-parameter) */
@@ -396,16 +383,18 @@ int main(int argc, char **argv) {
     platformConnectSignals(noAction, shutdownCrash, shutdownProgram);
 
     if (argc > 1) {
-        setRootPath(argv[1]);
+        globalRootPath = platformGetRootPath(argv[1]);
     } else {
         char *buf = malloc(BUFSIZ + 1), *test = getcwd(buf, BUFSIZ);
 
         buf[BUFSIZ] = '\0';
         if (test)
-            setRootPath(test);
+            globalRootPath = platformGetRootPath(test);
 
         free(buf);
     }
+
+    printf("Root Path: %s\n\n", globalRootPath);
 
     {
         sa_family_t family;

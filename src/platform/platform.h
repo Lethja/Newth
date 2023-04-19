@@ -160,4 +160,6 @@ char platformFileStatIsDirectory(PlatformFileStat *stat);
 
 char platformFileStatIsFile(PlatformFileStat *stat);
 
+char *platformGetRootPath(char *path);
+
 #endif /* OPEN_WEB_PLATFORM_H */

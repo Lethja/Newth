@@ -7,6 +7,7 @@
 #define SOCK_BUF_TYPE int
 #define FORCE_FORWARD_SLASH(path) platformPathForceForwardSlash(path)
 #define FORCE_BACKWARD_SLASH(path) platformPathForceBackwardSlash(path)
+#define REMOVE_TRAILING_SLASHES(path, len) platformRemoveTrailingSlashes(path, len)
 #define sa_family_t short
 
 #include <winsock2.h>
@@ -56,6 +57,8 @@ typedef struct winSockNativeDir {
 void platformPathForceForwardSlash(char *path);
 
 void platformPathForceBackwardSlash(char *path);
+
+void platformRemoveTrailingSlashes(char *path, size_t len);
 
 void ipv6NTop(const void *inAddr6, char *ipStr);
 

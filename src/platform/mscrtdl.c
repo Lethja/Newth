@@ -27,6 +27,7 @@ HMODULE wsIpv6 = NULL;
 WSADATA wsaData;
 
 char *platformPathCombine(char *path1, char *path2) {
+    DEBUGPRT("platformPathCombine(%s, %s)", path1, path2);
     const char pathDivider = '/', pathDivider2 = '\\';
     size_t a = strlen(path1), b = strlen(path2), path2Jump = 1;
     char *returnPath;
@@ -309,6 +310,7 @@ AdapterAddressArray *platformGetAdapterInformation(sa_family_t family) {
 char *platformRealPath(char *path) {
     DEBUGPRT("platformRealPath(%s)", path);
     char *buf = malloc(MAX_PATH);
+
     DWORD e = GetFullPathName(path, MAX_PATH, buf, NULL);
 
     if (e != 0)
@@ -583,4 +585,29 @@ char platformFileStatIsDirectory(PlatformFileStat *stat) {
 
 char platformFileStatIsFile(PlatformFileStat *stat) {
     return ((stat->st_mode & FILE_ATTRIBUTE_NORMAL) > 0) ? 1 : 0;
+}
+
+void platformRemoveTrailingSlashes(char *path, size_t len) {
+    DEBUGPRT("platformRemoveTrailingSlashes(%s, %u)", path, len);
+    if (path[len - 1] == '\\')
+        path[len - 1] = '\0';
+}
+
+char *platformGetRootPath(char *path) {
+    char *test;
+    if (strlen(path) == 1 || strlen(path) < 4 && path[1] == ':' && path[2] == '\\') {
+        if (isupper(*path)) {
+            test = malloc(5); /* +1 is intended */
+            test[0] = *path, test[1] = ':', test[2] = '\\', test[3] = '\0';
+            return test;
+        }
+    }
+
+    test = platformRealPath(path);
+    if (!test) {
+        printf("No such directory \"%s\"\n", path);
+        exit(1);
+    }
+
+    return test;
 }
