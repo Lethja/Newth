@@ -326,3 +326,11 @@ int platformFileStat(const char *path, PlatformFileStat *fileStat) {
     struct stat *st = fileStat;
     return stat(path, st);
 }
+
+char platformFileStatIsDirectory(PlatformFileStat *stat) {
+    return S_ISDIR(stat->st_mode);
+}
+
+char platformFileStatIsFile(PlatformFileStat *stat) {
+    return S_ISREG(stat->st_mode);
+}

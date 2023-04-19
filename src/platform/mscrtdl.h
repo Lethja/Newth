@@ -26,6 +26,7 @@ typedef struct winSockNativeDir {
     PlatformDirEntry nextEntry;
     PlatformDirEntry lastEntry;
     HANDLE directoryHandle;
+    WINBOOL error;
 } DIR;
 
 #ifndef AF_INET6

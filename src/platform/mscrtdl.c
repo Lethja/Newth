@@ -58,6 +58,7 @@ void platformCloseBindSockets(fd_set *sockets, SOCKET max) {
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "ConstantParameter"
+
 static char platformVersionAbove(int major, int minor) {
     DWORD dwVersion;
     DWORD dwMajorVersion;
@@ -75,6 +76,7 @@ static char platformVersionAbove(int major, int minor) {
     else
         return 0;
 }
+
 #pragma clang diagnostic pop
 
 void platformIpStackExit(void) {
@@ -305,6 +307,7 @@ AdapterAddressArray *platformGetAdapterInformation(sa_family_t family) {
 }
 
 char *platformRealPath(char *path) {
+    DEBUGPRT("platformRealPath(%s)", path);
     char *buf = malloc(MAX_PATH);
     DWORD e = GetFullPathName(path, MAX_PATH, buf, NULL);
 
@@ -380,8 +383,9 @@ static void systemTimeToStr(SYSTEMTIME *timeStruct, char *timeStr) {
             break;
     }
 
-    snprintf(timeStr, 30, "%s, %hu %s %hu %hu:%hu:%hu GMT", day, timeStruct->wDay, month, timeStruct->wYear,
+    snprintf(timeStr, 30, "%s, %02hu %s %04hu %02hu:%02hu:%02hu GMT", day, timeStruct->wDay, month, timeStruct->wYear,
              timeStruct->wHour, timeStruct->wMonth, timeStruct->wMinute);
+    DEBUGPRT("timeStr = '%s'", timeStr);
 }
 
 void platformGetTime(void *clock, char *timeStr) {
@@ -407,6 +411,7 @@ int platformTimeStructEquals(PlatformTimeStruct *t1, PlatformTimeStruct *t2) {
 }
 
 void *platformDirOpen(char *path) {
+    DEBUGPRT("platformDirOpen(%s)", path);
     DIR *dir = malloc(sizeof(DIR));
     size_t len;
     if (path) {
@@ -417,8 +422,12 @@ void *platformDirOpen(char *path) {
             strcpy(searchPath, path);
             strcat(searchPath, "\\*");
 
+            dir->error = 0;
             dir->directoryHandle = FindFirstFile(searchPath, &dir->nextEntry);
-            return dir;
+            if (dir->directoryHandle != INVALID_HANDLE_VALUE)
+                return dir;
+            else
+                free(dir);
         }
     }
 
@@ -426,28 +435,28 @@ void *platformDirOpen(char *path) {
 }
 
 void platformDirClose(void *dirp) {
+    DEBUGPRT("platformDirClose(%p)", dirp);
     DIR *dir = dirp;
     FindClose(dir->directoryHandle);
     free(dir);
 }
 
 void *platformDirRead(void *dirp) {
+    DEBUGPRT("platformDirRead(%p)", dirp);
     DIR *dir = dirp;
     memcpy(&dir->lastEntry, &dir->nextEntry, sizeof(PlatformDirEntry));
-    FindNextFile(dir->directoryHandle, &dir->nextEntry);
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "bugprone-suspicious-string-compare"
-#pragma ide diagnostic ignored "bugprone-suspicious-memory-comparison"
-    if (memcmp(&dir->lastEntry, &dir->nextEntry, sizeof(PlatformDirEntry))) {
-#pragma clang diagnostic pop
-        DEBUGPRT("%s\n", "lastEntry == nextEntry");
-        return &dir->lastEntry;
+    switch (dir->error) {
+        case 0:
+            if (!FindNextFile(dir->directoryHandle, &dir->nextEntry))
+                ++dir->error;
+            return &dir->lastEntry;
+        default:
+            return NULL;
     }
-
-    return NULL;
 }
 
 char *platformDirEntryGetName(PlatformDirEntry *entry, size_t *length) {
+    DEBUGPRT("platformDirEntryGetName(%p, %p)", entry, length);
     if (entry) {
         if (length)
             *length = strlen(entry->cFileName);
@@ -459,18 +468,32 @@ char *platformDirEntryGetName(PlatformDirEntry *entry, size_t *length) {
 }
 
 char platformDirEntryIsHidden(PlatformDirEntry *entry) {
-    if (entry)
+    DEBUGPRT("platformDirIsHidden(%p)", entry);
+    if (entry) {
+        if (entry->cFileName[0] == '.') {
+            switch (entry->cFileName[1]) {
+                case '\0':
+                case '.':
+                    return 1;
+                default:
+                    break;
+            }
+        }
         return (char) ((entry->dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) > 0);
+    }
     return 1;
 }
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "UnusedParameter"
+
 char platformDirEntryIsDirectory(char *rootPath, char *webPath, PlatformDirEntry *entry) {
+    DEBUGPRT("platformDirEntryIsDirectory(%s, %s, %p)", rootPath, webPath, entry);
     if (entry)
         return (char) ((entry->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) > 0);
     return 0;
 }
+
 #pragma clang diagnostic pop
 
 char platformTimeGetFromHttpStr(const char *str, PlatformTimeStruct *time) {
@@ -533,16 +556,31 @@ char platformTimeGetFromHttpStr(const char *str, PlatformTimeStruct *time) {
 }
 
 int platformFileStat(const char *path, PlatformFileStat *stat) {
+    DEBUGPRT("platformFileStat(%s, %p)", path, stat);
     DWORD attributes = GetFileAttributes(path);
-    HANDLE handle = CreateFile(path, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, 3, 0, NULL);
 
-    if (handle) {
-        GetFileTime(handle, NULL, NULL, &stat->st_mtime);
-        stat->st_size = GetFileSize(handle, NULL);
-        stat->st_mode = attributes & FILE_ATTRIBUTE_DIRECTORY ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL;
-        CloseHandle(handle);
-        return 0;
+    DEBUGPRT("platformFileStat:attributes = %lu", attributes);
+    if (attributes != INVALID_FILE_ATTRIBUTES) {
+        HANDLE handle = CreateFile(path, 0, 0, NULL, OPEN_EXISTING,
+                                   attributes & FILE_ATTRIBUTE_DIRECTORY ? FILE_FLAG_BACKUP_SEMANTICS : 0, NULL);
+
+        DEBUGPRT("platformFileStat:handle = %p", handle);
+        if (handle != INVALID_HANDLE_VALUE) {
+            GetFileTime(handle, NULL, NULL, &stat->st_mtime);
+            stat->st_size = GetFileSize(handle, NULL);
+            stat->st_mode = attributes & FILE_ATTRIBUTE_DIRECTORY ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL;
+            CloseHandle(handle);
+            return 0;
+        }
     }
 
     return 1;
+}
+
+char platformFileStatIsDirectory(PlatformFileStat *stat) {
+    return ((stat->st_mode & FILE_ATTRIBUTE_DIRECTORY) > 0) ? 1 : 0;
+}
+
+char platformFileStatIsFile(PlatformFileStat *stat) {
+    return ((stat->st_mode & FILE_ATTRIBUTE_NORMAL) > 0) ? 1 : 0;
 }

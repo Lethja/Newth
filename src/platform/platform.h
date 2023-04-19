@@ -156,4 +156,8 @@ int platformFileStat(const char *path, PlatformFileStat *fileStat);
 
 SOCKET platformAcceptConnection(SOCKET fromSocket);
 
+char platformFileStatIsDirectory(PlatformFileStat *stat);
+
+char platformFileStatIsFile(PlatformFileStat *stat);
+
 #endif /* OPEN_WEB_PLATFORM_H */

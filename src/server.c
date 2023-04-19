@@ -218,9 +218,9 @@ char handlePath(SOCKET clientSocket, const char *header, char *path) {
         }
     }
 
-    if (S_ISDIR(st.st_mode))
+    if (platformFileStatIsDirectory(&st))
         e = handleDir(clientSocket, absolutePath, e, &st);
-    else if (S_ISREG(st.st_mode))
+    else if (platformFileStatIsFile(&st))
         e = handleFile(clientSocket, header, absolutePath, e, &st);
 
     if (absolutePath != globalRootPath)
