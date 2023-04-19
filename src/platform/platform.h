@@ -134,7 +134,7 @@ void platformGetTime(void *clock, char *timeStr);
 
 void platformGetCurrentTime(char *timeStr);
 
-void platformGetTimeStruct(void *clock, void **timeStructure);
+char platformGetTimeStruct(void *clock, PlatformTimeStruct *timeStructure);
 
 char platformTimeGetFromHttpStr(const char *str, PlatformTimeStruct *time);
 

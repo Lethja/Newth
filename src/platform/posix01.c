@@ -183,8 +183,14 @@ void platformGetCurrentTime(char *timeStr) {
     platformGetTime(&rawTime, timeStr);
 }
 
-void platformGetTimeStruct(void *clock, void **timeStructure) {
-    *timeStructure = gmtime(clock);
+char platformGetTimeStruct(void *clock, PlatformTimeStruct *timeStructure) {
+    PlatformTimeStruct timespec, *tm = &timespec;
+    tm = gmtime(clock);
+    if (tm) {
+        memcpy(timeStructure, tm, sizeof(PlatformTimeStruct));
+        return 0;
+    }
+    return 1;
 }
 
 int platformTimeStructEquals(PlatformTimeStruct *t1, PlatformTimeStruct *t2) {

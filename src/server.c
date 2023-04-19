@@ -195,23 +195,23 @@ char handlePath(SOCKET clientSocket, const char *header, char *path) {
 
     if (!httpHeaderReadIfModifiedSince(header, &tm)) {
         PlatformTimeStruct mt;
-        platformGetTimeStruct(&st.st_mtime, (void **) &mt);
+        if (!platformGetTimeStruct(&st.st_mtime, &mt)) {
+            if (platformTimeStructEquals(&tm, &mt)) {
+                SocketBuffer socketBuffer = socketBufferNew(clientSocket);
 
-        if (platformTimeStructEquals(&tm, &mt)) {
-            SocketBuffer socketBuffer = socketBufferNew(clientSocket);
+                if (absolutePath != globalRootPath)
+                    free(absolutePath);
 
-            if (absolutePath != globalRootPath)
-                free(absolutePath);
+                httpHeaderWriteResponse(&socketBuffer, 304);
+                httpHeaderWriteDate(&socketBuffer);
+                httpHeaderWriteEnd(&socketBuffer);
+                eventHttpRespondInvoke(&socketBuffer.clientSocket, path, e, 304);
 
-            httpHeaderWriteResponse(&socketBuffer, 304);
-            httpHeaderWriteDate(&socketBuffer);
-            httpHeaderWriteEnd(&socketBuffer);
-            eventHttpRespondInvoke(&socketBuffer.clientSocket, path, e, 304);
+                if (socketBufferFlush(&socketBuffer))
+                    return 1;
 
-            if (socketBufferFlush(&socketBuffer))
-                return 1;
-
-            return 0;
+                return 0;
+            }
         }
     }
 

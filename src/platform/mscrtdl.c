@@ -402,9 +402,8 @@ void platformGetCurrentTime(char *timeStr) {
     systemTimeToStr(&timeStruct, timeStr);
 }
 
-void platformGetTimeStruct(void *clock, void **timeStructure) {
-    if (!FileTimeToSystemTime(clock, *timeStructure))
-        *timeStructure = NULL;
+char platformGetTimeStruct(void *clock, PlatformTimeStruct *timeStructure) {
+    return FileTimeToSystemTime(clock, timeStructure) ? 0 : 1;
 }
 
 int platformTimeStructEquals(PlatformTimeStruct *t1, PlatformTimeStruct *t2) {
