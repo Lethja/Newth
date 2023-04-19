@@ -42,8 +42,20 @@ void shutdownProgram(int signal) {
     exit(0);
 }
 
+static char *getWebPath(char *path) {
+    char *r = path + strlen(globalRootPath) - 1, *it = r;
+    while (*it != '\0') {
+        if (*it == '/') {
+            r = it;
+            break;
+        }
+        ++it;
+    }
+    return r;
+}
+
 char handleDir(SOCKET clientSocket, char *realPath, char type, PlatformFileStat *st) {
-    char *webPath = realPath + strlen(globalRootPath);
+    char *webPath = getWebPath(realPath);
     char buf[BUFSIZ];
     SocketBuffer socketBuffer = socketBufferNew(clientSocket);
     DIR *dir = platformDirOpen(realPath);

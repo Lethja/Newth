@@ -584,8 +584,10 @@ char platformFileStatIsFile(PlatformFileStat *stat) {
 }
 
 void platformRemoveTrailingSlashes(char *path, size_t len) {
-    if (path[len - 1] == '\\')
-        path[len - 1] = '\0';
+    if (len > 3) {
+        if (path[len - 1] == '\\')
+            path[len - 1] = '\0';
+    }
 }
 
 char *platformGetRootPath(char *path) {
