@@ -15,8 +15,10 @@ size_t DirectoryRoutineContinue(DirectoryRoutine *self) {
             size_t entryLen;
             char buffer[BUFSIZ], pathBuf[BUFSIZ], *entryName;
 
-            if (platformDirEntryIsHidden(entry))
+            if (platformDirEntryIsHidden(entry)) {
+                --i;
                 continue;
+            }
 
             entryName = platformDirEntryGetName(entry, &entryLen);
 
@@ -27,7 +29,7 @@ size_t DirectoryRoutineContinue(DirectoryRoutine *self) {
                     pathBuf[pathLen ? pathLen : 0] = '/';
                     memcpy(pathLen ? pathBuf + pathLen + 1 : pathBuf + 1, entryName, entryLen + 1);
                 } else
-                    memcpy(pathBuf + pathLen + 1, entryName, entryLen + 1);
+                    memcpy(pathBuf + pathLen, entryName, entryLen + 1);
 
                 /* Append '/' on the end of directory entries */
                 if (platformDirEntryIsDirectory(self->rootPath, self->webPath, entry)) {
