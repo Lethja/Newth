@@ -27,10 +27,10 @@ HMODULE wsIpv6 = NULL;
 WSADATA wsaData;
 
 char *platformPathCombine(char *path1, char *path2) {
-    DEBUGPRT("platformPathCombine(%s, %s)", path1, path2);
     const char pathDivider = '/', pathDivider2 = '\\';
     size_t a = strlen(path1), b = strlen(path2), path2Jump = 1;
     char *returnPath;
+    DEBUGPRT("platformPathCombine(%s, %s)", path1, path2);
 
     if ((path1[a - 1] != pathDivider || path1[a - 1] != pathDivider2) &&
         (path2[0] != pathDivider || path2[0] != pathDivider2))
@@ -87,11 +87,11 @@ void platformIpStackExit(void) {
 }
 
 int platformIpStackInit(void) {
+    char libAbs[FILENAME_MAX] = "", *filePoint;
     DEBUGPRT("%s ", "platformIPStackInit");
-    char libAbs[FILENAME_MAX] = "";
 
     GetModuleFileName(NULL, libAbs, FILENAME_MAX);
-    char *filePoint = strrchr(libAbs, '\\') + 1;
+    filePoint = strrchr(libAbs, '\\') + 1;
     DEBUGPRT("libAbs = %s\nfilePoint = %s", libAbs, filePoint);
     if (!filePoint)
         return 1;
@@ -100,7 +100,7 @@ int platformIpStackInit(void) {
     *filePoint = '\0';
     strncat(filePoint, "thwsipv6.dll", FILENAME_MAX);
     wsIpv6 = LoadLibrary(TEXT(libAbs));
-    DEBUGPRT("wsIpv6 (%s) = %p", libAbs, wsIpv6);
+    DEBUGPRT("wsIpv6 (%s) = %p", libAbs, (void *) wsIpv6);
     if (wsIpv6)
         getAdapterInformationIpv6 = (adapterInformationIpv6) GetProcAddress(wsIpv6,
                                                                             "platformGetAdapterInformationIpv6");
@@ -109,7 +109,7 @@ int platformIpStackInit(void) {
     *filePoint = '\0';
     strncat(filePoint, "thwsock2.dll", FILENAME_MAX);
     wsIpv4 = LoadLibrary(TEXT(libAbs));
-    DEBUGPRT("wsIpv4 (%s) = %p", libAbs, wsIpv4);
+    DEBUGPRT("wsIpv4 (%s) = %p", libAbs, (void *) wsIpv4);
     if (wsIpv4)
         getAdapterInformationIpv4 = (adapterInformationIpv4) GetProcAddress(wsIpv4,
                                                                             "platformGetAdapterInformationIpv4");
@@ -308,9 +308,7 @@ AdapterAddressArray *platformGetAdapterInformation(sa_family_t family) {
 }
 
 char *platformRealPath(char *path) {
-    DEBUGPRT("platformRealPath(%s)", path);
     char *buf = malloc(MAX_PATH);
-
     DWORD e = GetFullPathName(path, MAX_PATH, buf, NULL);
 
     if (e != 0)
@@ -386,7 +384,7 @@ static void systemTimeToStr(SYSTEMTIME *timeStruct, char *timeStr) {
     }
 
     snprintf(timeStr, 30, "%s, %02hu %s %04hu %02hu:%02hu:%02hu GMT", day, timeStruct->wDay, month, timeStruct->wYear,
-             timeStruct->wHour, timeStruct->wMonth, timeStruct->wMinute);
+             timeStruct->wHour, timeStruct->wMinute, timeStruct->wSecond);
     DEBUGPRT("timeStr = '%s'", timeStr);
 }
 
@@ -408,13 +406,13 @@ char platformGetTimeStruct(void *clock, PlatformTimeStruct *timeStructure) {
 
 int platformTimeStructEquals(PlatformTimeStruct *t1, PlatformTimeStruct *t2) {
     return (t1->wYear == t2->wYear && t1->wMonth == t2->wMonth && t1->wDay == t2->wDay && t1->wHour == t2->wHour &&
-            t1->wMinute == t2->wMinute && t1->wMinute == t2->wMinute);
+            t1->wMinute == t2->wMinute && t1->wSecond == t2->wSecond);
 }
 
 void *platformDirOpen(char *path) {
-    DEBUGPRT("platformDirOpen(%s)", path);
     DIR *dir = malloc(sizeof(DIR));
     size_t len;
+    DEBUGPRT("platformDirOpen(%s)", path);
     if (path) {
         len = strlen(path);
         /* On DOS/Windows a valid absolute path to a directory shall be at least 3 characters. Example: `C:\` */
@@ -436,15 +434,15 @@ void *platformDirOpen(char *path) {
 }
 
 void platformDirClose(void *dirp) {
-    DEBUGPRT("platformDirClose(%p)", dirp);
     DIR *dir = dirp;
+    DEBUGPRT("platformDirClose(%p)", dirp);
     FindClose(dir->directoryHandle);
     free(dir);
 }
 
 void *platformDirRead(void *dirp) {
-    DEBUGPRT("platformDirRead(%p)", dirp);
     DIR *dir = dirp;
+    DEBUGPRT("platformDirRead(%p)", dirp);
     memcpy(&dir->lastEntry, &dir->nextEntry, sizeof(PlatformDirEntry));
     switch (dir->error) {
         case 0:
@@ -457,7 +455,6 @@ void *platformDirRead(void *dirp) {
 }
 
 char *platformDirEntryGetName(PlatformDirEntry *entry, size_t *length) {
-    DEBUGPRT("platformDirEntryGetName(%p, %p)", entry, length);
     if (entry) {
         if (length)
             *length = strlen(entry->cFileName);
@@ -469,7 +466,7 @@ char *platformDirEntryGetName(PlatformDirEntry *entry, size_t *length) {
 }
 
 char platformDirEntryIsHidden(PlatformDirEntry *entry) {
-    DEBUGPRT("platformDirIsHidden(%p)", entry);
+    DEBUGPRT("platformDirIsHidden(%p)", (void *) entry);
     if (entry) {
         if (entry->cFileName[0] == '.') {
             switch (entry->cFileName[1]) {
@@ -489,7 +486,7 @@ char platformDirEntryIsHidden(PlatformDirEntry *entry) {
 #pragma ide diagnostic ignored "UnusedParameter"
 
 char platformDirEntryIsDirectory(char *rootPath, char *webPath, PlatformDirEntry *entry) {
-    DEBUGPRT("platformDirEntryIsDirectory(%s, %s, %p)", rootPath, webPath, entry);
+    DEBUGPRT("platformDirEntryIsDirectory(%s, %s, %p)", rootPath, webPath, (void *) entry);
     if (entry)
         return (char) ((entry->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) > 0);
     return 0;
@@ -557,8 +554,8 @@ char platformTimeGetFromHttpStr(const char *str, PlatformTimeStruct *time) {
 }
 
 int platformFileStat(const char *path, PlatformFileStat *stat) {
-    DEBUGPRT("platformFileStat(%s, %p)", path, stat);
     DWORD attributes = GetFileAttributes(path);
+    DEBUGPRT("platformFileStat(%s, %p)", path, (void *) stat);
 
     DEBUGPRT("platformFileStat:attributes = %lu", attributes);
     if (attributes != INVALID_FILE_ATTRIBUTES) {
@@ -587,14 +584,13 @@ char platformFileStatIsFile(PlatformFileStat *stat) {
 }
 
 void platformRemoveTrailingSlashes(char *path, size_t len) {
-    DEBUGPRT("platformRemoveTrailingSlashes(%s, %u)", path, len);
     if (path[len - 1] == '\\')
         path[len - 1] = '\0';
 }
 
 char *platformGetRootPath(char *path) {
     char *test;
-    if (strlen(path) == 1 || strlen(path) < 4 && path[1] == ':' && path[2] == '\\') {
+    if (strlen(path) == 1 || (strlen(path) < 4 && path[1] == ':' && path[2] == '\\')) {
         if (isupper(*path)) {
             test = malloc(5); /* +1 is intended */
             test[0] = *path, test[1] = ':', test[2] = '\\', test[3] = '\0';
