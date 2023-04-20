@@ -564,8 +564,7 @@ int platformFileStat(const char *path, PlatformFileStat *stat) {
 
     DEBUGPRT("platformFileStat:attributes = %lu", attributes);
     if (attributes != INVALID_FILE_ATTRIBUTES) {
-        /* TODO: Get handle on DOS versions of Windows */
-        HANDLE handle = CreateFile(path, 0, 0, NULL, OPEN_EXISTING,
+        HANDLE handle = CreateFile(path, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
                                    attributes & FILE_ATTRIBUTE_DIRECTORY ? FILE_FLAG_BACKUP_SEMANTICS : 0, NULL);
 
         DEBUGPRT("platformFileStat:handle = %p", handle);
@@ -574,6 +573,11 @@ int platformFileStat(const char *path, PlatformFileStat *stat) {
             stat->st_size = GetFileSize(handle, NULL);
             stat->st_mode = attributes & FILE_ATTRIBUTE_DIRECTORY ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL;
             CloseHandle(handle);
+            return 0;
+        } else if (attributes & FILE_ATTRIBUTE_DIRECTORY) { /* Must be a FAT partition directory */
+            stat->st_mode = FILE_ATTRIBUTE_DIRECTORY;
+            stat->st_size = 0;
+            GetSystemTimeAsFileTime(&stat->st_mtime); /* Avoid a false 304 condition */
             return 0;
         }
     }

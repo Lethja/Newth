@@ -42,23 +42,10 @@ void shutdownProgram(int signal) {
     exit(0);
 }
 
-static char *getWebPath(char *path) {
-    char *r = path + strlen(globalRootPath) - 1, *it = r;
-    while (*it != '\0') {
-        if (*it == '/') {
-            r = it;
-            break;
-        }
-        ++it;
-    }
-    return r;
-}
-
-char handleDir(SOCKET clientSocket, char *realPath, char type, PlatformFileStat *st) {
-    char *webPath = getWebPath(realPath);
+char handleDir(SOCKET clientSocket, char *webPath, char *absolutePath, char type, PlatformFileStat *st) {
     char buf[BUFSIZ];
     SocketBuffer socketBuffer = socketBufferNew(clientSocket);
-    DIR *dir = platformDirOpen(realPath);
+    DIR *dir = platformDirOpen(absolutePath);
 
     if (dir == NULL)
         return httpHeaderHandleError(&socketBuffer, webPath, httpGet, 404);
@@ -105,11 +92,12 @@ char handleDir(SOCKET clientSocket, char *realPath, char type, PlatformFileStat 
     return 1;
 }
 
-char handleFile(SOCKET clientSocket, const char *header, char *realPath, char httpType, PlatformFileStat *st) {
+char handleFile(SOCKET clientSocket, const char *header, char *webPath, char *absolutePath, char httpType,
+                PlatformFileStat *st) {
     SocketBuffer socketBuffer = socketBufferNew(clientSocket);
-    FILE *fp = fopen(realPath, "rb");
+    FILE *fp = fopen(absolutePath, "rb");
     off_t start, finish;
-    char e, *webPath;
+    char e;
 
     if (fp == NULL) {
         perror("Error in opening file");
@@ -122,7 +110,7 @@ char handleFile(SOCKET clientSocket, const char *header, char *realPath, char ht
     /* Headers */
     httpHeaderWriteResponse(&socketBuffer, e ? 200 : 206);
     httpHeaderWriteDate(&socketBuffer);
-    httpHeaderWriteFileName(&socketBuffer, realPath);
+    httpHeaderWriteFileName(&socketBuffer, absolutePath);
     httpHeaderWriteLastModified(&socketBuffer, st);
     httpHeaderWriteAcceptRanges(&socketBuffer);
 
@@ -139,7 +127,6 @@ char handleFile(SOCKET clientSocket, const char *header, char *realPath, char ht
 
     httpHeaderWriteEnd(&socketBuffer);
     socketBufferFlush(&socketBuffer);
-    webPath = realPath + strlen(globalRootPath);
     eventHttpRespondInvoke(&socketBuffer.clientSocket, webPath, httpType, e ? 200 : 206);
 
     if (httpType == httpHead)
@@ -198,9 +185,9 @@ char handlePath(SOCKET clientSocket, const char *header, char *webPath) {
     }
 
     if (platformFileStatIsDirectory(&st))
-        e = handleDir(clientSocket, absolutePath, e, &st);
+        e = handleDir(clientSocket, webPath, absolutePath, e, &st);
     else if (platformFileStatIsFile(&st))
-        e = handleFile(clientSocket, header, absolutePath, e, &st);
+        e = handleFile(clientSocket, header, webPath, absolutePath, e, &st);
 
     return e;
 
