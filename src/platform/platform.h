@@ -162,4 +162,8 @@ char platformFileStatIsFile(PlatformFileStat *stat);
 
 char *platformGetRootPath(char *path);
 
+short platformPathWebToSystem(const char *rootPath, char *webPath, char *absolutePath);
+
+short platformPathSystemToWeb(const char *rootPath, char *absolutePath, char *webPath);
+
 #endif /* OPEN_WEB_PLATFORM_H */

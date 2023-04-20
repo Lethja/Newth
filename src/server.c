@@ -163,45 +163,18 @@ char handleFile(SOCKET clientSocket, const char *header, char *realPath, char ht
     return 1;
 }
 
-char handlePath(SOCKET clientSocket, const char *header, char *path) {
+char handlePath(SOCKET clientSocket, const char *header, char *webPath) {
     PlatformFileStat st;
     PlatformTimeStruct tm;
-    char *absolutePath = NULL, e = 0;
-    int r;
-    size_t lenA, lenB;
+    char absolutePath[FILENAME_MAX], e = 0;
 
-    if (path[0] == '\0')
-        absolutePath = globalRootPath;
-    else {
-        char *combinePath = platformPathCombine(globalRootPath, path);
-        if (!(absolutePath = platformRealPath(combinePath))) {
-            free(combinePath);
-            goto handlePathNotFound;
-        }
-        free(combinePath);
-    }
-
-    lenA = strlen(globalRootPath), lenB = strlen(absolutePath);
-
-    if (lenA > lenB)
+    if (platformPathWebToSystem(globalRootPath, webPath, absolutePath))
         goto handlePathNotFound;
 
-    FORCE_BACKWARD_SLASH(globalRootPath);
-
-    r = memcmp(globalRootPath, absolutePath, lenA);
-
-    if (r)
-        goto handlePathNotFound;
-
-    REMOVE_TRAILING_SLASHES(absolutePath, lenB);
-
-    r = platformFileStat(absolutePath, &st);
-    if (r) {
+    if (platformFileStat(absolutePath, &st)) {
         perror(absolutePath);
         goto handlePathNotFound;
     }
-
-    FORCE_FORWARD_SLASH(absolutePath);
 
     e = httpClientReadType(header);
 
@@ -211,13 +184,10 @@ char handlePath(SOCKET clientSocket, const char *header, char *path) {
             if (platformTimeStructEquals(&tm, &mt)) {
                 SocketBuffer socketBuffer = socketBufferNew(clientSocket);
 
-                if (absolutePath != globalRootPath)
-                    free(absolutePath);
-
                 httpHeaderWriteResponse(&socketBuffer, 304);
                 httpHeaderWriteDate(&socketBuffer);
                 httpHeaderWriteEnd(&socketBuffer);
-                eventHttpRespondInvoke(&socketBuffer.clientSocket, path, e, 304);
+                eventHttpRespondInvoke(&socketBuffer.clientSocket, webPath, e, 304);
 
                 if (socketBufferFlush(&socketBuffer))
                     return 1;
@@ -232,18 +202,12 @@ char handlePath(SOCKET clientSocket, const char *header, char *path) {
     else if (platformFileStatIsFile(&st))
         e = handleFile(clientSocket, header, absolutePath, e, &st);
 
-    if (absolutePath != globalRootPath)
-        free(absolutePath);
-
     return e;
 
     handlePathNotFound:
-    if (absolutePath && absolutePath != globalRootPath)
-        free(absolutePath);
-
     {
         SocketBuffer socketBuffer = socketBufferNew(clientSocket);
-        return httpHeaderHandleError(&socketBuffer, path, e, 404);
+        return httpHeaderHandleError(&socketBuffer, webPath, e, 404);
     }
 }
 
@@ -285,7 +249,7 @@ char handleConnection(SOCKET clientSocket) {
         if (uriPath[0] != '/')
             r = 1;
         else
-            r = handlePath(clientSocket, buffer, uriPath + 1);
+            r = handlePath(clientSocket, buffer, uriPath);
 
         free(uriPath);
     }

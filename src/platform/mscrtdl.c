@@ -28,20 +28,25 @@ WSADATA wsaData;
 
 char *platformPathCombine(char *path1, char *path2) {
     const char pathDivider = '/', pathDivider2 = '\\';
-    size_t a = strlen(path1), b = strlen(path2), path2Jump = 1;
+    size_t a = strlen(path1), b = strlen(path2), path2Jump = 0;
     char *returnPath;
     DEBUGPRT("platformPathCombine(%s, %s)", path1, path2);
 
-    if ((path1[a - 1] != pathDivider || path1[a - 1] != pathDivider2) &&
-        (path2[0] != pathDivider || path2[0] != pathDivider2))
-        path2Jump++;
+    if ((path1[a - 1] != pathDivider && path1[a - 1] != pathDivider2) &&
+        (path2[0] != pathDivider && path2[0] != pathDivider2))
+        ++path2Jump;
+    else if ((path1[a - 1] == pathDivider || path1[a - 1] == pathDivider2) &&
+             (path2[0] == pathDivider || path2[0] == pathDivider2))
+        path2++;
 
+    DEBUGPRT("platformPathCombine:path1 = %s\nplatformPathCombine:path2 = %s\nplatformPathCombine:path2Jump = %u\n)",
+             path1, path2, path2Jump);
     returnPath = malloc(a + b + path2Jump);
     memcpy(returnPath, path1, a);
     if (path2Jump > 1)
         returnPath[a] = pathDivider;
 
-    memcpy(returnPath + a + path2Jump - 1, path2, b + 1);
+    memcpy(returnPath + a + path2Jump, path2, b + 1);
 
     return returnPath;
 }
@@ -559,6 +564,7 @@ int platformFileStat(const char *path, PlatformFileStat *stat) {
 
     DEBUGPRT("platformFileStat:attributes = %lu", attributes);
     if (attributes != INVALID_FILE_ATTRIBUTES) {
+        /* TODO: Get handle on DOS versions of Windows */
         HANDLE handle = CreateFile(path, 0, 0, NULL, OPEN_EXISTING,
                                    attributes & FILE_ATTRIBUTE_DIRECTORY ? FILE_FLAG_BACKUP_SEMANTICS : 0, NULL);
 
@@ -607,4 +613,78 @@ char *platformGetRootPath(char *path) {
     }
 
     return test;
+}
+
+short platformPathWebToSystem(const char *rootPath, char *webPath, char *absolutePath) {
+    size_t absolutePathLen;
+    char *it, *internal;
+    DEBUGPRT("platformPathWebToSystem(%s, %s, OUT)", rootPath, webPath);
+
+    it = internal = platformPathCombine((char *) rootPath, webPath);
+
+    if (!internal || (absolutePathLen = strlen(internal)) >= FILENAME_MAX)
+        return 500;
+
+    while (*it != '\0') {
+        if (*it == '/')
+            *it = '\\';
+        ++it;
+    }
+
+    if (internal[absolutePathLen - 1] == '\\')
+        internal[absolutePathLen - 1] = '\0';
+
+    strcpy(absolutePath, internal);
+    free(internal);
+    DEBUGPRT("platformPathWebToSystem(%s, %s, %s)", rootPath, webPath, absolutePath);
+    return 0;
+}
+
+short platformPathSystemToWeb(const char *rootPath, char *absolutePath, char *webPath) {
+    size_t rootPathLen = strlen(rootPath), absolutePathLen = strlen(absolutePath), webPathLen;
+    char *start, *it;
+    DWORD attributes;
+    DEBUGPRT("platformPathSystemToWeb(%s, %s, OUT)", rootPath, absolutePath);
+
+    /* The absolutePath must be under a rootPath */
+    if (rootPathLen > absolutePathLen || memcmp(rootPath, absolutePath, rootPathLen) != 0) {
+        return 404;
+    }
+
+    attributes = GetFileAttributes(absolutePath);
+    if (attributes == INVALID_FILE_ATTRIBUTES) {
+        return 404;
+    }
+
+    /* Check if absolutePath has the folder divider where expected */
+    if (absolutePath[rootPathLen - 1] == '\\' || absolutePath[rootPathLen - 1] == '/')
+        start = &absolutePath[rootPathLen - 1];
+    else
+        start = NULL;
+
+    /* Add if needed */
+    if (start) {
+        memcpy(webPath, start, strlen(start) + 1);
+    } else {
+        webPath[0] = '/';
+        memcpy(webPath + 1, start, strlen(start) + 1);
+    }
+
+    /* Flip all DOS path dividers to web format */
+    it = webPath;
+    while (*it != '\0') {
+        if (*it == '\\')
+            *it = '/';
+        ++it;
+    }
+
+    /* Add a trailing zero if it's a directory */
+    if ((attributes & FILE_ATTRIBUTE_DIRECTORY) > 0) {
+        webPathLen = strlen(webPath);
+        if (webPath[webPathLen - 1] != '/')
+            webPath[webPathLen - 1] = '/';
+    }
+
+    DEBUGPRT("platformPathSystemToWeb(%s, %s, %s)", rootPath, absolutePath, webPath);
+    return 0;
 }
