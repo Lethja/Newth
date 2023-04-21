@@ -37,7 +37,7 @@ char *platformPathCombine(char *path1, char *path2) {
         ++path2Jump;
     else if ((path1[a - 1] == pathDivider || path1[a - 1] == pathDivider2) &&
              (path2[0] == pathDivider || path2[0] == pathDivider2))
-        path2++;
+        ++path2;
 
     DEBUGPRT("platformPathCombine:path1 = %s\nplatformPathCombine:path2 = %s\nplatformPathCombine:path2Jump = %u\n)",
              path1, path2, path2Jump);
@@ -418,22 +418,33 @@ void *platformDirOpen(char *path) {
     DIR *dir = malloc(sizeof(DIR));
     size_t len;
     DEBUGPRT("platformDirOpen(%s)", path);
-    if (path) {
+    if (dir && path) {
         len = strlen(path);
-        /* On DOS/Windows a valid absolute path to a directory shall be at least 3 characters. Example: `C:\` */
-        if (len > 2 && len < FILENAME_MAX - 3) {
+        if (len > 0 && len < FILENAME_MAX - 3) {
+            size_t searchPathLen;
             char searchPath[FILENAME_MAX];
             strcpy(searchPath, path);
-            strcat(searchPath, "\\*");
+            searchPathLen = strlen(searchPath);
+
+            if (searchPath[searchPathLen - 1] == '\\') {
+                if (searchPathLen < FILENAME_MAX - 2)
+                    strcat(searchPath, "*");
+            } else {
+                if (searchPathLen < FILENAME_MAX - 3)
+                    strcat(searchPath, "\\*");
+            }
+
+            DEBUGPRT("platformDirOpen:searchPath = %s", searchPath);
 
             dir->error = 0;
             dir->directoryHandle = FindFirstFile(searchPath, &dir->nextEntry);
             if (dir->directoryHandle != INVALID_HANDLE_VALUE)
                 return dir;
-            else
-                free(dir);
         }
     }
+
+    if (dir)
+        free(dir);
 
     return NULL;
 }

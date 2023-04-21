@@ -5,7 +5,7 @@
 #define DEBUGPRT(f_, ...)
 #else
 #ifdef _WIN32
-#define DEBUGPRT(f_, ...) printf((f_), __VA_ARGS__); fflush(stdout); system("PAUSE"); puts("")
+#define DEBUGPRT(f_, ...) printf((f_), __VA_ARGS__); fflush(stdout); puts(""); system("PAUSE")
 #else
 #define DEBUGPRT(f_, ...) printf((f_), __VA_ARGS__)
 #endif /* _WIN32 */
