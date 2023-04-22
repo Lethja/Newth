@@ -105,12 +105,12 @@ char handleFile(SOCKET clientSocket, const char *header, char *webPath, char *ab
     }
 
     start = finish = 0;
-    e = httpHeaderReadRange(header, &start, &finish, &st->st_size);
+    e = httpHeaderReadRange(header, &start, &finish, (const off_t *) &st->st_size);
 
     /* Headers */
     httpHeaderWriteResponse(&socketBuffer, e ? 200 : 206);
     httpHeaderWriteDate(&socketBuffer);
-    httpHeaderWriteFileName(&socketBuffer, absolutePath);
+    httpHeaderWriteFileName(&socketBuffer, webPath);
     httpHeaderWriteLastModified(&socketBuffer, st);
     httpHeaderWriteAcceptRanges(&socketBuffer);
 
@@ -119,10 +119,10 @@ char handleFile(SOCKET clientSocket, const char *header, char *webPath, char *ab
     else {
         /* Handle the end of the byte range being out of range or unspecified */
         if (finish >= st->st_size || finish == 0)
-            finish = st->st_size;
+            finish = (off_t) st->st_size;
 
         httpHeaderWriteContentLength(&socketBuffer, finish - start);
-        httpHeaderWriteRange(&socketBuffer, start, finish, st->st_size);
+        httpHeaderWriteRange(&socketBuffer, start, finish, (off_t) st->st_size);
     }
 
     httpHeaderWriteEnd(&socketBuffer);
@@ -134,14 +134,14 @@ char handleFile(SOCKET clientSocket, const char *header, char *webPath, char *ab
 
     /* Body */
     if (st->st_size < BUFSIZ) {
-        if (httpBodyWriteFile(&socketBuffer, fp, start, e ? st->st_size : finish))
+        if (httpBodyWriteFile(&socketBuffer, fp, start, e ? (off_t) st->st_size : (off_t) finish))
             goto handleFileAbort;
         fclose(fp);
         eventHttpFinishInvoke(&socketBuffer.clientSocket, webPath, httpType, 0);
         return 0;
     } else
         FileRoutineArrayAdd(&globalFileRoutineArray,
-                            FileRoutineNew(clientSocket, fp, start, e ? st->st_size : finish, webPath));
+                            FileRoutineNew(clientSocket, fp, start, e ? (off_t) st->st_size : finish, webPath));
     return 0;
 
     handleFileAbort:
@@ -370,9 +370,7 @@ int main(int argc, char **argv) {
             ports = "0";
 
         /* Choose IP standards to run on the socket */
-        if (platformArgvGetFlag(argc, argv, '4', "ipv4", NULL))
-            family = AF_INET;
-        else if (platformArgvGetFlag(argc, argv, '6', "ipv6", NULL))
+        if (platformArgvGetFlag(argc, argv, '6', "ipv6", NULL) && !platformArgvGetFlag(argc, argv, '4', "ipv4", NULL))
             family = AF_INET6;
         else if (platformOfficiallySupportsIpv6() || platformArgvGetFlag(argc, argv, '\0', "dual-stack", NULL))
             family = AF_UNSPEC;
@@ -427,7 +425,7 @@ int main(int argc, char **argv) {
 
         readySockets = currentSockets;
 
-        if (select(globalMaxSocket + 1, &readySockets, NULL, NULL, &globalSelectSleep) < 0) {
+        if (select((int) globalMaxSocket + 1, &readySockets, NULL, NULL, &globalSelectSleep) < 0) {
             perror("Select");
             exit(1);
         }
