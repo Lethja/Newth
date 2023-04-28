@@ -2,13 +2,13 @@
 <CodeBlocks_project_file>
 	<FileVersion major="1" minor="6" />
 	<Project>
-		<Option title="CodeBlocks" />
+		<Option title="Newth" />
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="Server Debug Unix">
 				<Option platforms="Unix;Mac;" />
-				<Option output="bin/nix/Debug/server" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/unix/Debug/server" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/unix/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
@@ -16,12 +16,13 @@
 					<Add option="-g" />
 				</Compiler>
 			</Target>
-			<Target title="Server Release Nix">
+			<Target title="Server Release Unix">
 				<Option platforms="Unix;Mac;" />
-				<Option output="bin/nix/Release/server" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/unix/Release/server" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/unix/Release/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
+				<Option use_console_runner="0" />
 				<Compiler>
 					<Add option="-O2" />
 					<Add option="-DNDEBUG=1" />
@@ -30,9 +31,9 @@
 					<Add option="-s" />
 				</Linker>
 			</Target>
-			<Target title="Server Debug W32">
+			<Target title="Server Debug MingW32">
 				<Option platforms="Windows;" />
-				<Option output="bin/w32/Debug/server" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/mingw32/Debug/server" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/w32/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
@@ -46,9 +47,9 @@
 					<Add library="Iphlpapi" />
 				</Linker>
 			</Target>
-			<Target title="Server Release W32">
+			<Target title="Server Release MingW32">
 				<Option platforms="Windows;" />
-				<Option output="bin/w32/Release/server" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/mingw32/Release/server" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/w32/Release/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
@@ -65,9 +66,9 @@
 					<Add library="Iphlpapi" />
 				</Linker>
 			</Target>
-			<Target title="Server Debug W64">
+			<Target title="Server Debug MingW64">
 				<Option platforms="Windows;" />
-				<Option output="bin/w64/Debug/server" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/mingw64/Debug/server" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/w32/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
@@ -81,9 +82,9 @@
 					<Add library="Iphlpapi" />
 				</Linker>
 			</Target>
-			<Target title="Server Release W64">
+			<Target title="Server Release MingW64">
 				<Option platforms="Windows;" />
-				<Option output="bin/w64/Release/server" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/mingw64/Release/server" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/w32/Release/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
@@ -111,37 +112,40 @@
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="../src/common/http.h" />
+		<Unit filename="../src/platform/mscrtdl.c">
+			<Option compilerVar="CC" />
+			<Option target="Server Debug MingW32" />
+			<Option target="Server Release MingW32" />
+			<Option target="Server Debug MingW64" />
+			<Option target="Server Release MingW64" />
+		</Unit>
+		<Unit filename="../src/platform/mscrtdl.h">
+			<Option target="Server Debug MingW32" />
+			<Option target="Server Release MingW32" />
+			<Option target="Server Debug MingW64" />
+			<Option target="Server Release MingW64" />
+		</Unit>
 		<Unit filename="../src/platform/platform.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../src/platform/platform.h" />
-		<Unit filename="../src/platform/unix.c">
+		<Unit filename="../src/platform/posix01.c">
 			<Option compilerVar="CC" />
 			<Option target="Server Debug Unix" />
-			<Option target="Server Release Nix" />
+			<Option target="Server Release Unix" />
 		</Unit>
-		<Unit filename="../src/platform/unix.h">
+		<Unit filename="../src/platform/posix01.h">
 			<Option target="Server Debug Unix" />
-			<Option target="Server Release Nix" />
+			<Option target="Server Release Unix" />
 		</Unit>
-		<Unit filename="../src/platform/ws2.c">
+		<Unit filename="../src/platform/winsock/wsock1.c">
 			<Option compilerVar="CC" />
-			<Option target="Server Debug W32" />
-			<Option target="Server Release W32" />
-			<Option target="Server Release W64" />
-			<Option target="Server Debug W64" />
+			<Option target="Server Debug MingW32" />
+			<Option target="Server Release MingW32" />
 		</Unit>
-		<Unit filename="../src/platform/ws2.h">
-			<Option target="Server Debug W32" />
-			<Option target="Server Release W32" />
-			<Option target="Server Release W64" />
-			<Option target="Server Debug W64" />
-		</Unit>
-		<Unit filename="../src/platform/ws2/ipv6.h">
-			<Option target="Server Debug W32" />
-			<Option target="Server Release W32" />
-			<Option target="Server Debug W64" />
-			<Option target="Server Release W64" />
+		<Unit filename="../src/platform/winsock/wsock1.h">
+			<Option target="Server Debug MingW32" />
+			<Option target="Server Release MingW32" />
 		</Unit>
 		<Unit filename="../src/server.c">
 			<Option compilerVar="CC" />

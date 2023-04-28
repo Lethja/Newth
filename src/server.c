@@ -4,6 +4,7 @@
 #include "server/routine.h"
 
 #include <stdlib.h>
+#include <unistd.h> /* getcwd() */
 
 SOCKET globalServerSocket;
 SOCKET globalMaxSocket = 0;

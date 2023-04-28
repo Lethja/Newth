@@ -8,6 +8,7 @@
 
 #endif
 
+#include <ctype.h>
 #include <iphlpapi.h>
 #include <signal.h>
 #include <stdio.h>

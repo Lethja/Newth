@@ -2,16 +2,15 @@
 #include "../../common/debug.h"
 
 #include <stdio.h>
-#include <tdiinfo.h>
+
+#pragma region WsControl helper structs and defines
+
+typedef int (__stdcall *WsControlProc)(DWORD, DWORD, LPVOID, LPDWORD, LPVOID, LPDWORD);
 
 #define WSCTL_TCP_QUERY_INFORMATION 0
 #define IF_MIB_STATS_ID     1
 #define MAX_PHYSADDR_SIZE   8
 #define IP_MIB_ADDRTABLE_ENTRY_ID   0x102
-
-#pragma region WsControl helper structs
-
-typedef int (__stdcall *WsControlProc)(DWORD, DWORD, LPVOID, LPDWORD, LPVOID, LPDWORD);
 
 typedef struct IFEntry {
     ULONG if_index;
@@ -74,6 +73,36 @@ typedef struct IPAddrEntry {
     USHORT iae_context;
     USHORT iae_pad;
 } IPAddrEntry;
+
+#define	MAX_TDI_ENTITIES 4096
+#define	CONTEXT_SIZE 16
+#define	GENERIC_ENTITY 0
+#define	ENTITY_LIST_ID 0
+#define	ENTITY_TYPE_ID 1
+#define	INFO_CLASS_GENERIC 0x100
+#define	INFO_TYPE_PROVIDER 0x100
+#define	IF_ENTITY 0x200
+#define	INFO_CLASS_PROTOCOL 0x200
+#define	IF_MIB 0x202
+#define	CL_NL_ENTITY 0x301
+#define	CL_NL_IP 0x303
+
+typedef struct TDIEntityID {
+  ULONG  tei_entity;
+  ULONG  tei_instance;
+} TDIEntityID;
+
+typedef struct _TDIObjectID {
+	TDIEntityID  toi_entity;
+	ULONG  toi_class;
+	ULONG  toi_type;
+	ULONG  toi_id;
+} TDIObjectID;
+
+typedef struct _TCP_REQUEST_QUERY_INFORMATION_EX {
+  TDIObjectID  ID;
+  ULONG_PTR  Context[CONTEXT_SIZE / sizeof(ULONG_PTR)];
+} TCP_REQUEST_QUERY_INFORMATION_EX, *PTCP_REQUEST_QUERY_INFORMATION_EX;
 
 #pragma endregion
 
