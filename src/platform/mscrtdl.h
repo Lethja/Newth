@@ -23,11 +23,19 @@ typedef struct winSockNativeStat {
     FILETIME st_mtime;
 } PlatformFileStat;
 
+#ifndef	_OFF_T_
+#define	_OFF_T_
+typedef long _off_t;
+#ifndef	_NO_OLDNAMES
+typedef _off_t	off_t;
+#endif
+#endif
+
 typedef struct winSockNativeDir {
     PlatformDirEntry nextEntry;
     PlatformDirEntry lastEntry;
     HANDLE directoryHandle;
-    WINBOOL error;
+    int error;
 } DIR;
 
 #ifndef AF_INET6
@@ -40,6 +48,10 @@ typedef struct winSockNativeDir {
 
 #ifndef INET6_ADDRSTRLEN
 #define INET6_ADDRSTRLEN 65
+#endif
+
+#ifndef IPPROTO_IPV6
+#define IPPROTO_IPV6 41
 #endif
 
 #ifndef IPV6_V6ONLY

@@ -93,6 +93,7 @@ void platformIpStackExit(void) {
 }
 
 int platformIpStackInit(void) {
+    int error;
     char libAbs[FILENAME_MAX] = "", *filePoint;
     DEBUGPRT("%s ", "platformIPStackInit");
 
@@ -135,7 +136,16 @@ int platformIpStackInit(void) {
         return 1;
     }
 
-    return WSAStartup(MAKEWORD(1, 1), &wsaData);
+    DEBUGPRT("%s\n","WSAStartup() about to be called");
+    error = WSAStartup(MAKEWORD(1, 1), &wsaData);
+    DEBUGPRT("WSAStartup() = %d\n", error);
+
+    if(error) {
+        error = WSAGetLastError();
+        DEBUGPRT("WSAStartup() failed with error %d\n", error);
+    }
+
+    return error;
 }
 
 int platformOfficiallySupportsIpv6(void) {

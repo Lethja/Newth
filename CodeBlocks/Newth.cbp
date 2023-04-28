@@ -6,9 +6,9 @@
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Build>
-			<Target title="Server Debug Unix">
+			<Target title="Unix GCC Debug">
 				<Option platforms="Unix;Mac;" />
-				<Option output="bin/unix/Debug/server" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/unix/Debug/newth" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/unix/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
@@ -16,9 +16,9 @@
 					<Add option="-g" />
 				</Compiler>
 			</Target>
-			<Target title="Server Release Unix">
+			<Target title="Unix GCC Release">
 				<Option platforms="Unix;Mac;" />
-				<Option output="bin/unix/Release/server" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/unix/Release/newth" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/unix/Release/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
@@ -31,15 +31,16 @@
 					<Add option="-s" />
 				</Linker>
 			</Target>
-			<Target title="Server Debug MingW32">
+			<Target title="MingW32 Debug">
 				<Option platforms="Windows;" />
-				<Option output="bin/mingw32/Debug/server" prefix_auto="1" extension_auto="1" />
-				<Option object_output="obj/w32/Debug/" />
+				<Option output="bin/mingw32/Debug/newth" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/mingw32/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-m32" />
 					<Add option="-g" />
+					<Add option="-DPORTABLE_WIN32=1" />
 				</Compiler>
 				<Linker>
 					<Add option="-m32" />
@@ -47,10 +48,10 @@
 					<Add library="Iphlpapi" />
 				</Linker>
 			</Target>
-			<Target title="Server Release MingW32">
+			<Target title="MingW32 Release">
 				<Option platforms="Windows;" />
-				<Option output="bin/mingw32/Release/server" prefix_auto="1" extension_auto="1" />
-				<Option object_output="obj/w32/Release/" />
+				<Option output="bin/mingw32/Release/newth" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/mingw32/Release/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Option use_console_runner="0" />
@@ -58,6 +59,7 @@
 					<Add option="-O2" />
 					<Add option="-m32" />
 					<Add option="-DNDEBUG=1" />
+					<Add option="-DPORTABLE_WIN32=1" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -66,10 +68,10 @@
 					<Add library="Iphlpapi" />
 				</Linker>
 			</Target>
-			<Target title="Server Debug MingW64">
+			<Target title="MingW64 Debug">
 				<Option platforms="Windows;" />
-				<Option output="bin/mingw64/Debug/server" prefix_auto="1" extension_auto="1" />
-				<Option object_output="obj/w32/Debug/" />
+				<Option output="bin/mingw64/Debug/newth" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/mingw64/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
@@ -82,10 +84,10 @@
 					<Add library="Iphlpapi" />
 				</Linker>
 			</Target>
-			<Target title="Server Release MingW64">
+			<Target title="MingW64 Release">
 				<Option platforms="Windows;" />
-				<Option output="bin/mingw64/Release/server" prefix_auto="1" extension_auto="1" />
-				<Option object_output="obj/w32/Release/" />
+				<Option output="bin/mingw64/Release/newth" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/mingw64/Release/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Option use_console_runner="0" />
@@ -99,6 +101,53 @@
 					<Add option="-m64" />
 					<Add library="libwsock32" />
 					<Add library="Iphlpapi" />
+				</Linker>
+			</Target>
+			<Target title="Watcom NT Debug">
+				<Option platforms="Windows;" />
+				<Option output="bin/wcnt/Debug/newth" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/wcnt/Debug/" />
+				<Option type="1" />
+				<Option compiler="ow" />
+				<Option projectCompilerOptionsRelation="1" />
+				<Option projectLinkerOptionsRelation="1" />
+				<Compiler>
+					<Add option="-bm" />
+					<Add option="-w=0" />
+					<Add option="-bt=nt" />
+					<Add option="-bcl=nt" />
+					<Add option="-3s" />
+					<Add option="-3r" />
+					<Add option="-cc" />
+					<Add option="-dPORTABLE_WIN32=1" />
+				</Compiler>
+				<Linker>
+					<Add library="wsock32" />
+				</Linker>
+			</Target>
+			<Target title="Watcom NT Release">
+				<Option platforms="Windows;" />
+				<Option output="bin/wcnt/Release/newth" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/wcnt/Release/" />
+				<Option type="1" />
+				<Option compiler="ow" />
+				<Option use_console_runner="0" />
+				<Option projectCompilerOptionsRelation="1" />
+				<Option projectLinkerOptionsRelation="1" />
+				<Compiler>
+					<Add option="-ox" />
+					<Add option="-d0" />
+					<Add option="-w=0" />
+					<Add option="-bt=nt" />
+					<Add option="-bcl=nt" />
+					<Add option="-3s" />
+					<Add option="-3r" />
+					<Add option="-cc" />
+					<Add option="-dNDEBUG=1" />
+					<Add option="-dPORTABLE_WIN32=1" />
+				</Compiler>
+				<Linker>
+					<Add library="wsock32" />
 				</Linker>
 			</Target>
 		</Build>
@@ -114,16 +163,20 @@
 		<Unit filename="../src/common/http.h" />
 		<Unit filename="../src/platform/mscrtdl.c">
 			<Option compilerVar="CC" />
-			<Option target="Server Debug MingW32" />
-			<Option target="Server Release MingW32" />
-			<Option target="Server Debug MingW64" />
-			<Option target="Server Release MingW64" />
+			<Option target="MingW32 Debug" />
+			<Option target="MingW32 Release" />
+			<Option target="MingW64 Debug" />
+			<Option target="MingW64 Release" />
+			<Option target="Watcom NT Release" />
+			<Option target="Watcom NT Debug" />
 		</Unit>
 		<Unit filename="../src/platform/mscrtdl.h">
-			<Option target="Server Debug MingW32" />
-			<Option target="Server Release MingW32" />
-			<Option target="Server Debug MingW64" />
-			<Option target="Server Release MingW64" />
+			<Option target="MingW32 Debug" />
+			<Option target="MingW32 Release" />
+			<Option target="MingW64 Debug" />
+			<Option target="MingW64 Release" />
+			<Option target="Watcom NT Release" />
+			<Option target="Watcom NT Debug" />
 		</Unit>
 		<Unit filename="../src/platform/platform.c">
 			<Option compilerVar="CC" />
@@ -131,21 +184,25 @@
 		<Unit filename="../src/platform/platform.h" />
 		<Unit filename="../src/platform/posix01.c">
 			<Option compilerVar="CC" />
-			<Option target="Server Debug Unix" />
-			<Option target="Server Release Unix" />
+			<Option target="Unix GCC Debug" />
+			<Option target="Unix GCC Release" />
 		</Unit>
 		<Unit filename="../src/platform/posix01.h">
-			<Option target="Server Debug Unix" />
-			<Option target="Server Release Unix" />
+			<Option target="Unix GCC Debug" />
+			<Option target="Unix GCC Release" />
 		</Unit>
 		<Unit filename="../src/platform/winsock/wsock1.c">
 			<Option compilerVar="CC" />
-			<Option target="Server Debug MingW32" />
-			<Option target="Server Release MingW32" />
+			<Option target="MingW32 Debug" />
+			<Option target="MingW32 Release" />
+			<Option target="Watcom NT Release" />
+			<Option target="Watcom NT Debug" />
 		</Unit>
 		<Unit filename="../src/platform/winsock/wsock1.h">
-			<Option target="Server Debug MingW32" />
-			<Option target="Server Release MingW32" />
+			<Option target="MingW32 Debug" />
+			<Option target="MingW32 Release" />
+			<Option target="Watcom NT Release" />
+			<Option target="Watcom NT Debug" />
 		</Unit>
 		<Unit filename="../src/server.c">
 			<Option compilerVar="CC" />
