@@ -13,24 +13,24 @@ endif ()
 set(CMAKE_C_FLAGS_RELEASE "-O2 -s")
 
 if (UNIX)
-    set(PLATFORM_SRC ../src/platform/posix01.c ../src/platform/posix01.c)
+    set(TH_PLATFORM_SRC ../src/platform/posix01.c)
 elseif (WIN32)
     if (PORTABLE_WIN32)
-        set(PLATFORM_SRC ../src/platform/mscrtdl.c ../src/platform/mscrtdl.c ../src/common/debug.h ../src/platform/winsock/wsock1.c ../src/platform/winsock/wsock2.c)
+        set(TH_PLATFORM_SRC ../src/platform/mscrtdl.c ../src/platform/winsock/wsock1.c ../src/platform/winsock/wsock2.c)
     else ()
-        set(PLATFORM_SRC ../src/platform/mscrtdl.c ../src/platform/mscrtdl.c ../src/common/debug.h)
+        set(TH_PLATFORM_SRC ../src/platform/mscrtdl.c)
     endif ()
 endif ()
 
-#add_executable(client ../src/client.c ../src/platform/unix.h ../src/common/http.h ../src/platform/platform.h)
+add_executable(dl ../src/client.c ../src/common/http.h ../src/platform/platform.h)
 add_executable(th ../src/server.c ../src/platform/posix01.h ../src/server/http.c
         ../src/server/http.h ../src/common/http.h ../src/server/routine.c ../src/server/routine.h
         ../src/server/sockbufr.c ../src/server/sockbufr.h
         ../src/platform/platform.c ../src/platform/platform.h
         ../src/server/event.c ../src/server/event.h
-        ${PLATFORM_SRC})
+        ${TH_PLATFORM_SRC})
 
-#target_compile_definitions(client PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
+target_compile_definitions(dl PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
 target_compile_definitions(th PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
 
 if (WIN32)
@@ -43,7 +43,7 @@ if (WIN32)
         target_compile_definitions(th PUBLIC PORTABLE_WIN32=1)
     endif ()
 
-    #    target_link_libraries(client libwsock32.a iphlpapi)
+    target_link_libraries(dl libwsock32.a)
     target_link_libraries(th libwsock32.a)
     add_dependencies(th thwsipv6)
 endif ()

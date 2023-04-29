@@ -5,9 +5,6 @@
 
 #define CLOSE_SOCKET(x) closesocket(x)
 #define SOCK_BUF_TYPE int
-#define FORCE_FORWARD_SLASH(path) platformPathForceForwardSlash(path)
-#define FORCE_BACKWARD_SLASH(path) platformPathForceBackwardSlash(path)
-#define REMOVE_TRAILING_SLASHES(path, len) platformRemoveTrailingSlashes(path, len)
 #define sa_family_t short
 
 #include <winsock2.h>
@@ -23,6 +20,8 @@ typedef struct winSockNativeStat {
     FILETIME st_mtime;
 } PlatformFileStat;
 
+/* TODO: use platform neutral typedef in case off_t is not declared */
+/*
 #ifndef	_OFF_T_
 #define	_OFF_T_
 typedef long _off_t;
@@ -30,6 +29,7 @@ typedef long _off_t;
 typedef _off_t	off_t;
 #endif
 #endif
+*/
 
 typedef struct winSockNativeDir {
     PlatformDirEntry nextEntry;
