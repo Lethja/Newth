@@ -152,27 +152,33 @@ static void nicFree(void) {
 
 #pragma endregion
 
+HMODULE wsock32;
 WsControlProc WsControlFunc;
 
+static void wSock1Free() {
+    if(wsock32)
+        FreeLibrary(wsock32);
+}
+
+void *wSock1Available() {
+    wsock32 = LoadLibrary("wsock32.dll");
+    if(wsock32) {
+        WsControlFunc = (WsControlProc) GetProcAddress(wsock32, "WsControl");
+        return &wSock1Free;
+    }
+    return NULL;
+}
+
+WSADATA WSAData;
+
 AdapterAddressArray *
-platformGetAdapterInformationIpv4(void (arrayAdd)(AdapterAddressArray *, char *, sa_family_t, char *)) {
-    HMODULE wsock32 = LoadLibrary("wsock32.dll");
-    DEBUGPRT("wsock32 = %p", wsock32);
-    if (wsock32) {
-        WSADATA WSAData;
+wSock1GetAdapterInformationIpv4(void (arrayAdd)(AdapterAddressArray *, char *, sa_family_t, char *)) {
+    if (WsControlFunc) {
         int result;
         TCP_REQUEST_QUERY_INFORMATION_EX tcpRequestQueryInfoEx;
         TDIEntityID *entityIds;
         DWORD tcpRequestBufSize, entityIdsBufSize, entityCount, ifCount, i;
-
         AdapterAddressArray *array = NULL;
-
-        WsControlFunc = (WsControlProc) GetProcAddress(wsock32, "WsControl");
-        DEBUGPRT("WsControlFunc = %p", WsControlFunc);
-        if (!WsControlFunc) {
-            FreeLibrary(wsock32);
-            return NULL;
-        }
 
         result = WSAStartup(MAKEWORD(1, 1), &WSAData);
         DEBUGPRT("WSAStartup = %d", result);
@@ -336,7 +342,6 @@ platformGetAdapterInformationIpv4(void (arrayAdd)(AdapterAddressArray *, char *,
             }
         }
         nicFree();
-        FreeLibrary(wsock32);
         DEBUGPRT("array = %p", array);
         if (array) {
             if (array->size)

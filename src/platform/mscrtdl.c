@@ -8,6 +8,8 @@
 
 #endif
 
+#include "winsock/wsock2.h"
+
 #include <ctype.h>
 #include <iphlpapi.h>
 #include <signal.h>
@@ -23,7 +25,7 @@ typedef AdapterAddressArray *(*adapterInformationIpv4)(
 
 adapterInformationIpv4 getAdapterInformationIpv4 = NULL;
 adapterInformationIpv6 getAdapterInformationIpv6 = NULL;
-HMODULE wsIpv4 = NULL;
+void (*wsIpv4)() = NULL;
 HMODULE wsIpv6 = NULL;
 WSADATA wsaData;
 
@@ -114,17 +116,18 @@ int platformIpStackInit(void) {
 
     /* Choose between WinSock 1 (Windows 95 support) and WinSock 2 */
     *filePoint = '\0';
-    strncat(filePoint, "thwsock2.dll", FILENAME_MAX);
-    wsIpv4 = LoadLibrary(TEXT(libAbs));
-    DEBUGPRT("wsIpv4 (%s) = %p", libAbs, (void *) wsIpv4);
+    wsIpv4 = wSock2Available();
+    DEBUGPRT("wsIpv4 (wsock2) = %p", (void *) wsIpv4);
     if (wsIpv4)
-        getAdapterInformationIpv4 = (adapterInformationIpv4) GetProcAddress(wsIpv4,
-                                                                            "platformGetAdapterInformationIpv4");
+        getAdapterInformationIpv4 = (adapterInformationIpv4) wSock2GetAdapterInformationIpv4;
 
 #ifdef PORTABLE_WIN32
     else {
-        getAdapterInformationIpv4 = platformGetAdapterInformationIpv4;
-        DEBUGPRT("getAdapterInformationIpv4 (Internal) = %p", getAdapterInformationIpv4);
+        wsIpv4 = wSock1Available();
+        if(wsIpv4) {
+            getAdapterInformationIpv4 = wSock1GetAdapterInformationIpv4;
+            DEBUGPRT("getAdapterInformationIpv4 (Internal) = %p", getAdapterInformationIpv4);
+        }
     }
 #endif
 

@@ -3,7 +3,9 @@
 
 #include "../mscrtdl.h"
 
-AdapterAddressArray *platformGetAdapterInformationIpv4(void (arrayAdd)(AdapterAddressArray *, char *, sa_family_t,
+void *wSock1Available();
+
+AdapterAddressArray *wSock1GetAdapterInformationIpv4(void (arrayAdd)(AdapterAddressArray *, char *, sa_family_t,
                                                                        char *));
 
 #endif /* NEW_TH_WIN_SOCK_H */

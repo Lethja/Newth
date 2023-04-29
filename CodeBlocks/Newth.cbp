@@ -204,6 +204,23 @@
 			<Option target="Watcom NT Release" />
 			<Option target="Watcom NT Debug" />
 		</Unit>
+		<Unit filename="../src/platform/winsock/wsock2.c">
+			<Option compilerVar="CC" />
+			<Option target="MingW32 Debug" />
+			<Option target="MingW32 Release" />
+			<Option target="MingW64 Debug" />
+			<Option target="MingW64 Release" />
+			<Option target="Watcom NT Debug" />
+			<Option target="Watcom NT Release" />
+		</Unit>
+		<Unit filename="../src/platform/winsock/wsock2.h">
+			<Option target="MingW32 Debug" />
+			<Option target="MingW32 Release" />
+			<Option target="MingW64 Debug" />
+			<Option target="MingW64 Release" />
+			<Option target="Watcom NT Debug" />
+			<Option target="Watcom NT Release" />
+		</Unit>
 		<Unit filename="../src/server.c">
 			<Option compilerVar="CC" />
 		</Unit>
