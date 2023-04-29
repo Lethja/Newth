@@ -24,7 +24,6 @@ size_t DirectoryRoutineContinue(DirectoryRoutine *self) {
 
             if (pathLen + entryLen + 3 < BUFSIZ) {
                 memcpy(pathBuf, self->webPath, pathLen);
-                FORCE_FORWARD_SLASH(pathBuf);
                 if (pathBuf[pathLen ? pathLen - 1 : 0] != '/') {
                     pathBuf[pathLen ? pathLen : 0] = '/';
                     memcpy(pathLen ? pathBuf + pathLen + 1 : pathBuf + 1, entryName, entryLen + 1);

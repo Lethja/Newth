@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="dl" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Unix Debug">
+				<Option platforms="Windows;" />
+				<Option output="bin/unix/Debug/dl" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/unix/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+			</Target>
+			<Target title="Unix Release">
+				<Option platforms="Windows;" />
+				<Option output="bin/unix/Release/dl" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/unix/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Option use_console_runner="0" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+			<Target title="MingW Debug">
+				<Option platforms="Windows;" />
+				<Option output="bin/MingW32/Debug/dl" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/mingw32/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Option parameters="192.168.101.1" />
+				<Compiler>
+					<Add option="-g" />
+					<Add option="-DWIN32=1" />
+				</Compiler>
+				<Linker>
+					<Add library="wsock32" />
+				</Linker>
+			</Target>
+			<Target title="MingW Release">
+				<Option platforms="Windows;" />
+				<Option output="bin/Mingw32/Release/dl" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/mingw32/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Option use_console_runner="0" />
+				<Compiler>
+					<Add option="-O2" />
+					<Add option="-DWIN32=1" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+					<Add library="wsock32" />
+				</Linker>
+			</Target>
+			<Target title="Watcom Debug">
+				<Option output="bin/wcnt/Debug/dl" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/wcnt/Debug/" />
+				<Option type="1" />
+				<Option compiler="ow" />
+				<Option projectCompilerOptionsRelation="1" />
+				<Compiler>
+					<Add option="-bt=nt" />
+					<Add option="-bcl=nt" />
+					<Add option="-3s" />
+					<Add option="-3r" />
+					<Add option="-cc" />
+					<Add option="-dWIN32=1" />
+				</Compiler>
+				<Linker>
+					<Add library="wsock32" />
+				</Linker>
+			</Target>
+			<Target title="Watcom Release">
+				<Option output="bin/wcnt/Release/dl" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/wcnt/Release" />
+				<Option type="1" />
+				<Option compiler="ow" />
+				<Option use_console_runner="0" />
+				<Option parameters="192.168.101.1" />
+				<Option projectCompilerOptionsRelation="1" />
+				<Compiler>
+					<Add option="-ox" />
+					<Add option="-bt=nt" />
+					<Add option="-bcl=nt" />
+					<Add option="-3s" />
+					<Add option="-3r" />
+					<Add option="-cc" />
+					<Add option="-dWIN32=1" />
+				</Compiler>
+				<Linker>
+					<Add library="wsock32" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-ansi" />
+		</Compiler>
+		<Unit filename="../src/client.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

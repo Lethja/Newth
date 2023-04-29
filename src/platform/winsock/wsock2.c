@@ -1,3 +1,4 @@
+#include "../../common/debug.h"
 #include <stdio.h>
 #include "wsock2.h"
 
@@ -12,9 +13,12 @@ static void wSock2Free() {
 }
 
 void *wSock2Available() {
+    DEBUGPRT("%s\n", "wSock2Available()");
     wsock2 = LoadLibrary("Iphlpapi.dll");
+    DEBUGPRT("wSock2Available():wsock2 = %p\n", wsock2);
     if(wsock2) {
         AdapterInfoFunc = (AdapterInfoProc) GetProcAddress(wsock2, "GetAdaptersInfo");
+        DEBUGPRT("wSock2Available():AdapterInfoFunc = %p\n", AdapterInfoFunc);
         return &wSock2Free;
     }
     return NULL;

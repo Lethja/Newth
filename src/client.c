@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
         goto errorOut;
 #endif
 
-    if ((socketFd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+    if ((socketFd = socket(AF_INET, SOCK_STREAM, 0)) != 0)
         goto errorOut;
 
     memset(&serverAddress, 0, sizeof(serverAddress));
