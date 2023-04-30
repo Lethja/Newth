@@ -1,7 +1,6 @@
 #ifndef OPEN_WEB_PLATFORM_H
 #define OPEN_WEB_PLATFORM_H
 
-#define MAX_LINE 4096
 #define SA struct sockaddr
 
 #ifndef __STDC_VERSION__

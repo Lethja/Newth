@@ -10,6 +10,19 @@ static WSADATA wsaData;
 
 #endif
 
+static char *getAddressPath(char *uri) {
+    char *colon = strchr(uri, ':'), *slash;
+
+    if (colon && colon[1] == '/' && colon[2] == '/')
+        slash = strchr(&colon[3], '/');
+    else
+        slash = strchr(uri, '/');
+
+    if (slash)
+        return slash;
+    return "/";
+}
+
 static char getAddressAndPort(char *uri, char *address, unsigned short *port) {
     char *it = uri;
     size_t hold, len = hold = 0, i, j;
@@ -75,7 +88,7 @@ char clientConnectSocketTo(const SOCKET *socket, char *uri, int type) {
     if (!host || host->h_addrtype != type || host->h_length == 0)
         return -1;
 
-    if(type == AF_INET) {
+    if (type == AF_INET) {
         struct sockaddr_in *serverAddress = (struct sockaddr_in *) &addrStruct;
         memset(serverAddress, 0, sizeof(addrStruct));
 
@@ -97,7 +110,8 @@ int main(int argc, char **argv) {
     SOCKET socketFd;
     int sendBytes;
     struct sockaddr_storage serverAddress;
-    char txLine[MAX_LINE], rxLine[MAX_LINE];
+    char txLine[BUFSIZ], rxLine[BUFSIZ];
+    char head = 0;
 
     if (argc != 2)
         goto errorOut;
@@ -116,17 +130,25 @@ int main(int argc, char **argv) {
         goto errorOut;
 
     /* TODO: More sophisticated header framework for HTTP requests */
-    sprintf(txLine, "GET / HTTP/1.1" HTTP_EOL HTTP_EOL);
+    snprintf(txLine, BUFSIZ, "GET %s HTTP/1.1" HTTP_EOL HTTP_EOL, getAddressPath(argv[1]));
     sendBytes = (int) strlen(txLine);
 
     if (send(socketFd, txLine, sendBytes, 0) != sendBytes)
         goto errorOut;
 
-    memset(rxLine, 0, MAX_LINE);
+    memset(rxLine, 0, BUFSIZ);
 
-    while ((recv(socketFd, rxLine, MAX_LINE - 1, 0) > 0)) {
+    while ((recv(socketFd, rxLine, BUFSIZ - 1, 0) > 0)) {
         printf("%s", rxLine);
-        memset(rxLine, 0, MAX_LINE);
+        /* TODO: Distinguish HTTP header from body properly and look for content disposition in header */
+        if (strstr(rxLine, HTTP_EOL HTTP_EOL) != NULL) {
+            ++head;
+            if (head >= 2) {
+                puts("");
+                break;
+            }
+        }
+        memset(rxLine, 0, BUFSIZ);
     }
 
     fflush(stdout);
