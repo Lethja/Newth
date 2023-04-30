@@ -1,7 +1,6 @@
 #ifndef OPEN_WEB_PLATFORM_H
 #define OPEN_WEB_PLATFORM_H
 
-#define SERVER_PORT 8080
 #define MAX_LINE 4096
 #define SA struct sockaddr
 
