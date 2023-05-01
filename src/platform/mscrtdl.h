@@ -14,6 +14,8 @@
 
 typedef SYSTEMTIME PlatformTimeStruct;
 typedef WIN32_FIND_DATA PlatformDirEntry;
+typedef long long PlatformFileOffset;
+
 typedef struct winSockNativeStat {
     unsigned long st_size;
     unsigned int st_mode;

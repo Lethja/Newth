@@ -10,6 +10,98 @@ static WSADATA wsaData;
 
 #endif
 
+typedef struct ServerHeaderResponse {
+    short code;
+    short type;
+    PlatformTimeStruct *modifiedDate;
+    PlatformFileOffset length;
+    char path[FILENAME_MAX];
+    char file[FILENAME_MAX];
+} ServerHeaderResponse;
+
+char headerStructGetEssential(ServerHeaderResponse *self, FILE *headerFile) {
+    char *p, buf[BUFSIZ] = "";
+
+    fseek(headerFile, 0L, SEEK_SET);
+    if (fgets(buf, BUFSIZ, headerFile) == NULL)
+        goto headerStructGetEssentialFailed;
+
+    /* Check this is actually HTTP */
+    if (toupper(buf[0]) != 'H')
+        goto headerStructGetEssentialFailed;
+
+    /* Get response code */
+    p = strchr(buf, ' ');
+
+    if (p) {
+        char *start = &p[1], code[4];
+        size_t len;
+
+        p = strchr(&p[2], ' ');
+        if (p)
+            len = p - start;
+        else
+            len = strlen(start);
+
+        if (len != 3)
+            goto headerStructGetEssentialFailed;
+
+        code[0] = start[0], code[1] = start[1], code[2] = start[2], code[3] = '\0';
+        self->code = (short) (atoi(code));
+    }
+
+    return 0;
+
+    headerStructGetEssentialFailed:
+    self->code = 0;
+    return 1;
+}
+
+char headerStructGetFileName(ServerHeaderResponse *self, FILE *headerFile) {
+    char buf[BUFSIZ] = "";
+
+    fseek(headerFile, 0L, SEEK_SET);
+    while (fgets(buf, BUFSIZ, headerFile)) {
+        char *p;
+
+        if ((p = strstr(buf, "Content-Disposition:"))) {
+            if ((p = strstr(p, "filename="))) {
+                char *s;
+                s = strchr(p, '"');
+                if (s) {
+                    ++s;
+                    char *e = strchr(s, '"');
+                    if (e && s - e < BUFSIZ) {
+                        *e = '\0';
+                        strcpy(self->file, s);
+                        return 0;
+                    }
+                }
+            }
+        }
+    }
+
+    strcpy(self->file, "download.txt");
+    return 1;
+}
+
+ServerHeaderResponse headerStructNew(FILE *headerFile) {
+    ServerHeaderResponse self;
+    if (headerStructGetEssential(&self, headerFile))
+        return self;
+
+    headerStructGetFileName(&self, headerFile);
+
+    /* TODO: Implement content-length lookup */
+    self.length = 0;
+
+    return self;
+}
+
+static inline void *CreateTempFile() {
+    return tmpfile();
+}
+
 static char *getAddressPath(char *uri) {
     char *colon = strchr(uri, ':'), *slash;
 
@@ -106,12 +198,77 @@ char clientConnectSocketTo(const SOCKET *socket, char *uri, int type) {
     return -1;
 }
 
-int main(int argc, char **argv) {
-    SOCKET socketFd;
+void writeToDisk(ServerHeaderResponse *self, const SOCKET *socket, FILE *disk) {
+    size_t totalBytes = 0;
+    ssize_t bytesReceived;
+    char rxBytes[BUFSIZ] = "";
+
+    while ((bytesReceived = recv(*socket, rxBytes, BUFSIZ - 1, 0)) > 0) {
+        fwrite(rxBytes, bytesReceived, 1, disk);
+        totalBytes += bytesReceived;
+        putc('.', stdout);
+    }
+
+    fflush(disk);
+
+    if (self->length != 0) {
+        if (self->length != totalBytes)
+            printf("\nUnusual amount of bytes transferred. File might be corrupt.\n");
+    }
+}
+
+FILE *getHeader(const SOCKET *socket) {
+    char rxBytes[BUFSIZ] = "";
+    size_t totalBytes = 0;
+    ssize_t bytesReceived;
+    FILE *header = CreateTempFile();
+
+    if (header) {
+        char *headEnd = NULL;
+
+        while ((bytesReceived = recv(*socket, rxBytes, BUFSIZ - 1, MSG_PEEK)) > 0 && !headEnd) {
+
+            /* Check if the end of header was part of this buffer and truncate anything after if so */
+            rxBytes[bytesReceived] = '\0';
+            if ((headEnd = strstr(rxBytes, HTTP_EOL HTTP_EOL)) != NULL)
+                bytesReceived = (headEnd - rxBytes);
+
+            /* Write header buffer into temporary file */
+            fwrite(rxBytes, bytesReceived, 1, header);
+            totalBytes += bytesReceived;
+
+            /* Non-peek to move buffer along */
+            recv(*socket, rxBytes, bytesReceived, 0);
+        }
+
+        /* If the buffer has a body after the head then jump over it so the next function is ready to read the body */
+        if (headEnd)
+            recv(*socket, rxBytes, 4, 0);
+
+        return header;
+    }
+
+    return NULL;
+}
+
+char sendRequest(const SOCKET *socket, const char *type, const char *path) {
+    char txLine[BUFSIZ];
     int sendBytes;
+
+    snprintf(txLine, BUFSIZ, "%s %s HTTP/1.1" HTTP_EOL HTTP_EOL, type, path);
+    sendBytes = (int) strlen(txLine);
+
+    if (send(*socket, txLine, sendBytes, 0) != sendBytes)
+        return 1;
+
+    return 0;
+}
+
+int main(int argc, char **argv) {
+    FILE *file;
+    SOCKET socketFd;
     struct sockaddr_storage serverAddress;
-    char txLine[BUFSIZ], rxLine[BUFSIZ];
-    char head = 0;
+    ServerHeaderResponse header;
 
     if (argc != 2)
         goto errorOut;
@@ -129,26 +286,24 @@ int main(int argc, char **argv) {
     if (clientConnectSocketTo(&socketFd, argv[1], AF_INET))
         goto errorOut;
 
-    /* TODO: More sophisticated header framework for HTTP requests */
-    snprintf(txLine, BUFSIZ, "GET %s HTTP/1.1" HTTP_EOL HTTP_EOL, getAddressPath(argv[1]));
-    sendBytes = (int) strlen(txLine);
-
-    if (send(socketFd, txLine, sendBytes, 0) != sendBytes)
+    if (sendRequest(&socketFd, "GET", getAddressPath(argv[1])))
         goto errorOut;
 
-    memset(rxLine, 0, BUFSIZ);
+    file = getHeader(&socketFd);
+    if (!file)
+        goto errorOut;
 
-    while ((recv(socketFd, rxLine, BUFSIZ - 1, 0) > 0)) {
-        printf("%s", rxLine);
-        /* TODO: Distinguish HTTP header from body properly and look for content disposition in header */
-        if (strstr(rxLine, HTTP_EOL HTTP_EOL) != NULL) {
-            ++head;
-            if (head >= 2) {
-                puts("");
-                break;
-            }
-        }
-        memset(rxLine, 0, BUFSIZ);
+    header = headerStructNew(file);
+    fclose(file);
+
+    if (!header.code)
+        goto errorOut;
+
+    file = fopen(header.file, "w+b");
+    if (file) {
+        printf("Downloading '%s'\n", header.file);
+        writeToDisk(&header, &socketFd, file);
+        fclose(file);
     }
 
     fflush(stdout);
