@@ -69,8 +69,9 @@ char headerStructGetFileName(ServerHeaderResponse *self, FILE *headerFile) {
                 char *s;
                 s = strchr(p, '"');
                 if (s) {
+                    char *e;
                     ++s;
-                    char *e = strchr(s, '"');
+                    e = strchr(s, '"');
                     if (e && s - e < BUFSIZ) {
                         *e = '\0';
                         strcpy(self->file, s);
@@ -98,9 +99,22 @@ ServerHeaderResponse headerStructNew(FILE *headerFile) {
     return self;
 }
 
+#ifdef WIN32
+
+static inline void *CreateTempFile() {
+    char path[BUFSIZ];
+    GetTempPath(BUFSIZ, path);
+    strncat(path, "dlbuf", BUFSIZ);
+    return fopen(path, "w+bTD");
+}
+
+#else
+
 static inline void *CreateTempFile() {
     return tmpfile();
 }
+
+#endif /* WIN32 */
 
 static char *getAddressPath(char *uri) {
     char *colon = strchr(uri, ':'), *slash;
@@ -304,6 +318,9 @@ int main(int argc, char **argv) {
         printf("Downloading '%s'\n", header.file);
         writeToDisk(&header, &socketFd, file);
         fclose(file);
+    } else {
+        printf("Unable to write to '%s'", header.file);
+        perror("");
     }
 
     fflush(stdout);
