@@ -10,6 +10,8 @@ static WSADATA wsaData;
 
 #endif
 
+long errln = __LINE__;
+
 typedef struct ServerHeaderResponse {
     short code;
     short type;
@@ -117,7 +119,9 @@ static inline void *CreateTempFile() {
 #endif /* WIN32 */
 
 static char *getAddressPath(char *uri) {
-    char *colon = strchr(uri, ':'), *slash;
+    char *colon, *slash;
+
+    colon = strchr(uri, ':');
 
     if (colon && colon[1] == '/' && colon[2] == '/')
         slash = strchr(&colon[3], '/');
@@ -152,8 +156,9 @@ static char getAddressAndPort(char *uri, char *address, unsigned short *port) {
     }
 
     getAddressAndPortBreakOutLoop:
-    if (len == 0 || len >= FILENAME_MAX)
-        return 1;
+    if (len == 0 || len >= FILENAME_MAX) {
+        errln = __LINE__; return 1;
+	}
 
     hold = it - uri;
     memcpy(address, uri, hold);
@@ -184,32 +189,51 @@ char clientConnectSocketTo(const SOCKET *socket, char *uri, int type) {
     struct sockaddr_storage addrStruct;
     char address[FILENAME_MAX];
     unsigned short port = 80;
-    int i;
+    /*
+	int i;
     struct hostent *host;
+	*/
 
-    if (getAddressAndPort(uri, (char *) &address, &port))
-        return -1;
+    if (getAddressAndPort(uri, (char *) &address, &port)) {
+        errln = __LINE__; return -1;
+	}
 
-    host = gethostbyname(address);
-    if (!host || host->h_addrtype != type || host->h_length == 0)
-        return -1;
+	/*
+		TODO: Check if the string is a valid IPV4 address internally before using gethostbyname()
+		as Windows 95As implementation dosen't appear to notice raw addresses
+	*/
+
+    /*host = gethostbyname(address);
+    if (!host || host->h_addrtype != type || host->h_length == 0) {
+		printf("Unable to get hostname of '%s'\n", address);
+		if(host) {
+			printf("%d vs %d, length = %d", host->h_addrtype, type, host->h_length);
+		}
+
+		errln = __LINE__; return -1;
+	}*/
 
     if (type == AF_INET) {
         struct sockaddr_in *serverAddress = (struct sockaddr_in *) &addrStruct;
+		long addr = inet_addr(address);
         memset(serverAddress, 0, sizeof(addrStruct));
 
         serverAddress->sin_family = type;
         serverAddress->sin_port = htons(port);
+		serverAddress->sin_addr.s_addr = addr;
 
-        for (i = 0; host->h_addr_list[i] != NULL; ++i) {
+        /*for (i = 0; host->h_addr_list[i] != NULL; ++i) {
             memcpy(&serverAddress->sin_addr.s_addr, host->h_addr_list[0], host->h_length);
 
             if (connect(*socket, (SA *) serverAddress, sizeof(addrStruct)) == 0)
                 return 0;
-        }
+        }*/
+
+		if (connect(*socket, (SA *) serverAddress, sizeof(addrStruct)) == 0)
+                return 0;
     }
 
-    return -1;
+    errln = __LINE__; return -1;
 }
 
 void writeToDisk(ServerHeaderResponse *self, const SOCKET *socket, FILE *disk) {
@@ -235,7 +259,9 @@ FILE *getHeader(const SOCKET *socket) {
     char rxBytes[BUFSIZ] = "";
     size_t totalBytes = 0;
     ssize_t bytesReceived;
-    FILE *header = CreateTempFile();
+    FILE *header;
+
+    header = CreateTempFile();
 
     if (header) {
         char *headEnd = NULL;
@@ -269,7 +295,7 @@ char sendRequest(const SOCKET *socket, const char *type, const char *path) {
     char txLine[BUFSIZ];
     int sendBytes;
 
-    snprintf(txLine, BUFSIZ, "%s %s HTTP/1.1" HTTP_EOL HTTP_EOL, type, path);
+    sprintf(txLine, "%s %s HTTP/1.1" HTTP_EOL HTTP_EOL, type, path);
     sendBytes = (int) strlen(txLine);
 
     if (send(*socket, txLine, sendBytes, 0) != sendBytes)
@@ -284,34 +310,41 @@ int main(int argc, char **argv) {
     struct sockaddr_storage serverAddress;
     ServerHeaderResponse header;
 
-    if (argc != 2)
-        goto errorOut;
+    if (argc != 2) {
+		errln = __LINE__; goto errorOut;
+	}
 
 #ifdef WIN32
-    if (WSAStartup(MAKEWORD(1, 1), &wsaData))
-        goto errorOut;
+    if (WSAStartup(MAKEWORD(1, 1), &wsaData)) {
+		errln = __LINE__; goto errorOut;
+	}
 #endif
 
-    if ((socketFd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
-        goto errorOut;
+    if ((socketFd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+        errln = __LINE__; goto errorOut;
+	}
 
     memset(&serverAddress, 0, sizeof(serverAddress));
 
-    if (clientConnectSocketTo(&socketFd, argv[1], AF_INET))
-        goto errorOut;
+    if (clientConnectSocketTo(&socketFd, argv[1], AF_INET)) {
+        /*errln = __LINE__;*/ goto errorOut;
+	}
 
-    if (sendRequest(&socketFd, "GET", getAddressPath(argv[1])))
-        goto errorOut;
+    if (sendRequest(&socketFd, "GET", getAddressPath(argv[1]))) {
+        errln = __LINE__; goto errorOut;
+	}
 
     file = getHeader(&socketFd);
-    if (!file)
-        goto errorOut;
+    if (!file) {
+        errln = __LINE__; goto errorOut;
+	}
 
     header = headerStructNew(file);
     fclose(file);
 
-    if (!header.code)
-        goto errorOut;
+    if (!header.code) {
+        errln = __LINE__; goto errorOut;
+	}
 
     file = fopen(header.file, "w+b");
     if (file) {
@@ -333,6 +366,7 @@ int main(int argc, char **argv) {
 #ifdef WIN32
     WSACleanup();
 #endif
-    fprintf(stderr, "ERR\n");
+    fprintf(stderr, "ERR %ld\n", errln);
+	getchar();
     return 1;
 }

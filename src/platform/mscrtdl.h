@@ -9,12 +9,20 @@
 
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#include <iphlpapi.h>
 #include <windows.h>
 
 typedef SYSTEMTIME PlatformTimeStruct;
 typedef WIN32_FIND_DATA PlatformDirEntry;
+#ifndef MSVC89
 typedef long long PlatformFileOffset;
+#else
+typedef DWORD PlatformFileOffset;
+typedef int ssize_t;
+#endif
+
+#ifdef MSVC89
+#define sockaddr_storage sockaddr
+#endif
 
 typedef struct winSockNativeStat {
     unsigned long st_size;
