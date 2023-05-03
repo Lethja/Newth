@@ -4,11 +4,10 @@
 #include <stdio.h>
 #include "../platform/platform.h"
 #include "sockbufr.h"
-#include <iphlpapi.h>
 
 typedef struct FileRoutine {
     FILE *file;
-    off_t start, end;
+    PlatformFileOffset start, end;
     SOCKET socket;
     char webPath[FILENAME_MAX];
 } FileRoutine;
@@ -36,7 +35,8 @@ void DirectoryRoutineFree(DirectoryRoutine *self);
 
 char DirectoryRoutineArrayDel(RoutineArray *self, DirectoryRoutine *directoryRoutine);
 
-FileRoutine FileRoutineNew(SOCKET socket, FILE *file, off_t start, off_t end, char webPath[FILENAME_MAX]);
+FileRoutine
+FileRoutineNew(SOCKET socket, FILE *file, PlatformFileOffset start, PlatformFileOffset end, char webPath[FILENAME_MAX]);
 
 size_t FileRoutineContinue(FileRoutine *self);
 

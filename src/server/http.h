@@ -81,13 +81,14 @@ httpType httpClientReadType(const char *request);
 char httpHeaderReadIfModifiedSince(const char *request, PlatformTimeStruct *tm);
 
 /**
- * Convert 'Range' header to a set of off_t types
+ * Convert 'Range' header to a set of PlatformFileOffset types
  * @param request In: the entire header buffer
  * @param start Out: The start of the range
  * @param end Out: The end of the range
  * @return 0 on success, other on error
  */
-char httpHeaderReadRange(const char *request, off_t *start, off_t *end, const off_t *max);
+char httpHeaderReadRange(const char *request, PlatformFileOffset *start, PlatformFileOffset *end,
+                         const PlatformFileOffset *max);
 
 #pragma endregion
 
@@ -116,7 +117,7 @@ size_t httpBodyWriteChunkEnding(SocketBuffer *socketBuffer);
  * @param finish In: The offset to stop the transfer at
  * @return 0 on success, other on error
  */
-size_t httpBodyWriteFile(SocketBuffer *socketBuffer, FILE *file, off_t start, off_t finish);
+size_t httpBodyWriteFile(SocketBuffer *socketBuffer, FILE *file, PlatformFileOffset start, PlatformFileOffset finish);
 
 /**
  * Send the entirety of a string over TCP
@@ -197,7 +198,8 @@ void httpHeaderWriteLastModified(SocketBuffer *socketBuffer, PlatformFileStat *s
  * @param finish
  * @param fileLength
  */
-void httpHeaderWriteRange(SocketBuffer *socketBuffer, off_t start, off_t finish, off_t fileLength);
+void httpHeaderWriteRange(SocketBuffer *socketBuffer, PlatformFileOffset start, PlatformFileOffset finish,
+                          PlatformFileOffset fileLength);
 
 /**
  * Write HTTP header response code

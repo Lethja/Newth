@@ -13,37 +13,27 @@
 
 typedef SYSTEMTIME PlatformTimeStruct;
 typedef WIN32_FIND_DATA PlatformDirEntry;
-#ifndef MSVC89
-
-typedef long long PlatformFileOffset;
-
-#else
-
 typedef DWORD PlatformFileOffset;
+
+#ifdef MSVC89
+
 typedef int ssize_t;
 
 #define sockaddr_storage sockaddr
 
+#else
+
+#include <iphlpapi.h>
+
 #endif
 
-#define in_addr_t long
+#define in_addr_t unsigned long
 
 typedef struct winSockNativeStat {
     unsigned long st_size;
     unsigned int st_mode;
     FILETIME st_mtime;
 } PlatformFileStat;
-
-/* TODO: use platform neutral typedef in case off_t is not declared */
-/*
-#ifndef	_OFF_T_
-#define	_OFF_T_
-typedef long _off_t;
-#ifndef	_NO_OLDNAMES
-typedef _off_t	off_t;
-#endif
-#endif
-*/
 
 typedef struct winSockNativeDir {
     PlatformDirEntry nextEntry;

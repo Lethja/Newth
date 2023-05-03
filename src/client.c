@@ -49,7 +49,7 @@ char headerStructGetEssential(ServerHeaderResponse *self, FILE *headerFile) {
             goto headerStructGetEssentialFailed;
 
         code[0] = start[0], code[1] = start[1], code[2] = start[2], code[3] = '\0';
-        self->code = (short) (atoi(code));
+        self->code = (short) (atoi(code)); /* NOLINT(cert-err34-c) */
     }
 
     return 0;
@@ -106,7 +106,7 @@ ServerHeaderResponse headerStructNew(FILE *headerFile) {
 static inline void *CreateTempFile() {
     char path[BUFSIZ];
     GetTempPath(BUFSIZ, path);
-    strncat(path, "dlbuf", BUFSIZ);
+    strncat(path, "dlbuf", BUFSIZ-1);
     return fopen(path, "w+bTD");
 }
 
@@ -181,7 +181,10 @@ static char getAddressAndPort(char *uri, char *address, unsigned short *port) {
         }
     }
 
-    *port = (unsigned short) atoi(portStr);
+    *port = (unsigned short) atoi(portStr); /* NOLINT(cert-err34-c) */
+
+    if (!*port)
+        return 1;
 
     return 0;
 }
@@ -226,7 +229,7 @@ static char isValidIpv4Str(const char *str) {
     return 1;
 }
 
-char clientConnectSocketTo(const SOCKET *socket, char *uri, int type) {
+char clientConnectSocketTo(const SOCKET *socket, char *uri, sa_family_t type) {
     struct sockaddr_storage addressStorage;
     char address[FILENAME_MAX];
     unsigned short port = 80;
@@ -374,9 +377,8 @@ int main(int argc, char **argv) {
 
     memset(&serverAddress, 0, sizeof(serverAddress));
 
-    if (clientConnectSocketTo(&socketFd, argv[1], AF_INET)) {
-        /*errln = __LINE__;*/ goto errorOut;
-    }
+    if (clientConnectSocketTo(&socketFd, argv[1], AF_INET))
+        goto errorOut;
 
     if (sendRequest(&socketFd, "GET", getAddressPath(argv[1]))) {
         errln = __LINE__;

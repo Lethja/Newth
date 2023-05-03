@@ -12,6 +12,10 @@ typedef int (__stdcall *WsControlProc)(DWORD, DWORD, LPVOID, LPDWORD, LPVOID, LP
 #define MAX_PHYSADDR_SIZE   8
 #define IP_MIB_ADDRTABLE_ENTRY_ID   0x102
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnusedLocalVariable"
+#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
+
 typedef struct IFEntry {
     ULONG if_index;
     ULONG if_type;
@@ -74,35 +78,37 @@ typedef struct IPAddrEntry {
     USHORT iae_pad;
 } IPAddrEntry;
 
-#define	MAX_TDI_ENTITIES 4096
-#define	CONTEXT_SIZE 16
-#define	GENERIC_ENTITY 0
-#define	ENTITY_LIST_ID 0
-#define	ENTITY_TYPE_ID 1
-#define	INFO_CLASS_GENERIC 0x100
-#define	INFO_TYPE_PROVIDER 0x100
-#define	IF_ENTITY 0x200
-#define	INFO_CLASS_PROTOCOL 0x200
-#define	IF_MIB 0x202
-#define	CL_NL_ENTITY 0x301
-#define	CL_NL_IP 0x303
+#define    MAX_TDI_ENTITIES 4096
+#define    CONTEXT_SIZE 16
+#define    GENERIC_ENTITY 0
+#define    ENTITY_LIST_ID 0
+#define    ENTITY_TYPE_ID 1
+#define    INFO_CLASS_GENERIC 0x100
+#define    INFO_TYPE_PROVIDER 0x100
+#define    IF_ENTITY 0x200
+#define    INFO_CLASS_PROTOCOL 0x200
+#define    IF_MIB 0x202
+#define    CL_NL_ENTITY 0x301
+#define    CL_NL_IP 0x303
 
 typedef struct TDIEntityID {
-  ULONG  tei_entity;
-  ULONG  tei_instance;
+    ULONG tei_entity;
+    ULONG tei_instance;
 } TDIEntityID;
 
-typedef struct _TDIObjectID {
-	TDIEntityID  toi_entity;
-	ULONG  toi_class;
-	ULONG  toi_type;
-	ULONG  toi_id;
+typedef struct _TDIObjectID { /* NOLINT(bugprone-reserved-identifier) */
+    TDIEntityID toi_entity;
+    ULONG toi_class;
+    ULONG toi_type;
+    ULONG toi_id;
 } TDIObjectID;
 
-typedef struct _TCP_REQUEST_QUERY_INFORMATION_EX {
-  TDIObjectID  ID;
-  ULONG_PTR  Context[CONTEXT_SIZE / sizeof(ULONG_PTR)];
+typedef struct _TCP_REQUEST_QUERY_INFORMATION_EX { /* NOLINT(bugprone-reserved-identifier) */
+    TDIObjectID ID;
+    ULONG_PTR Context[CONTEXT_SIZE / sizeof(ULONG_PTR)];
 } TCP_REQUEST_QUERY_INFORMATION_EX, *PTCP_REQUEST_QUERY_INFORMATION_EX;
+
+#pragma clang diagnostic pop
 
 #pragma endregion
 
@@ -156,13 +162,13 @@ HMODULE wsock32;
 WsControlProc WsControlFunc;
 
 static void wSock1Free() {
-    if(wsock32)
+    if (wsock32)
         FreeLibrary(wsock32);
 }
 
 void *wSock1Available() {
     wsock32 = LoadLibrary("wsock32.dll");
-    if(wsock32) {
+    if (wsock32) {
         WsControlFunc = (WsControlProc) GetProcAddress(wsock32, "WsControl");
         return &wSock1Free;
     }
@@ -349,8 +355,7 @@ wSock1GetAdapterInformationIpv4(void (arrayAdd)(AdapterAddressArray *, char *, s
             else
                 free(array);
         }
-    } else { /* If all else fails at least do something */
-        fprintf(stderr, "Couldn't load any network adapter information. Are you missing 'thwsock2.dll'?");
     }
+
     return NULL;
 }

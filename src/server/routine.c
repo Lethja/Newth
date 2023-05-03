@@ -125,7 +125,8 @@ char DirectoryRoutineArrayDel(RoutineArray *self, DirectoryRoutine *directoryRou
     return 0;
 }
 
-FileRoutine FileRoutineNew(SOCKET socket, FILE *file, off_t start, off_t end, char webPath[FILENAME_MAX]) {
+FileRoutine FileRoutineNew(SOCKET socket, FILE *file, PlatformFileOffset start, PlatformFileOffset end,
+                           char webPath[FILENAME_MAX]) {
     FileRoutine self;
     self.file = file, self.start = start, self.end = end, self.socket = socket;
     strncpy(self.webPath, webPath, FILENAME_MAX - 1);
@@ -136,7 +137,7 @@ FileRoutine FileRoutineNew(SOCKET socket, FILE *file, off_t start, off_t end, ch
 size_t FileRoutineContinue(FileRoutine *self) {
     size_t bytesRead, byteWrite;
     char buffer[BUFSIZ];
-    off_t currentPosition = ftell(self->file);
+    PlatformFileOffset currentPosition = ftell(self->file);
     long remaining = self->end - currentPosition;
 
     bytesRead = fread(buffer, 1, remaining < BUFSIZ ? remaining : BUFSIZ, self->file);

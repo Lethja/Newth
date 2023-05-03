@@ -141,7 +141,8 @@ char httpHeaderReadIfModifiedSince(const char *request, PlatformTimeStruct *tm) 
     return 1;
 }
 
-char httpHeaderReadRange(const char *request, off_t *start, off_t *end, const off_t *max) {
+char httpHeaderReadRange(const char *request, PlatformFileOffset *start, PlatformFileOffset *end,
+                         const PlatformFileOffset *max) {
 #define MAX_RANGE_STR_BUF 128
     const char *headerValue = "Range", *parameter = "bytes=";
     size_t strLength;
@@ -187,7 +188,8 @@ void httpHeaderWriteAcceptRanges(SocketBuffer *socketBuffer) {
     socketBufferWrite(socketBuffer, str);
 }
 
-void httpHeaderWriteRange(SocketBuffer *socketBuffer, off_t start, off_t finish, off_t fileLength) {
+void httpHeaderWriteRange(SocketBuffer *socketBuffer, PlatformFileOffset start, PlatformFileOffset finish,
+                          PlatformFileOffset fileLength) {
     char buf[128];
     snprintf(buf, 128, "Content-Range: bytes %lu-%lu/%lu" HTTP_EOL, start, finish == fileLength ? finish - 1 : finish,
              fileLength);
@@ -408,16 +410,16 @@ void htmlBreadCrumbWrite(char buffer[BUFSIZ], const char *webPath) {
     strncat(buffer, "\t\t</DIV>\n\t\t<HR>\n", 17);
 }
 
-size_t httpBodyWriteFile(SocketBuffer *socketBuffer, FILE *file, off_t start, off_t finish) {
+size_t httpBodyWriteFile(SocketBuffer *socketBuffer, FILE *file, PlatformFileOffset start, PlatformFileOffset finish) {
     char buffer[BUFSIZ];
-    off_t length = finish - start;
+    PlatformFileOffset length = finish - start;
     unsigned long bytesRead;
 
     if (start)
         fseek(file, start, SEEK_SET);
 
     while ((bytesRead = fread(buffer, 1, length, file)) > 0) {
-        length -= (off_t) bytesRead;
+        length -= (PlatformFileOffset) bytesRead;
         if (socketBufferWrite(socketBuffer, buffer))
             return 1;
     }
