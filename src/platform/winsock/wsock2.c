@@ -1,6 +1,7 @@
 #include "../../common/debug.h"
 #include <stdio.h>
 #include "wsock2.h"
+#include <iphlpapi.h>
 
 typedef DWORD (WINAPI *AdapterInfoProc)(PIP_ADAPTER_INFO, PULONG);
 

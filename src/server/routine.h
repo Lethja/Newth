@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include "../platform/platform.h"
 #include "sockbufr.h"
+#include <iphlpapi.h>
 
 typedef struct FileRoutine {
     FILE *file;
