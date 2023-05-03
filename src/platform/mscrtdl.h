@@ -14,15 +14,19 @@
 typedef SYSTEMTIME PlatformTimeStruct;
 typedef WIN32_FIND_DATA PlatformDirEntry;
 #ifndef MSVC89
+
 typedef long long PlatformFileOffset;
+
 #else
+
 typedef DWORD PlatformFileOffset;
 typedef int ssize_t;
+
+#define sockaddr_storage sockaddr
+
 #endif
 
-#ifdef MSVC89
-#define sockaddr_storage sockaddr
-#endif
+#define in_addr_t long
 
 typedef struct winSockNativeStat {
     unsigned long st_size;

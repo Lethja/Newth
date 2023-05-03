@@ -157,8 +157,9 @@ static char getAddressAndPort(char *uri, char *address, unsigned short *port) {
 
     getAddressAndPortBreakOutLoop:
     if (len == 0 || len >= FILENAME_MAX) {
-        errln = __LINE__; return 1;
-	}
+        errln = __LINE__;
+        return 1;
+    }
 
     hold = it - uri;
     memcpy(address, uri, hold);
@@ -185,61 +186,106 @@ static char getAddressAndPort(char *uri, char *address, unsigned short *port) {
     return 0;
 }
 
-char clientConnectSocketTo(const SOCKET *socket, char *uri, int type) {
-    struct sockaddr_storage addrStruct;
-    char address[FILENAME_MAX];
-    unsigned short port = 80;
-    /*
-	int i;
-    struct hostent *host;
-	*/
+static char isValidIpv4Str(const char *str) {
+    int i, divider, limit = divider = -1;
 
-    if (getAddressAndPort(uri, (char *) &address, &port)) {
-        errln = __LINE__; return -1;
-	}
-
-	/*
-		TODO: Check if the string is a valid IPV4 address internally before using gethostbyname()
-		as Windows 95As implementation dosen't appear to notice raw addresses
-	*/
-
-    /*host = gethostbyname(address);
-    if (!host || host->h_addrtype != type || host->h_length == 0) {
-		printf("Unable to get hostname of '%s'\n", address);
-		if(host) {
-			printf("%d vs %d, length = %d", host->h_addrtype, type, host->h_length);
-		}
-
-		errln = __LINE__; return -1;
-	}*/
-
-    if (type == AF_INET) {
-        struct sockaddr_in *serverAddress = (struct sockaddr_in *) &addrStruct;
-		long addr = inet_addr(address);
-        memset(serverAddress, 0, sizeof(addrStruct));
-
-        serverAddress->sin_family = type;
-        serverAddress->sin_port = htons(port);
-		serverAddress->sin_addr.s_addr = addr;
-
-        /*for (i = 0; host->h_addr_list[i] != NULL; ++i) {
-            memcpy(&serverAddress->sin_addr.s_addr, host->h_addr_list[0], host->h_length);
-
-            if (connect(*socket, (SA *) serverAddress, sizeof(addrStruct)) == 0)
+    for (i = 0; str[i] != '\0'; ++i) {
+        switch (str[i]) {
+            case '2':
+                if (divider + 1 == i)
+                    limit = i;
+                goto twoJump;
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+                if (limit + 1 == i)
+                    return 0;
+            case '3':
+            case '4':
+            case '5':
+                if (divider + 1 == i)
+                    return 0;
+            case '0':
+            case '1':
+            twoJump:
+                if (divider - i > 3)
+                    return 0;
+                break;
+            case '.':
+                divider = i;
+                break;
+            default:
                 return 0;
-        }*/
-
-		if (connect(*socket, (SA *) serverAddress, sizeof(addrStruct)) == 0)
-                return 0;
+        }
     }
 
-    errln = __LINE__; return -1;
+    if (i > 15) /* 255.255.255.255 */
+        return 0;
+
+    return 1;
+}
+
+char clientConnectSocketTo(const SOCKET *socket, char *uri, int type) {
+    struct sockaddr_storage addressStorage;
+    char address[FILENAME_MAX];
+    unsigned short port = 80;
+
+    if (getAddressAndPort(uri, (char *) &address, &port)) {
+        errln = __LINE__;
+        return -1;
+    }
+
+    if (type == AF_INET) {
+        struct sockaddr_in *serverAddress = (struct sockaddr_in *) &addressStorage;
+
+        memset(serverAddress, 0, sizeof(addressStorage));
+        serverAddress->sin_family = type;
+        serverAddress->sin_port = htons(port);
+
+        /* Not all implementations of gethostbyname() can resolve literal IPV4, check manually */
+        if (isValidIpv4Str(address)) {
+            in_addr_t ipv4 = inet_addr(address);
+            serverAddress->sin_addr.s_addr = ipv4;
+
+            if (connect(*socket, (SA *) serverAddress, sizeof(addressStorage)) == 0)
+                return 0;
+            else
+                return 1;
+
+        } else {
+            int i;
+            struct hostent *host = gethostbyname(address);
+
+            if (!host || host->h_addrtype != type || host->h_length == 0) {
+                printf("Unable to resolve '%s'\n", address);
+
+                errln = __LINE__;
+                return -1;
+            }
+
+            for (i = 0; host->h_addr_list[i] != NULL; ++i) {
+                serverAddress->sin_addr.s_addr = ((in_addr_t) *host->h_addr_list[i]);
+
+                if (connect(*socket, (SA *) serverAddress, sizeof(addressStorage)) == 0)
+                    return 0;
+            }
+
+            return -1;
+        }
+    }
+
+    errln = __LINE__;
+    return -1;
 }
 
 void writeToDisk(ServerHeaderResponse *self, const SOCKET *socket, FILE *disk) {
     size_t totalBytes = 0;
     ssize_t bytesReceived;
     char rxBytes[BUFSIZ] = "";
+
+    /* TODO: Handle chunked data if applicable */
+    /* TODO: Be aware of content length if applicable */
 
     while ((bytesReceived = recv(*socket, rxBytes, BUFSIZ - 1, 0)) > 0) {
         fwrite(rxBytes, bytesReceived, 1, disk);
@@ -311,40 +357,45 @@ int main(int argc, char **argv) {
     ServerHeaderResponse header;
 
     if (argc != 2) {
-		errln = __LINE__; goto errorOut;
-	}
+        errln = __LINE__;
+        goto errorOut;
+    }
 
 #ifdef WIN32
     if (WSAStartup(MAKEWORD(1, 1), &wsaData)) {
-		errln = __LINE__; goto errorOut;
-	}
+        errln = __LINE__; goto errorOut;
+    }
 #endif
 
     if ((socketFd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-        errln = __LINE__; goto errorOut;
-	}
+        errln = __LINE__;
+        goto errorOut;
+    }
 
     memset(&serverAddress, 0, sizeof(serverAddress));
 
     if (clientConnectSocketTo(&socketFd, argv[1], AF_INET)) {
         /*errln = __LINE__;*/ goto errorOut;
-	}
+    }
 
     if (sendRequest(&socketFd, "GET", getAddressPath(argv[1]))) {
-        errln = __LINE__; goto errorOut;
-	}
+        errln = __LINE__;
+        goto errorOut;
+    }
 
     file = getHeader(&socketFd);
     if (!file) {
-        errln = __LINE__; goto errorOut;
-	}
+        errln = __LINE__;
+        goto errorOut;
+    }
 
     header = headerStructNew(file);
     fclose(file);
 
     if (!header.code) {
-        errln = __LINE__; goto errorOut;
-	}
+        errln = __LINE__;
+        goto errorOut;
+    }
 
     file = fopen(header.file, "w+b");
     if (file) {
@@ -367,6 +418,6 @@ int main(int argc, char **argv) {
     WSACleanup();
 #endif
     fprintf(stderr, "ERR %ld\n", errln);
-	getchar();
+    getchar();
     return 1;
 }
