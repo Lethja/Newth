@@ -70,12 +70,6 @@ typedef struct winSockNativeDir {
 
 #include "platform.h"
 
-void platformPathForceForwardSlash(char *path);
-
-void platformPathForceBackwardSlash(char *path);
-
-void platformRemoveTrailingSlashes(char *path, size_t len);
-
 void ipv6NTop(const void *inAddr6, char *ipStr);
 
 #endif /* OPEN_WEB_PLATFORM_WIN_SOCK_2_H */

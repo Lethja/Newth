@@ -1,6 +1,5 @@
 #include "mscrtdl.h"
 #include "../server/event.h"
-#include "../common/debug.h"
 
 #ifdef PORTABLE_WIN32
 
@@ -33,7 +32,6 @@ char *platformPathCombine(char *path1, char *path2) {
     const char pathDivider = '/', pathDivider2 = '\\';
     size_t a = strlen(path1), b = strlen(path2), path2Jump = 0;
     char *returnPath;
-    DEBUGPRT("platformPathCombine(%s, %s)", path1, path2);
 
     if ((path1[a - 1] != pathDivider && path1[a - 1] != pathDivider2) &&
         (path2[0] != pathDivider && path2[0] != pathDivider2))
@@ -42,8 +40,6 @@ char *platformPathCombine(char *path1, char *path2) {
              (path2[0] == pathDivider || path2[0] == pathDivider2))
         ++path2;
 
-    DEBUGPRT("platformPathCombine:path1 = %s\nplatformPathCombine:path2 = %s\nplatformPathCombine:path2Jump = %u\n)",
-             path1, path2, path2Jump);
     returnPath = malloc(a + b + path2Jump);
     memcpy(returnPath, path1, a);
     if (path2Jump > 1)
@@ -97,11 +93,9 @@ void platformIpStackExit(void) {
 int platformIpStackInit(void) {
     int error;
     char libAbs[FILENAME_MAX] = "", *filePoint;
-    DEBUGPRT("%s ", "platformIPStackInit");
 
     GetModuleFileName(NULL, libAbs, FILENAME_MAX);
     filePoint = strrchr(libAbs, '\\') + 1;
-    DEBUGPRT("libAbs = %s\nfilePoint = %s", libAbs, filePoint);
     if (!filePoint)
         return 1;
 
@@ -109,7 +103,6 @@ int platformIpStackInit(void) {
     *filePoint = '\0';
     strncat(filePoint, "thwsipv6.dll", FILENAME_MAX);
     wsIpv6 = LoadLibrary(TEXT(libAbs));
-    DEBUGPRT("wsIpv6 (%s) = %p", libAbs, (void *) wsIpv6);
     if (wsIpv6)
         getAdapterInformationIpv6 = (adapterInformationIpv6) GetProcAddress(wsIpv6,
                                                                             "platformGetAdapterInformationIpv6");
@@ -117,7 +110,6 @@ int platformIpStackInit(void) {
     /* Choose between WinSock 1 (Windows 95 support) and WinSock 2 */
     *filePoint = '\0';
     wsIpv4 = wSock2Available();
-    DEBUGPRT("wsIpv4 (wsock2) = %p", (void *) wsIpv4);
     if (wsIpv4)
         getAdapterInformationIpv4 = (adapterInformationIpv4) wSock2GetAdapterInformationIpv4;
 
@@ -126,7 +118,6 @@ int platformIpStackInit(void) {
         wsIpv4 = wSock1Available();
         if(wsIpv4) {
             getAdapterInformationIpv4 = wSock1GetAdapterInformationIpv4;
-            DEBUGPRT("getAdapterInformationIpv4 (Internal) = %p", getAdapterInformationIpv4);
         }
     }
 #endif
@@ -135,17 +126,14 @@ int platformIpStackInit(void) {
         char err[255] = "";
         FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), err,
                       255, NULL);
-        DEBUGPRT("%s %s\n", "No Ipv4 handler could be established:", err);
+
         return 1;
     }
 
-    DEBUGPRT("%s\n","WSAStartup() about to be called");
     error = WSAStartup(MAKEWORD(1, 1), &wsaData);
-    DEBUGPRT("WSAStartup() = %d\n", error);
 
     if(error) {
         error = WSAGetLastError();
-        DEBUGPRT("WSAStartup() failed with error %d\n", error);
     }
 
     return error;
@@ -161,7 +149,6 @@ int platformServerStartup(SOCKET *listenSocket, sa_family_t family, char *ports)
     struct sockaddr_storage serverAddress;
     int iResult;
 
-    DEBUGPRT("%s", "platformServerStartup()");
     /* Force start in IPV4 mode if IPV6 functions cannot be loaded */
     if (family != AF_INET && (!getAdapterInformationIpv6)) {
         if (family == AF_INET6) {
@@ -236,22 +223,6 @@ SOCKET platformAcceptConnection(SOCKET fromSocket) {
     eventSocketAcceptInvoke(&clientSocket);
 
     return clientSocket;
-}
-
-void platformPathForceForwardSlash(char *path) {
-    while (*path != '\0') {
-        if (*path == '\\')
-            *path = '/';
-        ++path;
-    }
-}
-
-void platformPathForceBackwardSlash(char *path) {
-    while (*path != '\0') {
-        if (*path == '/')
-            *path = '\\';
-        ++path;
-    }
 }
 
 void ipv6NTop(const void *inAddr6, char *ipStr) {
@@ -404,7 +375,6 @@ static void systemTimeToStr(SYSTEMTIME *timeStruct, char *timeStr) {
 
     snprintf(timeStr, 30, "%s, %02hu %s %04hu %02hu:%02hu:%02hu GMT", day, timeStruct->wDay, month, timeStruct->wYear,
              timeStruct->wHour, timeStruct->wMinute, timeStruct->wSecond);
-    DEBUGPRT("timeStr = '%s'", timeStr);
 }
 
 void platformGetTime(void *clock, char *timeStr) {
@@ -431,7 +401,7 @@ int platformTimeStructEquals(PlatformTimeStruct *t1, PlatformTimeStruct *t2) {
 void *platformDirOpen(char *path) {
     DIR *dir = malloc(sizeof(DIR));
     size_t len;
-    DEBUGPRT("platformDirOpen(%s)", path);
+
     if (dir && path) {
         len = strlen(path);
         if (len > 0 && len < FILENAME_MAX - 3) {
@@ -448,8 +418,6 @@ void *platformDirOpen(char *path) {
                     strcat(searchPath, "\\*");
             }
 
-            DEBUGPRT("platformDirOpen:searchPath = %s", searchPath);
-
             dir->error = 0;
             dir->directoryHandle = FindFirstFile(searchPath, &dir->nextEntry);
             if (dir->directoryHandle != INVALID_HANDLE_VALUE)
@@ -465,14 +433,14 @@ void *platformDirOpen(char *path) {
 
 void platformDirClose(void *dirp) {
     DIR *dir = dirp;
-    DEBUGPRT("platformDirClose(%p)", dirp);
+
     FindClose(dir->directoryHandle);
     free(dir);
 }
 
 void *platformDirRead(void *dirp) {
     DIR *dir = dirp;
-    DEBUGPRT("platformDirRead(%p)", dirp);
+
     memcpy(&dir->lastEntry, &dir->nextEntry, sizeof(PlatformDirEntry));
     switch (dir->error) {
         case 0:
@@ -496,7 +464,7 @@ char *platformDirEntryGetName(PlatformDirEntry *entry, size_t *length) {
 }
 
 char platformDirEntryIsHidden(PlatformDirEntry *entry) {
-    DEBUGPRT("platformDirIsHidden(%p)", (void *) entry);
+
     if (entry) {
         if (entry->cFileName[0] == '.') {
             switch (entry->cFileName[1]) {
@@ -516,7 +484,7 @@ char platformDirEntryIsHidden(PlatformDirEntry *entry) {
 #pragma ide diagnostic ignored "UnusedParameter"
 
 char platformDirEntryIsDirectory(char *rootPath, char *webPath, PlatformDirEntry *entry) {
-    DEBUGPRT("platformDirEntryIsDirectory(%s, %s, %p)", rootPath, webPath, (void *) entry);
+
     if (entry)
         return (char) ((entry->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) > 0);
     return 0;
@@ -585,14 +553,11 @@ char platformTimeGetFromHttpStr(const char *str, PlatformTimeStruct *time) {
 
 int platformFileStat(const char *path, PlatformFileStat *stat) {
     DWORD attributes = GetFileAttributes(path);
-    DEBUGPRT("platformFileStat(%s, %p)", path, (void *) stat);
 
-    DEBUGPRT("platformFileStat:attributes = %lu", attributes);
     if (attributes != INVALID_FILE_ATTRIBUTES) {
         HANDLE handle = CreateFile(path, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
                                    attributes & FILE_ATTRIBUTE_DIRECTORY ? FILE_FLAG_BACKUP_SEMANTICS : 0, NULL);
 
-        DEBUGPRT("platformFileStat:handle = %p", handle);
         if (handle != INVALID_HANDLE_VALUE) {
             GetFileTime(handle, NULL, NULL, &stat->st_mtime);
             stat->st_size = GetFileSize(handle, NULL);
@@ -618,13 +583,6 @@ char platformFileStatIsFile(PlatformFileStat *stat) {
     return ((stat->st_mode & FILE_ATTRIBUTE_NORMAL) > 0) ? 1 : 0;
 }
 
-void platformRemoveTrailingSlashes(char *path, size_t len) {
-    if (len > 3) {
-        if (path[len - 1] == '\\')
-            path[len - 1] = '\0';
-    }
-}
-
 char *platformGetRootPath(char *path) {
     char *test;
     if (strlen(path) == 1 || (strlen(path) < 4 && path[1] == ':' && path[2] == '\\')) {
@@ -647,7 +605,6 @@ char *platformGetRootPath(char *path) {
 short platformPathWebToSystem(const char *rootPath, char *webPath, char *absolutePath) {
     size_t absolutePathLen;
     char *it, *internal;
-    DEBUGPRT("platformPathWebToSystem(%s, %s, OUT)", rootPath, webPath);
 
     it = internal = platformPathCombine((char *) rootPath, webPath);
 
@@ -665,7 +622,6 @@ short platformPathWebToSystem(const char *rootPath, char *webPath, char *absolut
 
     strcpy(absolutePath, internal);
     free(internal);
-    DEBUGPRT("platformPathWebToSystem(%s, %s, %s)", rootPath, webPath, absolutePath);
     return 0;
 }
 
@@ -673,7 +629,6 @@ short platformPathSystemToWeb(const char *rootPath, char *absolutePath, char *we
     size_t rootPathLen = strlen(rootPath), absolutePathLen = strlen(absolutePath), webPathLen;
     char *start, *it;
     DWORD attributes;
-    DEBUGPRT("platformPathSystemToWeb(%s, %s, OUT)", rootPath, absolutePath);
 
     /* The absolutePath must be under a rootPath */
     if (rootPathLen > absolutePathLen || memcmp(rootPath, absolutePath, rootPathLen) != 0) {
@@ -714,6 +669,5 @@ short platformPathSystemToWeb(const char *rootPath, char *absolutePath, char *we
             webPath[webPathLen - 1] = '/';
     }
 
-    DEBUGPRT("platformPathSystemToWeb(%s, %s, %s)", rootPath, absolutePath, webPath);
     return 0;
 }
