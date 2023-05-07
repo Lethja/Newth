@@ -21,6 +21,10 @@ typedef int ssize_t;
 
 #define sockaddr_storage sockaddr
 
+#define ss_family sa_family
+
+typedef unsigned long ULONG_PTR,*PULONG_PTR;
+
 #endif /* MSVC89 */
 
 #define in_addr_t unsigned long
