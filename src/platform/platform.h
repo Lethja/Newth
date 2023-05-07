@@ -1,6 +1,12 @@
 #ifndef OPEN_WEB_PLATFORM_H
 #define OPEN_WEB_PLATFORM_H
 
+#ifdef NDEBUG
+#define LINEDBG
+#else
+#define LINEDBG printf("%s:%d\n", __FILE__, __LINE__)
+#endif
+
 #define SA struct sockaddr
 
 #ifndef __STDC_VERSION__
@@ -8,6 +14,9 @@
 #endif
 
 #ifdef _WIN32
+
+/* Disable unknown pragma warning */
+#pragma warning(disable:4068)
 
 #include "mscrtdl.h"
 

@@ -64,7 +64,7 @@ char platformBindPort(const SOCKET *listenSocket, SA *sockAddr, char *port) {
                 out[0] = strtoul(portStr, NULL, 10);
                 last = port += 1;
                 if (!errno && out[0] < USHRT_MAX && portSize < PORT_SIZE_MAX) {
-                    portList[portSize] = out[0];
+                    portList[portSize] = (unsigned short) out[0];
                     ++portSize;
                 }
                 break;
@@ -76,7 +76,7 @@ char platformBindPort(const SOCKET *listenSocket, SA *sockAddr, char *port) {
         errno = 0;
         out[0] = strtoul(last, NULL, 10);
         if (!errno && out[0] < USHRT_MAX) {
-            portList[portSize] = out[0];
+            portList[portSize] = (unsigned short) out[0];
             ++portSize;
         }
     }

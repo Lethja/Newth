@@ -25,9 +25,9 @@ typedef AdapterAddressArray *(*adapterInformationIpv4)(
 adapterInformationIpv4 getAdapterInformationIpv4 = NULL;
 adapterInformationIpv6 getAdapterInformationIpv6 = NULL;
 
-void (*wsIpv4)() = NULL;
+void (*wsIpv4)(void) = NULL;
+void (*wsIpv6)(void) = NULL;
 
-HMODULE wsIpv6 = NULL;
 WSADATA wsaData;
 
 char *platformPathCombine(char *path1, char *path2) {
@@ -42,12 +42,22 @@ char *platformPathCombine(char *path1, char *path2) {
              (path2[0] == pathDivider || path2[0] == pathDivider2))
         ++path2;
 
+	LINEDBG;
+
     returnPath = malloc(a + b + path2Jump);
-    memcpy(returnPath, path1, a);
+
+	if(!returnPath)
+		return NULL;
+
+    strncpy(returnPath, path1, a);
     if (path2Jump > 1)
         returnPath[a] = pathDivider;
 
-    memcpy(returnPath + a + path2Jump, path2, b + 1);
+    strncpy(returnPath + a + path2Jump, path2, b + 1);
+
+	LINEDBG;
+
+	printf("platformPathCombine (%p) = %s\n", (void *) returnPath, returnPath);
 
     return returnPath;
 }
@@ -66,7 +76,7 @@ void platformCloseBindSockets(fd_set *sockets, SOCKET max) {
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "ConstantParameter"
 
-static char platformVersionAbove(int major, int minor) {
+static char platformVersionAbove(DWORD major, DWORD minor) {
     DWORD dwVersion;
     DWORD dwMajorVersion;
     DWORD dwMinorVersion;
@@ -88,30 +98,38 @@ static char platformVersionAbove(int major, int minor) {
 
 void platformIpStackExit(void) {
     WSACleanup();
-    if (wsIpv6)
-        FreeLibrary(wsIpv6);
+	/* TODO: free any loaded library */
 }
 
 int platformIpStackInit(void) {
     int error;
 
+	LINEDBG;
+
     wsIpv6 = wSockIpv6Available();
-    if (wsIpv6)
+    if (wsIpv6) {
         getAdapterInformationIpv6 = (adapterInformationIpv6) wSockIpv6GetAdapterInformation;
+		LINEDBG;
+	}
 
     /* Choose between WinSock 1 (Windows 95 support) and WinSock 2 */
-    wsIpv4 = wSock2Available();
-    if (wsIpv4)
+	wsIpv4 = wSock2Available();
+    if (wsIpv4) {
         getAdapterInformationIpv4 = (adapterInformationIpv4) wSock2GetAdapterInformation;
-
+		LINEDBG;
+	}
 #ifdef PORTABLE_WIN32
     else {
+		LINEDBG;
         wsIpv4 = wSock1Available();
         if (wsIpv4) {
+			LINEDBG;
             getAdapterInformationIpv4 = wSock1GetAdapterInformationIpv4;
         }
     }
 #endif
+
+	LINEDBG;
 
     if (!getAdapterInformationIpv4) {
         char err[255] = "";
@@ -120,6 +138,8 @@ int platformIpStackInit(void) {
 
         return 1;
     }
+
+	LINEDBG;
 
     error = WSAStartup(MAKEWORD(1, 1), &wsaData);
 
@@ -208,6 +228,8 @@ SOCKET platformAcceptConnection(SOCKET fromSocket) {
     socklen_t addrSize = sizeof(struct sockaddr_storage);
     SOCKET clientSocket;
     struct sockaddr_storage clientAddress;
+
+	LINEDBG;
 
     clientSocket = accept(fromSocket, (SA *) &clientAddress, &addrSize);
 
@@ -599,25 +621,44 @@ char *platformGetWorkingDirectory(char *buffer, size_t length) {
 }
 
 short platformPathWebToSystem(const char *rootPath, char *webPath, char *absolutePath) {
-    size_t absolutePathLen;
-    char *it, *internal;
+    size_t absolutePathLen, i;
+    char *internal = malloc(50);
 
-    it = internal = platformPathCombine((char *) rootPath, webPath);
+	LINEDBG;
+
+	free(internal);
+
+    internal = platformPathCombine((char *) rootPath, webPath);
 
     if (!internal || (absolutePathLen = strlen(internal)) >= FILENAME_MAX)
         return 500;
 
-    while (*it != '\0') {
-        if (*it == '/')
-            *it = '\\';
-        ++it;
+	LINEDBG;
+
+	free(internal);
+
+	LINEDBG;
+
+    for (i = 0; internal[i] != '\0'; ++i) {
+        if (internal[i] == '/')
+            internal[i] = '\\';
     }
 
     if (internal[absolutePathLen - 1] == '\\')
         internal[absolutePathLen - 1] = '\0';
 
+	LINEDBG;
+
     strcpy(absolutePath, internal);
+
+	LINEDBG;
+
+	/* TODO: Figure out why Windows 95 on a i386 will crash on this legitimate free() */
+
     free(internal);
+
+	LINEDBG;
+
     return 0;
 }
 

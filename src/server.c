@@ -47,6 +47,8 @@ char handleDir(SOCKET clientSocket, char *webPath, char *absolutePath, char type
     SocketBuffer socketBuffer = socketBufferNew(clientSocket);
     DIR *dir = platformDirOpen(absolutePath);
 
+	LINEDBG;
+
     if (dir == NULL)
         return httpHeaderHandleError(&socketBuffer, webPath, httpGet, 404);
 
@@ -99,6 +101,8 @@ char handleFile(SOCKET clientSocket, const char *header, char *webPath, char *ab
     PlatformFileOffset start, finish;
     char e;
 
+	LINEDBG;
+
     if (fp == NULL) {
         perror("Error in opening file");
         return 1;
@@ -108,7 +112,7 @@ char handleFile(SOCKET clientSocket, const char *header, char *webPath, char *ab
     e = httpHeaderReadRange(header, &start, &finish, (const PlatformFileOffset *) &st->st_size);
 
     /* Headers */
-    httpHeaderWriteResponse(&socketBuffer, e ? 200 : 206);
+    httpHeaderWriteResponse(&socketBuffer, (short) (e ? 200 : 206));
     httpHeaderWriteDate(&socketBuffer);
     httpHeaderWriteFileName(&socketBuffer, webPath);
     httpHeaderWriteLastModified(&socketBuffer, st);
@@ -127,7 +131,7 @@ char handleFile(SOCKET clientSocket, const char *header, char *webPath, char *ab
 
     httpHeaderWriteEnd(&socketBuffer);
     socketBufferFlush(&socketBuffer);
-    eventHttpRespondInvoke(&socketBuffer.clientSocket, webPath, httpType, e ? 200 : 206);
+    eventHttpRespondInvoke(&socketBuffer.clientSocket, webPath, httpType, (short) (e ? 200 : 206));
 
     if (httpType == httpHead)
         return 0;
@@ -154,6 +158,8 @@ char handlePath(SOCKET clientSocket, const char *header, char *webPath) {
     PlatformFileStat st;
     PlatformTimeStruct tm;
     char absolutePath[FILENAME_MAX], e = 0;
+
+	LINEDBG;
 
     if (platformPathWebToSystem(globalRootPath, webPath, absolutePath))
         goto handlePathNotFound;
@@ -203,6 +209,8 @@ char handleConnection(SOCKET clientSocket) {
     char buffer[BUFSIZ];
     size_t bytesRead, messageSize = 0;
     char *uriPath;
+
+	LINEDBG;
 
     while ((bytesRead = recv(clientSocket, buffer + messageSize, (int) (sizeof(buffer) - messageSize - 1), 0))) {
         if (bytesRead == -1)
@@ -342,6 +350,8 @@ static void printAdapterInformation(char *protocol, sa_family_t family, unsigned
 
 int main(int argc, char **argv) {
     fd_set readySockets;
+
+	LINEDBG;
 
     platformConnectSignals(noAction, shutdownCrash, shutdownProgram);
 

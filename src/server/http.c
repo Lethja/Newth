@@ -70,6 +70,8 @@ char *httpClientReadUri(const char *request) {
     char *start, *end, *path;
     size_t len;
 
+	LINEDBG;
+
     start = strchr(request, ' ');
     if (!start)
         return NULL;

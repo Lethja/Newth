@@ -101,7 +101,7 @@ AdapterAddressArray *wSockIpv6GetAdapterInformation(sa_family_t family,
                 continue;
 
             if (addrBuf) {
-                arrayAdd(array, nameBuf, ua->Address.lpSockaddr->sa_family == AF_INET6 ? 1 : 0, addrBuf);
+                arrayAdd(array, nameBuf, (char) (ua->Address.lpSockaddr->sa_family == AF_INET6 ? 1 : 0), addrBuf);
                 free(addrBuf), addrBuf = NULL;
             }
         }
