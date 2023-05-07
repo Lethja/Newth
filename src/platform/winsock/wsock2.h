@@ -29,7 +29,7 @@ typedef long __time32_t;
 
 #ifndef _TIME64_T_DEFINED
 #define _TIME64_T_DEFINED
-__MINGW_EXTENSION typedef __int64 __time64_t;
+typedef __int64 __time64_t;
 #endif /* _TIME64_T_DEFINED */
 
 #ifndef MSVC89

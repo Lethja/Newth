@@ -23,7 +23,11 @@ typedef int ssize_t;
 
 #define ss_family sa_family
 
+#define INVALID_FILE_ATTRIBUTES ((DWORD)-1)
+
 typedef unsigned long ULONG_PTR,*PULONG_PTR;
+
+typedef int socklen_t;
 
 #endif /* MSVC89 */
 
