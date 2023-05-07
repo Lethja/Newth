@@ -337,7 +337,7 @@ wSock1GetAdapterInformationIpv4(void (arrayAdd)(AdapterAddressArray *, char *, s
                             char addrStr[INET_ADDRSTRLEN];
                             unsigned char *addr = (unsigned char *) &ipAddrEntry[j].iae_addr;
                             if (*addr != 127) { /* Not loop-back interface */
-                                snprintf(addrStr, INET_ADDRSTRLEN, "%d.%d.%d.%d", addr[0], addr[1], addr[2], addr[3]);
+                                sprintf(addrStr, "%d.%d.%d.%d", addr[0], addr[1], addr[2], addr[3]);
                                 arrayAdd(array, nicStr, 0, addrStr);
                             }
                         }

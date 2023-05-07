@@ -24,7 +24,9 @@ typedef AdapterAddressArray *(*adapterInformationIpv4)(
 
 adapterInformationIpv4 getAdapterInformationIpv4 = NULL;
 adapterInformationIpv6 getAdapterInformationIpv6 = NULL;
+
 void (*wsIpv4)() = NULL;
+
 HMODULE wsIpv6 = NULL;
 WSADATA wsaData;
 
@@ -105,7 +107,7 @@ int platformIpStackInit(void) {
 #ifdef PORTABLE_WIN32
     else {
         wsIpv4 = wSock1Available();
-        if(wsIpv4) {
+        if (wsIpv4) {
             getAdapterInformationIpv4 = wSock1GetAdapterInformationIpv4;
         }
     }
@@ -121,7 +123,7 @@ int platformIpStackInit(void) {
 
     error = WSAStartup(MAKEWORD(1, 1), &wsaData);
 
-    if(error) {
+    if (error) {
         error = WSAGetLastError();
     }
 
@@ -220,12 +222,11 @@ void ipv6NTop(const void *inAddr6, char *ipStr) {
     size_t i, j, max, best;
 
     if (memcmp(a, "\0\0\0\0\0\0\0\0\0\0\377\377", 12) != 0)
-        snprintf(buf, sizeof(buf), "%x:%x:%x:%x:%x:%x:%x:%x", 256 * a[0] + a[1], 256 * a[2] + a[3], 256 * a[4] + a[5],
-                 256 * a[6] + a[7], 256 * a[8] + a[9], 256 * a[10] + a[11], 256 * a[12] + a[13], 256 * a[14] + a[15]);
+        sprintf(buf, "%x:%x:%x:%x:%x:%x:%x:%x", 256 * a[0] + a[1], 256 * a[2] + a[3], 256 * a[4] + a[5],
+                256 * a[6] + a[7], 256 * a[8] + a[9], 256 * a[10] + a[11], 256 * a[12] + a[13], 256 * a[14] + a[15]);
     else
-        snprintf(buf, sizeof(buf), "%x:%x:%x:%x:%x:%x:%d.%d.%d.%d", 256 * a[0] + 256 * a[1], 256 * a[2] + a[3],
-                 256 * a[4] + a[5], 256 * a[6] + a[7], 256 * a[8] + a[9], 256 * a[10] + a[11], a[12], a[13], a[14],
-                 a[15]);
+        sprintf(buf, "%x:%x:%x:%x:%x:%x:%d.%d.%d.%d", 256 * a[0] + 256 * a[1], 256 * a[2] + a[3], 256 * a[4] + a[5],
+                256 * a[6] + a[7], 256 * a[8] + a[9], 256 * a[10] + a[11], a[12], a[13], a[14], a[15]);
 
     for (i = best = 0, max = 2; buf[i]; ++i) {
         if (i && buf[i] != ':')
@@ -362,8 +363,8 @@ static void systemTimeToStr(SYSTEMTIME *timeStruct, char *timeStr) {
             break;
     }
 
-    snprintf(timeStr, 30, "%s, %02hu %s %04hu %02hu:%02hu:%02hu GMT", day, timeStruct->wDay, month, timeStruct->wYear,
-             timeStruct->wHour, timeStruct->wMinute, timeStruct->wSecond);
+    sprintf(timeStr, "%s, %02hu %s %04hu %02hu:%02hu:%02hu GMT", day, timeStruct->wDay, month, timeStruct->wYear,
+            timeStruct->wHour, timeStruct->wMinute, timeStruct->wSecond);
 }
 
 void platformGetTime(void *clock, char *timeStr) {
@@ -592,7 +593,7 @@ char *platformGetRootPath(char *path) {
 }
 
 char *platformGetWorkingDirectory(char *buffer, size_t length) {
-    if(GetCurrentDirectory(length, buffer))
+    if (GetCurrentDirectory(length, buffer))
         return buffer;
     return NULL;
 }
