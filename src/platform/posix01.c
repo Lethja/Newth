@@ -5,24 +5,20 @@
 #include "posix01.h"
 #include "../server/event.h"
 
-char *platformPathCombine(char *path1, char *path2) {
+void platformPathCombine(char *output, const char *path1, const char *path2) {
     const char pathDivider = '/';
     size_t a = strlen(path1), b = strlen(path2), path2Jump = 1;
-    char *returnPath;
 
     if (path1[a - 1] != pathDivider && path2[0] != pathDivider)
         ++path2Jump;
     else if (path1[a - 1] == pathDivider && path2[0] == pathDivider)
         ++path2;
 
-    returnPath = malloc(a + b + path2Jump);
-    memcpy(returnPath, path1, a);
+    strncpy(output, path1, a);
     if (path2Jump > 1)
-        returnPath[a] = pathDivider;
+        output[a] = pathDivider;
 
-    memcpy(returnPath + a + path2Jump - 1, path2, b + 1);
-
-    return returnPath;
+    memcpy(output + a + path2Jump - 1, path2, b + 1);
 }
 
 void platformCloseBindSockets(fd_set *sockets, SOCKET max) {
@@ -358,19 +354,18 @@ char *platformGetWorkingDirectory(char *buffer, size_t length) {
 }
 
 short platformPathWebToSystem(const char *rootPath, char *webPath, char *absolutePath) {
-    size_t absolutePathLen;
-    char *internal;
+    size_t absolutePathLen = strlen(rootPath) + strlen(webPath) + 1;
+    char internal[FILENAME_MAX];
 
-    internal = platformPathCombine((char *) rootPath, webPath);
-
-    if (!internal || (absolutePathLen = strlen(internal)) >= FILENAME_MAX)
+    if (absolutePathLen >= FILENAME_MAX)
         return 500;
+
+    platformPathCombine(internal, rootPath, webPath);
 
     if (absolutePathLen > 1 && internal[absolutePathLen - 1] == '/')
         internal[absolutePathLen - 1] = '\0';
 
     strcpy(absolutePath, internal);
-    free(internal);
     return 0;
 }
 

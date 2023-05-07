@@ -81,11 +81,11 @@ char platformHeapResize(void **heap, size_t elementSize, size_t elementNumber);
 
 /**
  * Combine two path strings together
+ * @param output A string buffer with at least the combine amount of space for path1 and path 2
  * @param path1 The string to combine on the left
  * @param path2 The string to combine on the right
- * @return Combined string. Use free() when done with it
  */
-char *platformPathCombine(char *path1, char *path2);
+void platformPathCombine(char *output, const char *path1, const char *path2);
 
 char *platformRealPath(char *path);
 

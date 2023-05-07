@@ -10,13 +10,13 @@ HMODULE wSockIpv6;
 static AdapterInfoCall AdapterInfoFunc;
 
 static void wSockIpv6Free() {
-    if(wSockIpv6)
+    if (wSockIpv6)
         FreeLibrary(wSockIpv6);
 }
 
 void *wSockIpv6Available() {
     wSockIpv6 = LoadLibrary("Iphlpapi.dll");
-    if(wSockIpv6) {
+    if (wSockIpv6) {
         AdapterInfoFunc = (AdapterInfoCall) GetProcAddress(wSockIpv6, "GetAdaptersAddresses");
         return &wSockIpv6Free;
     }
@@ -25,9 +25,10 @@ void *wSockIpv6Available() {
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
-AdapterAddressArray *wSockIpv6GetAdapterInformation(sa_family_t family,
-                                                       void (arrayAdd)(AdapterAddressArray *, char *, sa_family_t,
-                                                                       char *), void (nTop)(const void *, char *)) {
+
+AdapterAddressArray *
+wSockIpv6GetAdapterInformation(sa_family_t family, void (arrayAdd)(AdapterAddressArray *, char *, sa_family_t, char *),
+                               void (nTop)(const void *, char *)) {
     struct AdapterAddressArray *array;
     DWORD rv;
     ULONG size = 15000, it = 0;
@@ -113,4 +114,5 @@ AdapterAddressArray *wSockIpv6GetAdapterInformation(sa_family_t family,
 
     return array;
 }
+
 #pragma clang diagnostic pop

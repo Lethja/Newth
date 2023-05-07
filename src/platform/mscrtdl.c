@@ -26,14 +26,14 @@ adapterInformationIpv4 getAdapterInformationIpv4 = NULL;
 adapterInformationIpv6 getAdapterInformationIpv6 = NULL;
 
 void (*wsIpv4)(void) = NULL;
+
 void (*wsIpv6)(void) = NULL;
 
 WSADATA wsaData;
 
-char *platformPathCombine(char *path1, char *path2) {
+void platformPathCombine(char *output, const char *path1, const char *path2) {
     const char pathDivider = '/', pathDivider2 = '\\';
     size_t a = strlen(path1), b = strlen(path2), path2Jump = 0;
-    char *returnPath;
 
     if ((path1[a - 1] != pathDivider && path1[a - 1] != pathDivider2) &&
         (path2[0] != pathDivider && path2[0] != pathDivider2))
@@ -42,24 +42,13 @@ char *platformPathCombine(char *path1, char *path2) {
              (path2[0] == pathDivider || path2[0] == pathDivider2))
         ++path2;
 
-	LINEDBG;
+    LINEDBG;
 
-    returnPath = malloc(a + b + path2Jump);
-
-	if(!returnPath)
-		return NULL;
-
-    strncpy(returnPath, path1, a);
+    strcpy(output, path1);
     if (path2Jump > 1)
-        returnPath[a] = pathDivider;
+        output[a] = pathDivider;
 
-    strncpy(returnPath + a + path2Jump, path2, b + 1);
-
-	LINEDBG;
-
-	printf("platformPathCombine (%p) = %s\n", (void *) returnPath, returnPath);
-
-    return returnPath;
+    strcpy(output + a + path2Jump, path2);
 }
 
 void platformCloseBindSockets(fd_set *sockets, SOCKET max) {
@@ -98,38 +87,38 @@ static char platformVersionAbove(DWORD major, DWORD minor) {
 
 void platformIpStackExit(void) {
     WSACleanup();
-	/* TODO: free any loaded library */
+    /* TODO: free any loaded library */
 }
 
 int platformIpStackInit(void) {
     int error;
 
-	LINEDBG;
+    LINEDBG;
 
     wsIpv6 = wSockIpv6Available();
     if (wsIpv6) {
         getAdapterInformationIpv6 = (adapterInformationIpv6) wSockIpv6GetAdapterInformation;
-		LINEDBG;
-	}
+        LINEDBG;
+    }
 
     /* Choose between WinSock 1 (Windows 95 support) and WinSock 2 */
-	wsIpv4 = wSock2Available();
+    wsIpv4 = wSock2Available();
     if (wsIpv4) {
         getAdapterInformationIpv4 = (adapterInformationIpv4) wSock2GetAdapterInformation;
-		LINEDBG;
-	}
+        LINEDBG;
+    }
 #ifdef PORTABLE_WIN32
     else {
-		LINEDBG;
+        LINEDBG;
         wsIpv4 = wSock1Available();
         if (wsIpv4) {
-			LINEDBG;
+            LINEDBG;
             getAdapterInformationIpv4 = wSock1GetAdapterInformationIpv4;
         }
     }
 #endif
 
-	LINEDBG;
+    LINEDBG;
 
     if (!getAdapterInformationIpv4) {
         char err[255] = "";
@@ -139,7 +128,7 @@ int platformIpStackInit(void) {
         return 1;
     }
 
-	LINEDBG;
+    LINEDBG;
 
     error = WSAStartup(MAKEWORD(1, 1), &wsaData);
 
@@ -229,7 +218,7 @@ SOCKET platformAcceptConnection(SOCKET fromSocket) {
     SOCKET clientSocket;
     struct sockaddr_storage clientAddress;
 
-	LINEDBG;
+    LINEDBG;
 
     clientSocket = accept(fromSocket, (SA *) &clientAddress, &addrSize);
 
@@ -621,23 +610,17 @@ char *platformGetWorkingDirectory(char *buffer, size_t length) {
 }
 
 short platformPathWebToSystem(const char *rootPath, char *webPath, char *absolutePath) {
-    size_t absolutePathLen, i;
-    char *internal = malloc(50);
+    size_t absolutePathLen = strlen(rootPath) + strlen(webPath) + 1, i;
+    char internal[FILENAME_MAX];
 
-	LINEDBG;
+    LINEDBG;
 
-	free(internal);
-
-    internal = platformPathCombine((char *) rootPath, webPath);
-
-    if (!internal || (absolutePathLen = strlen(internal)) >= FILENAME_MAX)
+    if (absolutePathLen >= FILENAME_MAX)
         return 500;
 
-	LINEDBG;
+    platformPathCombine(internal, rootPath, webPath);
 
-	free(internal);
-
-	LINEDBG;
+    LINEDBG;
 
     for (i = 0; internal[i] != '\0'; ++i) {
         if (internal[i] == '/')
@@ -647,17 +630,11 @@ short platformPathWebToSystem(const char *rootPath, char *webPath, char *absolut
     if (internal[absolutePathLen - 1] == '\\')
         internal[absolutePathLen - 1] = '\0';
 
-	LINEDBG;
+    LINEDBG;
 
     strcpy(absolutePath, internal);
 
-	LINEDBG;
-
-	/* TODO: Figure out why Windows 95 on a i386 will crash on this legitimate free() */
-
-    free(internal);
-
-	LINEDBG;
+    LINEDBG;
 
     return 0;
 }

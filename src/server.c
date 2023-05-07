@@ -47,7 +47,7 @@ char handleDir(SOCKET clientSocket, char *webPath, char *absolutePath, char type
     SocketBuffer socketBuffer = socketBufferNew(clientSocket);
     DIR *dir = platformDirOpen(absolutePath);
 
-	LINEDBG;
+    LINEDBG;
 
     if (dir == NULL)
         return httpHeaderHandleError(&socketBuffer, webPath, httpGet, 404);
@@ -101,7 +101,7 @@ char handleFile(SOCKET clientSocket, const char *header, char *webPath, char *ab
     PlatformFileOffset start, finish;
     char e;
 
-	LINEDBG;
+    LINEDBG;
 
     if (fp == NULL) {
         perror("Error in opening file");
@@ -159,7 +159,7 @@ char handlePath(SOCKET clientSocket, const char *header, char *webPath) {
     PlatformTimeStruct tm;
     char absolutePath[FILENAME_MAX], e = 0;
 
-	LINEDBG;
+    LINEDBG;
 
     if (platformPathWebToSystem(globalRootPath, webPath, absolutePath))
         goto handlePathNotFound;
@@ -210,7 +210,7 @@ char handleConnection(SOCKET clientSocket) {
     size_t bytesRead, messageSize = 0;
     char *uriPath;
 
-	LINEDBG;
+    LINEDBG;
 
     while ((bytesRead = recv(clientSocket, buffer + messageSize, (int) (sizeof(buffer) - messageSize - 1), 0))) {
         if (bytesRead == -1)
@@ -351,7 +351,7 @@ static void printAdapterInformation(char *protocol, sa_family_t family, unsigned
 int main(int argc, char **argv) {
     fd_set readySockets;
 
-	LINEDBG;
+    LINEDBG;
 
     platformConnectSignals(noAction, shutdownCrash, shutdownProgram);
 

@@ -168,12 +168,12 @@ static void wSock1Free() {
 void *wSock1Available() {
     wsock32 = LoadLibrary("wsock32.dll");
     if (wsock32) {
-		LINEDBG;
+        LINEDBG;
         WsControlFunc = (WsControlProc) GetProcAddress(wsock32, "WsControl");
         return &wSock1Free;
     }
 
-	LINEDBG;
+    LINEDBG;
     return NULL;
 }
 
@@ -188,7 +188,7 @@ wSock1GetAdapterInformationIpv4(void (arrayAdd)(AdapterAddressArray *, char *, s
         DWORD tcpRequestBufSize, entityIdsBufSize, entityCount, ifCount, i;
         AdapterAddressArray *array = NULL;
 
-		LINEDBG;
+        LINEDBG;
 
         result = WSAStartup(MAKEWORD(1, 1), &WSAData);
         if (result) {
@@ -220,7 +220,7 @@ wSock1GetAdapterInformationIpv4(void (arrayAdd)(AdapterAddressArray *, char *, s
             return NULL;
         }
 
-		LINEDBG;
+        LINEDBG;
 
         entityCount = entityIdsBufSize / sizeof(TDIEntityID);
         ifCount = 0;
@@ -354,7 +354,7 @@ wSock1GetAdapterInformationIpv4(void (arrayAdd)(AdapterAddressArray *, char *, s
         }
         nicFree();
 
-		LINEDBG;
+        LINEDBG;
 
         if (array) {
             if (array->size)

@@ -21,14 +21,14 @@ void *wSock2Available() {
 }
 
 AdapterAddressArray *wSock2GetAdapterInformation(void (arrayAdd)(AdapterAddressArray *, char *, sa_family_t, char *)) {
-	LINEDBG;
-	if (AdapterInfoFunc) {
+    LINEDBG;
+    if (AdapterInfoFunc) {
         AdapterAddressArray *array = NULL;
         PIP_ADAPTER_INFO pAdapterInfo = NULL;
         PIP_ADAPTER_INFO pAdapter = NULL;
         ULONG dwRetVal, ulOutBufLen = sizeof(IP_ADAPTER_INFO);
 
-		LINEDBG;
+        LINEDBG;
 
         pAdapterInfo = (IP_ADAPTER_INFO *) malloc(sizeof(IP_ADAPTER_INFO));
         if (pAdapterInfo == NULL) {
