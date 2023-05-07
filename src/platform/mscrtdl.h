@@ -21,11 +21,7 @@ typedef int ssize_t;
 
 #define sockaddr_storage sockaddr
 
-#else
-
-#include <iphlpapi.h>
-
-#endif
+#endif /* MSVC89 */
 
 #define in_addr_t unsigned long
 

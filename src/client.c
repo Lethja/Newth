@@ -106,7 +106,7 @@ ServerHeaderResponse headerStructNew(FILE *headerFile) {
 static inline void *CreateTempFile() {
     char path[BUFSIZ];
     GetTempPath(BUFSIZ, path);
-    strncat(path, "dlbuf", BUFSIZ-1);
+    strncat(path, "dlbuf", BUFSIZ - 1);
     return fopen(path, "w+bTD");
 }
 
@@ -202,7 +202,7 @@ static char isValidIpv4Str(const char *str) {
             case '7':
             case '8':
             case '9':
-                if (limit + 1 == i)
+                if (limit > divider)
                     return 0;
             case '3':
             case '4':
@@ -217,6 +217,9 @@ static char isValidIpv4Str(const char *str) {
                 break;
             case '.':
                 divider = i;
+                if (!(isdigit(str[i - 1]) || isdigit(str[i + 1])))
+                    return 0;
+
                 break;
             default:
                 return 0;
@@ -366,7 +369,8 @@ int main(int argc, char **argv) {
 
 #ifdef WIN32
     if (WSAStartup(MAKEWORD(1, 1), &wsaData)) {
-        errln = __LINE__; goto errorOut;
+        errln = __LINE__;
+        goto errorOut;
     }
 #endif
 

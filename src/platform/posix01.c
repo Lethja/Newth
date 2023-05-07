@@ -353,6 +353,10 @@ char *platformGetRootPath(char *path) {
     return test;
 }
 
+char *platformGetWorkingDirectory(char *buffer, size_t length) {
+    return getcwd(buffer, length);
+}
+
 short platformPathWebToSystem(const char *rootPath, char *webPath, char *absolutePath) {
     size_t absolutePathLen;
     char *internal;

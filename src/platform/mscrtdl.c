@@ -8,9 +8,9 @@
 #endif
 
 #include "winsock/wsock2.h"
+#include "winsock/wsipv6.h"
 
 #include <ctype.h>
-#include <iphlpapi.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -92,26 +92,15 @@ void platformIpStackExit(void) {
 
 int platformIpStackInit(void) {
     int error;
-    char libAbs[FILENAME_MAX] = "", *filePoint;
 
-    GetModuleFileName(NULL, libAbs, FILENAME_MAX);
-    filePoint = strrchr(libAbs, '\\') + 1;
-    if (!filePoint)
-        return 1;
-
-    /* Runtime link. Dual-stack functions that are not available in all 32 bit versions of Windows */
-    *filePoint = '\0';
-    strncat(filePoint, "thwsipv6.dll", FILENAME_MAX);
-    wsIpv6 = LoadLibrary(TEXT(libAbs));
+    wsIpv6 = wSockIpv6Available();
     if (wsIpv6)
-        getAdapterInformationIpv6 = (adapterInformationIpv6) GetProcAddress(wsIpv6,
-                                                                            "platformGetAdapterInformationIpv6");
+        getAdapterInformationIpv6 = (adapterInformationIpv6) wSockIpv6GetAdapterInformation;
 
     /* Choose between WinSock 1 (Windows 95 support) and WinSock 2 */
-    *filePoint = '\0';
     wsIpv4 = wSock2Available();
     if (wsIpv4)
-        getAdapterInformationIpv4 = (adapterInformationIpv4) wSock2GetAdapterInformationIpv4;
+        getAdapterInformationIpv4 = (adapterInformationIpv4) wSock2GetAdapterInformation;
 
 #ifdef PORTABLE_WIN32
     else {
@@ -600,6 +589,12 @@ char *platformGetRootPath(char *path) {
     }
 
     return test;
+}
+
+char *platformGetWorkingDirectory(char *buffer, size_t length) {
+    if(GetCurrentDirectory(length, buffer))
+        return buffer;
+    return NULL;
 }
 
 short platformPathWebToSystem(const char *rootPath, char *webPath, char *absolutePath) {

@@ -1,5 +1,4 @@
 #include "wsock1.h"
-#include "../../common/debug.h"
 
 #include <stdio.h>
 
@@ -187,7 +186,6 @@ wSock1GetAdapterInformationIpv4(void (arrayAdd)(AdapterAddressArray *, char *, s
         AdapterAddressArray *array = NULL;
 
         result = WSAStartup(MAKEWORD(1, 1), &WSAData);
-        DEBUGPRT("WSAStartup = %d", result);
         if (result) {
             fprintf(stderr, "WSAStartup failed (%d)\n", result);
             FreeLibrary(wsock32);
@@ -209,7 +207,7 @@ wSock1GetAdapterInformationIpv4(void (arrayAdd)(AdapterAddressArray *, char *, s
 
         result = WsControlFunc(IPPROTO_TCP, WSCTL_TCP_QUERY_INFORMATION, &tcpRequestQueryInfoEx, &tcpRequestBufSize,
                                entityIds, &entityIdsBufSize);
-        DEBUGPRT("WsControlFunc(IPPROTO_TCP) = %d", result);
+
         if (result) {
             fprintf(stderr, "%s(%d) WsControlFunc failed (%d)\n", __FILE__, __LINE__, WSAGetLastError());
             WSACleanup();
@@ -239,7 +237,7 @@ wSock1GetAdapterInformationIpv4(void (arrayAdd)(AdapterAddressArray *, char *, s
 
                 result = WsControlFunc(IPPROTO_TCP, WSCTL_TCP_QUERY_INFORMATION, &tcpRequestQueryInfoEx,
                                        &tcpRequestBufSize, &entityType, &entityTypeSize);
-                DEBUGPRT("WsControlFunc(IPPROTO_TCP) = %d", result);
+
                 if (result) {
                     fprintf(stderr, "%s(%d) WsControlFunc failed (%d)\n", __FILE__, __LINE__, WSAGetLastError());
                     WSACleanup();
@@ -348,7 +346,7 @@ wSock1GetAdapterInformationIpv4(void (arrayAdd)(AdapterAddressArray *, char *, s
             }
         }
         nicFree();
-        DEBUGPRT("array = %p", array);
+
         if (array) {
             if (array->size)
                 return array;

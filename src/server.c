@@ -4,7 +4,6 @@
 #include "server/routine.h"
 
 #include <stdlib.h>
-#include <unistd.h> /* getcwd() */
 
 SOCKET globalServerSocket;
 SOCKET globalMaxSocket = 0;
@@ -349,7 +348,7 @@ int main(int argc, char **argv) {
     if (argc > 1) {
         globalRootPath = platformGetRootPath(argv[1]);
     } else {
-        char *buf = malloc(BUFSIZ + 1), *test = getcwd(buf, BUFSIZ);
+        char *buf = malloc(BUFSIZ + 1), *test = platformGetWorkingDirectory(buf, BUFSIZ);
 
         buf[BUFSIZ] = '\0';
         if (test)

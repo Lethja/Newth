@@ -1,33 +1,27 @@
-#include "../../common/debug.h"
 #include <stdio.h>
 #include "wsock2.h"
-#include <iphlpapi.h>
 
-typedef DWORD (WINAPI *AdapterInfoProc)(PIP_ADAPTER_INFO, PULONG);
+typedef DWORD (WINAPI *AdapterInfoCall)(PIP_ADAPTER_INFO, PULONG);
 
-HMODULE wsock2;
-AdapterInfoProc AdapterInfoFunc;
+HMODULE wSock2;
+static AdapterInfoCall AdapterInfoFunc;
 
 static void wSock2Free() {
-    if(wsock2)
-        FreeLibrary(wsock2);
+    if (wSock2)
+        FreeLibrary(wSock2);
 }
 
 void *wSock2Available() {
-    DEBUGPRT("%s\n", "wSock2Available()");
-    wsock2 = LoadLibrary("Iphlpapi.dll");
-    DEBUGPRT("wSock2Available():wsock2 = %p\n", wsock2);
-    if(wsock2) {
-        AdapterInfoFunc = (AdapterInfoProc) GetProcAddress(wsock2, "GetAdaptersInfo");
-        DEBUGPRT("wSock2Available():AdapterInfoFunc = %p\n", AdapterInfoFunc);
+    wSock2 = LoadLibrary("Iphlpapi.dll");
+    if (wSock2) {
+        AdapterInfoFunc = (AdapterInfoCall) GetProcAddress(wSock2, "GetAdaptersInfo");
         return &wSock2Free;
     }
     return NULL;
 }
 
-AdapterAddressArray *
-wSock2GetAdapterInformationIpv4(void (arrayAdd)(AdapterAddressArray *, char *, sa_family_t, char *)) {
-    if(AdapterInfoFunc) {
+AdapterAddressArray *wSock2GetAdapterInformation(void (arrayAdd)(AdapterAddressArray *, char *, sa_family_t, char *)) {
+    if (AdapterInfoFunc) {
         AdapterAddressArray *array = NULL;
         PIP_ADAPTER_INFO pAdapterInfo = NULL;
         PIP_ADAPTER_INFO pAdapter = NULL;

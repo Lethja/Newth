@@ -1,13 +1,31 @@
 #include <winsock2.h>
-#include <iphlpapi.h>
-#include <iptypes.h>
 #include <stdio.h>
 
+#include "wsock2.h"
 #include "wsipv6.h"
+
+typedef ULONG (WINAPI *AdapterInfoCall)(ULONG, ULONG, PVOID, PIP_ADAPTER_ADDRESSES, PULONG);
+
+HMODULE wSockIpv6;
+static AdapterInfoCall AdapterInfoFunc;
+
+static void wSockIpv6Free() {
+    if(wSockIpv6)
+        FreeLibrary(wSockIpv6);
+}
+
+void *wSockIpv6Available() {
+    wSockIpv6 = LoadLibrary("Iphlpapi.dll");
+    if(wSockIpv6) {
+        AdapterInfoFunc = (AdapterInfoCall) GetProcAddress(wSockIpv6, "GetAdaptersAddresses");
+        return &wSockIpv6Free;
+    }
+    return NULL;
+}
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
-AdapterAddressArray *platformGetAdapterInformationIpv6(sa_family_t family,
+AdapterAddressArray *wSockIpv6GetAdapterInformation(sa_family_t family,
                                                        void (arrayAdd)(AdapterAddressArray *, char *, sa_family_t,
                                                                        char *), void (nTop)(const void *, char *)) {
     struct AdapterAddressArray *array;
@@ -18,7 +36,7 @@ AdapterAddressArray *platformGetAdapterInformationIpv6(sa_family_t family,
 
     do {
         adapter_addresses = malloc(size);
-        rv = GetAdaptersAddresses(AF_UNSPEC, 0, NULL, adapter_addresses, &size);
+        rv = AdapterInfoFunc(AF_UNSPEC, 0, NULL, adapter_addresses, &size);
         if (rv == ERROR_BUFFER_OVERFLOW) {
             free(adapter_addresses);
             adapter_addresses = NULL;
