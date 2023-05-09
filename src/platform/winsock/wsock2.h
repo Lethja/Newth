@@ -12,6 +12,7 @@ AdapterAddressArray *wSock2GetAdapterInformation(void (arrayAdd)(AdapterAddressA
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "bugprone-reserved-identifier"
 #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
+#pragma ide diagnostic ignored "UnusedLocalVariable"
 
 #ifndef __C89_NAMELESS
 #define __C89_NAMELESS
@@ -133,7 +134,7 @@ typedef IP_ADAPTER_UNICAST_ADDRESS_LH IP_ADAPTER_UNICAST_ADDRESS;
 typedef IP_ADAPTER_UNICAST_ADDRESS_LH *PIP_ADAPTER_UNICAST_ADDRESS;
 #else /* _WIN32_WINNT >= 0x0501 */
 typedef IP_ADAPTER_UNICAST_ADDRESS_XP   IP_ADAPTER_UNICAST_ADDRESS;
-  typedef IP_ADAPTER_UNICAST_ADDRESS_XP *PIP_ADAPTER_UNICAST_ADDRESS;
+typedef IP_ADAPTER_UNICAST_ADDRESS_XP *PIP_ADAPTER_UNICAST_ADDRESS;
 #endif
 
 typedef struct _IP_ADAPTER_ANYCAST_ADDRESS_XP {

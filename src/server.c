@@ -393,7 +393,7 @@ int main(int argc, char **argv) {
         }
 
         if (platformServerStartup(&globalServerSocket, family, ports)) {
-			LINEDBG;
+            LINEDBG;
             perror("Unable to start server");
             platformIpStackExit();
             return 1;

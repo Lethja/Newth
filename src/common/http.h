@@ -1,4 +1,0 @@
-#ifndef OPEN_WEB_COMMON_HTTP_H
-#define OPEN_WEB_COMMON_HTTP_H
-
-#endif /* OPEN_WEB_COMMON_HTTP_H */

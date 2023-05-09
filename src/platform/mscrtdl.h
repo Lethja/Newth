@@ -36,11 +36,11 @@ typedef int socklen_t;
 #define _SS_PAD2SIZE (_SS_MAXSIZE - (sizeof (short) + _SS_PAD1SIZE + _SS_ALIGNSIZE))
 
 struct sockaddr_storage {
-	short ss_family;
-	char __ss_pad1[_SS_PAD1SIZE];
+    short ss_family;
+    char __ss_pad1[_SS_PAD1SIZE];
 
-	__int64 __ss_align;
-	char __ss_pad2[_SS_PAD2SIZE];
+    __int64 __ss_align;
+    char __ss_pad2[_SS_PAD2SIZE];
 };
 
 #pragma endregion
@@ -50,31 +50,31 @@ struct sockaddr_storage {
 #define SOCKIN6 sockaddr_in6_nt6
 
 typedef struct _SCOPE_ID {
-	union {
-			struct {
-				unsigned long Zone : 28;
-				unsigned long Level : 4;
-			};
-		unsigned long Value;
-	};
+    union {
+            struct {
+                unsigned long Zone : 28;
+                unsigned long Level : 4;
+            };
+        unsigned long Value;
+    };
 } SCOPE_ID, *PSCOPE_ID;
 
 typedef struct in6_addr {
-	union {
-		unsigned char Byte[16];
-		unsigned short Word[8];
-	} u;
+    union {
+        unsigned char Byte[16];
+        unsigned short Word[8];
+    } u;
 } IN6_ADDR_NT6, *PIN6_ADDR_NT6, *LPIN6_ADDR_NT6;
 
 typedef struct sockaddr_in6_nt6 {
-	short sin6_family;
-	unsigned short sin6_port;
-	unsigned long sin6_flowinfo;
-	struct in6_addr sin6_addr;
-	union {
-		unsigned long sin6_scope_id;
-		SCOPE_ID sin6_scope_struct;
-	};
+    short sin6_family;
+    unsigned short sin6_port;
+    unsigned long sin6_flowinfo;
+    struct in6_addr sin6_addr;
+    union {
+        unsigned long sin6_scope_id;
+        SCOPE_ID sin6_scope_struct;
+    };
 } sockaddr_in6_nt6;
 
 #pragma endregion
