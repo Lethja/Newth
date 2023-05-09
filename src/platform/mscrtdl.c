@@ -113,7 +113,7 @@ int platformIpStackInit(void) {
         wsIpv4 = wSock1Available();
         if (wsIpv4) {
             LINEDBG;
-            getAdapterInformationIpv4 = wSock1GetAdapterInformationIpv4;
+            getAdapterInformationIpv4 = (adapterInformationIpv4) wSock1GetAdapterInformation;
         }
     }
 #endif
