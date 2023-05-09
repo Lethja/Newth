@@ -24,6 +24,7 @@ typedef struct dirent PlatformDirEntry;
 typedef struct stat PlatformFileStat;
 typedef off_t PlatformFileOffset;
 
+#define SOCKIN6 sockaddr_in6
 #define CLOSE_SOCKET(x) close(x)
 #define SOCKET int
 #define SOCK_BUF_TYPE size_t

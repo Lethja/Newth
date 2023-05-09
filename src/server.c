@@ -326,7 +326,7 @@ unsigned short getPort(const SOCKET *listenSocket) {
         struct sockaddr_in *addr = (struct sockaddr_in *) &sock;
         return ntohs(addr->sin_port);
     } else if (sock.ss_family == AF_INET6) {
-        struct sockaddr_in6 *addr = (struct sockaddr_in6 *) &sock;
+        struct SOCKIN6 *addr = (struct SOCKIN6 *) &sock;
         return ntohs(addr->sin6_port);
     }
     return 0;
@@ -393,6 +393,7 @@ int main(int argc, char **argv) {
         }
 
         if (platformServerStartup(&globalServerSocket, family, ports)) {
+			LINEDBG;
             perror("Unable to start server");
             platformIpStackExit();
             return 1;

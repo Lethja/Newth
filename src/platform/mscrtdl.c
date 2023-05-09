@@ -149,6 +149,8 @@ int platformServerStartup(SOCKET *listenSocket, sa_family_t family, char *ports)
     struct sockaddr_storage serverAddress;
     int iResult;
 
+	LINEDBG;
+
     /* Force start in IPV4 mode if IPV6 functions cannot be loaded */
     if (family != AF_INET && (!getAdapterInformationIpv6)) {
         if (family == AF_INET6) {
@@ -169,33 +171,38 @@ int platformServerStartup(SOCKET *listenSocket, sa_family_t family, char *ports)
 
             sock->sin_family = AF_INET;
             sock->sin_addr.s_addr = htonl(INADDR_ANY);
+			LINEDBG;
             break;
         }
         case AF_INET6:
         case AF_UNSPEC: {
-            struct sockaddr_in6 *sock = (struct sockaddr_in6 *) &serverAddress;
+            struct SOCKIN6 *sock = (struct SOCKIN6 *) &serverAddress;
             size_t v6Only = family == AF_INET6;
             if ((*listenSocket = socket(AF_INET6, SOCK_STREAM, 0)) < 0)
                 return 1;
 
             sock->sin6_family = AF_INET6;
             setsockopt(*listenSocket, IPPROTO_IPV6, IPV6_V6ONLY, (char *) &v6Only, sizeof(v6Only));
+			LINEDBG;
             break;
         }
     }
 
     if (*listenSocket == INVALID_SOCKET) {
+		LINEDBG;
         return 1;
     }
 
     if (platformBindPort(listenSocket, (struct sockaddr *) &serverAddress, ports)) {
         closesocket(*listenSocket);
+		LINEDBG;
         return 1;
     }
 
     iResult = listen(*listenSocket, SOMAXCONN);
     if (iResult == SOCKET_ERROR) {
         closesocket(*listenSocket);
+		LINEDBG;
         return 1;
     }
 
@@ -262,7 +269,7 @@ void platformGetIpString(struct sockaddr *addr, char ipStr[INET6_ADDRSTRLEN], sa
         strcpy(ipStr, ip);
     } else if (addr->sa_family == AF_INET6) {
         const char ipv4[8] = "::ffff:";
-        struct sockaddr_in6 *s6 = (struct sockaddr_in6 *) addr;
+        struct SOCKIN6 *s6 = (struct SOCKIN6 *) addr;
         ipv6NTop(&s6->sin6_addr, ipStr);
         if (strncmp(ipStr, ipv4, sizeof(ipv4) - 1) == 0) {
             memmove(ipStr, &ipStr[7], INET_ADDRSTRLEN);
