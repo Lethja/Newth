@@ -1,7 +1,6 @@
 #ifndef OPEN_WEB_HTTP_H
 #define OPEN_WEB_HTTP_H
 
-#include "../common/http.h"
 #include "sockbufr.h"
 
 #include <stdio.h>
@@ -12,6 +11,8 @@
 typedef enum httpType {
     httpGet, httpHead, httpPost, httpUnknown
 } httpType;
+
+#define HTTP_EOL "\r\n"
 
 #pragma region HTML
 

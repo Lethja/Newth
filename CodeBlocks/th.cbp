@@ -160,7 +160,6 @@
 			<Option compilerVar="CC" />
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="../src/common/http.h" />
 		<Unit filename="../src/platform/mscrtdl.c">
 			<Option compilerVar="CC" />
 			<Option target="MingW32 Debug" />

@@ -135,10 +135,6 @@ SOURCE=..\src\server\event.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\common\http.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\src\server\http.h
 # End Source File
 # Begin Source File

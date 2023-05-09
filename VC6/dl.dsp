@@ -95,7 +95,7 @@ SOURCE=..\src\client.c
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
-SOURCE=..\src\common\http.h
+SOURCE=..\src\server\http.h
 # End Source File
 # Begin Source File
 
