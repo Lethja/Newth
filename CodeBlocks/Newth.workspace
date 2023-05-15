@@ -3,5 +3,6 @@
 	<Workspace title="Newth">
 		<Project filename="th.cbp" />
 		<Project filename="dl.cbp" />
+		<Project filename="th gui.cbp" />
 	</Workspace>
 </CodeBlocks_workspace_file>
