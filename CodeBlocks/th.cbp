@@ -156,10 +156,17 @@
 			<Add option="-ansi" />
 			<Add option="-Wno-unknown-pragmas" />
 		</Compiler>
-		<Unit filename="../src/client.c">
+		<Unit filename="../src/cli/th.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/common/client.c">
 			<Option compilerVar="CC" />
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
+		<Unit filename="../src/common/server.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/common/server.h" />
 		<Unit filename="../src/platform/mscrtdl.c">
 			<Option compilerVar="CC" />
 			<Option target="MingW32 Debug" />
@@ -190,6 +197,23 @@
 			<Option target="Unix GCC Debug" />
 			<Option target="Unix GCC Release" />
 		</Unit>
+		<Unit filename="../src/platform/winsock/wsipv6.c">
+			<Option compilerVar="CC" />
+			<Option target="MingW32 Debug" />
+			<Option target="MingW32 Release" />
+			<Option target="MingW64 Debug" />
+			<Option target="MingW64 Release" />
+			<Option target="Watcom NT Debug" />
+			<Option target="Watcom NT Release" />
+		</Unit>
+		<Unit filename="../src/platform/winsock/wsipv6.h">
+			<Option target="MingW32 Debug" />
+			<Option target="MingW32 Release" />
+			<Option target="MingW64 Debug" />
+			<Option target="MingW64 Release" />
+			<Option target="Watcom NT Debug" />
+			<Option target="Watcom NT Release" />
+		</Unit>
 		<Unit filename="../src/platform/winsock/wsock1.c">
 			<Option compilerVar="CC" />
 			<Option target="MingW32 Debug" />
@@ -219,9 +243,6 @@
 			<Option target="MingW64 Release" />
 			<Option target="Watcom NT Debug" />
 			<Option target="Watcom NT Release" />
-		</Unit>
-		<Unit filename="../src/server.c">
-			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../src/server/event.c">
 			<Option compilerVar="CC" />

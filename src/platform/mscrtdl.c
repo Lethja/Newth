@@ -33,7 +33,7 @@ WSADATA wsaData;
 
 void platformPathCombine(char *output, const char *path1, const char *path2) {
     const char pathDivider = '/', pathDivider2 = '\\';
-    size_t a = strlen(path1), b = strlen(path2), path2Jump = 0;
+    size_t a = strlen(path1), path2Jump = 0;
 
     if ((path1[a - 1] != pathDivider && path1[a - 1] != pathDivider2) &&
         (path2[0] != pathDivider && path2[0] != pathDivider2))

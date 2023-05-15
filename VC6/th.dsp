@@ -107,11 +107,15 @@ SOURCE=..\src\server\routine.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\server.c
+SOURCE=..\src\common\server.c
 # End Source File
 # Begin Source File
 
 SOURCE=..\src\server\sockbufr.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\cli\th.c
 # End Source File
 # Begin Source File
 
@@ -148,6 +152,10 @@ SOURCE=..\src\platform\platform.h
 # Begin Source File
 
 SOURCE=..\src\server\routine.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\common\server.h
 # End Source File
 # Begin Source File
 

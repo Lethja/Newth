@@ -34,8 +34,7 @@ typedef __int64 __time64_t;
 #endif /* _TIME64_T_DEFINED */
 
 #ifndef MSVC89
-typedef unsigned __LONG32 ULONG;
-typedef ULONG *PULONG;
+typedef unsigned long ULONG,*PULONG;
 #else
 typedef unsigned char UINT8,*PUINT8;
 typedef unsigned short UINT16,*PUINT16;
