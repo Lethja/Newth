@@ -1,18 +1,12 @@
-#include "platform/platform.h"
-#include "server/event.h"
-#include "server/http.h"
-#include "server/routine.h"
-
-#include <stdlib.h>
-
-SOCKET globalServerSocket;
-SOCKET globalMaxSocket = 0;
-fd_set currentSockets;
+#include "server.h"
 
 char *globalRootPath = NULL;
 RoutineArray globalFileRoutineArray;
 RoutineArray globalDirRoutineArray;
-struct timeval globalSelectSleep;
+
+SOCKET serverMaxSocket;
+SOCKET serverListenSocket;
+fd_set serverCurrentSockets;
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "UnusedParameter"
@@ -20,27 +14,6 @@ struct timeval globalSelectSleep;
 void noAction(int signal) {}
 
 #pragma clang diagnostic pop
-
-void shutdownCrash(int signal) {
-    switch (signal) {
-        default: /* Close like normal unless something has gone catastrophically wrong */
-            platformCloseBindSockets(&currentSockets, globalMaxSocket);
-            platformIpStackExit();
-            printf("Emergency shutdown: %d\n", signal);
-            /* Fallthrough */
-        case SIGABRT:
-        case SIGSEGV:
-            exit(1);
-    }
-}
-
-void shutdownProgram(int signal) {
-    if (signal == SIGINT)
-        printf("\n"); /* Put next message on a different line from ^C */
-    platformCloseBindSockets(&currentSockets, globalMaxSocket);
-    platformIpStackExit();
-    exit(0);
-}
 
 char handleDir(SOCKET clientSocket, char *webPath, char *absolutePath, char type, PlatformFileStat *st) {
     char buf[BUFSIZ];
@@ -252,68 +225,6 @@ char handleConnection(SOCKET clientSocket) {
     return r;
 }
 
-static void printSocketAccept(SOCKET *sock) { /* NOLINT(readability-non-const-parameter) */
-    struct sockaddr_storage ss;
-    socklen_t sockLen = sizeof(ss);
-    sa_family_t family;
-    char ip[INET6_ADDRSTRLEN];
-    unsigned short port;
-    getpeername(*sock, (struct sockaddr *) &ss, &sockLen);
-    platformGetIpString((struct sockaddr *) &ss, ip, &family);
-    port = platformGetPort((struct sockaddr *) &ss);
-    if (family == AF_INET)
-        printf("TSYN:%s:%u\n", ip, port);
-    else if (family == AF_INET6)
-        printf("TSYN:[%s]:%u\n", ip, port);
-}
-
-static void printSocketClose(SOCKET *sock) { /* NOLINT(readability-non-const-parameter) */
-    struct sockaddr_storage ss;
-    socklen_t sockLen = sizeof(ss);
-    sa_family_t family;
-    char ip[INET6_ADDRSTRLEN];
-    unsigned short port;
-    getpeername(*sock, (struct sockaddr *) &ss, &sockLen);
-    platformGetIpString((struct sockaddr *) &ss, ip, &family);
-    port = platformGetPort((struct sockaddr *) &ss);
-    if (family == AF_INET)
-        printf("TRST:%s:%u\n", ip, port);
-    else if (family == AF_INET6)
-        printf("TRST:[%s]:%u\n", ip, port);
-}
-
-static void printHttpEvent(eventHttpRespond *event) {
-    struct sockaddr_storage sock;
-    socklen_t sockLen = sizeof(sock);
-    sa_family_t family;
-    unsigned short port;
-    char type;
-    char ip[INET6_ADDRSTRLEN];
-
-    switch (*event->type) {
-        case httpGet:
-            type = 'G';
-            break;
-        case httpHead:
-            type = 'H';
-            break;
-        case httpPost:
-            type = 'P';
-            break;
-        default:
-            type = '?';
-            break;
-    }
-
-    getpeername(*event->clientSocket, (struct sockaddr *) &sock, &sockLen);
-    platformGetIpString((struct sockaddr *) &sock, ip, &family);
-    port = platformGetPort((struct sockaddr *) &sock);
-    if (family == AF_INET)
-        printf("%c%03d:%s:%u/%s\n", type, *event->response, ip, port, event->path);
-    else if (family == AF_INET6)
-        printf("%c%03d:[%s]:%u/%s\n", type, *event->response, ip, port, event->path);
-}
-
 unsigned short getPort(const SOCKET *listenSocket) {
     struct sockaddr_storage sock;
     socklen_t sockLen = sizeof(sock);
@@ -332,90 +243,12 @@ unsigned short getPort(const SOCKET *listenSocket) {
     return 0;
 }
 
-static void printAdapterInformation(char *protocol, sa_family_t family, unsigned short port) {
-    AdapterAddressArray *adapters = platformGetAdapterInformation(family);
-    size_t i, j;
-    for (i = 0; i < adapters->size; ++i) {
-        printf("%s:\n", adapters->adapter[i].name);
-        for (j = 0; j < adapters->adapter[i].addresses.size; ++j) {
-            if (!adapters->adapter[i].addresses.array[j].type)
-                printf("\t%s://%s:%u\n", protocol, adapters->adapter[i].addresses.array[j].address, port);
-            else
-                printf("\t%s://[%s]:%u\n", protocol, adapters->adapter[i].addresses.array[j].address, port);
-        }
-    }
-
-    platformFreeAdapterInformation(adapters);
-}
-
-int main(int argc, char **argv) {
+void serverTick() {
+    SOCKET i;
     fd_set readySockets;
-
-    LINEDBG;
-
-    platformConnectSignals(noAction, shutdownCrash, shutdownProgram);
-
-    if (argc > 1) {
-        globalRootPath = platformGetRootPath(argv[1]);
-    } else {
-        char *buf = malloc(BUFSIZ + 1), *test = platformGetWorkingDirectory(buf, BUFSIZ);
-
-        buf[BUFSIZ] = '\0';
-        if (test)
-            globalRootPath = platformGetRootPath(test);
-
-        free(buf);
-    }
-
-    printf("Root Path: %s\n\n", globalRootPath);
-
-    {
-        sa_family_t family;
-        char *ports;
-
-        /* Get the list of ports then try to bind one */
-        ports = getenv("TH_HTTP_PORT");
-        platformArgvGetFlag(argc, argv, 'p', "port", &ports);
-        if (!ports)
-            ports = "0";
-
-        /* Choose IP standards to run on the socket */
-        if (platformArgvGetFlag(argc, argv, '6', "ipv6", NULL) && !platformArgvGetFlag(argc, argv, '4', "ipv4", NULL))
-            family = AF_INET6;
-        else if (platformOfficiallySupportsIpv6() || platformArgvGetFlag(argc, argv, '\0', "dual-stack", NULL))
-            family = AF_UNSPEC;
-        else
-            family = AF_INET;
-
-        if (platformIpStackInit()) {
-            perror("Unable to network stack");
-            return 1;
-        }
-
-        if (platformServerStartup(&globalServerSocket, family, ports)) {
-            LINEDBG;
-            perror("Unable to start server");
-            platformIpStackExit();
-            return 1;
-        }
-
-        printAdapterInformation("http", family, getPort(&globalServerSocket));
-    }
-
-    globalMaxSocket = globalServerSocket;
-    FD_ZERO(&currentSockets);
-    FD_SET(globalServerSocket, &currentSockets);
-
-    globalFileRoutineArray.size = globalDirRoutineArray.size = 0;
-    globalFileRoutineArray.array = globalDirRoutineArray.array = NULL;
-
-    eventHttpRespondSetCallback(printHttpEvent);
-    eventHttpFinishSetCallback(printHttpEvent);
-    eventSocketAcceptSetCallback(printSocketAccept);
-    eventSocketCloseSetCallback(printSocketClose);
+    struct timeval globalSelectSleep;
 
     while (1) {
-        SOCKET i;
 
         for (i = 0; i < globalDirRoutineArray.size; i++) {
             DirectoryRoutine *directoryRoutine = (DirectoryRoutine *) globalDirRoutineArray.array;
@@ -434,26 +267,26 @@ int main(int argc, char **argv) {
         globalSelectSleep.tv_usec = 0;
         globalSelectSleep.tv_sec = globalFileRoutineArray.size || globalDirRoutineArray.size ? 0 : 60;
 
-        readySockets = currentSockets;
+        readySockets = serverCurrentSockets;
 
-        if (select((int) globalMaxSocket + 1, &readySockets, NULL, NULL, &globalSelectSleep) < 0) {
+        if (select((int) serverMaxSocket + 1, &readySockets, NULL, NULL, &globalSelectSleep) < 0) {
             perror("Select");
             exit(1);
         }
 
-        for (i = 0; i <= globalMaxSocket; i++) {
+        for (i = 0; i <= serverMaxSocket; i++) {
             if (FD_ISSET(i, &readySockets)) {
-                if (i == globalServerSocket) {
-                    SOCKET clientSocket = platformAcceptConnection(globalServerSocket);
-                    if (clientSocket > globalMaxSocket)
-                        globalMaxSocket = clientSocket;
+                if (i == serverListenSocket) {
+                    SOCKET clientSocket = platformAcceptConnection(serverListenSocket);
+                    if (clientSocket > serverMaxSocket)
+                        serverMaxSocket = clientSocket;
 
-                    FD_SET(clientSocket, &currentSockets);
+                    FD_SET(clientSocket, &serverCurrentSockets);
                 } else {
                     if (handleConnection(i)) {
                         eventSocketCloseInvoke(&i);
                         CLOSE_SOCKET(i);
-                        FD_CLR(i, &currentSockets);
+                        FD_CLR(i, &serverCurrentSockets);
                     }
                 }
             }

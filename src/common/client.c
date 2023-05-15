@@ -1,5 +1,5 @@
-#include "server/http.h"
-#include "platform/platform.h"
+#include "../server/http.h"
+#include "../platform/platform.h"
 
 #include <ctype.h>
 #include <stdio.h>

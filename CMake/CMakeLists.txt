@@ -22,8 +22,9 @@ elseif (WIN32)
     endif ()
 endif ()
 
-add_executable(dl ../src/client.c ../src/platform/platform.h)
-add_executable(th ../src/server.c ../src/platform/posix01.h ../src/server/http.c
+add_executable(dl ../src/common/client.c ../src/platform/platform.h)
+add_executable(th ../src/cli/th.c ../src/common/server.h
+        ../src/common/server.c ../src/platform/posix01.h ../src/server/http.c
         ../src/server/http.h ../src/server/routine.c ../src/server/routine.h
         ../src/server/sockbufr.c ../src/server/sockbufr.h
         ../src/platform/platform.c ../src/platform/platform.h
