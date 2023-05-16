@@ -35,6 +35,8 @@ target_compile_definitions(dl PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
 target_compile_definitions(th PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
 
 if (WIN32)
+    add_executable(th-gui ../src/gui/win32/main.c)
+    target_compile_definitions(th-gui PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
     if (PORTABLE_WIN32)
         target_compile_definitions(th PUBLIC PORTABLE_WIN32=1)
     endif ()
