@@ -23,9 +23,11 @@ typedef struct NewThInterface {
 
 #define NORMAL_BUTTON (NORMAL_WIDGET | BS_DEFPUSHBUTTON | WS_TABSTOP)
 
+#define NORMAL_GROUPBOX (NORMAL_WIDGET | BS_GROUPBOX)
+
 #define NORMAL_LABEL (NORMAL_WIDGET | SS_CENTERIMAGE)
 
-#define NORMAL_ENTRY (NORMAL_WIDGET | WS_BORDER)
+#define NORMAL_ENTRY (NORMAL_WIDGET | WS_BORDER | ES_AUTOHSCROLL)
 
 /*  Make the class name into a global variable  */
 TCHAR szClassName[] = _T("NewThInterface");
@@ -34,26 +36,28 @@ NewThInterface NewThCreate(HINSTANCE inst, int show) {
     NewThInterface r;
 
     /* Create the desktop Window */
-    r.winMain = CreateWindow (szClassName,              /* Class name */
-                              _T("Newth Http Server"),  /* Title Text */
-                              WS_OVERLAPPEDWINDOW,      /* default window */
-                              CW_USEDEFAULT,            /* Windows decides the position */
-                              CW_USEDEFAULT,            /* where the window ends up on the screen */
-                              320,                      /* The programs width */
-                              240,                      /* and height in pixels */
-                              HWND_DESKTOP,             /* The window is a child-window to desktop */
-                              NULL,                     /* No menu */
-                              inst,                     /* Program Instance handler */
-                              NULL                      /* No Window Creation data */
+    r.winMain = CreateWindow (szClassName,                                      /* Class name */
+                              _T("Newth Http Server"),                          /* Title Text */
+                              WS_OVERLAPPED | WS_MINIMIZEBOX | WS_SYSMENU,      /* Fixed size window */
+                              CW_USEDEFAULT,                                    /* Windows decides the position */
+                              CW_USEDEFAULT,                                    /* where the window ends up on the screen */
+                              320,                                              /* The programs width */
+                              240,                                              /* and height in pixels */
+                              HWND_DESKTOP,                                     /* The window is a child-window to desktop */
+                              NULL,                                             /* No menu */
+                              inst,                                             /* Program Instance handler */
+                              NULL                                              /* No Window Creation data */
     );
 
-    /* Create the Start/Stop server button */
-    r.btnRun = CreateWindow (_T("BUTTON"), _T("Start Server"), NORMAL_BUTTON, 10, 45, 100, 25, r.winMain, 0, inst, 0);
+    /* Create the path entry & button widgets */
+    CreateWindow(_T("BUTTON"), _T("Root Path:"), NORMAL_GROUPBOX, 5, 5, 300, 53, r.winMain, 0, inst, 0);
+    r.entryPath = CreateWindow(_T("EDIT"), _T(""), NORMAL_ENTRY, 10, 27, 209, 23, r.winMain, 0, inst, 0);
+    r.btnBrowse = CreateWindow(_T("BUTTON"), _T("&Browse..."), NORMAL_BUTTON, 222, 27, 77, 23, r.winMain, 0, inst, 0);
 
-    /* Create the path label, entry & button widgets */
-    r.labelPath = CreateWindow (_T("STATIC"), _T("Path:"), NORMAL_LABEL, 10, 10, 40, 25, r.winMain, 0, inst, 0);
-    r.entryPath = CreateWindow (_T("EDIT"), _T(""), NORMAL_ENTRY, 60, 10, 170, 25, r.winMain, 0, inst, 0);
-    r.btnBrowse = CreateWindow (_T("BUTTON"), _T("Browse..."), NORMAL_BUTTON, 240, 10, 70, 25, r.winMain, 0, inst, 0);
+    /* Create the Start/Stop server button */
+    r.labelPath = CreateWindow(_T("STATIC"), _T("Stopped"), NORMAL_LABEL, 5, 185, 235, 23, r.winMain, 0, inst, 0);
+
+    r.btnRun = CreateWindow(_T("BUTTON"), _T("&Start"), NORMAL_BUTTON, 229, 185, 75, 23, r.winMain, 0, inst, 0);
 
     /* Make the window visible on the screen */
     ShowWindow(r.winMain, show);
@@ -64,6 +68,7 @@ NewThInterface NewThCreate(HINSTANCE inst, int show) {
 /*  This function is called by the Windows function DispatchMessage()  */
 LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
+        /* TODO: CoInitialize() and SHBrowseForFolder() */
         case WM_DESTROY:
             PostQuitMessage(0); /* send a WM_QUIT to the message queue */
             break;
