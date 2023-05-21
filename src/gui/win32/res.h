@@ -1,0 +1,28 @@
+#ifndef NEW_TH_GUI_RES_H
+#define NEW_TH_GUI_RES_H
+
+#pragma region Normal Widget Types
+
+#define NORMAL_WIDGET (WS_VISIBLE | WS_CHILD)
+
+#define NORMAL_BUTTON (NORMAL_WIDGET | BS_DEFPUSHBUTTON | WS_TABSTOP)
+
+#define NORMAL_GROUPBOX (NORMAL_WIDGET | BS_GROUPBOX)
+
+#define NORMAL_LABEL (NORMAL_WIDGET | SS_CENTERIMAGE)
+
+#define NORMAL_ENTRY (NORMAL_WIDGET | WS_BORDER | ES_AUTOHSCROLL)
+
+#define NORMAL_RADIO (NORMAL_WIDGET | BS_AUTORADIOBUTTON)
+
+#pragma endregion
+
+#pragma region Widget IDs
+
+#define BTN_START (100)
+
+#define BTN_BROWSE (101)
+
+#pragma endregion
+
+#endif /* NEW_TH_GUI_RES_H */

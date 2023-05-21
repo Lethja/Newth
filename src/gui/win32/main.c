@@ -6,8 +6,16 @@
 
 #include <tchar.h>
 #include <windows.h>
+#include "res.h"
 
 /* TODO: Add a manifest to enable visual styles */
+
+typedef struct RadioPortButtons {
+    HWND ephemeral;
+    HWND http;
+    HWND custom;
+    HWND port;
+} PortRadio;
 
 typedef struct NewThInterface {
     HWND winMain;
@@ -17,17 +25,8 @@ typedef struct NewThInterface {
     HWND labelPath;
     HWND listAdapter;
     HWND listConnections;
+    PortRadio port;
 } NewThInterface;
-
-#define NORMAL_WIDGET (WS_VISIBLE | WS_CHILD)
-
-#define NORMAL_BUTTON (NORMAL_WIDGET | BS_DEFPUSHBUTTON | WS_TABSTOP)
-
-#define NORMAL_GROUPBOX (NORMAL_WIDGET | BS_GROUPBOX)
-
-#define NORMAL_LABEL (NORMAL_WIDGET | SS_CENTERIMAGE)
-
-#define NORMAL_ENTRY (NORMAL_WIDGET | WS_BORDER | ES_AUTOHSCROLL)
 
 /*  Make the class name into a global variable  */
 TCHAR szClassName[] = _T("NewThInterface");
@@ -52,12 +51,25 @@ NewThInterface NewThCreate(HINSTANCE inst, int show) {
     /* Create the path entry & button widgets */
     CreateWindow(_T("BUTTON"), _T("Root Path:"), NORMAL_GROUPBOX, 5, 5, 300, 53, r.winMain, 0, inst, 0);
     r.entryPath = CreateWindow(_T("EDIT"), _T(""), NORMAL_ENTRY, 10, 27, 209, 23, r.winMain, 0, inst, 0);
-    r.btnBrowse = CreateWindow(_T("BUTTON"), _T("&Browse..."), NORMAL_BUTTON, 222, 27, 77, 23, r.winMain, 0, inst, 0);
+    r.btnBrowse = CreateWindow(_T("BUTTON"), _T("&Browse..."), NORMAL_BUTTON, 222, 27, 77, 23, r.winMain,
+                               (HMENU) BTN_BROWSE, inst, 0);
+
+    /* Create listen port radio buttons */
+    CreateWindow(_T("BUTTON"), _T("Listen Port:"), NORMAL_GROUPBOX, 5, 58, 300, 94, r.winMain, 0, inst, 0);
+    r.port.ephemeral = CreateWindow(_T("BUTTON"), _T("&Ephemeral Port"), NORMAL_RADIO | WS_GROUP, 10, 80, 290, 17,
+                                    r.winMain, 0, inst, 0);
+    SendMessage(r.port.ephemeral, BM_SETCHECK, BST_CHECKED, 0);
+
+    r.port.http = CreateWindow(_T("BUTTON"), _T("&HTTP Port"), NORMAL_RADIO, 10, 104, 290, 17, r.winMain, 0, inst, 0);
+    r.port.custom = CreateWindow(_T("BUTTON"), _T("&Custom:"), NORMAL_RADIO, 10, 128, 85, 17, r.winMain, 0, inst, 0);
+
+    r.port.port = CreateWindow(_T("EDIT"), _T(""), NORMAL_ENTRY, 85, 125, 215, 23, r.winMain, 0, inst, 0);
 
     /* Create the Start/Stop server button */
     r.labelPath = CreateWindow(_T("STATIC"), _T("Stopped"), NORMAL_LABEL, 5, 185, 235, 23, r.winMain, 0, inst, 0);
 
-    r.btnRun = CreateWindow(_T("BUTTON"), _T("&Start"), NORMAL_BUTTON, 229, 185, 75, 23, r.winMain, 0, inst, 0);
+    r.btnRun = CreateWindow(_T("BUTTON"), _T("&Start"), NORMAL_BUTTON, 229, 185, 75, 23, r.winMain, (HMENU) BTN_START,
+                            inst, 0);
 
     /* Make the window visible on the screen */
     ShowWindow(r.winMain, show);
@@ -69,6 +81,18 @@ NewThInterface NewThCreate(HINSTANCE inst, int show) {
 LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
         /* TODO: CoInitialize() and SHBrowseForFolder() */
+        case WM_COMMAND: {
+            switch (LOWORD(wParam)) {
+                /* TODO: Useful code here */
+                case BTN_START:
+                    MessageBox(hwnd, "Foo", "Foo", 0);
+                    break;
+                case BTN_BROWSE:
+                    MessageBox(hwnd, "Bar", "Bar", 0);
+                    break;
+            }
+            break;
+        }
         case WM_DESTROY:
             PostQuitMessage(0); /* send a WM_QUIT to the message queue */
             break;
