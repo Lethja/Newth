@@ -4,6 +4,7 @@
 #define UNICODE
 #endif
 
+#include <shlobj.h>
 #include <tchar.h>
 #include <windows.h>
 #include "res.h"
@@ -28,31 +29,30 @@ typedef struct NewThInterface {
     PortRadio port;
 } NewThInterface;
 
-/*  Make the class name into a global variable  */
+/* Make the class name into a global variable */
 TCHAR szClassName[] = _T("NewThInterface");
 
 NewThInterface NewThCreate(HINSTANCE inst, int show) {
     NewThInterface r;
 
-    /* Create the desktop Window */
-    r.winMain = CreateWindow (szClassName,                                      /* Class name */
-                              _T("Newth Http Server"),                          /* Title Text */
-                              WS_OVERLAPPED | WS_MINIMIZEBOX | WS_SYSMENU,      /* Fixed size window */
-                              CW_USEDEFAULT,                                    /* Windows decides the position */
-                              CW_USEDEFAULT,                                    /* where the window ends up on the screen */
-                              320,                                              /* The programs width */
-                              240,                                              /* and height in pixels */
-                              HWND_DESKTOP,                                     /* The window is a child-window to desktop */
-                              NULL,                                             /* No menu */
-                              inst,                                             /* Program Instance handler */
-                              NULL                                              /* No Window Creation data */
+    /* Create the 'New Server' desktop window */
+    r.winMain = CreateWindow(szClassName,                                      /* Class name */
+                             _T("New Server"),                                 /* Title Text */
+                             WS_OVERLAPPED | WS_MINIMIZEBOX | WS_SYSMENU,      /* Fixed size window */
+                             CW_USEDEFAULT,                                    /* Windows decides the position */
+                             CW_USEDEFAULT,                                    /* where the window ends up on the screen */
+                             320,                                              /* The programs width */
+                             240,                                              /* and height in pixels */
+                             HWND_DESKTOP,                                     /* The window is a child-window to desktop */
+                             NULL,                                             /* No menu */
+                             inst,                                             /* Program Instance handler */
+                             NULL                                              /* No Window Creation data */
     );
 
     /* Create the path entry & button widgets */
     CreateWindow(_T("BUTTON"), _T("Root Path:"), NORMAL_GROUPBOX, 5, 5, 300, 53, r.winMain, 0, inst, 0);
-    r.entryPath = CreateWindow(_T("EDIT"), _T(""), NORMAL_ENTRY, 10, 27, 209, 23, r.winMain, 0, inst, 0);
-    r.btnBrowse = CreateWindow(_T("BUTTON"), _T("&Browse..."), NORMAL_BUTTON, 222, 27, 77, 23, r.winMain,
-                               (HMENU) BTN_BROWSE, inst, 0);
+    CreateWindow(_T("EDIT"), _T(""), NORMAL_ENTRY, 10, 27, 209, 23, r.winMain, (HMENU)EDT_ROOTPATH, inst, 0);
+    CreateWindow(_T("BUTTON"), _T("&Browse..."), NORMAL_BUTTON, 222, 27, 77, 23, r.winMain, (HMENU)BTN_BROWSE, inst, 0);
 
     /* Create listen port radio buttons */
     CreateWindow(_T("BUTTON"), _T("Listen Port:"), NORMAL_GROUPBOX, 5, 58, 300, 94, r.winMain, 0, inst, 0);
@@ -63,13 +63,11 @@ NewThInterface NewThCreate(HINSTANCE inst, int show) {
     r.port.http = CreateWindow(_T("BUTTON"), _T("&HTTP Port"), NORMAL_RADIO, 10, 104, 290, 17, r.winMain, 0, inst, 0);
     r.port.custom = CreateWindow(_T("BUTTON"), _T("&Custom:"), NORMAL_RADIO, 10, 128, 85, 17, r.winMain, 0, inst, 0);
 
-    r.port.port = CreateWindow(_T("EDIT"), _T(""), NORMAL_ENTRY, 85, 125, 215, 23, r.winMain, 0, inst, 0);
+    r.port.port = CreateWindow(_T("EDIT"), _T("80,8080-8090,0"), NORMAL_ENTRY, 85, 125, 215, 23, r.winMain, 0, inst, 0);
 
     /* Create the Start/Stop server button */
-    r.labelPath = CreateWindow(_T("STATIC"), _T("Stopped"), NORMAL_LABEL, 5, 185, 235, 23, r.winMain, 0, inst, 0);
-
-    r.btnRun = CreateWindow(_T("BUTTON"), _T("&Start"), NORMAL_BUTTON, 229, 185, 75, 23, r.winMain, (HMENU) BTN_START,
-                            inst, 0);
+    CreateWindow(_T("STATIC"), _T("Stopped"), NORMAL_LABEL, 5, 185, 235, 23, r.winMain, 0, inst, 0);
+    CreateWindow(_T("BUTTON"), _T("&Start"), NORMAL_BUTTON, 229, 185, 75, 23, r.winMain, (HMENU)BTN_START, inst, 0);
 
     /* Make the window visible on the screen */
     ShowWindow(r.winMain, show);
@@ -77,7 +75,35 @@ NewThInterface NewThCreate(HINSTANCE inst, int show) {
     return r;
 }
 
-/*  This function is called by the Windows function DispatchMessage()  */
+static int CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData) {
+    if (uMsg == BFFM_INITIALIZED) {
+        SendMessage(hwnd, BFFM_SETSELECTION, TRUE, lpData);
+    }
+
+    return 0;
+}
+
+void BrowseForPath(const char *currentPath, char *path) {
+    BROWSEINFO bi = {0};
+    bi.lpszTitle = ("Browse for Root Path...");
+    bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE | BIF_NONEWFOLDERBUTTON | BIF_EDITBOX;
+    bi.lpfn = BrowseCallbackProc;
+    bi.lParam = (LPARAM) currentPath;
+
+    LPITEMIDLIST pItemIdList = SHBrowseForFolder(&bi);
+
+    if (pItemIdList != 0) {
+        /* Get the name of the folder and put it in path */
+        HRESULT hr = SHGetPathFromIDList(pItemIdList, path);
+
+        /* Free memory used */
+        CoTaskMemFree(pItemIdList);
+    } else
+        path[0] = '\0';
+
+}
+
+/* This function is called by the Windows function DispatchMessage() */
 LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
         /* TODO: CoInitialize() and SHBrowseForFolder() */
@@ -85,11 +111,17 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
             switch (LOWORD(wParam)) {
                 /* TODO: Useful code here */
                 case BTN_START:
-                    MessageBox(hwnd, "Foo", "Foo", 0);
+                    MessageBox(hwnd, "Not Yet Implemented", "Implement Me!", MB_ICONEXCLAMATION);
                     break;
-                case BTN_BROWSE:
-                    MessageBox(hwnd, "Bar", "Bar", 0);
+                case BTN_BROWSE: {
+                    char browsePath[MAX_PATH];
+                    BrowseForPath("", browsePath);
+                    if (strlen(browsePath)) {
+                        HWND rootPathEntry = GetDlgItem(hwnd, EDT_ROOTPATH);
+                        SetWindowText(rootPathEntry, browsePath);
+                    }
                     break;
+                }
             }
             break;
         }
@@ -105,7 +137,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 
 int WINAPI WinMain(HINSTANCE hThisInstance, HINSTANCE hPrevInstance, LPSTR lpszArgument, int nCmdShow) {
     MSG messages;            /* Here messages to the application are saved */
-    WNDCLASSEX winClass;        /* Data structure for the window class */
+    WNDCLASSEX winClass;     /* Data structure for the window class */
     NewThInterface newTh;
 
     /* The Window structure */

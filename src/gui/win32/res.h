@@ -23,6 +23,8 @@
 
 #define BTN_BROWSE (101)
 
+#define EDT_ROOTPATH (102)
+
 #pragma endregion
 
 #endif /* NEW_TH_GUI_RES_H */
