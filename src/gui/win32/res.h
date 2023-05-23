@@ -1,6 +1,8 @@
 #ifndef NEW_TH_GUI_RES_H
 #define NEW_TH_GUI_RES_H
 
+#pragma warning(disable:4068)
+
 #pragma region Normal Widget Types
 
 #define NORMAL_WIDGET (WS_VISIBLE | WS_CHILD)
@@ -26,5 +28,19 @@
 #define EDT_ROOTPATH (102)
 
 #pragma endregion
+
+#pragma region Legacy toolchain helpers
+
+#ifndef BIF_NEWDIALOGSTYLE
+#define BIF_NEWDIALOGSTYLE 0x00000040
+#endif
+
+#ifndef BIF_NONEWFOLDERBUTTON
+#define BIF_NONEWFOLDERBUTTON 0x00000200
+#endif
+
+#pragma endregion
+
+HFONT hfDefault;
 
 #endif /* NEW_TH_GUI_RES_H */

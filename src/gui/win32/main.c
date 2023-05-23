@@ -32,6 +32,12 @@ typedef struct NewThInterface {
 /* Make the class name into a global variable */
 TCHAR szClassName[] = _T("NewThInterface");
 
+static BOOL CALLBACK EnumChildProc(HWND hWnd, LPARAM lParam) {
+    HFONT hFont = *(HFONT *) lParam;
+    SendMessage(hWnd, WM_SETFONT, (WPARAM) hFont, MAKELPARAM(TRUE, 0));
+    return TRUE;
+}
+
 NewThInterface NewThCreate(HINSTANCE inst, int show) {
     NewThInterface r;
 
@@ -51,8 +57,9 @@ NewThInterface NewThCreate(HINSTANCE inst, int show) {
 
     /* Create the path entry & button widgets */
     CreateWindow(_T("BUTTON"), _T("Root Path:"), NORMAL_GROUPBOX, 5, 5, 300, 53, r.winMain, 0, inst, 0);
-    CreateWindow(_T("EDIT"), _T(""), NORMAL_ENTRY, 10, 27, 209, 23, r.winMain, (HMENU)EDT_ROOTPATH, inst, 0);
-    CreateWindow(_T("BUTTON"), _T("&Browse..."), NORMAL_BUTTON, 222, 27, 77, 23, r.winMain, (HMENU)BTN_BROWSE, inst, 0);
+    CreateWindow(_T("EDIT"), _T(""), NORMAL_ENTRY, 10, 27, 209, 23, r.winMain, (HMENU) EDT_ROOTPATH, inst, 0);
+    CreateWindow(_T("BUTTON"), _T("&Browse..."), NORMAL_BUTTON, 222, 27, 77, 23, r.winMain, (HMENU) BTN_BROWSE, inst,
+                 0);
 
     /* Create listen port radio buttons */
     CreateWindow(_T("BUTTON"), _T("Listen Port:"), NORMAL_GROUPBOX, 5, 58, 300, 94, r.winMain, 0, inst, 0);
@@ -67,10 +74,13 @@ NewThInterface NewThCreate(HINSTANCE inst, int show) {
 
     /* Create the Start/Stop server button */
     CreateWindow(_T("STATIC"), _T("Stopped"), NORMAL_LABEL, 5, 185, 235, 23, r.winMain, 0, inst, 0);
-    CreateWindow(_T("BUTTON"), _T("&Start"), NORMAL_BUTTON, 229, 185, 75, 23, r.winMain, (HMENU)BTN_START, inst, 0);
+    CreateWindow(_T("BUTTON"), _T("&Start"), NORMAL_BUTTON, 229, 185, 75, 23, r.winMain, (HMENU) BTN_START, inst, 0);
 
     /* Make the window visible on the screen */
     ShowWindow(r.winMain, show);
+
+    /* Setup system font on all children widgets */
+    EnumChildWindows(r.winMain, EnumChildProc, (LPARAM) &hfDefault);
 
     return r;
 }
@@ -83,42 +93,52 @@ static int CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPAR
     return 0;
 }
 
-void BrowseForPath(const char *currentPath, char *path) {
+void BrowseForPath(const char *currentPath, char *returnPath) {
     BROWSEINFO bi = {0};
+    LPITEMIDLIST pItemIdList;
+
     bi.lpszTitle = ("Browse for Root Path...");
     bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE | BIF_NONEWFOLDERBUTTON | BIF_EDITBOX;
     bi.lpfn = BrowseCallbackProc;
     bi.lParam = (LPARAM) currentPath;
 
-    LPITEMIDLIST pItemIdList = SHBrowseForFolder(&bi);
+    pItemIdList = SHBrowseForFolder(&bi);
 
     if (pItemIdList != 0) {
-        /* Get the name of the folder and put it in path */
-        HRESULT hr = SHGetPathFromIDList(pItemIdList, path);
+        /* Get the name of the folder and put it in returnPath */
+        HRESULT hr = SHGetPathFromIDList(pItemIdList, returnPath);
 
-        /* Free memory used */
+        /* Free co-task memory */
         CoTaskMemFree(pItemIdList);
-    } else
-        path[0] = '\0';
 
+        if (hr)
+            return;
+
+        /* Fallthrough */
+    }
+
+    returnPath[0] = '\0';
 }
 
 /* This function is called by the Windows function DispatchMessage() */
 LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
-        /* TODO: CoInitialize() and SHBrowseForFolder() */
         case WM_COMMAND: {
             switch (LOWORD(wParam)) {
-                /* TODO: Useful code here */
                 case BTN_START:
+                    /* TODO: Useful code here */
                     MessageBox(hwnd, "Not Yet Implemented", "Implement Me!", MB_ICONEXCLAMATION);
                     break;
                 case BTN_BROWSE: {
                     char browsePath[MAX_PATH];
-                    BrowseForPath("", browsePath);
-                    if (strlen(browsePath)) {
-                        HWND rootPathEntry = GetDlgItem(hwnd, EDT_ROOTPATH);
-                        SetWindowText(rootPathEntry, browsePath);
+                    HWND rootPathEntry = GetDlgItem(hwnd, EDT_ROOTPATH);
+                    if (rootPathEntry) {
+                        GetWindowText(rootPathEntry, browsePath, MAX_PATH);
+                        BrowseForPath(browsePath, browsePath);
+
+                        if (strlen(browsePath)) {
+                            SetWindowText(rootPathEntry, browsePath);
+                        }
                     }
                     break;
                 }
@@ -139,6 +159,13 @@ int WINAPI WinMain(HINSTANCE hThisInstance, HINSTANCE hPrevInstance, LPSTR lpszA
     MSG messages;            /* Here messages to the application are saved */
     WNDCLASSEX winClass;     /* Data structure for the window class */
     NewThInterface newTh;
+    NONCLIENTMETRICS ncm;
+
+    ZeroMemory(&ncm, sizeof(NONCLIENTMETRICS));
+    ncm.cbSize = sizeof(NONCLIENTMETRICS);
+
+    SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICS), &ncm, FALSE);
+    hfDefault = CreateFontIndirect(&ncm.lfMessageFont);
 
     /* The Window structure */
     winClass.hInstance = hThisInstance;
