@@ -43,6 +43,7 @@
 		<Unit filename="../src/gui/win32/main.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="../src/gui/win32/res.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />

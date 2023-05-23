@@ -57,9 +57,8 @@ NewThInterface NewThCreate(HINSTANCE inst, int show) {
 
     /* Create the path entry & button widgets */
     CreateWindow(_T("BUTTON"), _T("Root Path:"), NORMAL_GROUPBOX, 5, 5, 300, 53, r.winMain, 0, inst, 0);
-    CreateWindow(_T("EDIT"), _T(""), NORMAL_ENTRY, 10, 27, 209, 23, r.winMain, (HMENU) EDT_ROOTPATH, inst, 0);
-    CreateWindow(_T("BUTTON"), _T("&Browse..."), NORMAL_BUTTON, 222, 27, 77, 23, r.winMain, (HMENU) BTN_BROWSE, inst,
-                 0);
+    CreateWindowEx(WS_EX_CLIENTEDGE, _T("EDIT"), _T(""), NORMAL_ENTRY, 10, 27, 209, 23, r.winMain, (HMENU) EDT_ROOTPATH, inst, 0);
+    CreateWindow(_T("BUTTON"), _T("&Browse..."), NORMAL_BUTTON, 222, 27, 77, 23, r.winMain, (HMENU) BTN_BROWSE, inst, 0);
 
     /* Create listen port radio buttons */
     CreateWindow(_T("BUTTON"), _T("Listen Port:"), NORMAL_GROUPBOX, 5, 58, 300, 94, r.winMain, 0, inst, 0);
@@ -70,7 +69,7 @@ NewThInterface NewThCreate(HINSTANCE inst, int show) {
     r.port.http = CreateWindow(_T("BUTTON"), _T("&HTTP Port"), NORMAL_RADIO, 10, 104, 290, 17, r.winMain, 0, inst, 0);
     r.port.custom = CreateWindow(_T("BUTTON"), _T("&Custom:"), NORMAL_RADIO, 10, 128, 85, 17, r.winMain, 0, inst, 0);
 
-    r.port.port = CreateWindow(_T("EDIT"), _T("80,8080-8090,0"), NORMAL_ENTRY, 85, 125, 215, 23, r.winMain, 0, inst, 0);
+    r.port.port = CreateWindowEx(WS_EX_CLIENTEDGE, _T("EDIT"), _T("80,8080-8090,0"), NORMAL_ENTRY, 85, 125, 215, 23, r.winMain, 0, inst, 0);
 
     /* Create the Start/Stop server button */
     CreateWindow(_T("STATIC"), _T("Stopped"), NORMAL_LABEL, 5, 185, 235, 23, r.winMain, 0, inst, 0);
@@ -183,7 +182,7 @@ int WINAPI WinMain(HINSTANCE hThisInstance, HINSTANCE hPrevInstance, LPSTR lpszA
     winClass.cbWndExtra = 0;      /* structure or the window instance */
 
     /* Use Windows's default color as the background of the window */
-    winClass.hbrBackground = (HBRUSH) COLOR_BACKGROUND;
+    winClass.hbrBackground = GetSysColorBrush(COLOR_3DFACE);
 
     /* Register the window class, and if it fails quit the program */
     if (!RegisterClassEx(&winClass))

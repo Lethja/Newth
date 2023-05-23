@@ -96,6 +96,10 @@ SOURCE=..\src\gui\win32\main.c
 # Begin Group "Header Files"
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
+# Begin Source File
+
+SOURCE=..\src\gui\win32\res.h
+# End Source File
 # End Group
 # Begin Group "Resource Files"
 
