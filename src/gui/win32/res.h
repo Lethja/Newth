@@ -3,6 +3,8 @@
 
 #pragma warning(disable:4068)
 
+#include <windows.h>
+
 #pragma region Normal Widget Types
 
 #define NORMAL_WIDGET (WS_VISIBLE | WS_CHILD)

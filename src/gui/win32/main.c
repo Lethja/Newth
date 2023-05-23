@@ -7,27 +7,10 @@
 #include <shlobj.h>
 #include <tchar.h>
 #include <windows.h>
+
 #include "res.h"
 
 /* TODO: Add a manifest to enable visual styles */
-
-typedef struct RadioPortButtons {
-    HWND ephemeral;
-    HWND http;
-    HWND custom;
-    HWND port;
-} PortRadio;
-
-typedef struct NewThInterface {
-    HWND winMain;
-    HWND btnRun;
-    HWND btnBrowse;
-    HWND entryPath;
-    HWND labelPath;
-    HWND listAdapter;
-    HWND listConnections;
-    PortRadio port;
-} NewThInterface;
 
 /* Make the class name into a global variable */
 TCHAR szClassName[] = _T("NewThInterface");
@@ -38,50 +21,50 @@ static BOOL CALLBACK EnumChildProc(HWND hWnd, LPARAM lParam) {
     return TRUE;
 }
 
-NewThInterface NewThCreate(HINSTANCE inst, int show) {
-    NewThInterface r;
+void createNewServerWindow(HINSTANCE inst, int show) {
+    HWND window, misc;
 
     /* Create the 'New Server' desktop window */
-    r.winMain = CreateWindow(szClassName,                                      /* Class name */
-                             _T("New Server"),                                 /* Title Text */
-                             WS_OVERLAPPED | WS_MINIMIZEBOX | WS_SYSMENU,      /* Fixed size window */
-                             CW_USEDEFAULT,                                    /* Windows decides the position */
-                             CW_USEDEFAULT,                                    /* where the window ends up on the screen */
-                             320,                                              /* The programs width */
-                             240,                                              /* and height in pixels */
-                             HWND_DESKTOP,                                     /* The window is a child-window to desktop */
-                             NULL,                                             /* No menu */
-                             inst,                                             /* Program Instance handler */
-                             NULL                                              /* No Window Creation data */
+    window = CreateWindow(szClassName,                                      /* Class name */
+                          _T("New Server"),                                 /* Title Text */
+                          WS_OVERLAPPED | WS_MINIMIZEBOX | WS_SYSMENU,      /* Fixed size window */
+                          CW_USEDEFAULT,                                    /* Windows decides the position */
+                          CW_USEDEFAULT,                                    /* where the window ends up on the screen */
+                          320,                                              /* The programs width */
+                          240,                                              /* and height in pixels */
+                          HWND_DESKTOP,                                     /* The window is a child-window to desktop */
+                          NULL,                                             /* No menu */
+                          inst,                                             /* Program Instance handler */
+                          NULL                                              /* No Window Creation data */
     );
 
     /* Create the path entry & button widgets */
-    CreateWindow(_T("BUTTON"), _T("Root Path:"), NORMAL_GROUPBOX, 5, 5, 300, 53, r.winMain, 0, inst, 0);
-    CreateWindowEx(WS_EX_CLIENTEDGE, _T("EDIT"), _T(""), NORMAL_ENTRY, 10, 27, 209, 23, r.winMain, (HMENU) EDT_ROOTPATH, inst, 0);
-    CreateWindow(_T("BUTTON"), _T("&Browse..."), NORMAL_BUTTON, 222, 27, 77, 23, r.winMain, (HMENU) BTN_BROWSE, inst, 0);
+    CreateWindow(_T("BUTTON"), _T("Root Path:"), NORMAL_GROUPBOX, 5, 5, 300, 53, window, 0, inst, 0);
+    CreateWindowEx(WS_EX_CLIENTEDGE, _T("EDIT"), _T(""), NORMAL_ENTRY, 10, 27, 209, 23, window, (HMENU) EDT_ROOTPATH,
+                   inst, 0);
+    CreateWindow(_T("BUTTON"), _T("&Browse..."), NORMAL_BUTTON, 222, 27, 77, 23, window, (HMENU) BTN_BROWSE, inst, 0);
 
     /* Create listen port radio buttons */
-    CreateWindow(_T("BUTTON"), _T("Listen Port:"), NORMAL_GROUPBOX, 5, 58, 300, 94, r.winMain, 0, inst, 0);
-    r.port.ephemeral = CreateWindow(_T("BUTTON"), _T("&Ephemeral Port"), NORMAL_RADIO | WS_GROUP, 10, 80, 290, 17,
-                                    r.winMain, 0, inst, 0);
-    SendMessage(r.port.ephemeral, BM_SETCHECK, BST_CHECKED, 0);
+    CreateWindow(_T("BUTTON"), _T("Listen Port:"), NORMAL_GROUPBOX, 5, 58, 300, 94, window, 0, inst, 0);
+    misc = CreateWindow(_T("BUTTON"), _T("&Ephemeral Port"), NORMAL_RADIO | WS_GROUP, 10, 80, 290, 17, window, 0, inst,
+                        0);
+    SendMessage(misc, BM_SETCHECK, BST_CHECKED, 0);
 
-    r.port.http = CreateWindow(_T("BUTTON"), _T("&HTTP Port"), NORMAL_RADIO, 10, 104, 290, 17, r.winMain, 0, inst, 0);
-    r.port.custom = CreateWindow(_T("BUTTON"), _T("&Custom:"), NORMAL_RADIO, 10, 128, 85, 17, r.winMain, 0, inst, 0);
+    CreateWindow(_T("BUTTON"), _T("&HTTP Port"), NORMAL_RADIO, 10, 104, 290, 17, window, 0, inst, 0);
+    CreateWindow(_T("BUTTON"), _T("&Custom:"), NORMAL_RADIO, 10, 128, 85, 17, window, 0, inst, 0);
 
-    r.port.port = CreateWindowEx(WS_EX_CLIENTEDGE, _T("EDIT"), _T("80,8080-8090,0"), NORMAL_ENTRY, 85, 125, 215, 23, r.winMain, 0, inst, 0);
+    CreateWindowEx(WS_EX_CLIENTEDGE, _T("EDIT"), _T("80,8080-8090,0"), NORMAL_ENTRY, 85, 125, 215, 23, window, 0, inst,
+                   0);
 
     /* Create the Start/Stop server button */
-    CreateWindow(_T("STATIC"), _T("Stopped"), NORMAL_LABEL, 5, 185, 235, 23, r.winMain, 0, inst, 0);
-    CreateWindow(_T("BUTTON"), _T("&Start"), NORMAL_BUTTON, 229, 185, 75, 23, r.winMain, (HMENU) BTN_START, inst, 0);
+    CreateWindow(_T("STATIC"), _T("Stopped"), NORMAL_LABEL, 5, 185, 235, 23, window, 0, inst, 0);
+    CreateWindow(_T("BUTTON"), _T("&Start"), NORMAL_BUTTON, 229, 185, 75, 23, window, (HMENU) BTN_START, inst, 0);
 
     /* Make the window visible on the screen */
-    ShowWindow(r.winMain, show);
+    ShowWindow(window, show);
 
     /* Setup system font on all children widgets */
-    EnumChildWindows(r.winMain, EnumChildProc, (LPARAM) &hfDefault);
-
-    return r;
+    EnumChildWindows(window, EnumChildProc, (LPARAM) &hfDefault);
 }
 
 static int CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData) {
@@ -157,7 +140,6 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 int WINAPI WinMain(HINSTANCE hThisInstance, HINSTANCE hPrevInstance, LPSTR lpszArgument, int nCmdShow) {
     MSG messages;            /* Here messages to the application are saved */
     WNDCLASSEX winClass;     /* Data structure for the window class */
-    NewThInterface newTh;
     NONCLIENTMETRICS ncm;
 
     ZeroMemory(&ncm, sizeof(NONCLIENTMETRICS));
@@ -189,7 +171,7 @@ int WINAPI WinMain(HINSTANCE hThisInstance, HINSTANCE hPrevInstance, LPSTR lpszA
         return 0;
 
     /* The class is registered, create the program */
-    newTh = NewThCreate(hThisInstance, nCmdShow);
+    createNewServerWindow(hThisInstance, nCmdShow);
 
     /* Run the message loop. It will run until GetMessage() returns 0 */
     while (GetMessage(&messages, NULL, 0, 0)) {
@@ -198,6 +180,8 @@ int WINAPI WinMain(HINSTANCE hThisInstance, HINSTANCE hPrevInstance, LPSTR lpszA
         /* Send message to WindowProcedure */
         DispatchMessage(&messages);
     }
+
+    DeleteObject(hfDefault);
 
     /* The program return-value is 0 - The value that PostQuitMessage() gave */
     return messages.wParam;
