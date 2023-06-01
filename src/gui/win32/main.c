@@ -26,12 +26,12 @@ void createNewServerWindow(HINSTANCE inst, int show) {
 
     /* Create the 'New Server' desktop window */
     window = CreateWindow(szClassName,                                      /* Class name */
-                          _T("New Server"),                                 /* Title Text */
+                          _T("Host New Server"),                            /* Title Text */
                           WS_OVERLAPPED | WS_MINIMIZEBOX | WS_SYSMENU,      /* Fixed size window */
                           CW_USEDEFAULT,                                    /* Windows decides the position */
                           CW_USEDEFAULT,                                    /* where the window ends up on the screen */
-                          320,                                              /* The programs width */
-                          240,                                              /* and height in pixels */
+                          320 + GetSystemMetrics(SM_CXBORDER),              /* The programs width */
+                          192 + GetSystemMetrics(SM_CYCAPTION),             /* and height in pixels */
                           HWND_DESKTOP,                                     /* The window is a child-window to desktop */
                           NULL,                                             /* No menu */
                           inst,                                             /* Program Instance handler */
@@ -39,13 +39,13 @@ void createNewServerWindow(HINSTANCE inst, int show) {
     );
 
     /* Create the path entry & button widgets */
-    CreateWindow(_T("BUTTON"), _T("Root Path:"), NORMAL_GROUPBOX, 5, 5, 300, 53, window, 0, inst, 0);
-    CreateWindowEx(WS_EX_CLIENTEDGE, _T("EDIT"), _T(""), NORMAL_ENTRY, 10, 27, 209, 23, window, (HMENU) EDT_ROOTPATH,
+    CreateWindow(_T("BUTTON"), _T("Root Path:"), NORMAL_GROUPBOX, 5, 5, 305, 53, window, 0, inst, 0);
+    CreateWindowEx(WS_EX_CLIENTEDGE, _T("EDIT"), _T(""), NORMAL_ENTRY, 10, 27, 210, 23, window, (HMENU) EDT_ROOTPATH,
                    inst, 0);
-    CreateWindow(_T("BUTTON"), _T("&Browse..."), NORMAL_BUTTON, 222, 27, 77, 23, window, (HMENU) BTN_BROWSE, inst, 0);
+    CreateWindow(_T("BUTTON"), _T("&Browse..."), NORMAL_BUTTON, 227, 27, 77, 23, window, (HMENU) BTN_BROWSE, inst, 0);
 
     /* Create listen port radio buttons */
-    CreateWindow(_T("BUTTON"), _T("Listen Port:"), NORMAL_GROUPBOX, 5, 58, 300, 94, window, 0, inst, 0);
+    CreateWindow(_T("BUTTON"), _T("Listen Port:"), NORMAL_GROUPBOX, 5, 58, 305, 94, window, 0, inst, 0);
     misc = CreateWindow(_T("BUTTON"), _T("&Ephemeral Port"), NORMAL_RADIO | WS_GROUP, 10, 80, 290, 17, window, 0, inst,
                         0);
     SendMessage(misc, BM_SETCHECK, BST_CHECKED, 0);
@@ -53,12 +53,12 @@ void createNewServerWindow(HINSTANCE inst, int show) {
     CreateWindow(_T("BUTTON"), _T("&HTTP Port"), NORMAL_RADIO, 10, 104, 290, 17, window, 0, inst, 0);
     CreateWindow(_T("BUTTON"), _T("&Custom:"), NORMAL_RADIO, 10, 128, 85, 17, window, 0, inst, 0);
 
-    CreateWindowEx(WS_EX_CLIENTEDGE, _T("EDIT"), _T("80,8080-8090,0"), NORMAL_ENTRY, 85, 125, 215, 23, window, 0, inst,
+    CreateWindowEx(WS_EX_CLIENTEDGE, _T("EDIT"), _T("80,8080-8090,0"), NORMAL_ENTRY, 85, 125, 220, 23, window, 0, inst,
                    0);
 
     /* Create the Start/Stop server button */
-    CreateWindow(_T("STATIC"), _T("Stopped"), NORMAL_LABEL, 5, 185, 235, 23, window, 0, inst, 0);
-    CreateWindow(_T("BUTTON"), _T("&Start"), NORMAL_BUTTON, 229, 185, 75, 23, window, (HMENU) BTN_START, inst, 0);
+    /* CreateWindow(_T("STATIC"), _T("Stopped"), NORMAL_LABEL, 5, 158, 235, 23, window, 0, inst, 0); */
+    CreateWindow(_T("BUTTON"), _T("&Host"), NORMAL_BUTTON, 235, 158, 75, 23, window, (HMENU) BTN_START, inst, 0);
 
     /* Make the window visible on the screen */
     ShowWindow(window, show);
