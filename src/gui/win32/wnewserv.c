@@ -39,11 +39,47 @@ LRESULT CALLBACK newServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam,
     return 0;
 }
 
+typedef (__stdcall *GetFolderPath)(HWND, int, HANDLE, DWORD, LPSTR);
+
+#ifndef UNICODE
+#define FOLDER_FUNCTION "SHGetFolderPathA"
+#else
+#define FOLDER_FUNCTION "SHGetFolderPathW"
+#endif
+
 static void SetDesktopPath(HWND window) {
-    LPSTR path = malloc(MAX_PATH);
-    SHGetFolderPath(NULL, CSIDL_DESKTOP, NULL, SHGFP_TYPE_CURRENT, path);
+    LPSTR path = NULL;
+
+#pragma region Modern System Function Call
+
+    HMODULE module = LoadLibrary("shell32.dll");
+    if (module) {
+        GetFolderPath FolderPathFunc = (GetFolderPath) GetProcAddress(module, FOLDER_FUNCTION);
+        if (FolderPathFunc) {
+            path = malloc(MAX_PATH);
+            FolderPathFunc(NULL, CSIDL_DESKTOP, NULL, 0, path);
+            if (path[0])
+                SetWindowText(GetDlgItem(window, EDT_ROOTPATH), path);
+
+            free(path);
+            FreeLibrary(module);
+            return;
+        }
+        FreeLibrary(module);
+    }
+
+#pragma endregion
+
+#pragma region Fallback for DOS based Windows
+
+    path = malloc(MAX_PATH);
+    GetWindowsDirectory(path, MAX_PATH);
+    /* TODO: Is this path name the same in all languages? */
+    strncat(path, "\\Desktop", MAX_PATH);
     SetWindowText(GetDlgItem(window, EDT_ROOTPATH), path);
     free(path);
+
+#pragma endregion
 }
 
 void newServerWindowCreate(WNDCLASSEX *class, HINSTANCE inst, int show) {

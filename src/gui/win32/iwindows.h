@@ -3,6 +3,8 @@
 
 #include <windows.h>
 
+#include "res.h"
+
 void iWindowBrowseFolder(const char *currentPath, char *returnPath, LPCSTR title);
 
 WNDCLASSEX iWindowCreateClass(HINSTANCE hThisInstance, const TCHAR className[], WNDPROC windowProcedure);
