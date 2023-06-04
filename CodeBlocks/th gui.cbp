@@ -42,6 +42,10 @@
 			<Add library="comctl32" />
 			<Add library="ole32" />
 		</Linker>
+		<Unit filename="../src/gui/win32/iwindows.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/gui/win32/iwindows.h" />
 		<Unit filename="../src/gui/win32/main.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -49,6 +53,10 @@
 		<Unit filename="../src/gui/win32/res.rc">
 			<Option compilerVar="WINDRES" />
 		</Unit>
+		<Unit filename="../src/gui/win32/wnewserv.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/gui/win32/wnewserv.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />

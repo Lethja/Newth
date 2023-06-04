@@ -90,7 +90,15 @@ LINK32=link.exe
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
+SOURCE=..\src\gui\win32\iwindows.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\gui\win32\main.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\gui\win32\wnewserv.c
 # End Source File
 # End Group
 # Begin Group "Header Files"
@@ -98,7 +106,15 @@ SOURCE=..\src\gui\win32\main.c
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
+SOURCE=..\src\gui\win32\iwindows.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\gui\win32\res.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\gui\win32\wnewserv.h
 # End Source File
 # End Group
 # Begin Group "Resource Files"
@@ -109,5 +125,9 @@ SOURCE=..\src\gui\win32\res.h
 SOURCE=..\src\gui\win32\res.rc
 # End Source File
 # End Group
+# Begin Source File
+
+SOURCE=..\src\gui\win32\vsxp.xml
+# End Source File
 # End Target
 # End Project

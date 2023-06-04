@@ -39,7 +39,7 @@ LRESULT CALLBACK newServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam,
     return 0;
 }
 
-typedef (__stdcall *GetFolderPath)(HWND, int, HANDLE, DWORD, LPSTR);
+typedef HRESULT (__stdcall *GetFolderPath)(HWND, int, HANDLE, DWORD, LPSTR);
 
 #ifndef UNICODE
 #define FOLDER_FUNCTION "SHGetFolderPathA"
