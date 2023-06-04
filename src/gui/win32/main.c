@@ -9,17 +9,19 @@
 
 #include "iwindows.h"
 #include "wnewserv.h"
+#include "wrunserv.h"
 
 int WINAPI WinMain(HINSTANCE hThisInstance, HINSTANCE hPrevInstance, LPSTR lpszArgument, int nCmdShow) {
     MSG messages;            /* Here messages to the application are saved */
-    WNDCLASSEX winClass;     /* Data structure for the window class */
+    WNDCLASSEX newWindowClass, runWindowClass;
 
     iWindowSetupSystemFontStyle();
 
-    winClass = iWindowCreateClass(hThisInstance, _T("ThNewServer"), newServerWindowCallback);
+    newWindowClass = iWindowCreateClass(hThisInstance, _T("ThNewServer"), newServerWindowCallback);
+    runWindowClass = iWindowCreateClass(hThisInstance, _T("ThRunServer"), runServerWindowCallback);
 
-    /* The class is registered, create the program */
-    newServerWindowCreate(&winClass, hThisInstance, nCmdShow);
+    newServerWindowCreate(&newWindowClass, hThisInstance, nCmdShow);
+    /* runServerWindowCreate(&runWindowClass, hThisInstance, nCmdShow); */ /* Uncomment to test */
 
     /* Run the message loop. It will run until GetMessage() returns 0 */
     while (GetMessage(&messages, NULL, 0, 0)) {
