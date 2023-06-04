@@ -35,7 +35,7 @@ target_compile_definitions(dl PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
 target_compile_definitions(th PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
 
 if (WIN32)
-    add_executable(th-gui ../src/gui/win32/main.c ../src/gui/win32/res.h)
+    add_executable(th-gui ../src/gui/win32/main.c ../src/gui/win32/res.h ../src/gui/win32/wnewserv.c ../src/gui/win32/wnewserv.h ../src/gui/win32/iwindows.c ../src/gui/win32/iwindows.h)
     target_compile_definitions(th-gui PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
     if (PORTABLE_WIN32)
         target_compile_definitions(th PUBLIC PORTABLE_WIN32=1)

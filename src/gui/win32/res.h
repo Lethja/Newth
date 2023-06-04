@@ -43,6 +43,4 @@
 
 #pragma endregion
 
-HFONT hfDefault;
-
 #endif /* NEW_TH_GUI_RES_H */
