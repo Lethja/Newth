@@ -9,29 +9,28 @@
 #include <tchar.h>
 #include <windows.h>
 
-void setupTreeAdapterInformation(char *protocol, sa_family_t family, unsigned short port, HWND hwnd) {
-    AdapterAddressArray *adapters = platformGetAdapterInformation(family);
+void setupTreeAdapterInformation(char *protocol, sa_family_t family, unsigned short port, HWND treeView) {
+    AdapterAddressArray *adapters = NULL /* platformGetAdapterInformation(family) */;
     size_t i, j;
 
-    TV_INSERTSTRUCT treeInsert;
+    TVINSERTSTRUCT treeInsert = {0};
     HTREEITEM adapterItem, addressItem = adapterItem = NULL;
-    HWND treeView = GetDlgItem(hwnd, TV_ADAPTERS);
 
-    ZeroMemory(&treeInsert, sizeof(TV_INSERTSTRUCT));
     treeInsert.item.cchTextMax = MAX_PATH;
+    treeInsert.item.mask = TVIF_TEXT | TVIF_SELECTEDIMAGE;
+    treeInsert.item.iImage = 0, treeInsert.item.iSelectedImage = 1;
 
     /* if (!adapters) */
     if (1) {
-        char str[MAX_PATH];
-        treeInsert.hParent = NULL, treeInsert.hInsertAfter = TVI_ROOT;
+        char str[MAX_PATH] = "Unknown Adapter";
+        treeInsert.hParent = TVI_ROOT, treeInsert.hInsertAfter = TVI_LAST;
         treeInsert.item.mask = TVIF_TEXT;
-        treeInsert.item.pszText = "Unknown Adapter";
+        treeInsert.item.pszText = str;
         adapterItem = (HTREEITEM) SendMessage(treeView, TVM_INSERTITEM, 0, (LPARAM) &treeInsert);
 
         sprintf(str, "Unknown Address:%d", port);
-        MessageBox(hwnd, str, str, 0);
         treeInsert.hParent = adapterItem;
-        treeInsert.hInsertAfter = addressItem;
+        treeInsert.hInsertAfter = adapterItem;
         treeInsert.item.pszText = str;
         addressItem = (HTREEITEM) SendMessage(treeView, TVM_INSERTITEM, 0, (LPARAM) &treeInsert);
         return;
@@ -96,14 +95,16 @@ void runServerWindowCreate(WNDCLASSEX *class, HINSTANCE inst, int show) {
     misc = CreateWindow(_T("BUTTON"), _T("Network Adapters:"), NORMAL_GROUPBOX, 5, miscRect.bottom + 5,
                         winRect.right - 10, winRect.bottom - miscRect.bottom - 10, window, 0, inst, 0);
 
-    GetClientRect(misc, &miscRect);
-
-    CreateWindowEx(WS_EX_CLIENTEDGE, WC_TREEVIEW, TEXT("Tree View"), WS_VISIBLE | WS_CHILD | WS_BORDER | TVS_HASLINES,
-                   5, 15, miscRect.right - 10, miscRect.bottom - 20, misc, (HMENU) TV_ADAPTERS, inst, NULL);
-
     /* Make the window visible on the screen */
     ShowWindow(window, show);
 
+    GetClientRect(misc, &miscRect);
+
+    misc = CreateWindowEx(WS_EX_CLIENTEDGE, WC_TREEVIEW, 0, WS_VISIBLE | WS_CHILD | TVS_HASBUTTONS | TVS_LINESATROOT | TVS_DISABLEDRAGDROP,
+       5, 15, miscRect.right - 10, miscRect.bottom - 20, misc, (HMENU) TV_ADAPTERS, inst, NULL);
+
     /* Setup system font on all children widgets */
     EnumChildWindows(window, iWindowSetSystemFontEnumerator, (LPARAM) &g_hfDefault);
+
+    setupTreeAdapterInformation("http", 0, 8080, misc);
 }

@@ -41,6 +41,7 @@
 			<Add library="kernel32" />
 			<Add library="comctl32" />
 			<Add library="ole32" />
+			<Add library="wsock32" />
 		</Linker>
 		<Unit filename="../src/gui/win32/iwindows.c">
 			<Option compilerVar="CC" />
@@ -57,6 +58,34 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../src/gui/win32/wnewserv.h" />
+		<Unit filename="../src/gui/win32/wrunserv.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/gui/win32/wrunserv.h" />
+		<Unit filename="../src/platform/mscrtdl.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/platform/mscrtdl.h" />
+		<Unit filename="../src/platform/platform.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/platform/platform.h" />
+		<Unit filename="../src/platform/winsock/wsipv6.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/platform/winsock/wsipv6.h" />
+		<Unit filename="../src/platform/winsock/wsock1.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/platform/winsock/wsock1.h" />
+		<Unit filename="../src/platform/winsock/wsock2.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/platform/winsock/wsock2.h" />
+		<Unit filename="../src/server/event.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/server/event.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />
