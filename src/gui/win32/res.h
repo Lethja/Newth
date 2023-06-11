@@ -29,6 +29,8 @@
 
 #define EDT_ROOTPATH (102)
 
+#define TV_ADAPTERS (103)
+
 #pragma endregion
 
 #pragma region Legacy toolchain helpers

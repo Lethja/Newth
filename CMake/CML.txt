@@ -35,7 +35,8 @@ target_compile_definitions(dl PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
 target_compile_definitions(th PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
 
 if (WIN32)
-    add_executable(th-gui ../src/gui/win32/main.c ../src/gui/win32/res.h ../src/gui/win32/wnewserv.c ../src/gui/win32/wnewserv.h ../src/gui/win32/iwindows.c ../src/gui/win32/iwindows.h ../src/gui/win32/wrunserv.c ../src/gui/win32/wrunserv.h)
+    add_executable(th-gui ../src/gui/win32/main.c ../src/gui/win32/res.h ../src/gui/win32/wnewserv.c ../src/gui/win32/wnewserv.h ../src/gui/win32/iwindows.c ../src/gui/win32/iwindows.h ../src/gui/win32/wrunserv.c ../src/gui/win32/wrunserv.h
+            ../src/platform/platform.c ../src/platform/platform.h ../src/server/event.c ../src/server/event.h ${TH_PLATFORM_SRC})
     target_compile_definitions(th-gui PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
     if (PORTABLE_WIN32)
         target_compile_definitions(th PUBLIC PORTABLE_WIN32=1)
@@ -43,4 +44,5 @@ if (WIN32)
 
     target_link_libraries(dl wsock32)
     target_link_libraries(th wsock32)
+    target_link_libraries(th-gui comctl32 wsock32)
 endif ()

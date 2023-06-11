@@ -1,9 +1,57 @@
+#include "../../platform/platform.h"
+
 #include "wrunserv.h"
 #include "res.h"
 #include "iwindows.h"
 
+#include <commctrl.h>
+#include <stdio.h>
 #include <tchar.h>
 #include <windows.h>
+
+void setupTreeAdapterInformation(char *protocol, sa_family_t family, unsigned short port, HWND hwnd) {
+    AdapterAddressArray *adapters = platformGetAdapterInformation(family);
+    size_t i, j;
+
+    TV_INSERTSTRUCT treeInsert;
+    HTREEITEM adapterItem, addressItem = adapterItem = NULL;
+    HWND treeView = GetDlgItem(hwnd, TV_ADAPTERS);
+
+    ZeroMemory(&treeInsert, sizeof(TV_INSERTSTRUCT));
+    treeInsert.item.cchTextMax = MAX_PATH;
+
+    /* if (!adapters) */
+    if (1) {
+        char str[MAX_PATH];
+        treeInsert.hParent = NULL, treeInsert.hInsertAfter = TVI_ROOT;
+        treeInsert.item.mask = TVIF_TEXT;
+        treeInsert.item.pszText = "Unknown Adapter";
+        adapterItem = (HTREEITEM) SendMessage(treeView, TVM_INSERTITEM, 0, (LPARAM) &treeInsert);
+
+        sprintf(str, "Unknown Address:%d", port);
+        MessageBox(hwnd, str, str, 0);
+        treeInsert.hParent = adapterItem;
+        treeInsert.hInsertAfter = addressItem;
+        treeInsert.item.pszText = str;
+        addressItem = (HTREEITEM) SendMessage(treeView, TVM_INSERTITEM, 0, (LPARAM) &treeInsert);
+        return;
+    }
+
+    for (i = 0; i < adapters->size; ++i) {
+        /* TODO: Adapter entry here (adapters->adapter[i].name) */
+        for (j = 0; j < adapters->adapter[i].addresses.size; ++j) {
+            char str[MAX_PATH];
+            if (!adapters->adapter[i].addresses.array[j].type)
+                sprintf(str, "%s://%s:%u", protocol, adapters->adapter[i].addresses.array[j].address, port);
+            else
+                sprintf(str, "%s://[%s]:%u", protocol, adapters->adapter[i].addresses.array[j].address, port);
+
+            /* TODO: Address entry as child to address entry here (str) */
+        }
+    }
+
+    platformFreeAdapterInformation(adapters);
+}
 
 LRESULT CALLBACK runServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
@@ -44,6 +92,14 @@ void runServerWindowCreate(WNDCLASSEX *class, HINSTANCE inst, int show) {
                  0);
     CreateWindow(_T("BUTTON"), _T("&Details..."), NORMAL_BUTTON, miscRect.right - 87, miscRect.bottom - 33, 77, 23,
                  misc, 0, inst, 0);
+
+    misc = CreateWindow(_T("BUTTON"), _T("Network Adapters:"), NORMAL_GROUPBOX, 5, miscRect.bottom + 5,
+                        winRect.right - 10, winRect.bottom - miscRect.bottom - 10, window, 0, inst, 0);
+
+    GetClientRect(misc, &miscRect);
+
+    CreateWindowEx(WS_EX_CLIENTEDGE, WC_TREEVIEW, TEXT("Tree View"), WS_VISIBLE | WS_CHILD | WS_BORDER | TVS_HASLINES,
+                   5, 15, miscRect.right - 10, miscRect.bottom - 20, misc, (HMENU) TV_ADAPTERS, inst, NULL);
 
     /* Make the window visible on the screen */
     ShowWindow(window, show);

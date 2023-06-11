@@ -6,6 +6,7 @@
 
 #include <tchar.h>
 #include <windows.h>
+#include <commctrl.h>
 
 #include "iwindows.h"
 #include "wnewserv.h"
@@ -15,13 +16,14 @@ int WINAPI WinMain(HINSTANCE hThisInstance, HINSTANCE hPrevInstance, LPSTR lpszA
     MSG messages;            /* Here messages to the application are saved */
     WNDCLASSEX newWindowClass, runWindowClass;
 
+    InitCommonControls();
     iWindowSetupSystemFontStyle();
 
     newWindowClass = iWindowCreateClass(hThisInstance, _T("ThNewServer"), newServerWindowCallback);
     runWindowClass = iWindowCreateClass(hThisInstance, _T("ThRunServer"), runServerWindowCallback);
 
     newServerWindowCreate(&newWindowClass, hThisInstance, nCmdShow);
-    /* runServerWindowCreate(&runWindowClass, hThisInstance, nCmdShow); */ /* Uncomment to test */
+    runServerWindowCreate(&runWindowClass, hThisInstance, nCmdShow); /* Uncomment to test */
 
     /* Run the message loop. It will run until GetMessage() returns 0 */
     while (GetMessage(&messages, NULL, 0, 0)) {
