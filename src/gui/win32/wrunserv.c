@@ -89,8 +89,8 @@ void runServerWindowCreate(WNDCLASSEX *class, HINSTANCE inst, int show) {
                  inst, 0);
     CreateWindow(_T("STATIC"), _T("Active Transfers: 0"), NORMAL_LABEL, 10, 33, miscRect.right - 97, 23, misc, 0, inst,
                  0);
-    CreateWindow(_T("BUTTON"), _T("&Details..."), NORMAL_BUTTON, miscRect.right - 87, miscRect.bottom - 33, 77, 23,
-                 misc, 0, inst, 0);
+    CreateWindow(_T("BUTTON"), _T("&Details..."), WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX | BS_PUSHLIKE, winRect.right - 87, 37, 77, 23,
+                 window, 0, inst, 0);
 
     misc = CreateWindow(_T("BUTTON"), _T("Network Adapters:"), NORMAL_GROUPBOX, 5, miscRect.bottom + 5,
                         winRect.right - 10, winRect.bottom - miscRect.bottom - 10, window, 0, inst, 0);
