@@ -6,13 +6,18 @@
 #include <shlobj.h>
 #include <commctrl.h>
 
+static char *startServer(HWND hwnd) {
+    /* TODO: Useful code here */
+    MessageBox(hwnd, "Not Yet Implemented", "Implement Me!", MB_ICONEXCLAMATION);
+    return NULL;
+}
+
 LRESULT CALLBACK newServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
         case WM_COMMAND: {
             switch (LOWORD(wParam)) {
                 case BTN_START:
-                    /* TODO: Useful code here */
-                    MessageBox(hwnd, "Not Yet Implemented", "Implement Me!", MB_ICONEXCLAMATION);
+                    startServer(hwnd);
                     break;
                 case BTN_BROWSE: {
                     char browsePath[MAX_PATH];

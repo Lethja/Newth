@@ -10,7 +10,7 @@
 #include <windows.h>
 
 void setupTreeAdapterInformation(char *protocol, sa_family_t family, unsigned short port, HWND treeView) {
-    AdapterAddressArray *adapters = NULL /* platformGetAdapterInformation(family) */;
+    AdapterAddressArray *adapters = platformGetAdapterInformation(family);
     size_t i, j;
 
     TVINSERTSTRUCT treeInsert = {0};
@@ -20,8 +20,7 @@ void setupTreeAdapterInformation(char *protocol, sa_family_t family, unsigned sh
     treeInsert.item.mask = TVIF_TEXT | TVIF_SELECTEDIMAGE;
     treeInsert.item.iImage = 0, treeInsert.item.iSelectedImage = 1;
 
-    /* if (!adapters) */
-    if (1) {
+    if (!adapters) {
         char str[MAX_PATH] = "Unknown Adapter";
         treeInsert.hParent = TVI_ROOT, treeInsert.hInsertAfter = TVI_LAST;
         treeInsert.item.mask = TVIF_TEXT;
@@ -37,7 +36,12 @@ void setupTreeAdapterInformation(char *protocol, sa_family_t family, unsigned sh
     }
 
     for (i = 0; i < adapters->size; ++i) {
-        /* TODO: Adapter entry here (adapters->adapter[i].name) */
+
+        treeInsert.hParent = TVI_ROOT, treeInsert.hInsertAfter = TVI_LAST;
+        treeInsert.item.mask = TVIF_TEXT;
+        treeInsert.item.pszText = adapters->adapter[i].name;
+        adapterItem = (HTREEITEM) SendMessage(treeView, TVM_INSERTITEM, 0, (LPARAM) &treeInsert);
+
         for (j = 0; j < adapters->adapter[i].addresses.size; ++j) {
             char str[MAX_PATH];
             if (!adapters->adapter[i].addresses.array[j].type)
@@ -45,7 +49,10 @@ void setupTreeAdapterInformation(char *protocol, sa_family_t family, unsigned sh
             else
                 sprintf(str, "%s://[%s]:%u", protocol, adapters->adapter[i].addresses.array[j].address, port);
 
-            /* TODO: Address entry as child to address entry here (str) */
+            treeInsert.hParent = adapterItem;
+            treeInsert.hInsertAfter = addressItem;
+            treeInsert.item.pszText = str;
+            addressItem = (HTREEITEM) SendMessage(treeView, TVM_INSERTITEM, 0, (LPARAM) &treeInsert);
         }
     }
 
@@ -89,8 +96,8 @@ void runServerWindowCreate(WNDCLASSEX *class, HINSTANCE inst, int show) {
                  inst, 0);
     CreateWindow(_T("STATIC"), _T("Active Transfers: 0"), NORMAL_LABEL, 10, 33, miscRect.right - 97, 23, misc, 0, inst,
                  0);
-    CreateWindow(_T("BUTTON"), _T("&Details..."), WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX | BS_PUSHLIKE, winRect.right - 87, 37, 77, 23,
-                 window, 0, inst, 0);
+    CreateWindow(_T("BUTTON"), _T("&Details..."), WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX | BS_PUSHLIKE,
+                 winRect.right - 87, 37, 77, 23, window, 0, inst, 0);
 
     misc = CreateWindow(_T("BUTTON"), _T("Network Adapters:"), NORMAL_GROUPBOX, 5, miscRect.bottom + 5,
                         winRect.right - 10, winRect.bottom - miscRect.bottom - 10, window, 0, inst, 0);
@@ -100,11 +107,14 @@ void runServerWindowCreate(WNDCLASSEX *class, HINSTANCE inst, int show) {
 
     GetClientRect(misc, &miscRect);
 
-    misc = CreateWindowEx(WS_EX_CLIENTEDGE, WC_TREEVIEW, 0, WS_VISIBLE | WS_CHILD | TVS_HASBUTTONS | TVS_LINESATROOT | TVS_DISABLEDRAGDROP,
-       5, 15, miscRect.right - 10, miscRect.bottom - 20, misc, (HMENU) TV_ADAPTERS, inst, NULL);
+    misc = CreateWindowEx(WS_EX_CLIENTEDGE, WC_TREEVIEW, 0,
+                          WS_VISIBLE | WS_CHILD | TVS_HASBUTTONS | TVS_LINESATROOT | TVS_DISABLEDRAGDROP, 5, 15,
+                          miscRect.right - 10, miscRect.bottom - 20, misc, (HMENU) TV_ADAPTERS, inst, NULL);
 
     /* Setup system font on all children widgets */
     EnumChildWindows(window, iWindowSetSystemFontEnumerator, (LPARAM) &g_hfDefault);
 
-    setupTreeAdapterInformation("http", 0, 8080, misc);
+    platformIpStackInit(); /* TODO: Initialize IP stack and server somewhere more appropriate */
+
+    setupTreeAdapterInformation("http", AF_UNSPEC, 8080, misc);
 }
