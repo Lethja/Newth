@@ -77,7 +77,7 @@ char handleFile(SOCKET clientSocket, const char *header, char *webPath, char *ab
     LINEDBG;
 
     if (fp == NULL) {
-        perror("Error in opening file");
+        LINEDBG;
         return 1;
     }
 
@@ -134,11 +134,8 @@ char handlePath(SOCKET clientSocket, const char *header, char *webPath) {
 
     LINEDBG;
 
-    if (platformPathWebToSystem(globalRootPath, webPath, absolutePath))
-        goto handlePathNotFound;
-
-    if (platformFileStat(absolutePath, &st)) {
-        perror(absolutePath);
+    if (platformPathWebToSystem(globalRootPath, webPath, absolutePath) || platformFileStat(absolutePath, &st)) {
+        LINEDBG;
         goto handlePathNotFound;
     }
 
@@ -229,7 +226,7 @@ unsigned short getPort(const SOCKET *listenSocket) {
     struct sockaddr_storage sock;
     socklen_t sockLen = sizeof(sock);
     if (getsockname(*listenSocket, (struct sockaddr *) &sock, &sockLen) == -1) {
-        perror("Unable to get socket port");
+        LINEDBG;
         return 0;
     }
 
@@ -270,7 +267,7 @@ void serverTick() {
         readySockets = serverCurrentSockets;
 
         if (select((int) serverMaxSocket + 1, &readySockets, NULL, NULL, &globalSelectSleep) < 0) {
-            perror("Select");
+            LINEDBG;
             exit(1);
         }
 
