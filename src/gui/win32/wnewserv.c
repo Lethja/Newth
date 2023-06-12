@@ -12,19 +12,19 @@
 static char *startServer(HWND hwnd) {
     sa_family_t family;
     HWND ports, path;
-    char str[MAX_PATH];
+    char str[MAX_PATH], *err;
     DWORD word;
 
-    word = platformIpStackInit();
-    if (word)
-        return "Unable to initialize system TCP/IP stack";
+    err = platformIpStackInit();
+    if (err)
+        return err;
 
     ports = GetDlgItem(hwnd, EDT_PORTS), path = GetDlgItem(hwnd, EDT_ROOTPATH);
     GetWindowText(path, str, MAX_PATH);
     word = GetFileAttributes(str);
 
     if (word == INVALID_FILE_ATTRIBUTES || !(word & FILE_ATTRIBUTE_DIRECTORY))
-        return "Root path is not a folder";
+        return "Root path specified is not a directory";
 
     globalRootPath = malloc(strlen(str) + 1);
     if (!globalRootPath)
@@ -34,16 +34,21 @@ static char *startServer(HWND hwnd) {
 
     GetWindowText(ports, str, MAX_PATH);
 
+#ifndef NDEBUG
+    MessageBox(hwnd, globalRootPath, "Debug", MB_ICONINFORMATION);
+    MessageBox(hwnd, str, "Debug", MB_ICONINFORMATION);
+#endif
+
     if (platformOfficiallySupportsIpv6())
         family = AF_UNSPEC;
     else
         family = AF_INET;
 
-    word = platformServerStartup(&serverListenSocket, family, str);
+    err = platformServerStartup(&serverListenSocket, family, str);
 
-    if (!word) {
+    if (err) {
         free(globalRootPath);
-        return "Internal server startup error";
+        return err;
     }
 
     /* TODO: Connect callbacks */

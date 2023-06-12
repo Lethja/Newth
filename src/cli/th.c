@@ -101,7 +101,7 @@ static void printAdapterInformation(char *protocol, sa_family_t family, unsigned
 
 static int setup(int argc, char **argv) {
     sa_family_t family;
-    char *ports;
+    char *ports, *err;
 
     /* Get the list of ports then try to bind one */
     ports = getenv("TH_HTTP_PORT");
@@ -117,14 +117,16 @@ static int setup(int argc, char **argv) {
     else
         family = AF_INET;
 
-    if (platformIpStackInit()) {
-        perror("Unable to network stack");
+    err = platformIpStackInit();
+    if (err) {
+        puts(err);
         return 1;
     }
 
-    if (platformServerStartup(&serverListenSocket, family, ports)) {
+    err = platformServerStartup(&serverListenSocket, family, ports);
+    if (err) {
         LINEDBG;
-        perror("Unable to start server");
+        puts(err);
         platformIpStackExit();
         return 1;
     }

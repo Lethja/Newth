@@ -90,7 +90,7 @@ void platformIpStackExit(void) {
     /* TODO: free any loaded library */
 }
 
-int platformIpStackInit(void) {
+char *platformIpStackInit(void) {
     int error;
 
     LINEDBG;
@@ -125,18 +125,17 @@ int platformIpStackInit(void) {
         FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), err,
                       255, NULL);
 
-        return 1;
+        return "Unable to retrieve TCP/IP adapter information";
     }
 
     LINEDBG;
 
     error = WSAStartup(MAKEWORD(1, 1), &wsaData);
 
-    if (error) {
-        error = WSAGetLastError();
-    }
+    if (error)
+        return "Unable to start Windows socket interface";
 
-    return error;
+    return NULL;
 }
 
 int platformOfficiallySupportsIpv6(void) {
@@ -145,7 +144,7 @@ int platformOfficiallySupportsIpv6(void) {
     return 0;
 }
 
-int platformServerStartup(SOCKET *listenSocket, sa_family_t family, char *ports) {
+char *platformServerStartup(SOCKET *listenSocket, sa_family_t family, char *ports) {
     struct sockaddr_storage serverAddress;
     int iResult;
 
@@ -153,10 +152,9 @@ int platformServerStartup(SOCKET *listenSocket, sa_family_t family, char *ports)
 
     /* Force start in IPV4 mode if IPV6 functions cannot be loaded */
     if (family != AF_INET && (!getAdapterInformationIpv6)) {
-        if (family == AF_INET6) {
-            puts("This build of Windows does not have sufficient IPv6 support");
-            return 1;
-        }
+        if (family == AF_INET6)
+            return "This build of Windows does not have sufficient IPv6 support";
+
         family = AF_INET;
     }
 
@@ -167,7 +165,7 @@ int platformServerStartup(SOCKET *listenSocket, sa_family_t family, char *ports)
         case AF_INET: {
             struct sockaddr_in *sock = (struct sockaddr_in *) &serverAddress;
             if ((*listenSocket = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-                return 1;
+                return "Unable to acquire socket from system";
 
             sock->sin_family = AF_INET;
             sock->sin_addr.s_addr = htonl(INADDR_ANY);
@@ -179,7 +177,7 @@ int platformServerStartup(SOCKET *listenSocket, sa_family_t family, char *ports)
             struct SOCKIN6 *sock = (struct SOCKIN6 *) &serverAddress;
             size_t v6Only = family == AF_INET6;
             if ((*listenSocket = socket(AF_INET6, SOCK_STREAM, 0)) < 0)
-                return 1;
+                return "Unable to acquire socket from system";
 
             sock->sin6_family = AF_INET6;
             setsockopt(*listenSocket, IPPROTO_IPV6, IPV6_V6ONLY, (char *) &v6Only, sizeof(v6Only));
@@ -190,23 +188,23 @@ int platformServerStartup(SOCKET *listenSocket, sa_family_t family, char *ports)
 
     if (*listenSocket == INVALID_SOCKET) {
         LINEDBG;
-        return 1;
+        return "Socket is invalid";
     }
 
     if (platformBindPort(listenSocket, (struct sockaddr *) &serverAddress, ports)) {
         closesocket(*listenSocket);
         LINEDBG;
-        return 1;
+        return "Unable to bind to designated port numbers";
     }
 
     iResult = listen(*listenSocket, SOMAXCONN);
     if (iResult == SOCKET_ERROR) {
         closesocket(*listenSocket);
         LINEDBG;
-        return 1;
+        return "Unable to listen to assigned socket";
     }
 
-    return 0;
+    return NULL;
 }
 
 #pragma clang diagnostic push

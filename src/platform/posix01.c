@@ -32,14 +32,14 @@ void platformCloseBindSockets(fd_set *sockets, SOCKET max) {
     }
 }
 
-int platformServerStartup(int *listenSocket, sa_family_t family, char *ports) {
+char *platformServerStartup(int *listenSocket, sa_family_t family, char *ports) {
     struct sockaddr_storage serverAddress;
     switch (family) {
         default:
         case AF_INET: {
             struct sockaddr_in *sock = (struct sockaddr_in *) &serverAddress;
             if ((*listenSocket = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-                return 1;
+                return "Unable to acquire socket from system";
 
             sock->sin_family = AF_INET;
             sock->sin_addr.s_addr = htonl(INADDR_ANY);
@@ -50,7 +50,7 @@ int platformServerStartup(int *listenSocket, sa_family_t family, char *ports) {
             struct sockaddr_in6 *sock = (struct sockaddr_in6 *) &serverAddress;
             size_t v6Only = family == AF_INET6;
             if ((*listenSocket = socket(AF_INET6, SOCK_STREAM, 0)) < 0)
-                return 1;
+                return "Unable to acquire socket from system";
 
             sock->sin6_family = AF_INET6;
             sock->sin6_addr = in6addr_any;
@@ -60,12 +60,12 @@ int platformServerStartup(int *listenSocket, sa_family_t family, char *ports) {
     }
 
     if (platformBindPort(listenSocket, (struct sockaddr *) &serverAddress, ports))
-        return 1;
+        return "Unable to bind to designated port numbers";
 
     if ((listen(*listenSocket, 10)) < 0)
-        return 1;
+        return "Unable to listen to assigned socket";
 
-    return 0;
+    return NULL;
 }
 
 int platformAcceptConnection(int fromSocket) {
@@ -161,8 +161,8 @@ char *platformRealPath(char *path) {
 void platformIpStackExit(void) {
 }
 
-int platformIpStackInit(void) {
-    return 0;
+char *platformIpStackInit(void) {
+    return NULL;
 }
 
 int platformOfficiallySupportsIpv6(void) {

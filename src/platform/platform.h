@@ -103,18 +103,18 @@ void platformIpStackExit(void);
 
 /**
  * Allocate any memory resources that this platform may need to run network services
- * @return 0 on success, other on error
+ * @return NULL on success, human readable string to print error
  */
-int platformIpStackInit(void);
+char *platformIpStackInit(void);
 
 /**
  * Start up the server
  * @param listenSocket Out: the socket the server has been bound to
  * @param family protocol to start the server under
- * @param ports In: A port of comma seperated ports to try to bind to from left to right
- * @return 0 on success, other on error
+ * @param ports In: A port of comma separated ports to try to bind to from left to right
+ * @return NULL on success, human readable string to print error
  */
-int platformServerStartup(SOCKET *listenSocket, sa_family_t family, char *ports);
+char *platformServerStartup(SOCKET *listenSocket, sa_family_t family, char *ports);
 
 /**
  * Attach signals to comment interrupts
