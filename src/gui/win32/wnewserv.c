@@ -3,6 +3,7 @@
 
 #include "wnewserv.h"
 #include "res.h"
+#include "wrunserv.h"
 
 #include <tchar.h>
 #include <windows.h>
@@ -48,6 +49,7 @@ static char *startServer(HWND hwnd) {
 
     if (err) {
         free(globalRootPath);
+        globalRootPath = NULL;
         return err;
     }
 
@@ -70,8 +72,14 @@ LRESULT CALLBACK newServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam,
                     char *err = startServer(hwnd);
                     if (err)
                         MessageBox(hwnd, err, "Newth Server Startup Error", MB_ICONERROR);
-                    else
+                    else {
+                        HINSTANCE hThisInstance = (HINSTANCE) GetWindowLong(hwnd, GWL_HINSTANCE);
+                        WNDCLASSEX runWindowClass = iWindowCreateClass(hThisInstance, _T("ThRunServer"),
+                                                                       runServerWindowCallback);
                         forkServerProcess(hwnd);
+                        runServerWindowCreate(&runWindowClass, hThisInstance, SW_SHOW);
+                        DestroyWindow(hwnd);
+                    }
                     break;
                 }
                 case BTN_BROWSE: {
@@ -91,10 +99,13 @@ LRESULT CALLBACK newServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam,
             break;
         }
         case WM_DESTROY:
-            PostQuitMessage(0); /* send a WM_QUIT to the message queue */
-            break;
-        default:
-            return DefWindowProc(hwnd, message, wParam, lParam);
+            /* If global root path is NULL this window is being destroyed without a server running, send WM_QUIT */
+            if (!globalRootPath)
+                PostQuitMessage(0);
+            else
+                /* Fall through */
+                default:
+                    return DefWindowProc(hwnd, message, wParam, lParam);
     }
 
     return 0;
@@ -176,7 +187,7 @@ void newServerWindowCreate(WNDCLASSEX *class, HINSTANCE inst, int show) {
     CreateWindow(_T("BUTTON"), _T("&HTTP Port"), NORMAL_RADIO, 10, 104, 290, 17, window, 0, inst, 0);
     CreateWindow(_T("BUTTON"), _T("&Custom:"), NORMAL_RADIO, 10, 128, 85, 17, window, 0, inst, 0);
 
-    CreateWindowEx(WS_EX_CLIENTEDGE, _T("EDIT"), _T("80,8080-8090,0"), NORMAL_ENTRY, 85, 125, 220, 23, window,
+    CreateWindowEx(WS_EX_CLIENTEDGE, _T("EDIT"), _T("80,8080,0"), NORMAL_ENTRY, 85, 125, 220, 23, window,
                    (HMENU) EDT_PORTS, inst, 0);
 
     /* Create the Start/Stop server button */

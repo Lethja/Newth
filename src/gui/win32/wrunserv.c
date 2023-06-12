@@ -1,4 +1,5 @@
 #include "../../platform/platform.h"
+#include "../../common/server.h"
 
 #include "wrunserv.h"
 #include "res.h"
@@ -18,6 +19,9 @@ void setupTreeAdapterInformation(char *protocol, sa_family_t family, unsigned sh
 
     TVINSERTSTRUCT treeInsert = {0};
     HTREEITEM adapterItem, addressItem = adapterItem = NULL;
+
+    /* Clear old entries in case of a refresh */
+    SendMessage(sAdapterTv, TVM_DELETEITEM, 0, (LPARAM) TVI_ROOT);
 
     treeInsert.item.cchTextMax = MAX_PATH;
     treeInsert.item.mask = TVIF_TEXT | TVIF_SELECTEDIMAGE;
@@ -82,6 +86,10 @@ LRESULT CALLBACK runServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam,
             }
             break;
         }
+        case WM_DESTROY:
+            free(globalRootPath);
+            PostQuitMessage(0);
+            break;
 
         case WM_CLOSE:
             DestroyWindow(sConnectionList);
@@ -157,10 +165,5 @@ void runServerWindowCreate(WNDCLASSEX *class, HINSTANCE inst, int show) {
     /* Setup system font on all children widgets */
     EnumChildWindows(window, iWindowSetSystemFontEnumerator, (LPARAM) &g_hfDefault);
 
-    /* TODO: Initialize IP stack and populate network adapter addresses somewhere more appropriate */
-    platformIpStackInit();
-
-    setupTreeAdapterInformation("http", AF_UNSPEC, 8080);
-
-    platformIpStackExit();
+    setupTreeAdapterInformation("http", AF_UNSPEC, getPort(&serverListenSocket));
 }
