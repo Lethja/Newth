@@ -31,6 +31,8 @@
 
 #define TV_ADAPTERS (103)
 
+#define BTN_DETAILS (104)
+
 #pragma endregion
 
 #pragma region Legacy toolchain helpers
