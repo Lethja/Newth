@@ -1,3 +1,6 @@
+#include "../../platform/platform.h"
+#include "../../common/server.h"
+
 #include "wnewserv.h"
 #include "res.h"
 
@@ -7,18 +10,65 @@
 #include <commctrl.h>
 
 static char *startServer(HWND hwnd) {
-    /* TODO: Useful code here */
-    MessageBox(hwnd, "Not Yet Implemented", "Implement Me!", MB_ICONEXCLAMATION);
+    sa_family_t family;
+    HWND ports, path;
+    char str[MAX_PATH];
+    DWORD word;
+
+    word = platformIpStackInit();
+    if (word)
+        return "Unable to initialize system TCP/IP stack";
+
+    ports = GetDlgItem(hwnd, EDT_PORTS), path = GetDlgItem(hwnd, EDT_ROOTPATH);
+    GetWindowText(path, str, MAX_PATH);
+    word = GetFileAttributes(str);
+
+    if (word == INVALID_FILE_ATTRIBUTES || !(word & FILE_ATTRIBUTE_DIRECTORY))
+        return "Root path is not a folder";
+
+    globalRootPath = malloc(strlen(str) + 1);
+    if (!globalRootPath)
+        return "Couldn't allocate memory";
+
+    strcpy(globalRootPath, str);
+
+    GetWindowText(ports, str, MAX_PATH);
+
+    if (platformOfficiallySupportsIpv6())
+        family = AF_UNSPEC;
+    else
+        family = AF_INET;
+
+    word = platformServerStartup(&serverListenSocket, family, str);
+
+    if (!word) {
+        free(globalRootPath);
+        return "Internal server startup error";
+    }
+
+    /* TODO: Connect callbacks */
+
     return NULL;
+}
+
+void forkServerProcess(HWND hwnd) {
+    /* TODO: Implement the server tick to run on another thread */
+
+    MessageBox(hwnd, "Thread fork not yet implemented", "Implement Me!", MB_ICONEXCLAMATION);
 }
 
 LRESULT CALLBACK newServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
         case WM_COMMAND: {
             switch (LOWORD(wParam)) {
-                case BTN_START:
-                    startServer(hwnd);
+                case BTN_START: {
+                    char *err = startServer(hwnd);
+                    if (err)
+                        MessageBox(hwnd, err, "Newth Server Startup Error", MB_ICONERROR);
+                    else
+                        forkServerProcess(hwnd);
                     break;
+                }
                 case BTN_BROWSE: {
                     char browsePath[MAX_PATH];
                     HWND rootPathEntry = GetDlgItem(hwnd, EDT_ROOTPATH);
@@ -121,8 +171,8 @@ void newServerWindowCreate(WNDCLASSEX *class, HINSTANCE inst, int show) {
     CreateWindow(_T("BUTTON"), _T("&HTTP Port"), NORMAL_RADIO, 10, 104, 290, 17, window, 0, inst, 0);
     CreateWindow(_T("BUTTON"), _T("&Custom:"), NORMAL_RADIO, 10, 128, 85, 17, window, 0, inst, 0);
 
-    CreateWindowEx(WS_EX_CLIENTEDGE, _T("EDIT"), _T("80,8080-8090,0"), NORMAL_ENTRY, 85, 125, 220, 23, window, 0, inst,
-                   0);
+    CreateWindowEx(WS_EX_CLIENTEDGE, _T("EDIT"), _T("80,8080-8090,0"), NORMAL_ENTRY, 85, 125, 220, 23, window,
+                   (HMENU) EDT_PORTS, inst, 0);
 
     /* Create the Start/Stop server button */
     CreateWindow(_T("BUTTON"), _T("&Host"), NORMAL_BUTTON, 235, 158, 75, 23, window, (HMENU) BTN_START, inst, 0);

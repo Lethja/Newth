@@ -145,7 +145,7 @@ void runServerWindowCreate(WNDCLASSEX *class, HINSTANCE inst, int show) {
 
     sAdapterTv = CreateWindowEx(WS_EX_CLIENTEDGE, WC_TREEVIEW, 0,
                                 WS_VISIBLE | WS_CHILD | TVS_HASBUTTONS | TVS_LINESATROOT | TVS_DISABLEDRAGDROP, 5, 15,
-                                miscRect.right - 10, miscRect.bottom - 20, misc, (HMENU) TV_ADAPTERS, inst, NULL);
+                                miscRect.right - 10, miscRect.bottom - 20, misc, 0, inst, NULL);
 
     sConnectionListClass = iWindowCreateClass(inst, "ConnectionDetails", detailsWindowCallback);
     sConnectionListClass.style = CS_NOCLOSE;

@@ -13,7 +13,7 @@ endif ()
 set(CMAKE_C_FLAGS_RELEASE "-O2 -s")
 
 if (UNIX)
-    set(TH_PLATFORM_SRC ../src/platform/posix01.c)
+    set(TH_PLATFORM_SRC ../src/platform/posix01.c ../src/platform/posix01.h)
 elseif (WIN32)
     if (PORTABLE_WIN32)
         set(TH_PLATFORM_SRC ../src/platform/mscrtdl.c ../src/platform/winsock/wsock1.c ../src/platform/winsock/wsock2.c ../src/platform/winsock/wsipv6.c)
@@ -24,7 +24,7 @@ endif ()
 
 add_executable(dl ../src/common/client.c ../src/platform/platform.h)
 add_executable(th ../src/cli/th.c ../src/common/server.h
-        ../src/common/server.c ../src/platform/posix01.h ../src/server/http.c
+        ../src/common/server.c ../src/server/http.c
         ../src/server/http.h ../src/server/routine.c ../src/server/routine.h
         ../src/server/sockbufr.c ../src/server/sockbufr.h
         ../src/platform/platform.c ../src/platform/platform.h
@@ -35,8 +35,14 @@ target_compile_definitions(dl PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
 target_compile_definitions(th PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
 
 if (WIN32)
-    add_executable(th-gui ../src/gui/win32/main.c ../src/gui/win32/res.h ../src/gui/win32/wnewserv.c ../src/gui/win32/wnewserv.h ../src/gui/win32/iwindows.c ../src/gui/win32/iwindows.h ../src/gui/win32/wrunserv.c ../src/gui/win32/wrunserv.h
-            ../src/platform/platform.c ../src/platform/platform.h ../src/server/event.c ../src/server/event.h ${TH_PLATFORM_SRC})
+    add_executable(th-gui ../src/gui/win32/main.c ../src/gui/win32/res.h
+            ../src/gui/win32/iwindows.c ../src/gui/win32/iwindows.h
+            ../src/gui/win32/wnewserv.c ../src/gui/win32/wnewserv.h
+            ../src/gui/win32/wrunserv.c ../src/gui/win32/wrunserv.h
+            ../src/platform/platform.c ../src/platform/platform.h
+            ../src/server/event.c ../src/server/event.h ../src/server/sockbufr.c ../src/server/sockbufr.h
+            ../src/server/http.c ../src/server/http.h ../src/server/routine.c ../src/server/routine.h
+            ../src/common/server.c ../src/common/server.h ${TH_PLATFORM_SRC})
     target_compile_definitions(th-gui PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
     if (PORTABLE_WIN32)
         target_compile_definitions(th PUBLIC PORTABLE_WIN32=1)
