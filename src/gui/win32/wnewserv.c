@@ -10,6 +10,15 @@
 #include <shlobj.h>
 #include <commctrl.h>
 
+HANDLE serverThread;
+
+static DWORD WINAPI serverTickThread(LPVOID lpParam) {
+    serverTick();
+    return 0;
+}
+
+static void noOp(void *foo) {}
+
 static char *startServer(HWND hwnd) {
     sa_family_t family;
     HWND ports, path;
@@ -53,15 +62,23 @@ static char *startServer(HWND hwnd) {
         return err;
     }
 
-    /* TODO: Connect callbacks */
-
     return NULL;
 }
 
 void forkServerProcess(HWND hwnd) {
-    /* TODO: Implement the server tick to run on another thread */
+    /* TODO: Connect callbacks to real code updating the list entries */
+    eventHttpRespondSetCallback((void (*)(eventHttpRespond *)) &noOp);
+    eventHttpFinishSetCallback((void (*)(eventHttpRespond *)) &noOp);
+    eventSocketCloseSetCallback((void (*)(SOCKET *)) &noOp);
+    eventSocketAcceptSetCallback((void (*)(SOCKET *)) &noOp);
 
-    MessageBox(hwnd, "Thread fork not yet implemented", "Implement Me!", MB_ICONEXCLAMATION);
+    /* TODO: Handle thread properly and don't create suspended */
+    serverThread = CreateThread(NULL, 0, serverTickThread, NULL, CREATE_SUSPENDED, NULL);
+
+    if (serverThread)
+        MessageBox(hwnd, "Thread fork created but is suspended", "Fix Me!", MB_ICONINFORMATION);
+    else
+        MessageBox(hwnd, "Thread fork failed", "Fix Me!", MB_ICONEXCLAMATION);
 }
 
 LRESULT CALLBACK newServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
