@@ -16,6 +16,7 @@
 static DWORD WINAPI serverTickThread(LPVOID lpParam) {
     serverTick();
     ExitThread(0);
+	return 0;
 }
 
 static void noOp(void *foo) {}
@@ -86,10 +87,10 @@ void forkServerProcess(HWND hwnd) {
     /* TODO: Handle thread properly and don't create suspended */
     serverThread = CreateThread(NULL, 0, serverTickThread, NULL, 0, NULL);
 
-    if (serverThread)
-        MessageBox(hwnd, "Thread fork created but is suspended", "Fix Me!", MB_ICONINFORMATION);
-    else
-        MessageBox(hwnd, "Thread fork failed", "Fix Me!", MB_ICONEXCLAMATION);
+    if (!serverThread) {
+        MessageBox(hwnd, "Unable to create thread for Newth server routine", "Error", MB_ICONEXCLAMATION);
+		PostQuitMessage(0);
+	}
 }
 
 LRESULT CALLBACK newServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {

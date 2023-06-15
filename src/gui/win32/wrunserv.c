@@ -96,6 +96,7 @@ LRESULT CALLBACK runServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam,
             WaitForSingleObject(serverThread, INFINITE);
             platformCloseBindSockets(&serverCurrentSockets, serverMaxSocket);
             platformIpStackExit();
+
             free(globalRootPath);
             PostQuitMessage(0);
             break;
@@ -111,9 +112,9 @@ LRESULT CALLBACK runServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam,
 
 LRESULT CALLBACK detailsWindowCallback(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
-        case WM_SYSCOMMAND:
+        /* case WM_SYSCOMMAND: */
         case WM_CLOSE:
-            return 0;
+            return 0; /* Ignore */
 
         default:
             return DefWindowProc(hwnd, message, wParam, lParam);
@@ -126,7 +127,7 @@ void runServerWindowCreate(WNDCLASSEX *class, HINSTANCE inst, int show) {
 
     /* Create the running server desktop window */
     window = CreateWindow(class->lpszClassName,                             /* Class name */
-                          _T("Server Statistics"),                          /* Title Text */
+                          _T("Http Server - Newth"),                        /* Title Text */
                           WS_OVERLAPPED | WS_MINIMIZEBOX | WS_SYSMENU,      /* Fixed size window */
                           CW_USEDEFAULT,                                    /* Windows decides the position */
                           CW_USEDEFAULT,                                    /* where the window ends up on the screen */
@@ -161,19 +162,19 @@ void runServerWindowCreate(WNDCLASSEX *class, HINSTANCE inst, int show) {
 
     GetClientRect(misc, &miscRect);
 
-    sAdapterTv = CreateWindowEx(WS_EX_CLIENTEDGE, WC_TREEVIEW, 0,
+    sAdapterTv = CreateWindow(WC_TREEVIEW, 0,
                                 WS_VISIBLE | WS_CHILD | TVS_HASBUTTONS | TVS_LINESATROOT | TVS_DISABLEDRAGDROP, 5, 15,
                                 miscRect.right - 10, miscRect.bottom - 20, misc, 0, inst, NULL);
 
     sConnectionListClass = iWindowCreateClass(inst, "ConnectionDetails", detailsWindowCallback);
     sConnectionListClass.style = CS_NOCLOSE;
 
-    sConnectionList = CreateWindow(sConnectionListClass.lpszClassName, _T("Details"), WS_OVERLAPPED, CW_USEDEFAULT,
+    sConnectionList = CreateWindow(sConnectionListClass.lpszClassName, _T("Connection Details - Newth"), WS_OVERLAPPED, CW_USEDEFAULT,
                                    CW_USEDEFAULT, 320 + GetSystemMetrics(SM_CXBORDER),
                                    240 + GetSystemMetrics(SM_CYCAPTION), HWND_DESKTOP, NULL, inst, NULL);
 
     /* Setup system font on all children widgets */
     EnumChildWindows(window, iWindowSetSystemFontEnumerator, (LPARAM) &g_hfDefault);
 
-    setupTreeAdapterInformation("http", AF_UNSPEC, getPort(&serverListenSocket));
+    setupTreeAdapterInformation("http", (sa_family_t)(platformOfficiallySupportsIpv6() ? AF_UNSPEC : AF_INET), getPort(&serverListenSocket));
 }

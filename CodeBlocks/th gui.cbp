@@ -9,7 +9,7 @@
 			<Target title="Debug">
 				<Option output="bin/mingw32/Debug/th-gui" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/mingw32/Debug/" />
-				<Option type="1" />
+				<Option type="0" />
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-g" />
@@ -43,6 +43,10 @@
 			<Add library="ole32" />
 			<Add library="wsock32" />
 		</Linker>
+		<Unit filename="../src/common/server.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/common/server.h" />
 		<Unit filename="../src/gui/win32/iwindows.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -86,6 +90,18 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../src/server/event.h" />
+		<Unit filename="../src/server/http.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/server/http.h" />
+		<Unit filename="../src/server/routine.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/server/routine.h" />
+		<Unit filename="../src/server/sockbufr.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/server/sockbufr.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />
