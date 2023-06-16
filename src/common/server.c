@@ -1,6 +1,8 @@
 #include "server.h"
 
 char *globalRootPath = NULL;
+volatile int serverRun = 1;
+
 RoutineArray globalFileRoutineArray;
 RoutineArray globalDirRoutineArray;
 
@@ -245,7 +247,7 @@ void serverTick() {
     fd_set readySockets;
     struct timeval globalSelectSleep;
 
-    while (1) {
+    while (serverRun) {
 
         for (i = 0; i < globalDirRoutineArray.size; i++) {
             DirectoryRoutine *directoryRoutine = (DirectoryRoutine *) globalDirRoutineArray.array;
@@ -289,4 +291,20 @@ void serverTick() {
             }
         }
     }
+}
+
+void serverPoke() {
+    SOCKET sock;
+    struct sockaddr_in ipv4;
+
+    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+        LINEDBG;
+        return;
+    }
+
+    ipv4.sin_addr.s_addr = inet_addr("127.0.0.1"), ipv4.sin_family = AF_INET, ipv4.sin_port = htons(
+            getPort(&serverListenSocket));
+
+    if (connect(sock, (SA *) &ipv4, sizeof(ipv4)) == 0)
+        closesocket(sock);
 }

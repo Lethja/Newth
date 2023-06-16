@@ -10,14 +10,17 @@
 #include <shlobj.h>
 #include <commctrl.h>
 
-HANDLE serverThread;
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnusedParameter"
 
 static DWORD WINAPI serverTickThread(LPVOID lpParam) {
     serverTick();
-    return 0;
+    ExitThread(0);
 }
 
 static void noOp(void *foo) {}
+
+#pragma clang diagnostic pop
 
 static char *startServer(HWND hwnd) {
     sa_family_t family;
@@ -62,6 +65,14 @@ static char *startServer(HWND hwnd) {
         return err;
     }
 
+    /* Set new server memory state */
+    serverMaxSocket = serverListenSocket;
+    FD_ZERO(&serverCurrentSockets);
+    FD_SET(serverListenSocket, &serverCurrentSockets);
+
+    globalFileRoutineArray.size = globalDirRoutineArray.size = 0;
+    globalFileRoutineArray.array = globalDirRoutineArray.array = NULL;
+
     return NULL;
 }
 
@@ -73,7 +84,7 @@ void forkServerProcess(HWND hwnd) {
     eventSocketAcceptSetCallback((void (*)(SOCKET *)) &noOp);
 
     /* TODO: Handle thread properly and don't create suspended */
-    serverThread = CreateThread(NULL, 0, serverTickThread, NULL, CREATE_SUSPENDED, NULL);
+    serverThread = CreateThread(NULL, 0, serverTickThread, NULL, 0, NULL);
 
     if (serverThread)
         MessageBox(hwnd, "Thread fork created but is suspended", "Fix Me!", MB_ICONINFORMATION);
@@ -90,7 +101,7 @@ LRESULT CALLBACK newServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam,
                     if (err)
                         MessageBox(hwnd, err, "Newth Server Startup Error", MB_ICONERROR);
                     else {
-                        HINSTANCE hThisInstance = (HINSTANCE) GetWindowLong(hwnd, GWL_HINSTANCE);
+                        HINSTANCE hThisInstance = (HINSTANCE) GetWindowLong(hwnd, -6 /* GWL_INSTANCE */);
                         WNDCLASSEX runWindowClass = iWindowCreateClass(hThisInstance, _T("ThRunServer"),
                                                                        runServerWindowCallback);
                         forkServerProcess(hwnd);

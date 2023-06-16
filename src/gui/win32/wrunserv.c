@@ -13,6 +13,8 @@
 static WNDCLASSEX sConnectionListClass;
 static HWND sAdapterTv, sConnectionList;
 
+HANDLE serverThread;
+
 void setupTreeAdapterInformation(char *protocol, sa_family_t family, unsigned short port) {
     AdapterAddressArray *adapters = platformGetAdapterInformation(family);
     size_t i, j;
@@ -87,6 +89,13 @@ LRESULT CALLBACK runServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam,
             break;
         }
         case WM_DESTROY:
+            /* Volatile global variable to make the server thread stop gracefully */
+            serverRun = 0;
+            /* Wait for thread to stop before teardown */
+            serverPoke();
+            WaitForSingleObject(serverThread, INFINITE);
+            platformCloseBindSockets(&serverCurrentSockets, serverMaxSocket);
+            platformIpStackExit();
             free(globalRootPath);
             PostQuitMessage(0);
             break;
@@ -97,6 +106,7 @@ LRESULT CALLBACK runServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam,
         default:
             return DefWindowProc(hwnd, message, wParam, lParam);
     }
+    return DefWindowProc(hwnd, message, wParam, lParam);
 }
 
 LRESULT CALLBACK detailsWindowCallback(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {

@@ -18,6 +18,8 @@ extern RoutineArray globalDirRoutineArray;
 extern SOCKET serverMaxSocket;
 extern SOCKET serverListenSocket;
 
+extern volatile int serverRun;
+
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "UnusedParameter"
 
@@ -28,7 +30,7 @@ extern void noAction(int signal);
 extern char handleDir(SOCKET clientSocket, char *webPath, char *absolutePath, char type, PlatformFileStat *st);
 
 extern char handleFile(SOCKET clientSocket, const char *header, char *webPath, char *absolutePath, char httpType,
-                PlatformFileStat *st);
+                       PlatformFileStat *st);
 
 extern char handlePath(SOCKET clientSocket, const char *header, char *webPath);
 
@@ -37,5 +39,7 @@ extern char handleConnection(SOCKET clientSocket);
 extern unsigned short getPort(const SOCKET *listenSocket);
 
 extern void serverTick();
+
+extern void serverPoke();
 
 #endif /* NEW_TH_SERVER_H */

@@ -7,4 +7,6 @@ LRESULT CALLBACK runServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam,
 
 void runServerWindowCreate(WNDCLASSEX *class, HINSTANCE inst, int show);
 
+extern HANDLE serverThread;
+
 #endif /* NEW_TH_WINDOW_SERVER_STATUS_H */
