@@ -16,7 +16,7 @@
 static DWORD WINAPI serverTickThread(LPVOID lpParam) {
     serverTick();
     ExitThread(0);
-	return 0;
+    return 0;
 }
 
 static void noOp(void *foo) {}
@@ -33,7 +33,7 @@ static char *startServer(HWND hwnd) {
     if (err)
         return err;
 
-    path = GetDlgItem(hwnd, EDT_ROOTPATH);
+    path = GetDlgItem(hwnd, EDT_ROOT_PATH);
     GetWindowText(path, str, MAX_PATH);
     word = GetFileAttributes(str);
 
@@ -100,8 +100,8 @@ void forkServerProcess(HWND hwnd) {
 
     if (!serverThread) {
         MessageBox(hwnd, "Unable to create thread for Newth server routine", "Error", MB_ICONEXCLAMATION);
-		PostQuitMessage(0);
-	}
+        PostQuitMessage(0);
+    }
 }
 
 LRESULT CALLBACK newServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
@@ -124,7 +124,7 @@ LRESULT CALLBACK newServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam,
                 }
                 case BTN_BROWSE: {
                     char browsePath[MAX_PATH];
-                    HWND rootPathEntry = GetDlgItem(hwnd, EDT_ROOTPATH);
+                    HWND rootPathEntry = GetDlgItem(hwnd, EDT_ROOT_PATH);
                     if (rootPathEntry) {
                         GetWindowText(rootPathEntry, browsePath, MAX_PATH);
                         iWindowBrowseFolder(browsePath, browsePath, "Browse for root path...");
@@ -137,7 +137,7 @@ LRESULT CALLBACK newServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam,
                 }
                 case EDT_PORTS: {
                     HWND focus = GetFocus(), ports = GetDlgItem(hwnd, EDT_PORTS);
-                    if(focus != ports)
+                    if (focus != ports)
                         break;
 
                     SendMessage(GetDlgItem(hwnd, RB_PORT_EPHEMERAL), BM_SETCHECK, BST_UNCHECKED, 0);
@@ -182,7 +182,7 @@ static void SetDesktopPath(HWND window) {
             path = malloc(MAX_PATH);
             FolderPathFunc(NULL, CSIDL_DESKTOP, NULL, 0, path);
             if (path[0])
-                SetWindowText(GetDlgItem(window, EDT_ROOTPATH), path);
+                SetWindowText(GetDlgItem(window, EDT_ROOT_PATH), path);
 
             free(path);
             FreeLibrary(module);
@@ -199,7 +199,7 @@ static void SetDesktopPath(HWND window) {
     GetWindowsDirectory(path, MAX_PATH);
     /* TODO: Is this path name the same in all languages? */
     strncat(path, "\\Desktop", MAX_PATH);
-    SetWindowText(GetDlgItem(window, EDT_ROOTPATH), path);
+    SetWindowText(GetDlgItem(window, EDT_ROOT_PATH), path);
     free(path);
 
 #pragma endregion
@@ -224,7 +224,7 @@ void newServerWindowCreate(WNDCLASSEX *class, HINSTANCE inst, int show) {
 
     /* Create the path entry & button widgets */
     CreateWindow(_T("BUTTON"), _T("Root Path:"), NORMAL_GROUPBOX, 5, 5, 305, 53, window, 0, inst, 0);
-    CreateWindowEx(WS_EX_CLIENTEDGE, _T("EDIT"), _T(""), NORMAL_ENTRY, 10, 27, 210, 23, window, (HMENU) EDT_ROOTPATH,
+    CreateWindowEx(WS_EX_CLIENTEDGE, _T("EDIT"), _T(""), NORMAL_ENTRY, 10, 27, 210, 23, window, (HMENU) EDT_ROOT_PATH,
                    inst, 0);
 
     CreateWindow(_T("BUTTON"), _T("&Browse..."), NORMAL_BUTTON, 227, 27, 77, 23, window, (HMENU) BTN_BROWSE, inst, 0);
@@ -232,8 +232,8 @@ void newServerWindowCreate(WNDCLASSEX *class, HINSTANCE inst, int show) {
 
     /* Create listen port radio buttons */
     CreateWindow(_T("BUTTON"), _T("Listen Port:"), NORMAL_GROUPBOX, 5, 58, 305, 94, window, 0, inst, 0);
-    misc = CreateWindow(_T("BUTTON"), _T("&Ephemeral Port"), NORMAL_RADIO | WS_GROUP, 10, 80, 290, 17, window, (HMENU) RB_PORT_EPHEMERAL, inst,
-                        0);
+    misc = CreateWindow(_T("BUTTON"), _T("&Ephemeral Port"), NORMAL_RADIO | WS_GROUP, 10, 80, 290, 17, window,
+                        (HMENU) RB_PORT_EPHEMERAL, inst, 0);
     SendMessage(misc, BM_SETCHECK, BST_CHECKED, 0);
 
     CreateWindow(_T("BUTTON"), _T("&HTTP Port"), NORMAL_RADIO, 10, 104, 290, 17, window, (HMENU) RB_PORT_HTTP, inst, 0);

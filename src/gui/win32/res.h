@@ -27,7 +27,7 @@
 
 #define BTN_BROWSE (101)
 
-#define EDT_ROOTPATH (102)
+#define EDT_ROOT_PATH (102)
 
 #define EDT_PORTS (103)
 

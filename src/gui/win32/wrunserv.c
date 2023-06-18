@@ -112,7 +112,6 @@ LRESULT CALLBACK runServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam,
 
 LRESULT CALLBACK detailsWindowCallback(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
-        /* case WM_SYSCOMMAND: */
         case WM_CLOSE:
             return 0; /* Ignore */
 
@@ -147,11 +146,11 @@ void runServerWindowCreate(WNDCLASSEX *class, HINSTANCE inst, int show) {
 
     GetClientRect(misc, &miscRect);
 
-    CreateWindow(_T("STATIC"), _T("Active Connections: 0"), NORMAL_LABEL, 10, 15, miscRect.right - 97, 23, misc, 0,
+    CreateWindow(_T("STATIC"), _T("Active Connections: Unknown"), NORMAL_LABEL, 10, 15, miscRect.right - 97, 23, misc,
+                 0, inst, 0);
+    CreateWindow(_T("STATIC"), _T("Active Transfers: Unknown"), NORMAL_LABEL, 10, 33, miscRect.right - 97, 23, misc, 0,
                  inst, 0);
-    CreateWindow(_T("STATIC"), _T("Active Transfers: 0"), NORMAL_LABEL, 10, 33, miscRect.right - 97, 23, misc, 0, inst,
-                 0);
-    CreateWindow(_T("BUTTON"), _T("&Details..."), WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX | BS_PUSHLIKE,
+    CreateWindow(_T("BUTTON"), _T("&Details..."), WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX | BS_PUSHLIKE | WS_DISABLED,
                  winRect.right - 87, 37, 77, 23, window, (HMENU) BTN_DETAILS, inst, 0);
 
     misc = CreateWindow(_T("BUTTON"), _T("Network Adapters:"), NORMAL_GROUPBOX, 5, miscRect.bottom + 5,
@@ -163,18 +162,19 @@ void runServerWindowCreate(WNDCLASSEX *class, HINSTANCE inst, int show) {
     GetClientRect(misc, &miscRect);
 
     sAdapterTv = CreateWindow(WC_TREEVIEW, 0,
-                                WS_VISIBLE | WS_CHILD | TVS_HASBUTTONS | TVS_LINESATROOT | TVS_DISABLEDRAGDROP, 5, 15,
-                                miscRect.right - 10, miscRect.bottom - 20, misc, 0, inst, NULL);
+                              WS_VISIBLE | WS_CHILD | TVS_HASBUTTONS | TVS_LINESATROOT | TVS_DISABLEDRAGDROP, 5, 15,
+                              miscRect.right - 10, miscRect.bottom - 20, misc, 0, inst, NULL);
 
     sConnectionListClass = iWindowCreateClass(inst, "ConnectionDetails", detailsWindowCallback);
     sConnectionListClass.style = CS_NOCLOSE;
 
-    sConnectionList = CreateWindow(sConnectionListClass.lpszClassName, _T("Connection Details - Newth"), WS_OVERLAPPED, CW_USEDEFAULT,
-                                   CW_USEDEFAULT, 320 + GetSystemMetrics(SM_CXBORDER),
+    sConnectionList = CreateWindow(sConnectionListClass.lpszClassName, _T("Connection Details - Newth"), WS_OVERLAPPED,
+                                   CW_USEDEFAULT, CW_USEDEFAULT, 320 + GetSystemMetrics(SM_CXBORDER),
                                    240 + GetSystemMetrics(SM_CYCAPTION), HWND_DESKTOP, NULL, inst, NULL);
 
     /* Setup system font on all children widgets */
     EnumChildWindows(window, iWindowSetSystemFontEnumerator, (LPARAM) &g_hfDefault);
 
-    setupTreeAdapterInformation("http", (sa_family_t)(platformOfficiallySupportsIpv6() ? AF_UNSPEC : AF_INET), getPort(&serverListenSocket));
+    setupTreeAdapterInformation("http", (sa_family_t) (platformOfficiallySupportsIpv6() ? AF_UNSPEC : AF_INET),
+                                getPort(&serverListenSocket));
 }
