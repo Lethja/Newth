@@ -113,7 +113,11 @@ LRESULT CALLBACK newServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam,
                     if (err)
                         MessageBox(hwnd, err, "Newth Server Startup Error", MB_ICONERROR);
                     else {
+#ifdef _WIN64
+                        HINSTANCE hThisInstance = (HINSTANCE) GetWindowLongPtr(hwnd, -6 /* GWL_INSTANCE */);
+#else
                         HINSTANCE hThisInstance = (HINSTANCE) GetWindowLong(hwnd, -6 /* GWL_INSTANCE */);
+#endif
                         WNDCLASSEX runWindowClass = iWindowCreateClass(hThisInstance, _T("ThRunServer"),
                                                                        runServerWindowCallback);
                         forkServerProcess(hwnd);

@@ -3,7 +3,7 @@
 
 #include "../mscrtdl.h"
 
-void *wSock2Available();
+void *wSock2Available(void);
 
 AdapterAddressArray *wSock2GetAdapterInformation(void (arrayAdd)(AdapterAddressArray *, char *, sa_family_t, char *));
 
@@ -43,6 +43,7 @@ typedef int socklen_t;
 #endif /* !MSVC89 */
 
 #define IF_TYPE_SOFTWARE_LOOPBACK 24
+#define IF_TYPE_TUNNEL 131
 #define MAX_ADAPTER_ADDRESS_LENGTH 8
 #define MAX_ADAPTER_DESCRIPTION_LENGTH 128
 #define MAX_ADAPTER_NAME_LENGTH 256
@@ -84,7 +85,7 @@ typedef enum {
     IpDadStateTentative,
     IpDadStateDuplicate,
     IpDadStateDeprecated,
-    IpDadStatePreferred,
+    IpDadStatePreferred
 } NL_DAD_STATE;
 
 typedef NL_PREFIX_ORIGIN IP_PREFIX_ORIGIN;

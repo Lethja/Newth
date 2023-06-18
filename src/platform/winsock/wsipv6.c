@@ -9,7 +9,7 @@ typedef ULONG (WINAPI *AdapterInfoCall)(ULONG, ULONG, PVOID, PIP_ADAPTER_ADDRESS
 HMODULE wSockIpv6;
 static AdapterInfoCall AdapterInfoFunc;
 
-static void wSockIpv6Free() {
+static void wSockIpv6Free(void) {
     if (wSockIpv6)
         FreeLibrary(wSockIpv6);
 }
@@ -77,7 +77,7 @@ wSockIpv6GetAdapterInformation(sa_family_t family, void (arrayAdd)(AdapterAddres
         int len, wlen;
 
         /* Skip loop-back adapters */
-        if (!aa || IF_TYPE_SOFTWARE_LOOPBACK == aa->IfType)
+        if (!aa || IF_TYPE_SOFTWARE_LOOPBACK == aa->IfType || IF_TYPE_TUNNEL == aa->IfType)
             continue;
 
         nameBuf = malloc(BUFSIZ);
