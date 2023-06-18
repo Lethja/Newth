@@ -33,7 +33,7 @@ static char *startServer(HWND hwnd) {
     if (err)
         return err;
 
-    ports = GetDlgItem(hwnd, EDT_PORTS), path = GetDlgItem(hwnd, EDT_ROOTPATH);
+    path = GetDlgItem(hwnd, EDT_ROOTPATH);
     GetWindowText(path, str, MAX_PATH);
     word = GetFileAttributes(str);
 
@@ -46,7 +46,18 @@ static char *startServer(HWND hwnd) {
 
     strcpy(globalRootPath, str);
 
-    GetWindowText(ports, str, MAX_PATH);
+    ports = GetDlgItem(hwnd, RB_PORT_EPHEMERAL);
+    if (SendMessage(ports, BM_GETSTATE, 0, 0) == BST_CHECKED)
+        strcpy(str, "0");
+    else {
+        ports = GetDlgItem(hwnd, RB_PORT_HTTP);
+        if (SendMessage(ports, BM_GETSTATE, 0, 0) == BST_CHECKED)
+            strcpy(str, "80,8080");
+        else {
+            ports = GetDlgItem(hwnd, EDT_PORTS);
+            GetWindowText(ports, str, MAX_PATH);
+        }
+    }
 
 #ifndef NDEBUG
     MessageBox(hwnd, globalRootPath, "Debug", MB_ICONINFORMATION);
@@ -124,9 +135,20 @@ LRESULT CALLBACK newServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam,
                     }
                     break;
                 }
+                case EDT_PORTS: {
+                    HWND focus = GetFocus(), ports = GetDlgItem(hwnd, EDT_PORTS);
+                    if(focus != ports)
+                        break;
+
+                    SendMessage(GetDlgItem(hwnd, RB_PORT_EPHEMERAL), BM_SETCHECK, BST_UNCHECKED, 0);
+                    SendMessage(GetDlgItem(hwnd, RB_PORT_HTTP), BM_SETCHECK, BST_UNCHECKED, 0);
+                    SendMessage(GetDlgItem(hwnd, RB_PORT_CUSTOM), BM_SETCHECK, BST_CHECKED, 0);
+                    break;
+                }
             }
             break;
         }
+
         case WM_DESTROY:
             /* If global root path is NULL this window is being destroyed without a server running, send WM_QUIT */
             if (!globalRootPath)
@@ -204,17 +226,18 @@ void newServerWindowCreate(WNDCLASSEX *class, HINSTANCE inst, int show) {
     CreateWindow(_T("BUTTON"), _T("Root Path:"), NORMAL_GROUPBOX, 5, 5, 305, 53, window, 0, inst, 0);
     CreateWindowEx(WS_EX_CLIENTEDGE, _T("EDIT"), _T(""), NORMAL_ENTRY, 10, 27, 210, 23, window, (HMENU) EDT_ROOTPATH,
                    inst, 0);
+
     CreateWindow(_T("BUTTON"), _T("&Browse..."), NORMAL_BUTTON, 227, 27, 77, 23, window, (HMENU) BTN_BROWSE, inst, 0);
     SetDesktopPath(window);
 
     /* Create listen port radio buttons */
     CreateWindow(_T("BUTTON"), _T("Listen Port:"), NORMAL_GROUPBOX, 5, 58, 305, 94, window, 0, inst, 0);
-    misc = CreateWindow(_T("BUTTON"), _T("&Ephemeral Port"), NORMAL_RADIO | WS_GROUP, 10, 80, 290, 17, window, 0, inst,
+    misc = CreateWindow(_T("BUTTON"), _T("&Ephemeral Port"), NORMAL_RADIO | WS_GROUP, 10, 80, 290, 17, window, (HMENU) RB_PORT_EPHEMERAL, inst,
                         0);
     SendMessage(misc, BM_SETCHECK, BST_CHECKED, 0);
 
-    CreateWindow(_T("BUTTON"), _T("&HTTP Port"), NORMAL_RADIO, 10, 104, 290, 17, window, 0, inst, 0);
-    CreateWindow(_T("BUTTON"), _T("&Custom:"), NORMAL_RADIO, 10, 128, 85, 17, window, 0, inst, 0);
+    CreateWindow(_T("BUTTON"), _T("&HTTP Port"), NORMAL_RADIO, 10, 104, 290, 17, window, (HMENU) RB_PORT_HTTP, inst, 0);
+    CreateWindow(_T("BUTTON"), _T("&Custom:"), NORMAL_RADIO, 10, 128, 75, 17, window, (HMENU) RB_PORT_CUSTOM, inst, 0);
 
     CreateWindowEx(WS_EX_CLIENTEDGE, _T("EDIT"), _T("80,8080,0"), NORMAL_ENTRY, 85, 125, 220, 23, window,
                    (HMENU) EDT_PORTS, inst, 0);

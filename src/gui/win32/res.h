@@ -33,6 +33,12 @@
 
 #define BTN_DETAILS (104)
 
+#define RB_PORT_EPHEMERAL (105)
+
+#define RB_PORT_HTTP (106)
+
+#define RB_PORT_CUSTOM (107)
+
 #pragma endregion
 
 #pragma region Legacy toolchain helpers
