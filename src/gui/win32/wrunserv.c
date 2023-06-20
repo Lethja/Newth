@@ -82,8 +82,19 @@ LRESULT CALLBACK runServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam,
                 case BTN_DETAILS:
                     if (IsWindowVisible(sConnectionWin))
                         ShowWindow(sConnectionWin, SW_HIDE);
-                    else
+                    else {
+                        HDC hdc = GetDC(hwnd);
+                        RECT rect;
+                        int hRes, x, w = 320 + GetSystemMetrics(SM_CXBORDER);
+
+                        /* Move connection window to the right (or left if not enough space) of the server window */
+                        GetWindowRect(hwnd, &rect);
+                        hRes = hdc ? GetDeviceCaps(hdc, HORZRES) : 0;
+                        x = hRes > 700 && rect.right + w >= hRes ? rect.left - w : rect.right;
+
+                        MoveWindow(sConnectionWin, x, rect.top, w, 240 + GetSystemMetrics(SM_CYCAPTION), 0);
                         ShowWindow(sConnectionWin, SW_SHOW);
+                    }
                     break;
             }
             break;
