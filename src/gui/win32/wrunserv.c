@@ -11,7 +11,7 @@
 #include <windows.h>
 
 static WNDCLASSEX sConnectionListClass;
-static HWND sAdapterTv, sConnectionList;
+static HWND sAdapterTv, sConnectionList, sConnectionWin;
 
 HANDLE serverThread;
 
@@ -80,10 +80,10 @@ LRESULT CALLBACK runServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam,
         case WM_COMMAND: {
             switch (LOWORD(wParam)) {
                 case BTN_DETAILS:
-                    if (IsWindowVisible(sConnectionList))
-                        ShowWindow(sConnectionList, SW_HIDE);
+                    if (IsWindowVisible(sConnectionWin))
+                        ShowWindow(sConnectionWin, SW_HIDE);
                     else
-                        ShowWindow(sConnectionList, SW_SHOW);
+                        ShowWindow(sConnectionWin, SW_SHOW);
                     break;
             }
             break;
@@ -102,7 +102,7 @@ LRESULT CALLBACK runServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam,
             break;
 
         case WM_CLOSE:
-            DestroyWindow(sConnectionList);
+            DestroyWindow(sConnectionWin);
             /* Fall though */
         default:
             return DefWindowProc(hwnd, message, wParam, lParam);
@@ -118,6 +118,20 @@ LRESULT CALLBACK detailsWindowCallback(HWND hwnd, UINT message, WPARAM wParam, L
         default:
             return DefWindowProc(hwnd, message, wParam, lParam);
     }
+}
+
+void connectionsWindowCreate(WNDCLASSEX *class, HINSTANCE inst, int show) {
+    RECT rect;
+    HWND window = sConnectionWin = CreateWindow(class->lpszClassName, _T("Connection Details - Newth"), WS_OVERLAPPED,
+                                                CW_USEDEFAULT, CW_USEDEFAULT, 320 + GetSystemMetrics(SM_CXBORDER),
+                                                240 + GetSystemMetrics(SM_CYCAPTION), HWND_DESKTOP, NULL, inst, NULL);
+
+    GetClientRect(window, &rect);
+
+    sConnectionList = CreateWindow(WC_LISTVIEW, 0, WS_CHILD | WS_VISIBLE | WS_VSCROLL | ES_AUTOVSCROLL, rect.left,
+                                   rect.top, rect.right, rect.bottom, window, 0, inst, NULL);
+
+    ShowWindow(window, show);
 }
 
 void runServerWindowCreate(WNDCLASSEX *class, HINSTANCE inst, int show) {
@@ -150,7 +164,7 @@ void runServerWindowCreate(WNDCLASSEX *class, HINSTANCE inst, int show) {
                  0, inst, 0);
     CreateWindow(_T("STATIC"), _T("Active Transfers: Unknown"), NORMAL_LABEL, 10, 33, miscRect.right - 97, 23, misc, 0,
                  inst, 0);
-    CreateWindow(_T("BUTTON"), _T("&Details..."), WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX | BS_PUSHLIKE | WS_DISABLED,
+    CreateWindow(_T("BUTTON"), _T("&Details..."), WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX | BS_PUSHLIKE,
                  winRect.right - 87, 37, 77, 23, window, (HMENU) BTN_DETAILS, inst, 0);
 
     misc = CreateWindow(_T("BUTTON"), _T("Network Adapters:"), NORMAL_GROUPBOX, 5, miscRect.bottom + 5,
@@ -165,12 +179,10 @@ void runServerWindowCreate(WNDCLASSEX *class, HINSTANCE inst, int show) {
                                 WS_VISIBLE | WS_CHILD | TVS_HASBUTTONS | TVS_LINESATROOT | TVS_DISABLEDRAGDROP, 5, 15,
                                 miscRect.right - 10, miscRect.bottom - 20, misc, 0, inst, NULL);
 
-    sConnectionListClass = iWindowCreateClass(inst, "ConnectionDetails", detailsWindowCallback);
+    sConnectionListClass = iWindowCreateClass(inst, "ThConnectionDetails", detailsWindowCallback);
     sConnectionListClass.style = CS_NOCLOSE;
 
-    sConnectionList = CreateWindow(sConnectionListClass.lpszClassName, _T("Connection Details - Newth"), WS_OVERLAPPED,
-                                   CW_USEDEFAULT, CW_USEDEFAULT, 320 + GetSystemMetrics(SM_CXBORDER),
-                                   240 + GetSystemMetrics(SM_CYCAPTION), HWND_DESKTOP, NULL, inst, NULL);
+    connectionsWindowCreate(&sConnectionListClass, inst, SW_HIDE);
 
     /* Setup system font on all children widgets */
     EnumChildWindows(window, iWindowSetSystemFontEnumerator, (LPARAM) &g_hfDefault);
