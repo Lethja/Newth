@@ -5,6 +5,8 @@ set(CMAKE_C_STANDARD 90)
 set(CMAKE_C_FLAGS "-pedantic -Wall -Wno-unknown-pragmas")
 
 option(PORTABLE_WIN32 "Force a portable Windows binary" ON)
+option(STYLISH_WIN32 "Enable visual styling on Windows XP and later" ON)
+
 if (PORTABLE_WIN32)
     set(CMAKE_SYSTEM_NAME Windows)
     set(CMAKE_C_FLAGS "-m32 -march=i386")
@@ -35,6 +37,10 @@ target_compile_definitions(dl PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
 target_compile_definitions(th PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
 
 if (WIN32)
+    if (STYLISH_WIN32)
+        set(W32_RES ../src/gui/win32/res.rc ../src/gui/win32/resource.h)
+    endif ()
+
     add_executable(th-gui ../src/gui/win32/main.c ../src/gui/win32/res.h
             ../src/gui/win32/iwindows.c ../src/gui/win32/iwindows.h
             ../src/gui/win32/wnewserv.c ../src/gui/win32/wnewserv.h
@@ -42,7 +48,7 @@ if (WIN32)
             ../src/platform/platform.c ../src/platform/platform.h
             ../src/server/event.c ../src/server/event.h ../src/server/sockbufr.c ../src/server/sockbufr.h
             ../src/server/http.c ../src/server/http.h ../src/server/routine.c ../src/server/routine.h
-            ../src/common/server.c ../src/common/server.h ${TH_PLATFORM_SRC})
+            ../src/common/server.c ../src/common/server.h ${TH_PLATFORM_SRC} ${W32_RES})
     target_compile_definitions(th-gui PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
     if (PORTABLE_WIN32)
         target_compile_definitions(th PUBLIC PORTABLE_WIN32=1)
