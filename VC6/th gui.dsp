@@ -156,6 +156,10 @@ SOURCE=..\src\server\event.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\src\server\http.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\gui\win32\iwindows.h
 # End Source File
 # Begin Source File
@@ -169,6 +173,18 @@ SOURCE=..\src\platform\platform.h
 # Begin Source File
 
 SOURCE=..\src\gui\win32\res.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\server\routine.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\common\server.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\server\sockbufr.h
 # End Source File
 # Begin Source File
 
