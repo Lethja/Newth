@@ -15,111 +15,7 @@ static HWND sAdapterTv, sConnectionList, sConnectionWin;
 
 HANDLE serverThread;
 
-void setupTreeAdapterInformation(char *protocol, sa_family_t family, unsigned short port) {
-    AdapterAddressArray *adapters = platformGetAdapterInformation(family);
-    size_t i, j;
-
-    TVINSERTSTRUCT treeInsert = {0};
-    HTREEITEM adapterItem, addressItem = adapterItem = NULL;
-
-    /* Clear old entries in case of a refresh */
-    SendMessage(sAdapterTv, TVM_DELETEITEM, 0, (LPARAM) TVI_ROOT);
-
-    treeInsert.item.cchTextMax = MAX_PATH;
-    treeInsert.item.mask = TVIF_TEXT | TVIF_SELECTEDIMAGE;
-    treeInsert.item.iImage = 0, treeInsert.item.iSelectedImage = 1;
-
-    if (!adapters) {
-        char str[MAX_PATH] = "Unknown Adapter";
-        treeInsert.hParent = TVI_ROOT, treeInsert.hInsertAfter = TVI_LAST;
-        treeInsert.item.mask = TVIF_TEXT;
-        treeInsert.item.pszText = str;
-        adapterItem = (HTREEITEM) SendMessage(sAdapterTv, TVM_INSERTITEM, 0, (LPARAM) &treeInsert);
-
-        sprintf(str, "Unknown Address:%d", port);
-        treeInsert.hParent = adapterItem;
-        treeInsert.hInsertAfter = adapterItem;
-        treeInsert.item.pszText = str;
-        SendMessage(sAdapterTv, TVM_INSERTITEM, 0, (LPARAM) &treeInsert);
-        return;
-    }
-
-    for (i = 0; i < adapters->size; ++i) {
-
-        treeInsert.hParent = TVI_ROOT, treeInsert.hInsertAfter = TVI_LAST;
-        treeInsert.item.mask = TVIF_TEXT;
-        treeInsert.item.pszText = adapters->adapter[i].name;
-        adapterItem = (HTREEITEM) SendMessage(sAdapterTv, TVM_INSERTITEM, 0, (LPARAM) &treeInsert);
-
-        for (j = 0; j < adapters->adapter[i].addresses.size; ++j) {
-            char str[MAX_PATH];
-            if (!adapters->adapter[i].addresses.array[j].type)
-                sprintf(str, "%s://%s:%u", protocol, adapters->adapter[i].addresses.array[j].address, port);
-            else
-                sprintf(str, "%s://[%s]:%u", protocol, adapters->adapter[i].addresses.array[j].address, port);
-
-            treeInsert.hParent = adapterItem;
-            treeInsert.hInsertAfter = addressItem;
-            treeInsert.item.pszText = str;
-            addressItem = (HTREEITEM) SendMessage(sAdapterTv, TVM_INSERTITEM, 0, (LPARAM) &treeInsert);
-        }
-
-        /* Automatically expand any adapters that have exactly one address */
-        if (j == 1)
-            SendMessage(sAdapterTv, TVM_EXPAND, TVE_EXPAND, (LPARAM) adapterItem);
-    }
-
-    SendMessage(sAdapterTv, TVM_GETNEXTITEM, TVGN_ROOT, (LPARAM) adapterItem);
-    SendMessage(sAdapterTv, TVM_ENSUREVISIBLE, 0, (LPARAM) adapterItem);
-
-    platformFreeAdapterInformation(adapters);
-}
-
-LRESULT CALLBACK runServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
-    switch (message) {
-        case WM_COMMAND: {
-            switch (LOWORD(wParam)) {
-                case BTN_DETAILS:
-                    if (IsWindowVisible(sConnectionWin))
-                        ShowWindow(sConnectionWin, SW_HIDE);
-                    else {
-                        HDC hdc = GetDC(hwnd);
-                        RECT rect;
-                        int hRes, x, w = 320 + GetSystemMetrics(SM_CXBORDER);
-
-                        /* Move connection window to the right (or left if not enough space) of the server window */
-                        GetWindowRect(hwnd, &rect);
-                        hRes = hdc ? GetDeviceCaps(hdc, HORZRES) : 0;
-                        x = hRes > 700 && rect.right + w >= hRes ? rect.left - w : rect.right;
-
-                        MoveWindow(sConnectionWin, x, rect.top, w, 240 + GetSystemMetrics(SM_CYCAPTION), 0);
-                        ShowWindow(sConnectionWin, SW_SHOW);
-                    }
-                    break;
-            }
-            break;
-        }
-        case WM_DESTROY:
-            /* Volatile global variable to make the server thread stop gracefully */
-            serverRun = 0;
-            /* Wait for thread to stop before teardown */
-            serverPoke();
-            WaitForSingleObject(serverThread, INFINITE);
-            platformCloseBindSockets(&serverCurrentSockets, serverMaxSocket);
-            platformIpStackExit();
-
-            free(globalRootPath);
-            PostQuitMessage(0);
-            break;
-
-        case WM_CLOSE:
-            DestroyWindow(sConnectionWin);
-            /* Fall though */
-        default:
-            return DefWindowProc(hwnd, message, wParam, lParam);
-    }
-    return DefWindowProc(hwnd, message, wParam, lParam);
-}
+#pragma region Connection List Window
 
 LRESULT CALLBACK detailsWindowCallback(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
@@ -137,7 +33,7 @@ static int GetRowByAddress(HWND list, const char *address) {
     int i, max;
 
     ZeroMemory(&lvi, sizeof(LVITEM));
-    lvi.mask = LVIF_TEXT, lvi.pszText = item, lvi.cchTextMax = PATH_MAX, lvi.iSubItem = 0; /* Address */
+    lvi.mask = LVIF_TEXT, lvi.pszText = item, lvi.cchTextMax = PATH_MAX, lvi.iSubItem = 1; /* Address */
     max = SendMessage(list, LVM_GETITEMCOUNT, 0, 0);
 
     strncpy(addr, address, PATH_MAX);
@@ -146,9 +42,8 @@ static int GetRowByAddress(HWND list, const char *address) {
         lvi.iItem = i;
         if (SendMessage(list, LVM_GETITEM, 0, (LPARAM) &lvi)) {
             if (lvi.mask & LVIF_TEXT) {
-                if (strncmp(addr, item, PATH_MAX) == 0) {
-                    return i;
-                }
+                if (strncmp(addr, item, PATH_MAX) == 0)
+                    return i; /* This is the correct item to update or remove */
             }
         }
     }
@@ -163,7 +58,7 @@ static void updateRow(HWND list, const char *address, const char *state, const c
     ZeroMemory(&temp, PATH_MAX), ZeroMemory(&item, sizeof(LVITEM));
     item.cchTextMax = PATH_MAX, item.mask = LVIF_TEXT, item.pszText = temp;
 
-    item.iSubItem = 0, strncpy(temp, address, PATH_MAX - 1);
+    item.iSubItem = 0, strncpy(temp, state, PATH_MAX - 1);
     if (row == -1) {
         item.iItem = SendMessage(list, LVM_INSERTITEM, 0, (LPARAM) &item);
         if (item.iItem == -1)
@@ -171,7 +66,7 @@ static void updateRow(HWND list, const char *address, const char *state, const c
     } else
         item.iItem = row;
 
-    item.iSubItem = 1, strncpy(temp, state, PATH_MAX - 1);
+    item.iSubItem = 1, strncpy(temp, address, PATH_MAX - 1);
     if (SendMessage(list, LVM_SETITEM, 0, (LPARAM) &item) == -1)
         MessageBox(list, "Error setting subtext", "Debug Error", MB_ICONERROR);
 
@@ -265,7 +160,7 @@ static void callbackHttpStart(eventHttpRespond *event) {
 
 HWND connectionsListCreate(WNDCLASSEX *class, HINSTANCE inst, HWND parent, RECT *parentRect) {
     HWND list;
-    TCHAR header[24] = "Address\0State\0\0\0Path";
+    TCHAR header[24] = "State\0\0\0Address\0Path";
     LVCOLUMN lvc;
     int i, max = 3;
 
@@ -275,19 +170,19 @@ HWND connectionsListCreate(WNDCLASSEX *class, HINSTANCE inst, HWND parent, RECT 
 
     SendMessage(list, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 
-    lvc.fmt = LVCFMT_LEFT, lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM, lvc.cx = 100;
+    lvc.fmt = LVCFMT_LEFT, lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
 
     for (i = 0; i < max; ++i) {
         LPSTR ptr = &header[i * (8 * sizeof(TCHAR))];
         switch (i) {
             case 0:
-                lvc.pszText = "Address";
+                lvc.cx = 50, lvc.pszText = "State";
                 break;
             case 1:
-                lvc.pszText = "State";
+                lvc.cx = 100, lvc.pszText = "Address";
                 break;
             case 2:
-                lvc.pszText = "Path";
+                lvc.cx = 150, lvc.pszText = "Path";
                 break;
             default:
                 lvc.pszText = "?";
@@ -305,11 +200,117 @@ HWND connectionsListCreate(WNDCLASSEX *class, HINSTANCE inst, HWND parent, RECT 
     eventSocketAcceptSetCallback(callbackNewSocket);
     eventSocketCloseSetCallback(callbackCloseSocket);
 
-    /* TODO: This is test code */
-    updateRow(list, "This", "is", "test");
-    removeRow(list, "This");
-
     return list;
+}
+
+#pragma endregion
+
+#pragma region Running Server Window
+
+void setupTreeAdapterInformation(char *protocol, sa_family_t family, unsigned short port) {
+    AdapterAddressArray *adapters = platformGetAdapterInformation(family);
+    size_t i, j;
+
+    TVINSERTSTRUCT treeInsert = {0};
+    HTREEITEM adapterItem, addressItem = adapterItem = NULL;
+
+    /* Clear old entries in case of a refresh */
+    SendMessage(sAdapterTv, TVM_DELETEITEM, 0, (LPARAM) TVI_ROOT);
+
+    treeInsert.item.cchTextMax = MAX_PATH;
+    treeInsert.item.mask = TVIF_TEXT | TVIF_SELECTEDIMAGE;
+    treeInsert.item.iImage = 0, treeInsert.item.iSelectedImage = 1;
+
+    if (!adapters) {
+        char str[MAX_PATH] = "Unknown Adapter";
+        treeInsert.hParent = TVI_ROOT, treeInsert.hInsertAfter = TVI_LAST;
+        treeInsert.item.mask = TVIF_TEXT;
+        treeInsert.item.pszText = str;
+        adapterItem = (HTREEITEM) SendMessage(sAdapterTv, TVM_INSERTITEM, 0, (LPARAM) &treeInsert);
+
+        sprintf(str, "Unknown Address:%d", port);
+        treeInsert.hParent = adapterItem;
+        treeInsert.hInsertAfter = adapterItem;
+        treeInsert.item.pszText = str;
+        SendMessage(sAdapterTv, TVM_INSERTITEM, 0, (LPARAM) &treeInsert);
+        return;
+    }
+
+    for (i = 0; i < adapters->size; ++i) {
+
+        treeInsert.hParent = TVI_ROOT, treeInsert.hInsertAfter = TVI_LAST;
+        treeInsert.item.mask = TVIF_TEXT;
+        treeInsert.item.pszText = adapters->adapter[i].name;
+        adapterItem = (HTREEITEM) SendMessage(sAdapterTv, TVM_INSERTITEM, 0, (LPARAM) &treeInsert);
+
+        for (j = 0; j < adapters->adapter[i].addresses.size; ++j) {
+            char str[MAX_PATH];
+            if (!adapters->adapter[i].addresses.array[j].type)
+                sprintf(str, "%s://%s:%u", protocol, adapters->adapter[i].addresses.array[j].address, port);
+            else
+                sprintf(str, "%s://[%s]:%u", protocol, adapters->adapter[i].addresses.array[j].address, port);
+
+            treeInsert.hParent = adapterItem;
+            treeInsert.hInsertAfter = addressItem;
+            treeInsert.item.pszText = str;
+            addressItem = (HTREEITEM) SendMessage(sAdapterTv, TVM_INSERTITEM, 0, (LPARAM) &treeInsert);
+        }
+
+        /* Automatically expand any adapters that have exactly one address */
+        if (j == 1)
+            SendMessage(sAdapterTv, TVM_EXPAND, TVE_EXPAND, (LPARAM) adapterItem);
+    }
+
+    SendMessage(sAdapterTv, TVM_GETNEXTITEM, TVGN_ROOT, (LPARAM) adapterItem);
+    SendMessage(sAdapterTv, TVM_ENSUREVISIBLE, 0, (LPARAM) adapterItem);
+
+    platformFreeAdapterInformation(adapters);
+}
+
+LRESULT CALLBACK runServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    switch (message) {
+        case WM_COMMAND: {
+            switch (LOWORD(wParam)) {
+                case BTN_DETAILS:
+                    if (IsWindowVisible(sConnectionWin))
+                        ShowWindow(sConnectionWin, SW_HIDE);
+                    else {
+                        HDC hdc = GetDC(hwnd);
+                        RECT rect;
+                        int hRes, x, w = 320 + GetSystemMetrics(SM_CXBORDER);
+
+                        /* Move connection window to the right (or left if not enough space) of the server window */
+                        GetWindowRect(hwnd, &rect);
+                        hRes = hdc ? GetDeviceCaps(hdc, HORZRES) : 0;
+                        x = hRes > 700 && rect.right + w >= hRes ? rect.left - w : rect.right;
+
+                        MoveWindow(sConnectionWin, x, rect.top, w, 240 + GetSystemMetrics(SM_CYCAPTION), 0);
+                        ShowWindow(sConnectionWin, SW_SHOW);
+                    }
+                    break;
+            }
+            break;
+        }
+        case WM_DESTROY:
+            /* Volatile global variable to make the server thread stop gracefully */
+            serverRun = 0;
+            /* Wait for thread to stop before tear down */
+            serverPoke();
+            WaitForSingleObject(serverThread, INFINITE);
+            platformCloseBindSockets(&serverCurrentSockets, serverMaxSocket);
+            platformIpStackExit();
+
+            free(globalRootPath);
+            PostQuitMessage(0);
+            break;
+
+        case WM_CLOSE:
+            DestroyWindow(sConnectionWin);
+            /* Fall though */
+        default:
+            return DefWindowProc(hwnd, message, wParam, lParam);
+    }
+    return DefWindowProc(hwnd, message, wParam, lParam);
 }
 
 void connectionsWindowCreate(WNDCLASSEX *class, HINSTANCE inst, int show) {
@@ -381,3 +382,5 @@ void runServerWindowCreate(WNDCLASSEX *class, HINSTANCE inst, int show) {
     setupTreeAdapterInformation("http", (sa_family_t) (platformOfficiallySupportsIpv6() ? AF_UNSPEC : AF_INET),
                                 getPort(&serverListenSocket));
 }
+
+#pragma endregion
