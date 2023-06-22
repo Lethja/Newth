@@ -131,23 +131,45 @@ LRESULT CALLBACK detailsWindowCallback(HWND hwnd, UINT message, WPARAM wParam, L
     }
 }
 
-static int GetRowByAddress(const char *address) {
-    /* TODO: run LVM_GETITEM over list to find address if it exists */
-    return 0;
+static int GetRowByAddress(HWND list, const char *address) {
+    TCHAR addr[PATH_MAX], item[PATH_MAX];
+    LVITEM lvi;
+    int i, max;
+
+    ZeroMemory(&lvi, sizeof(LVITEM));
+    lvi.mask = LVIF_TEXT, lvi.pszText = item, lvi.cchTextMax = PATH_MAX, lvi.iSubItem = 0; /* Address */
+    max = SendMessage(list, LVM_GETITEMCOUNT, 0, 0);
+
+    strncpy(addr, address, PATH_MAX);
+
+    for (i = 0; i < max; ++i) {
+        lvi.iItem = i;
+        if (SendMessage(list, LVM_GETITEM, 0, (LPARAM) &lvi)) {
+            if (lvi.mask & LVIF_TEXT) {
+                if (strncmp(addr, item, PATH_MAX) == 0) {
+                    return i;
+                }
+            }
+        }
+    }
+    return -1;
 }
 
-static void InsertOrUpdateRow(HWND list, const char *address, const char *state, const char *path) {
+static void updateRow(HWND list, const char *address, const char *state, const char *path) {
     TCHAR temp[PATH_MAX];
     LVITEM item;
-    int row = GetRowByAddress(address), i;
+    int row = GetRowByAddress(list, address);
 
     ZeroMemory(&temp, PATH_MAX), ZeroMemory(&item, sizeof(LVITEM));
     item.cchTextMax = PATH_MAX, item.mask = LVIF_TEXT, item.pszText = temp;
 
     item.iSubItem = 0, strncpy(temp, address, PATH_MAX - 1);
-    item.iItem = SendMessage(list, LVM_INSERTITEM, 0, (LPARAM) &item);
-    if (item.iItem == -1)
-        MessageBox(list, "Error inserting text", "Debug Error", MB_ICONERROR);
+    if (row == -1) {
+        item.iItem = SendMessage(list, LVM_INSERTITEM, 0, (LPARAM) &item);
+        if (item.iItem == -1)
+            MessageBox(list, "Error inserting text", "Debug Error", MB_ICONERROR);
+    } else
+        item.iItem = row;
 
     item.iSubItem = 1, strncpy(temp, state, PATH_MAX - 1);
     if (SendMessage(list, LVM_SETITEM, 0, (LPARAM) &item) == -1)
@@ -158,20 +180,87 @@ static void InsertOrUpdateRow(HWND list, const char *address, const char *state,
         MessageBox(list, "Error setting subtext", "Debug Error", MB_ICONERROR);
 }
 
-static void callbackCloseSocket(SOCKET *socket) {
+static void removeRow(HWND list, const char *address) {
+    int row = GetRowByAddress(list, address);
+    if (row >= 0)
+        SendMessage(list, LVM_DELETEITEM, (WPARAM) row, 0);
+}
 
+static void callbackCloseSocket(SOCKET *socket) {
+    struct sockaddr_storage ss;
+    socklen_t sockLen = sizeof(ss);
+    sa_family_t family;
+    char ip[INET6_ADDRSTRLEN], temp[PATH_MAX];
+    unsigned short port;
+
+    getpeername(*socket, (struct sockaddr *) &ss, &sockLen);
+    platformGetIpString((struct sockaddr *) &ss, ip, &family);
+    port = platformGetPort((struct sockaddr *) &ss);
+
+    sprintf(temp, "%s:%d", ip, port);
+    removeRow(sConnectionList, temp);
 }
 
 static void callbackNewSocket(SOCKET *socket) {
+    struct sockaddr_storage ss;
+    socklen_t sockLen = sizeof(ss);
+    sa_family_t family;
+    char ip[INET6_ADDRSTRLEN], temp[PATH_MAX];
+    unsigned short port;
 
+    getpeername(*socket, (struct sockaddr *) &ss, &sockLen);
+    platformGetIpString((struct sockaddr *) &ss, ip, &family);
+    port = platformGetPort((struct sockaddr *) &ss);
+    sprintf(temp, "%s:%u", ip, port);
+
+    updateRow(sConnectionList, temp, "TSYN", "");
 }
 
 static void callbackHttpEnd(eventHttpRespond *event) {
+    struct sockaddr_storage ss;
+    socklen_t sockLen = sizeof(ss);
+    sa_family_t family;
+    char ip[INET6_ADDRSTRLEN], temp[PATH_MAX], state[12];
+    unsigned short port;
 
+    getpeername(*event->clientSocket, (struct sockaddr *) &ss, &sockLen);
+    platformGetIpString((struct sockaddr *) &ss, ip, &family);
+    port = platformGetPort((struct sockaddr *) &ss);
+    sprintf(temp, "%s:%u", ip, port);
+
+    updateRow(sConnectionList, temp, "TSYN", event->path);
 }
 
 static void callbackHttpStart(eventHttpRespond *event) {
+    struct sockaddr_storage ss;
+    socklen_t sockLen = sizeof(ss);
+    sa_family_t family;
+    char ip[INET6_ADDRSTRLEN], temp[PATH_MAX], state[12], type;
+    unsigned short port;
 
+    getpeername(*event->clientSocket, (struct sockaddr *) &ss, &sockLen);
+    platformGetIpString((struct sockaddr *) &ss, ip, &family);
+    port = platformGetPort((struct sockaddr *) &ss);
+    sprintf(temp, "%s:%u", ip, port);
+
+    switch (*event->type) {
+        case httpGet:
+            type = 'G';
+            break;
+        case httpHead:
+            type = 'H';
+            break;
+        case httpPost:
+            type = 'P';
+            break;
+        default:
+            type = '?';
+            break;
+    }
+
+    sprintf(state, "%c%03d", type, *event->response);
+
+    updateRow(sConnectionList, temp, state, event->path);
 }
 
 HWND connectionsListCreate(WNDCLASSEX *class, HINSTANCE inst, HWND parent, RECT *parentRect) {
@@ -217,7 +306,8 @@ HWND connectionsListCreate(WNDCLASSEX *class, HINSTANCE inst, HWND parent, RECT 
     eventSocketCloseSetCallback(callbackCloseSocket);
 
     /* TODO: This is test code */
-    InsertOrUpdateRow(list, "This", "is", "test");
+    updateRow(list, "This", "is", "test");
+    removeRow(list, "This");
 
     return list;
 }
