@@ -30,14 +30,14 @@ detailsWindowCallback(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     }
 }
 
-void updateConnectionsLabel() {
+void updateConnectionsLabel(void) {
     HWND connections = GetDlgItem(sStats, LBL_ACTIVE_CONNECTIONS);
     TCHAR temp[64];
     sprintf(temp, "Active Connections: %lu", nActiveConnections);
     SetWindowText(connections, temp);
 }
 
-void updateTransferLabel() {
+void updateTransferLabel(void) {
     HWND connections = GetDlgItem(sStats, LBL_ACTIVE_TRANSFERS);
     TCHAR temp[64];
     sprintf(temp, "Active Transfers: %lu", nActiveTransfers);
@@ -102,7 +102,7 @@ static void removeRow(HWND list, const char *address) {
         LVITEM lvi;
 
         ZeroMemory(&lvi, sizeof(LVITEM));
-        lvi.cchTextMax = 12, lvi.pszText = &str, lvi.iItem = row, lvi.mask = LVIF_TEXT;
+        lvi.cchTextMax = 12, lvi.pszText = (char *) &str, lvi.iItem = row, lvi.mask = LVIF_TEXT;
         /* If this rows state is not TSYN then we must also decrement the active transfers counter */
         if (SendMessage(sConnectionList, LVM_GETITEM, 0, (LPARAM) &lvi)) {
             if (toupper(str[0] == 'G') && strlen(str) >= 4) {
@@ -111,6 +111,7 @@ static void removeRow(HWND list, const char *address) {
                     case '6':
                     case '8':
                         --nActiveTransfers;
+                        updateTransferLabel();
                 }
             }
         }
@@ -368,9 +369,16 @@ runServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         case WM_DESTROY:
             /* Volatile global variable to make the server thread stop gracefully */
             serverRun = 0;
+
+            /* Detach all callbacks */
+            eventHttpFinishSetCallback(NULL);
+            eventHttpRespondSetCallback(NULL);
+            eventSocketAcceptSetCallback(NULL);
+            eventSocketCloseSetCallback(NULL);
+
             /* Wait for thread to stop before tear down */
             serverPoke();
-            WaitForSingleObject(serverThread, INFINITE);
+            /* WaitForSingleObject(serverThread, INFINITE); */
             platformCloseBindSockets(&serverCurrentSockets, serverMaxSocket);
             platformIpStackExit();
 

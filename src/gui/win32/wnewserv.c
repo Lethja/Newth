@@ -176,35 +176,35 @@ typedef HRESULT (__stdcall *GetFolderPath)(HWND, int, HANDLE, DWORD, LPSTR);
 #define FOLDER_FUNCTION "SHGetFolderPathW"
 #endif
 
-static char *getDirectoryPathArg() {
-	int i;
-	char *dirPath = NULL;
+static char *getDirectoryPathArg(void) {
+    int i;
+    char *dirPath = NULL;
 
-	for(i = 1; i < __argc; ++i) {
-		PlatformFileStat st;
-		if(!platformFileStat(__argv[i], &st) && platformFileStatIsDirectory(&st)) {
-			dirPath = malloc(strlen(__argv[i] + 1));
-			strcpy(dirPath, __argv[i]);
-			break;
-		}
-	}
+    for (i = 1; i < __argc; ++i) {
+        PlatformFileStat st;
+        if (!platformFileStat(__argv[i], &st) && platformFileStatIsDirectory(&st)) {
+            dirPath = malloc(strlen(__argv[i]) + 1);
+            strcpy(dirPath, __argv[i]);
+            break;
+        }
+    }
 
-	return dirPath;
+    return dirPath;
 }
 
 static void SetRootStartUpPath(HWND window) {
     LPSTR path = NULL;
-	HMODULE module;
+    HMODULE module;
 
 #pragma region Check For Argv Path Argument
 
-	path = getDirectoryPathArg();
+    path = getDirectoryPathArg();
 
-	if (path) {
-		SetWindowText(GetDlgItem(window, EDT_ROOT_PATH), path);
-		free(path);
-		return;
-	}
+    if (path) {
+        SetWindowText(GetDlgItem(window, EDT_ROOT_PATH), path);
+        free(path);
+        return;
+    }
 
 #pragma endregion
 
