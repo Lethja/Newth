@@ -131,6 +131,97 @@ LRESULT CALLBACK detailsWindowCallback(HWND hwnd, UINT message, WPARAM wParam, L
     }
 }
 
+static int GetRowByAddress(const char *address) {
+    /* TODO: run LVM_GETITEM over list to find address if it exists */
+    return 0;
+}
+
+static void InsertOrUpdateRow(HWND list, const char *address, const char *state, const char *path) {
+    TCHAR temp[PATH_MAX];
+    LVITEM item;
+    int row = GetRowByAddress(address), i;
+
+    ZeroMemory(&temp, PATH_MAX), ZeroMemory(&item, sizeof(LVITEM));
+    item.cchTextMax = PATH_MAX, item.mask = LVIF_TEXT, item.pszText = temp;
+
+    item.iSubItem = 0, strncpy(temp, address, PATH_MAX - 1);
+    item.iItem = SendMessage(list, LVM_INSERTITEM, 0, (LPARAM) &item);
+    if (item.iItem == -1)
+        MessageBox(list, "Error inserting text", "Debug Error", MB_ICONERROR);
+
+    item.iSubItem = 1, strncpy(temp, state, PATH_MAX - 1);
+    if (SendMessage(list, LVM_SETITEM, 0, (LPARAM) &item) == -1)
+        MessageBox(list, "Error setting subtext", "Debug Error", MB_ICONERROR);
+
+    item.iSubItem = 2, strncpy(temp, path, PATH_MAX - 1);
+    if (SendMessage(list, LVM_SETITEM, 0, (LPARAM) &item) == -1)
+        MessageBox(list, "Error setting subtext", "Debug Error", MB_ICONERROR);
+}
+
+static void callbackCloseSocket(SOCKET *socket) {
+
+}
+
+static void callbackNewSocket(SOCKET *socket) {
+
+}
+
+static void callbackHttpEnd(eventHttpRespond *event) {
+
+}
+
+static void callbackHttpStart(eventHttpRespond *event) {
+
+}
+
+HWND connectionsListCreate(WNDCLASSEX *class, HINSTANCE inst, HWND parent, RECT *parentRect) {
+    HWND list;
+    TCHAR header[24] = "Address\0State\0\0\0Path";
+    LVCOLUMN lvc;
+    int i, max = 3;
+
+    list = CreateWindow(WC_LISTVIEW, 0, WS_CHILD | WS_VISIBLE | WS_VSCROLL | ES_AUTOVSCROLL | LVS_REPORT,
+                        parentRect->left, parentRect->top, parentRect->right, parentRect->bottom, parent, 0, inst,
+                        NULL);
+
+    SendMessage(list, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
+
+    lvc.fmt = LVCFMT_LEFT, lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM, lvc.cx = 100;
+
+    for (i = 0; i < max; ++i) {
+        LPSTR ptr = &header[i * (8 * sizeof(TCHAR))];
+        switch (i) {
+            case 0:
+                lvc.pszText = "Address";
+                break;
+            case 1:
+                lvc.pszText = "State";
+                break;
+            case 2:
+                lvc.pszText = "Path";
+                break;
+            default:
+                lvc.pszText = "?";
+                break;
+        }
+
+        lvc.iSubItem = i;
+        LoadString(inst, LVC_CONNECTION + i, ptr, 14);
+        if (SendMessage(list, LVM_INSERTCOLUMN, (WPARAM) &i, (LPARAM) (&lvc)) == -1)
+            MessageBox(parent, "Error inserting column", "Error", 0);
+    }
+
+    eventHttpRespondSetCallback(callbackHttpStart);
+    eventHttpFinishSetCallback(callbackHttpEnd);
+    eventSocketAcceptSetCallback(callbackNewSocket);
+    eventSocketCloseSetCallback(callbackCloseSocket);
+
+    /* TODO: This is test code */
+    InsertOrUpdateRow(list, "This", "is", "test");
+
+    return list;
+}
+
 void connectionsWindowCreate(WNDCLASSEX *class, HINSTANCE inst, int show) {
     RECT rect;
     HWND window = sConnectionWin = CreateWindow(class->lpszClassName, _T("Connection Details - Newth"), WS_OVERLAPPED,
@@ -139,8 +230,7 @@ void connectionsWindowCreate(WNDCLASSEX *class, HINSTANCE inst, int show) {
 
     GetClientRect(window, &rect);
 
-    sConnectionList = CreateWindow(WC_LISTVIEW, 0, WS_CHILD | WS_VISIBLE | WS_VSCROLL | ES_AUTOVSCROLL, rect.left,
-                                   rect.top, rect.right, rect.bottom, window, 0, inst, NULL);
+    sConnectionList = connectionsListCreate(class, inst, window, &rect);
 
     ShowWindow(window, show);
 }

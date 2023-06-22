@@ -39,6 +39,8 @@
 
 #define RB_PORT_CUSTOM (107)
 
+#define LVC_CONNECTION (200)
+
 #pragma endregion
 
 #pragma region Legacy toolchain helpers
