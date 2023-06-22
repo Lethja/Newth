@@ -39,6 +39,10 @@
 
 #define RB_PORT_CUSTOM (107)
 
+#define LBL_ACTIVE_CONNECTIONS (108)
+
+#define LBL_ACTIVE_TRANSFERS (109)
+
 #define LVC_CONNECTION (200)
 
 #pragma endregion

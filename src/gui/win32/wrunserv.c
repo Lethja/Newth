@@ -11,7 +11,9 @@
 #include <windows.h>
 
 static WNDCLASSEX sConnectionListClass;
-static HWND sAdapterTv, sConnectionList, sConnectionWin;
+static HWND sAdapterTv, sConnectionList, sConnectionWin, sStats;
+static size_t nActiveConnections = 0, nActiveTransfers = 0;
+static HANDLE gMutex;
 
 HANDLE serverThread;
 
@@ -25,6 +27,20 @@ LRESULT CALLBACK detailsWindowCallback(HWND hwnd, UINT message, WPARAM wParam, L
         default:
             return DefWindowProc(hwnd, message, wParam, lParam);
     }
+}
+
+void updateConnectionsLabel() {
+	HWND connections = GetDlgItem(sStats, LBL_ACTIVE_CONNECTIONS);
+	TCHAR temp[64];
+	sprintf(temp, "Active Connections: %u", nActiveConnections);
+	SetWindowText(connections, temp);
+}
+
+void updateTransferLabel() {
+	HWND connections = GetDlgItem(sStats, LBL_ACTIVE_TRANSFERS);
+	TCHAR temp[64];
+	sprintf(temp, "Active Transfers: %u", nActiveTransfers);
+	SetWindowText(connections, temp);
 }
 
 static int GetRowByAddress(HWND list, const char *address) {
@@ -55,7 +71,7 @@ static void updateRow(HWND list, const char *address, const char *state, const c
     LVITEM item;
     int row = GetRowByAddress(list, address);
 
-	if (address[0] == '?')
+	/*if (address[0] == '?')
 		return; /* TODO: should never get to this point */
 
     ZeroMemory(&temp, MAX_PATH), ZeroMemory(&item, sizeof(LVITEM));
@@ -99,7 +115,14 @@ static void callbackCloseSocket(SOCKET *socket) {
     port = platformGetPort((struct sockaddr *) &ss);
 
     sprintf(temp, "%s:%d", ip, port);
+
+	WaitForSingleObject(gMutex, INFINITE);
     removeRow(sConnectionList, temp);
+
+	--nActiveConnections;
+	updateConnectionsLabel();
+
+	ReleaseMutex(gMutex);
 }
 
 static void callbackNewSocket(SOCKET *socket) {
@@ -114,7 +137,13 @@ static void callbackNewSocket(SOCKET *socket) {
     port = platformGetPort((struct sockaddr *) &ss);
     sprintf(temp, "%s:%u", ip, port);
 
+	WaitForSingleObject(gMutex, INFINITE);
     updateRow(sConnectionList, temp, "TSYN", "");
+	
+	++nActiveConnections;
+	updateConnectionsLabel();
+
+	ReleaseMutex(gMutex);
 }
 
 static void callbackHttpEnd(eventHttpRespond *event) {
@@ -129,7 +158,13 @@ static void callbackHttpEnd(eventHttpRespond *event) {
     port = platformGetPort((struct sockaddr *) &ss);
     sprintf(temp, "%s:%u", ip, port);
 
+	WaitForSingleObject(gMutex, INFINITE);
     updateRow(sConnectionList, temp, "TSYN", event->path);
+
+	--nActiveTransfers;
+	updateTransferLabel();
+
+	ReleaseMutex(gMutex);
 }
 
 static void callbackHttpStart(eventHttpRespond *event) {
@@ -161,7 +196,19 @@ static void callbackHttpStart(eventHttpRespond *event) {
 
     sprintf(state, "%c%03d", type, *event->response);
 
+	WaitForSingleObject(gMutex, INFINITE);
     updateRow(sConnectionList, temp, state, event->path);
+
+	switch (*event->response) {
+		case 200:
+		case 206:
+		case 208:
+			++nActiveTransfers;
+			updateTransferLabel();
+			break;
+	}
+
+	ReleaseMutex(gMutex);
 }
 
 HWND connectionsListCreate(WNDCLASSEX *class, HINSTANCE inst, HWND parent, RECT *parentRect) {
@@ -188,7 +235,7 @@ HWND connectionsListCreate(WNDCLASSEX *class, HINSTANCE inst, HWND parent, RECT 
                 lvc.cx = 100, lvc.pszText = "Address";
                 break;
             case 2:
-                lvc.cx = 150, lvc.pszText = "Path";
+                lvc.cx = 170, lvc.pszText = "Path";
                 break;
             default:
                 lvc.pszText = "?";
@@ -200,6 +247,8 @@ HWND connectionsListCreate(WNDCLASSEX *class, HINSTANCE inst, HWND parent, RECT 
         if (SendMessage(list, LVM_INSERTCOLUMN, (WPARAM) &i, (LPARAM) (&lvc)) == -1)
             MessageBox(parent, "Error inserting column", "Error", 0);
     }
+
+	gMutex = CreateMutex(NULL, FALSE, NULL);
 
     eventHttpRespondSetCallback(callbackHttpStart);
     eventHttpFinishSetCallback(callbackHttpEnd);
@@ -353,17 +402,21 @@ void runServerWindowCreate(WNDCLASSEX *class, HINSTANCE inst, int show) {
     GetClientRect(window, &winRect);
 
     /* Create the path entry & button widgets */
-    misc = CreateWindow(_T("BUTTON"), _T("Statistics:"), NORMAL_GROUPBOX, 5, 5, winRect.right - 10, 60, window, 0, inst,
-                        0);
+	/* TODO: sStats could be made non-global if the labels below it where pareneted to the top window instead */
+    sStats = misc = CreateWindow(_T("BUTTON"), _T("Statistics:"), NORMAL_GROUPBOX, 5, 5, winRect.right - 10, 60, window,
+				 0, inst, 0);
 
     GetClientRect(misc, &miscRect);
 
     CreateWindow(_T("STATIC"), _T("Active Connections: Unknown"), NORMAL_LABEL, 10, 15, miscRect.right - 97, 23, misc,
-                 0, inst, 0);
-    CreateWindow(_T("STATIC"), _T("Active Transfers: Unknown"), NORMAL_LABEL, 10, 33, miscRect.right - 97, 23, misc, 0,
-                 inst, 0);
+                 (HMENU) LBL_ACTIVE_CONNECTIONS, inst, 0);
+    CreateWindow(_T("STATIC"), _T("Active Transfers: Unknown"), NORMAL_LABEL, 10, 33, miscRect.right - 97, 23, misc,
+				 (HMENU) LBL_ACTIVE_TRANSFERS, inst, 0);
     CreateWindow(_T("BUTTON"), _T("&Details..."), WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX | BS_PUSHLIKE,
                  winRect.right - 87, 37, 77, 23, window, (HMENU) BTN_DETAILS, inst, 0);
+
+	updateConnectionsLabel();
+	updateTransferLabel();
 
     misc = CreateWindow(_T("BUTTON"), _T("Network Adapters:"), NORMAL_GROUPBOX, 5, miscRect.bottom + 5,
                         winRect.right - 10, winRect.bottom - miscRect.bottom - 10, window, 0, inst, 0);
