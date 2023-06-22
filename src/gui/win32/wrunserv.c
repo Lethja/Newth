@@ -55,6 +55,9 @@ static void updateRow(HWND list, const char *address, const char *state, const c
     LVITEM item;
     int row = GetRowByAddress(list, address);
 
+	if (address[0] == '?')
+		return; /* TODO: should never get to this point */
+
     ZeroMemory(&temp, MAX_PATH), ZeroMemory(&item, sizeof(LVITEM));
     item.cchTextMax = MAX_PATH, item.mask = LVIF_TEXT, item.pszText = temp;
 
@@ -63,12 +66,15 @@ static void updateRow(HWND list, const char *address, const char *state, const c
         item.iItem = SendMessage(list, LVM_INSERTITEM, 0, (LPARAM) &item);
         if (item.iItem == -1)
             MessageBox(list, "Error inserting text", "Debug Error", MB_ICONERROR);
-    } else
-        item.iItem = row;
+		    item.iSubItem = 1, strncpy(temp, address, MAX_PATH - 1);
 
-    item.iSubItem = 1, strncpy(temp, address, MAX_PATH - 1);
-    if (SendMessage(list, LVM_SETITEM, 0, (LPARAM) &item) == -1)
-        MessageBox(list, "Error setting subtext", "Debug Error", MB_ICONERROR);
+		if (SendMessage(list, LVM_SETITEM, 0, (LPARAM) &item) == -1)
+			MessageBox(list, "Error setting subtext", "Debug Error", MB_ICONERROR);
+    } else {
+        item.iItem = row;
+		if (SendMessage(list, LVM_SETITEM, 0, (LPARAM) &item) == -1)
+			MessageBox(list, "Error setting subtext", "Debug Error", MB_ICONERROR);
+	}
 
     item.iSubItem = 2, strncpy(temp, path, MAX_PATH - 1);
     if (SendMessage(list, LVM_SETITEM, 0, (LPARAM) &item) == -1)

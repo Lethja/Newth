@@ -7,7 +7,9 @@
 
 #include <tchar.h>
 #include <windows.h>
+#include <shellapi.h>
 #include <shlobj.h>
+#include <shlwapi.h>
 #include <commctrl.h>
 
 #pragma clang diagnostic push
@@ -174,12 +176,41 @@ typedef HRESULT (__stdcall *GetFolderPath)(HWND, int, HANDLE, DWORD, LPSTR);
 #define FOLDER_FUNCTION "SHGetFolderPathW"
 #endif
 
-static void SetDesktopPath(HWND window) {
+static char *getDirectoryPathArg() {
+	int i;
+	char *dirPath = NULL;
+
+	for(i = 1; i < __argc; ++i) {
+		PlatformFileStat st;
+		if(!platformFileStat(__argv[i], &st) && platformFileStatIsDirectory(&st)) {
+			dirPath = malloc(strlen(__argv[i] + 1));
+			strcpy(dirPath, __argv[i]);
+			break;
+		}
+	}
+
+	return dirPath;
+}
+
+static void SetRootStartUpPath(HWND window) {
     LPSTR path = NULL;
+	HMODULE module;
 
-#pragma region Modern System Function Call
+#pragma region Check For Argv Path Argument
 
-    HMODULE module = LoadLibrary("shell32.dll");
+	path = getDirectoryPathArg();
+
+	if (path) {
+		SetWindowText(GetDlgItem(window, EDT_ROOT_PATH), path);
+		free(path);
+		return;
+	}
+
+#pragma endregion
+
+#pragma region Modern System Function Call To Get Desktop Path
+
+    module = LoadLibrary("shell32.dll");
     if (module) {
         GetFolderPath FolderPathFunc = (GetFolderPath) GetProcAddress(module, FOLDER_FUNCTION);
         if (FolderPathFunc) {
@@ -197,7 +228,7 @@ static void SetDesktopPath(HWND window) {
 
 #pragma endregion
 
-#pragma region Fallback for DOS based Windows
+#pragma region Fallback For DOS based Windows To Get Desktop Path
 
     path = malloc(MAX_PATH);
     GetWindowsDirectory(path, MAX_PATH);
@@ -232,7 +263,7 @@ void newServerWindowCreate(WNDCLASSEX *class, HINSTANCE inst, int show) {
                    inst, 0);
 
     CreateWindow(_T("BUTTON"), _T("&Browse..."), NORMAL_BUTTON, 227, 27, 77, 23, window, (HMENU) BTN_BROWSE, inst, 0);
-    SetDesktopPath(window);
+    SetRootStartUpPath(window);
 
     /* Create listen port radio buttons */
     CreateWindow(_T("BUTTON"), _T("Listen Port:"), NORMAL_GROUPBOX, 5, 58, 305, 94, window, 0, inst, 0);
