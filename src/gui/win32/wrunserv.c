@@ -28,21 +28,21 @@ LRESULT CALLBACK detailsWindowCallback(HWND hwnd, UINT message, WPARAM wParam, L
 }
 
 static int GetRowByAddress(HWND list, const char *address) {
-    TCHAR addr[PATH_MAX], item[PATH_MAX];
+    TCHAR addr[MAX_PATH], item[MAX_PATH];
     LVITEM lvi;
     int i, max;
 
     ZeroMemory(&lvi, sizeof(LVITEM));
-    lvi.mask = LVIF_TEXT, lvi.pszText = item, lvi.cchTextMax = PATH_MAX, lvi.iSubItem = 1; /* Address */
+    lvi.mask = LVIF_TEXT, lvi.pszText = item, lvi.cchTextMax = MAX_PATH, lvi.iSubItem = 1; /* Address */
     max = SendMessage(list, LVM_GETITEMCOUNT, 0, 0);
 
-    strncpy(addr, address, PATH_MAX);
+    strncpy(addr, address, MAX_PATH);
 
     for (i = 0; i < max; ++i) {
         lvi.iItem = i;
         if (SendMessage(list, LVM_GETITEM, 0, (LPARAM) &lvi)) {
             if (lvi.mask & LVIF_TEXT) {
-                if (strncmp(addr, item, PATH_MAX) == 0)
+                if (strncmp(addr, item, MAX_PATH) == 0)
                     return i; /* This is the correct item to update or remove */
             }
         }
@@ -51,14 +51,14 @@ static int GetRowByAddress(HWND list, const char *address) {
 }
 
 static void updateRow(HWND list, const char *address, const char *state, const char *path) {
-    TCHAR temp[PATH_MAX];
+    TCHAR temp[MAX_PATH];
     LVITEM item;
     int row = GetRowByAddress(list, address);
 
-    ZeroMemory(&temp, PATH_MAX), ZeroMemory(&item, sizeof(LVITEM));
-    item.cchTextMax = PATH_MAX, item.mask = LVIF_TEXT, item.pszText = temp;
+    ZeroMemory(&temp, MAX_PATH), ZeroMemory(&item, sizeof(LVITEM));
+    item.cchTextMax = MAX_PATH, item.mask = LVIF_TEXT, item.pszText = temp;
 
-    item.iSubItem = 0, strncpy(temp, state, PATH_MAX - 1);
+    item.iSubItem = 0, strncpy(temp, state, MAX_PATH - 1);
     if (row == -1) {
         item.iItem = SendMessage(list, LVM_INSERTITEM, 0, (LPARAM) &item);
         if (item.iItem == -1)
@@ -66,11 +66,11 @@ static void updateRow(HWND list, const char *address, const char *state, const c
     } else
         item.iItem = row;
 
-    item.iSubItem = 1, strncpy(temp, address, PATH_MAX - 1);
+    item.iSubItem = 1, strncpy(temp, address, MAX_PATH - 1);
     if (SendMessage(list, LVM_SETITEM, 0, (LPARAM) &item) == -1)
         MessageBox(list, "Error setting subtext", "Debug Error", MB_ICONERROR);
 
-    item.iSubItem = 2, strncpy(temp, path, PATH_MAX - 1);
+    item.iSubItem = 2, strncpy(temp, path, MAX_PATH - 1);
     if (SendMessage(list, LVM_SETITEM, 0, (LPARAM) &item) == -1)
         MessageBox(list, "Error setting subtext", "Debug Error", MB_ICONERROR);
 }
@@ -85,7 +85,7 @@ static void callbackCloseSocket(SOCKET *socket) {
     struct sockaddr_storage ss;
     socklen_t sockLen = sizeof(ss);
     sa_family_t family;
-    char ip[INET6_ADDRSTRLEN], temp[PATH_MAX];
+    char ip[INET6_ADDRSTRLEN], temp[MAX_PATH];
     unsigned short port;
 
     getpeername(*socket, (struct sockaddr *) &ss, &sockLen);
@@ -100,7 +100,7 @@ static void callbackNewSocket(SOCKET *socket) {
     struct sockaddr_storage ss;
     socklen_t sockLen = sizeof(ss);
     sa_family_t family;
-    char ip[INET6_ADDRSTRLEN], temp[PATH_MAX];
+    char ip[INET6_ADDRSTRLEN], temp[MAX_PATH];
     unsigned short port;
 
     getpeername(*socket, (struct sockaddr *) &ss, &sockLen);
@@ -115,7 +115,7 @@ static void callbackHttpEnd(eventHttpRespond *event) {
     struct sockaddr_storage ss;
     socklen_t sockLen = sizeof(ss);
     sa_family_t family;
-    char ip[INET6_ADDRSTRLEN], temp[PATH_MAX], state[12];
+    char ip[INET6_ADDRSTRLEN], temp[MAX_PATH];
     unsigned short port;
 
     getpeername(*event->clientSocket, (struct sockaddr *) &ss, &sockLen);
@@ -130,7 +130,7 @@ static void callbackHttpStart(eventHttpRespond *event) {
     struct sockaddr_storage ss;
     socklen_t sockLen = sizeof(ss);
     sa_family_t family;
-    char ip[INET6_ADDRSTRLEN], temp[PATH_MAX], state[12], type;
+    char ip[INET6_ADDRSTRLEN], temp[MAX_PATH], state[12], type;
     unsigned short port;
 
     getpeername(*event->clientSocket, (struct sockaddr *) &ss, &sockLen);
