@@ -12,14 +12,15 @@
 
 static WNDCLASSEX sConnectionListClass;
 static HWND sAdapterTv, sConnectionList, sConnectionWin, sStats;
-static size_t nActiveConnections = 0, nActiveTransfers = 0;
-static HANDLE gMutex;
+static unsigned long nActiveConnections = 0, nActiveTransfers = 0;
+/* static HANDLE updateConnectionListMutex; */
 
 HANDLE serverThread;
 
 #pragma region Connection List Window
 
-LRESULT CALLBACK detailsWindowCallback(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+LRESULT CALLBACK
+detailsWindowCallback(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
         case WM_CLOSE:
             return 0; /* Ignore */
@@ -30,17 +31,17 @@ LRESULT CALLBACK detailsWindowCallback(HWND hwnd, UINT message, WPARAM wParam, L
 }
 
 void updateConnectionsLabel() {
-	HWND connections = GetDlgItem(sStats, LBL_ACTIVE_CONNECTIONS);
-	TCHAR temp[64];
-	sprintf(temp, "Active Connections: %u", nActiveConnections);
-	SetWindowText(connections, temp);
+    HWND connections = GetDlgItem(sStats, LBL_ACTIVE_CONNECTIONS);
+    TCHAR temp[64];
+    sprintf(temp, "Active Connections: %lu", nActiveConnections);
+    SetWindowText(connections, temp);
 }
 
 void updateTransferLabel() {
-	HWND connections = GetDlgItem(sStats, LBL_ACTIVE_TRANSFERS);
-	TCHAR temp[64];
-	sprintf(temp, "Active Transfers: %u", nActiveTransfers);
-	SetWindowText(connections, temp);
+    HWND connections = GetDlgItem(sStats, LBL_ACTIVE_TRANSFERS);
+    TCHAR temp[64];
+    sprintf(temp, "Active Transfers: %lu", nActiveTransfers);
+    SetWindowText(connections, temp);
 }
 
 static int GetRowByAddress(HWND list, const char *address) {
@@ -71,9 +72,6 @@ static void updateRow(HWND list, const char *address, const char *state, const c
     LVITEM item;
     int row = GetRowByAddress(list, address);
 
-	/*if (address[0] == '?')
-		return; /* TODO: should never get to this point */
-
     ZeroMemory(&temp, MAX_PATH), ZeroMemory(&item, sizeof(LVITEM));
     item.cchTextMax = MAX_PATH, item.mask = LVIF_TEXT, item.pszText = temp;
 
@@ -82,15 +80,15 @@ static void updateRow(HWND list, const char *address, const char *state, const c
         item.iItem = SendMessage(list, LVM_INSERTITEM, 0, (LPARAM) &item);
         if (item.iItem == -1)
             MessageBox(list, "Error inserting text", "Debug Error", MB_ICONERROR);
-		    item.iSubItem = 1, strncpy(temp, address, MAX_PATH - 1);
+        item.iSubItem = 1, strncpy(temp, address, MAX_PATH - 1);
 
-		if (SendMessage(list, LVM_SETITEM, 0, (LPARAM) &item) == -1)
-			MessageBox(list, "Error setting subtext", "Debug Error", MB_ICONERROR);
+        if (SendMessage(list, LVM_SETITEM, 0, (LPARAM) &item) == -1)
+            MessageBox(list, "Error setting subtext", "Debug Error", MB_ICONERROR);
     } else {
         item.iItem = row;
-		if (SendMessage(list, LVM_SETITEM, 0, (LPARAM) &item) == -1)
-			MessageBox(list, "Error setting subtext", "Debug Error", MB_ICONERROR);
-	}
+        if (SendMessage(list, LVM_SETITEM, 0, (LPARAM) &item) == -1)
+            MessageBox(list, "Error setting subtext", "Debug Error", MB_ICONERROR);
+    }
 
     item.iSubItem = 2, strncpy(temp, path, MAX_PATH - 1);
     if (SendMessage(list, LVM_SETITEM, 0, (LPARAM) &item) == -1)
@@ -99,8 +97,26 @@ static void updateRow(HWND list, const char *address, const char *state, const c
 
 static void removeRow(HWND list, const char *address) {
     int row = GetRowByAddress(list, address);
-    if (row >= 0)
+    if (row >= 0) {
+        TCHAR str[12];
+        LVITEM lvi;
+
+        ZeroMemory(&lvi, sizeof(LVITEM));
+        lvi.cchTextMax = 12, lvi.pszText = &str, lvi.iItem = row, lvi.mask = LVIF_TEXT;
+        /* If this rows state is not TSYN then we must also decrement the active transfers counter */
+        if (SendMessage(sConnectionList, LVM_GETITEM, 0, (LPARAM) &lvi)) {
+            if (toupper(str[0] == 'G') && strlen(str) >= 4) {
+                switch (str[3]) {
+                    case '0':
+                    case '6':
+                    case '8':
+                        --nActiveTransfers;
+                }
+            }
+        }
         SendMessage(list, LVM_DELETEITEM, (WPARAM) row, 0);
+    } else
+        MessageBox(NULL, "Attempted to remove a address that didn't exist", "Debug", MB_ICONERROR);
 }
 
 static void callbackCloseSocket(SOCKET *socket) {
@@ -116,13 +132,13 @@ static void callbackCloseSocket(SOCKET *socket) {
 
     sprintf(temp, "%s:%d", ip, port);
 
-	WaitForSingleObject(gMutex, INFINITE);
+    /* WaitForSingleObject(updateConnectionListMutex, INFINITE); */
     removeRow(sConnectionList, temp);
 
-	--nActiveConnections;
-	updateConnectionsLabel();
+    --nActiveConnections;
+    updateConnectionsLabel();
 
-	ReleaseMutex(gMutex);
+    /* ReleaseMutex(updateConnectionListMutex); */
 }
 
 static void callbackNewSocket(SOCKET *socket) {
@@ -137,13 +153,13 @@ static void callbackNewSocket(SOCKET *socket) {
     port = platformGetPort((struct sockaddr *) &ss);
     sprintf(temp, "%s:%u", ip, port);
 
-	WaitForSingleObject(gMutex, INFINITE);
+    /* WaitForSingleObject(updateConnectionListMutex, INFINITE); */
     updateRow(sConnectionList, temp, "TSYN", "");
-	
-	++nActiveConnections;
-	updateConnectionsLabel();
 
-	ReleaseMutex(gMutex);
+    ++nActiveConnections;
+    updateConnectionsLabel();
+
+    /* ReleaseMutex(updateConnectionListMutex); */
 }
 
 static void callbackHttpEnd(eventHttpRespond *event) {
@@ -158,13 +174,13 @@ static void callbackHttpEnd(eventHttpRespond *event) {
     port = platformGetPort((struct sockaddr *) &ss);
     sprintf(temp, "%s:%u", ip, port);
 
-	WaitForSingleObject(gMutex, INFINITE);
+    /* WaitForSingleObject(updateConnectionListMutex, INFINITE); */
     updateRow(sConnectionList, temp, "TSYN", event->path);
 
-	--nActiveTransfers;
-	updateTransferLabel();
+    --nActiveTransfers;
+    updateTransferLabel();
 
-	ReleaseMutex(gMutex);
+    /* ReleaseMutex(updateConnectionListMutex); */
 }
 
 static void callbackHttpStart(eventHttpRespond *event) {
@@ -196,19 +212,21 @@ static void callbackHttpStart(eventHttpRespond *event) {
 
     sprintf(state, "%c%03d", type, *event->response);
 
-	WaitForSingleObject(gMutex, INFINITE);
+    /* WaitForSingleObject(updateConnectionListMutex, INFINITE); */
+
+    switch (*event->response) {
+        case 200:
+        case 206:
+        case 208:
+            ++nActiveTransfers;
+            updateTransferLabel();
+            break;
+
+    }
+
     updateRow(sConnectionList, temp, state, event->path);
 
-	switch (*event->response) {
-		case 200:
-		case 206:
-		case 208:
-			++nActiveTransfers;
-			updateTransferLabel();
-			break;
-	}
-
-	ReleaseMutex(gMutex);
+    /* ReleaseMutex(updateConnectionListMutex); */
 }
 
 HWND connectionsListCreate(WNDCLASSEX *class, HINSTANCE inst, HWND parent, RECT *parentRect) {
@@ -248,7 +266,7 @@ HWND connectionsListCreate(WNDCLASSEX *class, HINSTANCE inst, HWND parent, RECT 
             MessageBox(parent, "Error inserting column", "Error", 0);
     }
 
-	gMutex = CreateMutex(NULL, FALSE, NULL);
+    /* updateConnectionListMutex = CreateMutex(NULL, FALSE, NULL); */
 
     eventHttpRespondSetCallback(callbackHttpStart);
     eventHttpFinishSetCallback(callbackHttpEnd);
@@ -322,7 +340,8 @@ void setupTreeAdapterInformation(char *protocol, sa_family_t family, unsigned sh
     platformFreeAdapterInformation(adapters);
 }
 
-LRESULT CALLBACK runServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+LRESULT CALLBACK
+runServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
         case WM_COMMAND: {
             switch (LOWORD(wParam)) {
@@ -361,7 +380,7 @@ LRESULT CALLBACK runServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam,
 
         case WM_CLOSE:
             DestroyWindow(sConnectionWin);
-            /* Fall though */
+            /* Fall through */
         default:
             return DefWindowProc(hwnd, message, wParam, lParam);
     }
@@ -402,21 +421,21 @@ void runServerWindowCreate(WNDCLASSEX *class, HINSTANCE inst, int show) {
     GetClientRect(window, &winRect);
 
     /* Create the path entry & button widgets */
-	/* TODO: sStats could be made non-global if the labels below it where pareneted to the top window instead */
+    /* TODO: sStats could be made non-global if the labels below it where pareneted to the top window instead */
     sStats = misc = CreateWindow(_T("BUTTON"), _T("Statistics:"), NORMAL_GROUPBOX, 5, 5, winRect.right - 10, 60, window,
-				 0, inst, 0);
+                                 0, inst, 0);
 
     GetClientRect(misc, &miscRect);
 
-    CreateWindow(_T("STATIC"), _T("Active Connections: Unknown"), NORMAL_LABEL, 10, 15, miscRect.right - 97, 23, misc,
+    CreateWindow(_T("STATIC"), _T(""), NORMAL_LABEL, 10, 15, miscRect.right - 97, 23, misc,
                  (HMENU) LBL_ACTIVE_CONNECTIONS, inst, 0);
-    CreateWindow(_T("STATIC"), _T("Active Transfers: Unknown"), NORMAL_LABEL, 10, 33, miscRect.right - 97, 23, misc,
-				 (HMENU) LBL_ACTIVE_TRANSFERS, inst, 0);
+    CreateWindow(_T("STATIC"), _T(""), NORMAL_LABEL, 10, 33, miscRect.right - 97, 23, misc,
+                 (HMENU) LBL_ACTIVE_TRANSFERS, inst, 0);
     CreateWindow(_T("BUTTON"), _T("&Details..."), WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX | BS_PUSHLIKE,
                  winRect.right - 87, 37, 77, 23, window, (HMENU) BTN_DETAILS, inst, 0);
 
-	updateConnectionsLabel();
-	updateTransferLabel();
+    updateConnectionsLabel();
+    updateTransferLabel();
 
     misc = CreateWindow(_T("BUTTON"), _T("Network Adapters:"), NORMAL_GROUPBOX, 5, miscRect.bottom + 5,
                         winRect.right - 10, winRect.bottom - miscRect.bottom - 10, window, 0, inst, 0);
