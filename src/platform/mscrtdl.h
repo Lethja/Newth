@@ -6,6 +6,8 @@
 #define CLOSE_SOCKET(x) closesocket(x)
 #define SOCK_BUF_TYPE int
 #define sa_family_t short
+#define FSEEK_64 _fseeki64
+#define FTELL_64 _ftelli64
 
 #include <winsock2.h>
 #include <ws2tcpip.h>

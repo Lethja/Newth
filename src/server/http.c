@@ -195,7 +195,7 @@ void httpHeaderWriteAcceptRanges(SocketBuffer *socketBuffer) {
 void httpHeaderWriteRange(SocketBuffer *socketBuffer, PlatformFileOffset start, PlatformFileOffset finish,
                           PlatformFileOffset fileLength) {
     char buf[BUFSIZ];
-    sprintf(buf, "Content-Range: bytes %lu-%lu/%lu" HTTP_EOL, start, finish == fileLength ? finish - 1 : finish,
+    sprintf(buf, "Content-Range: bytes %llu-%llu/%llu" HTTP_EOL, start, finish == fileLength ? finish - 1 : finish,
             fileLength);
     socketBufferWrite(socketBuffer, buf);
 }
@@ -215,9 +215,9 @@ void httpHeaderWriteChunkedEncoding(SocketBuffer *socketBuffer) {
     socketBufferWrite(socketBuffer, chunked);
 }
 
-void httpHeaderWriteContentLength(SocketBuffer *socketBuffer, size_t length) {
+void httpHeaderWriteContentLength(SocketBuffer *socketBuffer, PlatformFileOffset length) {
     char buffer[BUFSIZ];
-    sprintf(buffer, "Content-Length: %lu" HTTP_EOL, (unsigned long) length);
+    sprintf(buffer, "Content-Length: %llu" HTTP_EOL, length);
     socketBufferWrite(socketBuffer, buffer);
 }
 
@@ -438,7 +438,7 @@ size_t httpBodyWriteFile(SocketBuffer *socketBuffer, FILE *file, PlatformFileOff
     unsigned long bytesRead;
 
     if (start)
-        fseek(file, start, SEEK_SET);
+        FSEEK_64(file, start, SEEK_SET);
 
     while ((bytesRead = fread(buffer, 1, length, file)) > 0) {
         length -= (PlatformFileOffset) bytesRead;

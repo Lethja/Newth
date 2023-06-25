@@ -24,7 +24,7 @@ typedef struct ServerHeaderResponse {
 char headerStructGetEssential(ServerHeaderResponse *self, FILE *headerFile) {
     char *p, buf[BUFSIZ] = "";
 
-    fseek(headerFile, 0L, SEEK_SET);
+    FSEEK_64(headerFile, 0L, SEEK_SET);
     if (fgets(buf, BUFSIZ, headerFile) == NULL)
         goto headerStructGetEssentialFailed;
 
@@ -62,7 +62,7 @@ char headerStructGetEssential(ServerHeaderResponse *self, FILE *headerFile) {
 char headerStructGetFileName(ServerHeaderResponse *self, FILE *headerFile) {
     char buf[BUFSIZ] = "";
 
-    fseek(headerFile, 0L, SEEK_SET);
+    FSEEK_64(headerFile, 0L, SEEK_SET);
     while (fgets(buf, BUFSIZ, headerFile)) {
         char *p;
 
@@ -286,7 +286,7 @@ char clientConnectSocketTo(const SOCKET *socket, char *uri, sa_family_t type) {
 }
 
 void writeToDisk(ServerHeaderResponse *self, const SOCKET *socket, FILE *disk) {
-    size_t totalBytes = 0;
+    PlatformFileOffset totalBytes = 0;
     ssize_t bytesReceived;
     char rxBytes[BUFSIZ] = "";
 
@@ -309,7 +309,7 @@ void writeToDisk(ServerHeaderResponse *self, const SOCKET *socket, FILE *disk) {
 
 FILE *getHeader(const SOCKET *socket) {
     char rxBytes[BUFSIZ] = "";
-    size_t totalBytes = 0;
+    PlatformFileOffset totalBytes = 0;
     ssize_t bytesReceived;
     FILE *header;
 

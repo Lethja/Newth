@@ -28,5 +28,7 @@ typedef off_t PlatformFileOffset;
 #define CLOSE_SOCKET(x) close(x)
 #define SOCKET int
 #define SOCK_BUF_TYPE size_t
+#define FSEEK_64 fseeko
+#define FTELL_64 ftello
 
 #endif /* OPEN_WEB_PLATFORM_UNIX_H */

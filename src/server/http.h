@@ -149,7 +149,7 @@ void httpHeaderWriteChunkedEncoding(SocketBuffer *socketBuffer);
  * @param socketBuffer In: The socketBuffer to write to
  * @param length In: Content length in bytes
  */
-void httpHeaderWriteContentLength(SocketBuffer *socketBuffer, size_t length);
+void httpHeaderWriteContentLength(SocketBuffer *socketBuffer, PlatformFileOffset length);
 
 /**
  * Write the HTTP header Content-Length using the files size

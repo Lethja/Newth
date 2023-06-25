@@ -306,5 +306,5 @@ void serverPoke() {
             getPort(&serverListenSocket));
 
     if (connect(sock, (SA *) &ipv4, sizeof(ipv4)) == 0)
-        closesocket(sock);
+        CLOSE_SOCKET(sock);
 }
