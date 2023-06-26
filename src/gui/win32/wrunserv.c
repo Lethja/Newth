@@ -19,9 +19,8 @@ HANDLE serverThread;
 
 #pragma region Connection List Window
 
-LRESULT CALLBACK
-detailsWindowCallback(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
-    switch (message) {
+LRESULT CALLBACK detailsWindowCallback(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    switch (message) { /* NOLINT(hicpp-multiway-paths-covered) */
         case WM_CLOSE:
             return 0; /* Ignore */
 
@@ -120,7 +119,7 @@ static void removeRow(HWND list, const char *address) {
         MessageBox(NULL, "Attempted to remove a address that didn't exist", "Debug", MB_ICONERROR);
 }
 
-static void callbackCloseSocket(SOCKET *socket) {
+static void callbackCloseSocket(SOCKET *socket) { /* NOLINT(readability-non-const-parameter) */
     struct sockaddr_storage ss;
     socklen_t sockLen = sizeof(ss);
     sa_family_t family;
@@ -142,7 +141,7 @@ static void callbackCloseSocket(SOCKET *socket) {
     /* ReleaseMutex(updateConnectionListMutex); */
 }
 
-static void callbackNewSocket(SOCKET *socket) {
+static void callbackNewSocket(SOCKET *socket) { /* NOLINT(readability-non-const-parameter) */
     struct sockaddr_storage ss;
     socklen_t sockLen = sizeof(ss);
     sa_family_t family;
@@ -341,8 +340,7 @@ void setupTreeAdapterInformation(char *protocol, sa_family_t family, unsigned sh
     platformFreeAdapterInformation(adapters);
 }
 
-LRESULT CALLBACK
-runServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+LRESULT CALLBACK runServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
         case WM_COMMAND: {
             switch (LOWORD(wParam)) {
@@ -429,7 +427,7 @@ void runServerWindowCreate(WNDCLASSEX *class, HINSTANCE inst, int show) {
     GetClientRect(window, &winRect);
 
     /* Create the path entry & button widgets */
-    /* TODO: sStats could be made non-global if the labels below it where pareneted to the top window instead */
+    /* TODO: sStats could be made non-global if the labels below it where parented to the top window instead */
     sStats = misc = CreateWindow(_T("BUTTON"), _T("Statistics:"), NORMAL_GROUPBOX, 5, 5, winRect.right - 10, 60, window,
                                  0, inst, 0);
 

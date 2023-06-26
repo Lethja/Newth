@@ -7,10 +7,14 @@ set(CMAKE_C_STANDARD 90)
 set(CMAKE_C_FLAGS "-pedantic -Wall -Wno-unknown-pragmas")
 
 option(PORTABLE_WIN32 "Force a portable Windows binary" ON)
-option(STYLISH_WIN32 "Enable visual styling on Windows XP and later" ON)
+option(STYLISH_WIN32 "Enable native visual styling for Windows XP and later" ON)
+option(FORCE_32BIT "Force x86 32-bit binaries" OFF)
 
 if (PORTABLE_WIN32)
     set(CMAKE_SYSTEM_NAME Windows)
+endif ()
+
+if (FORCE_32BIT)
     set(CMAKE_C_FLAGS "-m32 -march=i386")
 endif ()
 

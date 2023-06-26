@@ -38,8 +38,8 @@ extern char handleConnection(SOCKET clientSocket);
 
 extern unsigned short getPort(const SOCKET *listenSocket);
 
-extern void serverTick();
+extern void serverTick(void);
 
-extern void serverPoke();
+extern void serverPoke(void);
 
 #endif /* NEW_TH_SERVER_H */

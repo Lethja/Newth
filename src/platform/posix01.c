@@ -34,6 +34,8 @@ void platformCloseBindSockets(fd_set *sockets, SOCKET max) {
 
 char *platformServerStartup(int *listenSocket, sa_family_t family, char *ports) {
     struct sockaddr_storage serverAddress;
+    memset(&serverAddress, 0, sizeof(struct sockaddr_storage));
+
     switch (family) {
         default:
         case AF_INET: {
@@ -89,11 +91,11 @@ void platformConnectSignals(void(*noAction)(int), void(*shutdownCrash)(int), voi
 }
 
 void platformGetIpString(struct sockaddr *addr, char ipStr[INET6_ADDRSTRLEN], sa_family_t *family) {
+    *family = addr->sa_family;
     if (addr->sa_family == AF_INET) {
         struct sockaddr_in *s4 = (struct sockaddr_in *) addr;
         char *ip = inet_ntoa(s4->sin_addr);
         strcpy(ipStr, ip);
-        *family = AF_INET;
     } else if (addr->sa_family == AF_INET6) {
         const char ipv4[8] = "::ffff:";
         struct sockaddr_in6 *s6 = (struct sockaddr_in6 *) addr;

@@ -42,7 +42,10 @@ static void printSocketClose(SOCKET *sock) { /* NOLINT(readability-non-const-par
     sa_family_t family;
     char ip[INET6_ADDRSTRLEN];
     unsigned short port;
-    getpeername(*sock, (struct sockaddr *) &ss, &sockLen);
+
+    if (getpeername(*sock, (struct sockaddr *) &ss, &sockLen))
+        return;
+
     platformGetIpString((struct sockaddr *) &ss, ip, &family);
     port = platformGetPort((struct sockaddr *) &ss);
     if (family == AF_INET)
@@ -74,7 +77,9 @@ static void printHttpEvent(eventHttpRespond *event) {
             break;
     }
 
-    getpeername(*event->clientSocket, (struct sockaddr *) &sock, &sockLen);
+    if (getpeername(*event->clientSocket, (struct sockaddr *) &sock, &sockLen))
+        return;
+
     platformGetIpString((struct sockaddr *) &sock, ip, &family);
     port = platformGetPort((struct sockaddr *) &sock);
     if (family == AF_INET)

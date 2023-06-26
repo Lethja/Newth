@@ -64,6 +64,7 @@ void platformCloseBindSockets(fd_set *sockets, SOCKET max) {
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "ConstantParameter"
+#pragma ide diagnostic ignored "ConstantConditionsOC"
 
 static char platformVersionAbove(DWORD major, DWORD minor) {
     DWORD dwVersion;

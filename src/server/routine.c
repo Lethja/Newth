@@ -183,7 +183,7 @@ char FileRoutineArrayDel(RoutineArray *self, FileRoutine *fileRoutine) {
         FileRoutineFree(&array[i]);
 
         if (i + 1 < self->size)
-            memmove(&array[i], &array[i + 1], sizeof(FileRoutine) * (self->size - i));
+            memmove(&array[i], &array[i + 1], sizeof(FileRoutine) * (self->size - (i + 1)));
 
         --self->size;
 
@@ -191,6 +191,8 @@ char FileRoutineArrayDel(RoutineArray *self, FileRoutine *fileRoutine) {
             platformHeapResize((void **) &self->array, sizeof(FileRoutine), self->size);
         else
             free(self->array);
+
+        break; /* There should never be any duplicates in the array, early return */
     }
     return 0;
 }

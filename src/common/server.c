@@ -242,7 +242,7 @@ unsigned short getPort(const SOCKET *listenSocket) {
     return 0;
 }
 
-void serverTick() {
+void serverTick(void) {
     SOCKET i;
     fd_set readySockets;
     struct timeval globalSelectSleep;
@@ -293,7 +293,7 @@ void serverTick() {
     }
 }
 
-void serverPoke() {
+void serverPoke(void) {
     SOCKET sock;
     struct sockaddr_in ipv4;
 
