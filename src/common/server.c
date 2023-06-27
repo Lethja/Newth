@@ -8,7 +8,8 @@ RoutineArray globalDirRoutineArray;
 
 SOCKET serverMaxSocket;
 SOCKET serverListenSocket;
-fd_set serverCurrentSockets;
+fd_set serverReadSockets;
+fd_set serverWriteSockets;
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "UnusedParameter"
@@ -244,7 +245,7 @@ unsigned short getPort(const SOCKET *listenSocket) {
 
 void serverTick(void) {
     SOCKET i;
-    fd_set readySockets;
+    fd_set readyToReadSockets, readyToWriteSockets, errorSockets;
     struct timeval globalSelectSleep;
 
     while (serverRun) {
@@ -266,26 +267,28 @@ void serverTick(void) {
         globalSelectSleep.tv_usec = 0;
         globalSelectSleep.tv_sec = globalFileRoutineArray.size || globalDirRoutineArray.size ? 0 : 60;
 
-        readySockets = serverCurrentSockets;
+        readyToReadSockets = serverReadSockets;
+        readyToWriteSockets = serverWriteSockets;
 
-        if (select((int) serverMaxSocket + 1, &readySockets, NULL, NULL, &globalSelectSleep) < 0) {
+        if (select((int) serverMaxSocket + 1, &readyToReadSockets, &readyToWriteSockets, &errorSockets,
+                   &globalSelectSleep) < 0) {
             LINEDBG;
             exit(1);
         }
 
         for (i = 0; i <= serverMaxSocket; i++) {
-            if (FD_ISSET(i, &readySockets)) {
+            if (FD_ISSET(i, &readyToReadSockets)) {
                 if (i == serverListenSocket) {
                     SOCKET clientSocket = platformAcceptConnection(serverListenSocket);
                     if (clientSocket > serverMaxSocket)
                         serverMaxSocket = clientSocket;
 
-                    FD_SET(clientSocket, &serverCurrentSockets);
+                    FD_SET(clientSocket, &serverReadSockets);
                 } else {
                     if (handleConnection(i)) {
                         eventSocketCloseInvoke(&i);
                         CLOSE_SOCKET(i);
-                        FD_CLR(i, &serverCurrentSockets);
+                        FD_CLR(i, &serverReadSockets);
                     }
                 }
             }

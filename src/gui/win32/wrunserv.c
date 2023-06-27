@@ -377,7 +377,7 @@ LRESULT CALLBACK runServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam,
             /* Wait for thread to stop before tear down */
             serverPoke();
             /* WaitForSingleObject(serverThread, INFINITE); */
-            platformCloseBindSockets(&serverCurrentSockets, serverMaxSocket);
+            platformCloseBindSockets(&serverReadSockets, serverMaxSocket);
             platformIpStackExit();
 
             free(globalRootPath);

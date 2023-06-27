@@ -10,7 +10,8 @@
 
 extern char *globalRootPath;
 
-extern fd_set serverCurrentSockets;
+extern fd_set serverReadSockets;
+extern fd_set serverWriteSockets;
 
 extern RoutineArray globalFileRoutineArray;
 extern RoutineArray globalDirRoutineArray;

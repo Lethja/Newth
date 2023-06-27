@@ -3,7 +3,7 @@
 static void shutdownCrash(int signal) {
     switch (signal) {
         default: /* Close like normal unless something has gone catastrophically wrong */
-            platformCloseBindSockets(&serverCurrentSockets, serverMaxSocket);
+            platformCloseBindSockets(&serverReadSockets, serverMaxSocket);
             platformIpStackExit();
             printf("Emergency shutdown: %d\n", signal);
             /* Fallthrough */
@@ -16,7 +16,7 @@ static void shutdownCrash(int signal) {
 static void shutdownProgram(int signal) {
     if (signal == SIGINT)
         printf("\n"); /* Put next message on a different line from ^C */
-    platformCloseBindSockets(&serverCurrentSockets, serverMaxSocket);
+    platformCloseBindSockets(&serverReadSockets, serverMaxSocket);
     platformIpStackExit();
     exit(0);
 }
@@ -139,8 +139,9 @@ static int setup(int argc, char **argv) {
     printAdapterInformation("http", family, getPort(&serverListenSocket));
 
     serverMaxSocket = serverListenSocket;
-    FD_ZERO(&serverCurrentSockets);
-    FD_SET(serverListenSocket, &serverCurrentSockets);
+    FD_ZERO(&serverReadSockets);
+    FD_ZERO(&serverWriteSockets);
+    FD_SET(serverListenSocket, &serverReadSockets);
 
     globalFileRoutineArray.size = globalDirRoutineArray.size = 0;
     globalFileRoutineArray.array = globalDirRoutineArray.array = NULL;

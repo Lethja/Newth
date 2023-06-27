@@ -81,8 +81,9 @@ static char *startServer(HWND hwnd) {
 
     /* Set new server memory state */
     serverMaxSocket = serverListenSocket;
-    FD_ZERO(&serverCurrentSockets);
-    FD_SET(serverListenSocket, &serverCurrentSockets);
+    FD_ZERO(&serverReadSockets);
+    FD_ZERO(&serverWriteSockets);
+    FD_SET(serverListenSocket, &serverReadSockets);
 
     globalFileRoutineArray.size = globalDirRoutineArray.size = 0;
     globalFileRoutineArray.array = globalDirRoutineArray.array = NULL;
