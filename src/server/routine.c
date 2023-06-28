@@ -4,13 +4,13 @@
 #include "http.h"
 #include "event.h"
 
-size_t DirectoryRoutineContinue(DirectoryRoutine *self) {
+size_t DirectoryRoutineContinue(Routine *self) {
     const size_t max = 10;
     size_t bytesWrite = 0, i, pathLen = strlen(self->webPath);
     PlatformDirEntry *entry;
 
     for (i = 0; i < max; ++i) {
-        entry = platformDirRead(self->directory);
+        entry = platformDirRead(self->type.dir.directory);
         if (entry) {
             size_t entryLen;
             char buffer[BUFSIZ], pathBuf[BUFSIZ], *entryName;
@@ -31,7 +31,7 @@ size_t DirectoryRoutineContinue(DirectoryRoutine *self) {
                     memcpy(pathBuf + pathLen, entryName, entryLen + 1);
 
                 /* Append '/' on the end of directory entries */
-                if (platformDirEntryIsDirectory(self->rootPath, self->webPath, entry)) {
+                if (platformDirEntryIsDirectory(self->type.dir.rootPath, self->webPath, entry)) {
                     size_t len = strlen(pathBuf);
                     pathBuf[len] = '/', pathBuf[len + 1] = '\0';
                 }
@@ -41,14 +41,14 @@ size_t DirectoryRoutineContinue(DirectoryRoutine *self) {
                     return 0;
 
                 bytesWrite += strlen(buffer);
-                ++self->count;
+                ++self->type.dir.count;
             }
         } else {
             char buffer[BUFSIZ];
             buffer[0] = '\0';
 
             /* If the directory is empty, say so */
-            if (!self->count)
+            if (!self->type.dir.count)
                 strcpy(buffer, "\t\t\t<LI>Empty Directory</LI>\n");
 
             htmlListEnd(buffer);
@@ -69,11 +69,12 @@ size_t DirectoryRoutineContinue(DirectoryRoutine *self) {
     return bytesWrite;
 }
 
-DirectoryRoutine DirectoryRoutineNew(SOCKET socket, DIR *dir, const char *webPath, char *rootPath) {
+Routine DirectoryRoutineNew(SOCKET socket, DIR *dir, const char *webPath, char *rootPath) {
     size_t i;
-    DirectoryRoutine self;
-    self.directory = dir, self.socketBuffer = socketBufferNew(
-            socket), self.count = 0, self.rootPath = rootPath, self.state = TYPE_DIR_ROUTINE | STATE_CONTINUE;
+    Routine self;
+    self.type.dir.directory = dir, self.socketBuffer = socketBufferNew(
+            socket), self.type.dir.count = 0, self.type.dir.rootPath = rootPath, self.state =
+            TYPE_DIR_ROUTINE | STATE_CONTINUE;
 
     for (i = 0; i < FILENAME_MAX; ++i) {
         self.webPath[i] = webPath[i];
@@ -84,16 +85,17 @@ DirectoryRoutine DirectoryRoutineNew(SOCKET socket, DIR *dir, const char *webPat
     return self;
 }
 
-char DirectoryRoutineArrayAdd(RoutineArray *self, DirectoryRoutine directoryRoutine) {
-    DirectoryRoutine *array;
+char DirectoryRoutineArrayAdd(RoutineArray *self, Routine directoryRoutine) {
+    Routine *array;
+
     ++self->size;
     if (self->size == 1)
-        self->array = malloc(sizeof(DirectoryRoutine));
-    else if (platformHeapResize((void **) &self->array, sizeof(DirectoryRoutine), self->size))
+        self->array = malloc(sizeof(Routine));
+    else if (platformHeapResize((void **) &self->array, sizeof(Routine), self->size))
         return 1;
 
-    array = (DirectoryRoutine *) self->array;
-    memcpy(&array[self->size - 1], &directoryRoutine, sizeof(DirectoryRoutine));
+    array = (Routine *) self->array;
+    memcpy(&array[self->size - 1], &directoryRoutine, sizeof(Routine));
 
     return 0;
 }
@@ -102,23 +104,23 @@ void DirectoryRoutineFree(DirectoryRoutine *self) {
     platformDirClose(self->directory);
 }
 
-char DirectoryRoutineArrayDel(RoutineArray *self, DirectoryRoutine *directoryRoutine) {
+char DirectoryRoutineArrayDel(RoutineArray *self, Routine *directoryRoutine) {
     size_t i;
-    DirectoryRoutine *array = (DirectoryRoutine *) self->array;
+    Routine *array = (Routine *) self->array;
 
-    for (i = 0; i < self->size; i++) {
+    for (i = 0; i < self->size; ++i) {
         if (&array[i] != directoryRoutine)
             continue;
 
-        DirectoryRoutineFree(&array[i]);
+        DirectoryRoutineFree(&array[i].type.dir);
 
         if (i + 1 < self->size)
-            memmove(&array[i], &array[i + 1], sizeof(DirectoryRoutine) * (self->size - i));
+            memmove(&array[i], &array[i + 1], sizeof(Routine) * (self->size - i));
 
         --self->size;
 
         if (self->size)
-            platformHeapResize((void **) &self->array, sizeof(DirectoryRoutine), self->size);
+            platformHeapResize((void **) &self->array, sizeof(Routine), self->size);
         else
             free(self->array);
 
@@ -126,32 +128,33 @@ char DirectoryRoutineArrayDel(RoutineArray *self, DirectoryRoutine *directoryRou
     return 0;
 }
 
-FileRoutine FileRoutineNew(SOCKET socket, FILE *file, PlatformFileOffset start, PlatformFileOffset end,
-                           char webPath[FILENAME_MAX]) {
-    FileRoutine self;
-    self.file = file, self.start = start, self.end = end, self.socket = socket, self.state =
+Routine FileRoutineNew(SOCKET socket, FILE *file, PlatformFileOffset start, PlatformFileOffset end,
+                       char webPath[FILENAME_MAX]) {
+    Routine self;
+
+    self.type.file.file = file, self.type.file.start = start, self.type.file.end = end, self.socketBuffer.clientSocket = socket, self.state =
             TYPE_FILE_ROUTINE | STATE_CONTINUE;
 
     strncpy(self.webPath, webPath, FILENAME_MAX - 1);
-    FSEEK_64(self.file, self.start, SEEK_SET);
+    FSEEK_64(self.type.file.file, self.type.file.start, SEEK_SET);
     return self;
 }
 
-size_t FileRoutineContinue(FileRoutine *self) {
+size_t FileRoutineContinue(Routine *self) {
     size_t bytesRead, byteWrite;
     char buffer[BUFSIZ];
-    PlatformFileOffset currentPosition = FTELL_64(self->file);
-    PlatformFileOffset remaining = self->end - currentPosition;
+    PlatformFileOffset currentPosition = FTELL_64(self->type.file.file);
+    PlatformFileOffset remaining = self->type.file.end - currentPosition;
 
-    bytesRead = fread(buffer, 1, remaining < BUFSIZ ? remaining : BUFSIZ, self->file);
+    bytesRead = fread(buffer, 1, remaining < BUFSIZ ? remaining : BUFSIZ, self->type.file.file);
 
     if (bytesRead > 0) {
-        byteWrite = send(self->socket, buffer, (SOCK_BUF_TYPE) bytesRead, 0);
+        byteWrite = send(self->socketBuffer.clientSocket, buffer, (SOCK_BUF_TYPE) bytesRead, 0);
 
         if (byteWrite == -1)
             bytesRead = 0;
     } else {
-        eventHttpFinishInvoke(&self->socket, self->webPath, httpGet, 0);
+        eventHttpFinishInvoke(&self->socketBuffer.clientSocket, self->webPath, httpGet, 0);
     }
 
     return bytesRead;
@@ -161,37 +164,38 @@ void FileRoutineFree(FileRoutine *self) {
     fclose(self->file);
 }
 
-char FileRoutineArrayAdd(RoutineArray *self, FileRoutine fileRoutine) {
-    FileRoutine *array;
+char FileRoutineArrayAdd(RoutineArray *self, Routine fileRoutine) {
+    Routine *array;
+
     ++self->size;
     if (self->size == 1)
-        self->array = malloc(sizeof(FileRoutine));
-    else if (platformHeapResize((void **) &self->array, sizeof(FileRoutine), self->size))
+        self->array = malloc(sizeof(Routine));
+    else if (platformHeapResize((void **) &self->array, sizeof(Routine), self->size))
         return 1;
 
-    array = (FileRoutine *) self->array;
-    memcpy(&array[self->size - 1], &fileRoutine, sizeof(FileRoutine));
+    array = (Routine *) self->array;
+    memcpy(&array[self->size - 1], &fileRoutine, sizeof(Routine));
 
     return 0;
 }
 
-char FileRoutineArrayDel(RoutineArray *self, FileRoutine *fileRoutine) {
+char FileRoutineArrayDel(RoutineArray *self, Routine *fileRoutine) {
     size_t i;
-    FileRoutine *array = (FileRoutine *) self->array;
+    Routine *array = (Routine *) self->array;
 
     for (i = 0; i < self->size; i++) {
         if (&array[i] != fileRoutine)
             continue;
 
-        FileRoutineFree(&array[i]);
+        FileRoutineFree(&array[i].type.file);
 
         if (i + 1 < self->size)
-            memmove(&array[i], &array[i + 1], sizeof(FileRoutine) * (self->size - (i + 1)));
+            memmove(&array[i], &array[i + 1], sizeof(Routine) * (self->size - (i + 1)));
 
         --self->size;
 
         if (self->size)
-            platformHeapResize((void **) &self->array, sizeof(FileRoutine), self->size);
+            platformHeapResize((void **) &self->array, sizeof(Routine), self->size);
         else
             free(self->array);
 

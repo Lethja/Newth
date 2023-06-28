@@ -249,11 +249,11 @@ void serverTick(void) {
     struct timeval globalSelectSleep;
 
     while (serverRun) {
-        DirectoryRoutine *directoryRoutine = (DirectoryRoutine *) globalDirRoutineArray.array;
-        FileRoutine *fileRoutine = (FileRoutine *) globalFileRoutineArray.array;
+        Routine *directoryRoutine = (Routine *) globalDirRoutineArray.array;
+        Routine *fileRoutine = (Routine *) globalFileRoutineArray.array;
 
         for (i = 0; i < globalDirRoutineArray.size; ++i) {
-            DirectoryRoutine *dir = &directoryRoutine[i];
+            Routine *dir = &directoryRoutine[i];
             if ((dir->state & STATE_CONTINUE) > 0) {
                 if (!DirectoryRoutineContinue(dir)) {
                     DirectoryRoutineArrayDel(&globalDirRoutineArray, dir);
@@ -262,7 +262,7 @@ void serverTick(void) {
         }
 
         for (i = 0; i < globalFileRoutineArray.size; ++i) {
-            FileRoutine *file = &fileRoutine[i];
+            Routine *file = &fileRoutine[i];
             if ((file->state & STATE_CONTINUE) > 0) {
                 if (!FileRoutineContinue(file)) {
                     FileRoutineArrayDel(&globalFileRoutineArray, file);
@@ -274,10 +274,9 @@ void serverTick(void) {
         globalSelectSleep.tv_sec = globalFileRoutineArray.size || globalDirRoutineArray.size ? 0 : 60;
 
         readyToReadSockets = serverReadSockets;
-        readyToWriteSockets = serverWriteSockets;
+        /* readyToWriteSockets = serverWriteSockets; */
 
-        if (select((int) serverMaxSocket + 1, &readyToReadSockets, &readyToWriteSockets, &errorSockets,
-                   &globalSelectSleep) < 0) {
+        if (select((int) serverMaxSocket + 1, &readyToReadSockets, NULL, NULL, &globalSelectSleep) < 0) {
             LINEDBG;
             exit(1);
         }

@@ -6,55 +6,54 @@
 #include "sockbufr.h"
 
 enum state {
-    TYPE_FILE_ROUTINE = 1,
-    TYPE_DIR_ROUTINE = 2,
-    STATE_CONTINUE = 4,
-    STATE_DEFER = 8,
-    STATE_FINISH = 16,
-    STATE_FAIL = 32
+    TYPE_FILE_ROUTINE = 1, TYPE_DIR_ROUTINE = 2, STATE_CONTINUE = 4, STATE_DEFER = 8, STATE_FINISH = 16, STATE_FAIL = 32
 };
 
 typedef struct FileRoutine {
     FILE *file;
     PlatformFileOffset start, end;
-    SOCKET socket;
-    char webPath[FILENAME_MAX];
-    char state;
 } FileRoutine;
 
 typedef struct DirectoryRoutine {
     size_t count;
     DIR *directory;
     char *rootPath;
+} DirectoryRoutine;
+
+typedef struct Routine {
+    char state;
     SocketBuffer socketBuffer;
     char webPath[FILENAME_MAX];
-    char state;
-} DirectoryRoutine;
+    union {
+        struct FileRoutine file;
+        struct DirectoryRoutine dir;
+    } type;
+} Routine;
 
 typedef struct RoutineArray {
     size_t size;
     char *array;
 } RoutineArray;
 
-size_t DirectoryRoutineContinue(DirectoryRoutine *self);
+size_t DirectoryRoutineContinue(Routine *self);
 
-DirectoryRoutine DirectoryRoutineNew(SOCKET socket, DIR *dir, const char *webPath, char *rootPath);
+Routine DirectoryRoutineNew(SOCKET socket, DIR *dir, const char *webPath, char *rootPath);
 
-char DirectoryRoutineArrayAdd(RoutineArray *self, DirectoryRoutine directoryRoutine);
+char DirectoryRoutineArrayAdd(RoutineArray *self, Routine directoryRoutine);
 
 void DirectoryRoutineFree(DirectoryRoutine *self);
 
-char DirectoryRoutineArrayDel(RoutineArray *self, DirectoryRoutine *directoryRoutine);
+char DirectoryRoutineArrayDel(RoutineArray *self, Routine *directoryRoutine);
 
-FileRoutine
+Routine
 FileRoutineNew(SOCKET socket, FILE *file, PlatformFileOffset start, PlatformFileOffset end, char webPath[FILENAME_MAX]);
 
-size_t FileRoutineContinue(FileRoutine *self);
+size_t FileRoutineContinue(Routine *self);
 
 void FileRoutineFree(FileRoutine *self);
 
-char FileRoutineArrayAdd(RoutineArray *self, FileRoutine fileRoutine);
+char FileRoutineArrayAdd(RoutineArray *self, Routine fileRoutine);
 
-char FileRoutineArrayDel(RoutineArray *self, FileRoutine *fileRoutine);
+char FileRoutineArrayDel(RoutineArray *self, Routine *fileRoutine);
 
 #endif /* OPEN_WEB_ROUTINE_H */
