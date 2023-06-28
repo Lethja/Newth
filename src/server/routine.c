@@ -72,7 +72,8 @@ size_t DirectoryRoutineContinue(DirectoryRoutine *self) {
 DirectoryRoutine DirectoryRoutineNew(SOCKET socket, DIR *dir, const char *webPath, char *rootPath) {
     size_t i;
     DirectoryRoutine self;
-    self.directory = dir, self.socketBuffer = socketBufferNew(socket), self.count = 0, self.rootPath = rootPath;
+    self.directory = dir, self.socketBuffer = socketBufferNew(
+            socket), self.count = 0, self.rootPath = rootPath, self.state = TYPE_DIR_ROUTINE | STATE_CONTINUE;
 
     for (i = 0; i < FILENAME_MAX; ++i) {
         self.webPath[i] = webPath[i];
@@ -85,7 +86,7 @@ DirectoryRoutine DirectoryRoutineNew(SOCKET socket, DIR *dir, const char *webPat
 
 char DirectoryRoutineArrayAdd(RoutineArray *self, DirectoryRoutine directoryRoutine) {
     DirectoryRoutine *array;
-    self->size++;
+    ++self->size;
     if (self->size == 1)
         self->array = malloc(sizeof(DirectoryRoutine));
     else if (platformHeapResize((void **) &self->array, sizeof(DirectoryRoutine), self->size))
@@ -128,7 +129,9 @@ char DirectoryRoutineArrayDel(RoutineArray *self, DirectoryRoutine *directoryRou
 FileRoutine FileRoutineNew(SOCKET socket, FILE *file, PlatformFileOffset start, PlatformFileOffset end,
                            char webPath[FILENAME_MAX]) {
     FileRoutine self;
-    self.file = file, self.start = start, self.end = end, self.socket = socket;
+    self.file = file, self.start = start, self.end = end, self.socket = socket, self.state =
+            TYPE_FILE_ROUTINE | STATE_CONTINUE;
+
     strncpy(self.webPath, webPath, FILENAME_MAX - 1);
     FSEEK_64(self.file, self.start, SEEK_SET);
     return self;
@@ -160,7 +163,7 @@ void FileRoutineFree(FileRoutine *self) {
 
 char FileRoutineArrayAdd(RoutineArray *self, FileRoutine fileRoutine) {
     FileRoutine *array;
-    self->size++;
+    ++self->size;
     if (self->size == 1)
         self->array = malloc(sizeof(FileRoutine));
     else if (platformHeapResize((void **) &self->array, sizeof(FileRoutine), self->size))

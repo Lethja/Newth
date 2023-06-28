@@ -5,11 +5,21 @@
 #include "../platform/platform.h"
 #include "sockbufr.h"
 
+enum state {
+    TYPE_FILE_ROUTINE = 1,
+    TYPE_DIR_ROUTINE = 2,
+    STATE_CONTINUE = 4,
+    STATE_DEFER = 8,
+    STATE_FINISH = 16,
+    STATE_FAIL = 32
+};
+
 typedef struct FileRoutine {
     FILE *file;
     PlatformFileOffset start, end;
     SOCKET socket;
     char webPath[FILENAME_MAX];
+    char state;
 } FileRoutine;
 
 typedef struct DirectoryRoutine {
@@ -18,6 +28,7 @@ typedef struct DirectoryRoutine {
     char *rootPath;
     SocketBuffer socketBuffer;
     char webPath[FILENAME_MAX];
+    char state;
 } DirectoryRoutine;
 
 typedef struct RoutineArray {
