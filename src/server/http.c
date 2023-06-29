@@ -440,7 +440,7 @@ size_t httpBodyWriteFile(SocketBuffer *socketBuffer, FILE *file, PlatformFileOff
     if (start)
         platformFileSeek(file, start, SEEK_SET);
 
-    while ((bytesRead = platformFileRead(buffer, 1, length, file)) > 0) {
+    while ((bytesRead = platformFileRead(buffer, 1, (size_t) length, file)) > 0) {
         length -= (PlatformFileOffset) bytesRead;
         if (socketBufferWrite(socketBuffer, buffer))
             return 1;

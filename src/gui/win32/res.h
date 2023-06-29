@@ -3,6 +3,10 @@
 
 #pragma warning(disable:4068)
 
+#include <commctrl.h>
+
+#include <stdlib.h>
+
 #include <windows.h>
 
 #pragma region Normal Widget Types
@@ -55,6 +59,18 @@
 
 #ifndef BIF_NONEWFOLDERBUTTON
 #define BIF_NONEWFOLDERBUTTON 0x00000200
+#endif
+
+#ifndef LVM_FIRST
+#define LVM_FIRST 0x1000
+#endif
+
+#ifndef LVM_SETEXTENDEDLISTVIEWSTYLE
+#define LVM_SETEXTENDEDLISTVIEWSTYLE (LVM_FIRST+54)
+#endif
+
+#ifndef LVS_EX_FULLROWSELECT
+#define LVS_EX_FULLROWSELECT 0x20
 #endif
 
 #pragma endregion

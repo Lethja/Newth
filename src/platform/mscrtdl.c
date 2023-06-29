@@ -518,13 +518,13 @@ int platformFileSeek(PlatformFile stream, PlatformFileOffset offset, int whence)
 }
 
 PlatformFileOffset platformFileTell(PlatformFile stream) {
-    LARGE_INTEGER li, lo;
+    LARGE_INTEGER li;
+    li.LowPart = SetFilePointer(stream, 0, &li.HighPart, FILE_CURRENT);
 
-    li.QuadPart = 0;
-    if (SetFilePointerEx(stream, li, &lo, FILE_CURRENT))
-        return lo.QuadPart;
+    if (li.LowPart == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
+        return -1;
 
-    return 0;
+    return li.QuadPart;
 }
 
 size_t platformFileRead(void *ptr, size_t size, size_t n, PlatformFile stream) {

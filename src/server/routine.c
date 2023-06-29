@@ -140,7 +140,7 @@ size_t FileRoutineContinue(FileRoutine *self) {
     PlatformFileOffset currentPosition = platformFileTell(self->file);
     PlatformFileOffset remaining = self->end - currentPosition;
 
-    bytesRead = platformFileRead(buffer, 1, remaining < BUFSIZ ? remaining : BUFSIZ, self->file);
+    bytesRead = platformFileRead(buffer, 1, (size_t) (remaining < BUFSIZ ? remaining : BUFSIZ), self->file);
 
     if (bytesRead > 0) {
         byteWrite = send(self->socket, buffer, (SOCK_BUF_TYPE) bytesRead, 0);
