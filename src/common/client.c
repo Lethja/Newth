@@ -24,7 +24,7 @@ typedef struct ServerHeaderResponse {
 char headerStructGetEssential(ServerHeaderResponse *self, FILE *headerFile) {
     char *p, buf[BUFSIZ] = "";
 
-    FSEEK_64(headerFile, 0L, SEEK_SET);
+    platformFileSeek(headerFile, 0L, SEEK_SET);
     if (fgets(buf, BUFSIZ, headerFile) == NULL)
         goto headerStructGetEssentialFailed;
 
@@ -62,7 +62,7 @@ char headerStructGetEssential(ServerHeaderResponse *self, FILE *headerFile) {
 char headerStructGetFileName(ServerHeaderResponse *self, FILE *headerFile) {
     char buf[BUFSIZ] = "";
 
-    FSEEK_64(headerFile, 0L, SEEK_SET);
+    platformFileSeek(headerFile, 0L, SEEK_SET);
     while (fgets(buf, BUFSIZ, headerFile)) {
         char *p;
 

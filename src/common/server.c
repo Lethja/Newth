@@ -72,7 +72,7 @@ char handleDir(SOCKET clientSocket, char *webPath, char *absolutePath, char type
 char handleFile(SOCKET clientSocket, const char *header, char *webPath, char *absolutePath, char httpType,
                 PlatformFileStat *st) {
     SocketBuffer socketBuffer = socketBufferNew(clientSocket);
-    FILE *fp = fopen(absolutePath, "rb");
+    PlatformFile fp = platformFileOpen(absolutePath, "rb");
     PlatformFileOffset start, finish;
     char e;
 
@@ -115,7 +115,7 @@ char handleFile(SOCKET clientSocket, const char *header, char *webPath, char *ab
     if (st->st_size < BUFSIZ) {
         if (httpBodyWriteFile(&socketBuffer, fp, start, e ? st->st_size : finish))
             goto handleFileAbort;
-        fclose(fp);
+        platformFileClose(fp);
         eventHttpFinishInvoke(&socketBuffer.clientSocket, webPath, httpType, 0);
         return 0;
     } else
@@ -125,7 +125,7 @@ char handleFile(SOCKET clientSocket, const char *header, char *webPath, char *ab
 
     handleFileAbort:
     if (fp)
-        fclose(fp);
+        platformFileClose(fp);
     return 1;
 }
 

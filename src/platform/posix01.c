@@ -396,3 +396,23 @@ short platformPathSystemToWeb(const char *rootPath, char *absolutePath, char *we
 
     return 0;
 }
+
+PlatformFile platformFileOpen(const char *fileName, const char *fileMode) {
+    return fopen(fileName, fileMode);
+}
+
+int platformFileClose(PlatformFile stream) {
+    return fclose(stream);
+}
+
+int platformFileSeek(PlatformFile stream, PlatformFileOffset offset, int whence) {
+    return fseeko(stream, offset, whence);
+}
+
+PlatformFileOffset platformFileTell(PlatformFile stream) {
+    return ftello(stream);
+}
+
+size_t platformFileRead(void *ptr, size_t size, size_t n, PlatformFile stream) {
+    return fread(ptr, size, n, stream);
+}

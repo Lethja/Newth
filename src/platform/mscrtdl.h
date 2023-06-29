@@ -15,7 +15,8 @@
 
 typedef SYSTEMTIME PlatformTimeStruct;
 typedef WIN32_FIND_DATA PlatformDirEntry;
-typedef DWORD PlatformFileOffset;
+typedef __int64 PlatformFileOffset;
+typedef HANDLE PlatformFile;
 
 #ifdef MSVC89
 

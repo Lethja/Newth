@@ -325,4 +325,46 @@ short platformPathWebToSystem(const char *rootPath, char *webPath, char *absolut
 short platformPathSystemToWeb(const char *rootPath, char *absolutePath, char *webPath);
 */
 
+/**
+ * Open a file with the largest bit offset the platform supports
+ * @param fileName Path to file
+ * @param fileMode Modes to use on the file
+ * @return The platforms native open file type
+ * @remark Return value must be run through platformFileClose() before memory freeing or leaving scope
+ */
+PlatformFile platformFileOpen(const char *fileName, const char *fileMode);
+
+/**
+ * Close a file opened with platformFileOpen
+ * @param stream The file stream to be closed
+ * @return 0 on success, other on error
+ */
+int platformFileClose(PlatformFile stream);
+
+/**
+ *
+ * @param stream
+ * @param offset
+ * @param whence
+ * @return
+ */
+int platformFileSeek(PlatformFile stream, PlatformFileOffset offset, int whence);
+
+/**
+ *
+ * @param stream
+ * @return
+ */
+PlatformFileOffset platformFileTell(PlatformFile stream);
+
+/**
+ *
+ * @param ptr
+ * @param size
+ * @param n
+ * @param stream
+ * @return
+ */
+size_t platformFileRead(void *ptr, size_t size, size_t n, PlatformFile stream);
+
 #endif /* OPEN_WEB_PLATFORM_H */

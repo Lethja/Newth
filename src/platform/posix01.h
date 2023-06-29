@@ -23,6 +23,7 @@ typedef struct tm PlatformTimeStruct;
 typedef struct dirent PlatformDirEntry;
 typedef struct stat PlatformFileStat;
 typedef off_t PlatformFileOffset;
+typedef FILE* PlatformFile;
 
 #define SOCKIN6 sockaddr_in6
 #define CLOSE_SOCKET(x) close(x)

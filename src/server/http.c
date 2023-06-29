@@ -438,9 +438,9 @@ size_t httpBodyWriteFile(SocketBuffer *socketBuffer, FILE *file, PlatformFileOff
     unsigned long bytesRead;
 
     if (start)
-        FSEEK_64(file, start, SEEK_SET);
+        platformFileSeek(file, start, SEEK_SET);
 
-    while ((bytesRead = fread(buffer, 1, length, file)) > 0) {
+    while ((bytesRead = platformFileRead(buffer, 1, length, file)) > 0) {
         length -= (PlatformFileOffset) bytesRead;
         if (socketBufferWrite(socketBuffer, buffer))
             return 1;

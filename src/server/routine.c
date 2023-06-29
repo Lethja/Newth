@@ -130,17 +130,17 @@ FileRoutine FileRoutineNew(SOCKET socket, FILE *file, PlatformFileOffset start, 
     FileRoutine self;
     self.file = file, self.start = start, self.end = end, self.socket = socket;
     strncpy(self.webPath, webPath, FILENAME_MAX - 1);
-    FSEEK_64(self.file, self.start, SEEK_SET);
+    platformFileSeek(self.file, self.start, SEEK_SET);
     return self;
 }
 
 size_t FileRoutineContinue(FileRoutine *self) {
     size_t bytesRead, byteWrite;
     char buffer[BUFSIZ];
-    PlatformFileOffset currentPosition = FTELL_64(self->file);
+    PlatformFileOffset currentPosition = platformFileTell(self->file);
     PlatformFileOffset remaining = self->end - currentPosition;
 
-    bytesRead = fread(buffer, 1, remaining < BUFSIZ ? remaining : BUFSIZ, self->file);
+    bytesRead = platformFileRead(buffer, 1, remaining < BUFSIZ ? remaining : BUFSIZ, self->file);
 
     if (bytesRead > 0) {
         byteWrite = send(self->socket, buffer, (SOCK_BUF_TYPE) bytesRead, 0);
@@ -155,7 +155,7 @@ size_t FileRoutineContinue(FileRoutine *self) {
 }
 
 void FileRoutineFree(FileRoutine *self) {
-    fclose(self->file);
+    platformFileClose(self->file);
 }
 
 char FileRoutineArrayAdd(RoutineArray *self, FileRoutine fileRoutine) {
