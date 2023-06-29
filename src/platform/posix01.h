@@ -11,6 +11,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <netdb.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -23,13 +24,12 @@ typedef struct tm PlatformTimeStruct;
 typedef struct dirent PlatformDirEntry;
 typedef struct stat PlatformFileStat;
 typedef off_t PlatformFileOffset;
-typedef FILE* PlatformFile;
+typedef FILE *PlatformFile;
 
 #define SOCKIN6 sockaddr_in6
 #define CLOSE_SOCKET(x) close(x)
 #define SOCKET int
 #define SOCK_BUF_TYPE size_t
-#define FSEEK_64 fseeko
-#define FTELL_64 ftello
+#define PF_OFFSET "ji"
 
 #endif /* OPEN_WEB_PLATFORM_UNIX_H */

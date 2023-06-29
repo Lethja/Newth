@@ -195,8 +195,8 @@ void httpHeaderWriteAcceptRanges(SocketBuffer *socketBuffer) {
 void httpHeaderWriteRange(SocketBuffer *socketBuffer, PlatformFileOffset start, PlatformFileOffset finish,
                           PlatformFileOffset fileLength) {
     char buf[BUFSIZ];
-    sprintf(buf, "Content-Range: bytes %llu-%llu/%llu" HTTP_EOL, start, finish == fileLength ? finish - 1 : finish,
-            fileLength);
+    sprintf(buf, "Content-Range: bytes %"PF_OFFSET"-%"PF_OFFSET"/%"PF_OFFSET HTTP_EOL, start,
+            finish == fileLength ? finish - 1 : finish, fileLength);
     socketBufferWrite(socketBuffer, buf);
 }
 
@@ -217,7 +217,7 @@ void httpHeaderWriteChunkedEncoding(SocketBuffer *socketBuffer) {
 
 void httpHeaderWriteContentLength(SocketBuffer *socketBuffer, PlatformFileOffset length) {
     char buffer[BUFSIZ];
-    sprintf(buffer, "Content-Length: %llu" HTTP_EOL, length);
+    sprintf(buffer, "Content-Length: %"PF_OFFSET HTTP_EOL, length);
     socketBufferWrite(socketBuffer, buffer);
 }
 
@@ -506,7 +506,7 @@ char httpHeaderHandleError(SocketBuffer *socketBuffer, const char *path, char ht
         char *errMsg = httpHeaderGetResponse(error);
         httpHeaderWriteResponseStr(socketBuffer, errMsg);
         httpHeaderWriteDate(socketBuffer);
-        httpHeaderWriteContentLength(socketBuffer, strlen(errMsg));
+        httpHeaderWriteContentLength(socketBuffer, (PlatformFileOffset) strlen(errMsg));
         httpHeaderWriteEnd(socketBuffer);
         eventHttpRespondInvoke(&socketBuffer->clientSocket, path, httpType, error);
 
