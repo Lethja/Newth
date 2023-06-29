@@ -3,6 +3,7 @@
 #include "http.h"
 
 #include <ctype.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -195,8 +196,8 @@ void httpHeaderWriteAcceptRanges(SocketBuffer *socketBuffer) {
 void httpHeaderWriteRange(SocketBuffer *socketBuffer, PlatformFileOffset start, PlatformFileOffset finish,
                           PlatformFileOffset fileLength) {
     char buf[BUFSIZ];
-    sprintf(buf, "Content-Range: bytes %llu-%llu/%llu" HTTP_EOL, start, finish == fileLength ? finish - 1 : finish,
-            fileLength);
+    sprintf(buf, "Content-Range: bytes %"PRIuMAX"-%"PRIuMAX"/%"PRIuMAX HTTP_EOL, start,
+            finish == fileLength ? finish - 1 : finish, fileLength);
     socketBufferWrite(socketBuffer, buf);
 }
 
@@ -217,7 +218,7 @@ void httpHeaderWriteChunkedEncoding(SocketBuffer *socketBuffer) {
 
 void httpHeaderWriteContentLength(SocketBuffer *socketBuffer, PlatformFileOffset length) {
     char buffer[BUFSIZ];
-    sprintf(buffer, "Content-Length: %llu" HTTP_EOL, length);
+    sprintf(buffer, "Content-Length: %"PRIuMAX HTTP_EOL, length);
     socketBufferWrite(socketBuffer, buffer);
 }
 
@@ -317,7 +318,8 @@ void htmlHeaderWrite(char buffer[BUFSIZ], char *title) {
         title = "/?";
 
     strcat(buffer, title);
-    strncat(buffer, h2, BUFSIZ);
+    strncat(buffer, h2, BUFSIZ - 1);
+    buffer[BUFSIZ - 1] = '\0';
 }
 
 void htmlListStart(char buffer[BUFSIZ]) {
@@ -506,7 +508,7 @@ char httpHeaderHandleError(SocketBuffer *socketBuffer, const char *path, char ht
         char *errMsg = httpHeaderGetResponse(error);
         httpHeaderWriteResponseStr(socketBuffer, errMsg);
         httpHeaderWriteDate(socketBuffer);
-        httpHeaderWriteContentLength(socketBuffer, strlen(errMsg));
+        httpHeaderWriteContentLength(socketBuffer, (PlatformFileOffset) strlen(errMsg));
         httpHeaderWriteEnd(socketBuffer);
         eventHttpRespondInvoke(&socketBuffer->clientSocket, path, httpType, error);
 

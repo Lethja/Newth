@@ -372,8 +372,8 @@ short platformPathWebToSystem(const char *rootPath, char *webPath, char *absolut
 }
 
 short platformPathSystemToWeb(const char *rootPath, char *absolutePath, char *webPath) {
-    size_t rootPathLen = strlen(rootPath), absolutePathLen = strlen(absolutePath), webPathLen;
-    char *start, *it;
+    size_t rootPathLen = strlen(rootPath), absolutePathLen = strlen(absolutePath)/*, webPathLen*/;
+    char *start/*, *it*/;
 
     /* The absolutePath must be under a rootPath */
     if (rootPathLen > absolutePathLen || memcmp(rootPath, absolutePath, rootPathLen) != 0) {

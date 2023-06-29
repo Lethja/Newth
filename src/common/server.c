@@ -3,8 +3,7 @@
 char *globalRootPath = NULL;
 volatile int serverRun = 1;
 
-RoutineArray globalFileRoutineArray;
-RoutineArray globalDirRoutineArray;
+RoutineArray globalRoutineArray;
 
 SOCKET serverMaxSocket;
 SOCKET serverListenSocket;
@@ -59,7 +58,7 @@ char handleDir(SOCKET clientSocket, char *webPath, char *absolutePath, char type
     if (httpBodyWriteChunk(&socketBuffer, buf) || socketBufferFlush(&socketBuffer))
         goto handleDirAbort;
 
-    DirectoryRoutineArrayAdd(&globalDirRoutineArray, DirectoryRoutineNew(clientSocket, dir, webPath, globalRootPath));
+    DirectoryRoutineArrayAdd(&globalRoutineArray, DirectoryRoutineNew(clientSocket, dir, webPath, globalRootPath));
 
     return 0;
 
@@ -120,7 +119,7 @@ char handleFile(SOCKET clientSocket, const char *header, char *webPath, char *ab
         eventHttpFinishInvoke(&socketBuffer.clientSocket, webPath, httpType, 0);
         return 0;
     } else
-        FileRoutineArrayAdd(&globalFileRoutineArray,
+        FileRoutineArrayAdd(&globalRoutineArray,
                             FileRoutineNew(clientSocket, fp, start, e ? st->st_size : finish, webPath));
     return 0;
 
@@ -245,38 +244,42 @@ unsigned short getPort(const SOCKET *listenSocket) {
 
 void serverTick(void) {
     SOCKET i;
-    fd_set readyToReadSockets, readyToWriteSockets, errorSockets;
+    fd_set readyToReadSockets, readyToWriteSockets/*, errorSockets*/;
     struct timeval globalSelectSleep;
 
     while (serverRun) {
-        Routine *directoryRoutine = (Routine *) globalDirRoutineArray.array;
-        Routine *fileRoutine = (Routine *) globalFileRoutineArray.array;
+        Routine *routineArray = (Routine *) globalRoutineArray.array;
 
-        for (i = 0; i < globalDirRoutineArray.size; ++i) {
-            Routine *dir = &directoryRoutine[i];
-            if ((dir->state & STATE_CONTINUE) > 0) {
-                if (!DirectoryRoutineContinue(dir)) {
-                    DirectoryRoutineArrayDel(&globalDirRoutineArray, dir);
-                }
-            }
-        }
-
-        for (i = 0; i < globalFileRoutineArray.size; ++i) {
-            Routine *file = &fileRoutine[i];
-            if ((file->state & STATE_CONTINUE) > 0) {
-                if (!FileRoutineContinue(file)) {
-                    FileRoutineArrayDel(&globalFileRoutineArray, file);
-                }
+        for (i = 0; i < globalRoutineArray.size; ++i) {
+            Routine *routine = &routineArray[i];
+            switch (routine->state) {
+                case STATE_CONTINUE | TYPE_FILE_ROUTINE:
+                    if (FileRoutineContinue(routine))
+                        break;
+                    /* Fall through */
+                case STATE_FINISH | TYPE_FILE_ROUTINE:
+                case STATE_FAIL | TYPE_FILE_ROUTINE:
+                    FileRoutineArrayDel(&globalRoutineArray, routine);
+                    break;
+                case STATE_CONTINUE | TYPE_DIR_ROUTINE:
+                    if (DirectoryRoutineContinue(routine))
+                        break;
+                    /* Fall through */
+                case STATE_FINISH | TYPE_DIR_ROUTINE:
+                case STATE_FAIL | TYPE_DIR_ROUTINE:
+                    DirectoryRoutineArrayDel(&globalRoutineArray, routine);
+                    break;
             }
         }
 
         globalSelectSleep.tv_usec = 0;
-        globalSelectSleep.tv_sec = globalFileRoutineArray.size || globalDirRoutineArray.size ? 0 : 60;
+        globalSelectSleep.tv_sec = globalRoutineArray.size ? 0 : 60;
 
         readyToReadSockets = serverReadSockets;
-        /* readyToWriteSockets = serverWriteSockets; */
+        readyToWriteSockets = serverWriteSockets;
 
-        if (select((int) serverMaxSocket + 1, &readyToReadSockets, NULL, NULL, &globalSelectSleep) < 0) {
+        if (select((int) serverMaxSocket + 1, &readyToReadSockets, &readyToWriteSockets, NULL, &globalSelectSleep) <
+            0) {
             LINEDBG;
             exit(1);
         }

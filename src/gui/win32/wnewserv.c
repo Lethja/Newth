@@ -85,8 +85,7 @@ static char *startServer(HWND hwnd) {
     FD_ZERO(&serverWriteSockets);
     FD_SET(serverListenSocket, &serverReadSockets);
 
-    globalFileRoutineArray.size = globalDirRoutineArray.size = 0;
-    globalFileRoutineArray.array = globalDirRoutineArray.array = NULL;
+    globalRoutineArray.size = 0, globalRoutineArray.array = NULL;
 
     return NULL;
 }

@@ -13,8 +13,7 @@ extern char *globalRootPath;
 extern fd_set serverReadSockets;
 extern fd_set serverWriteSockets;
 
-extern RoutineArray globalFileRoutineArray;
-extern RoutineArray globalDirRoutineArray;
+extern RoutineArray globalRoutineArray;
 
 extern SOCKET serverMaxSocket;
 extern SOCKET serverListenSocket;
