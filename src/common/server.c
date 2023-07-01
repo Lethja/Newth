@@ -19,7 +19,7 @@ void noAction(int signal) {}
 
 char handleDir(SOCKET clientSocket, char *webPath, char *absolutePath, char type, PlatformFileStat *st) {
     char buf[BUFSIZ];
-    SocketBuffer socketBuffer = socketBufferNew(clientSocket);
+    SocketBuffer socketBuffer = socketBufferNew(clientSocket, 0);
     DIR *dir = platformDirOpen(absolutePath);
 
     LINEDBG;
@@ -71,7 +71,7 @@ char handleDir(SOCKET clientSocket, char *webPath, char *absolutePath, char type
 
 char handleFile(SOCKET clientSocket, const char *header, char *webPath, char *absolutePath, char httpType,
                 PlatformFileStat *st) {
-    SocketBuffer socketBuffer = socketBufferNew(clientSocket);
+    SocketBuffer socketBuffer = socketBufferNew(clientSocket, 0);
     PlatformFile fp = platformFileOpen(absolutePath, "rb");
     PlatformFileOffset start, finish;
     char e;
@@ -147,7 +147,7 @@ char handlePath(SOCKET clientSocket, const char *header, char *webPath) {
         PlatformTimeStruct mt;
         if (!platformGetTimeStruct(&st.st_mtime, &mt)) {
             if (platformTimeStructEquals(&tm, &mt)) {
-                SocketBuffer socketBuffer = socketBufferNew(clientSocket);
+                SocketBuffer socketBuffer = socketBufferNew(clientSocket, 0);
 
                 httpHeaderWriteResponse(&socketBuffer, 304);
                 httpHeaderWriteDate(&socketBuffer);
@@ -171,7 +171,7 @@ char handlePath(SOCKET clientSocket, const char *header, char *webPath) {
 
     handlePathNotFound:
     {
-        SocketBuffer socketBuffer = socketBufferNew(clientSocket);
+        SocketBuffer socketBuffer = socketBufferNew(clientSocket, 0);
         return httpHeaderHandleError(&socketBuffer, webPath, e, 404);
     }
 }
@@ -190,7 +190,7 @@ char handleConnection(SOCKET clientSocket) {
 
         messageSize += bytesRead;
         if (messageSize >= BUFSIZ - 1) {
-            SocketBuffer socketBuffer = socketBufferNew(clientSocket);
+            SocketBuffer socketBuffer = socketBufferNew(clientSocket, 0);
 
             httpHeaderWriteResponse(&socketBuffer, 431);
             httpHeaderWriteDate(&socketBuffer);

@@ -72,7 +72,8 @@ size_t DirectoryRoutineContinue(DirectoryRoutine *self) {
 DirectoryRoutine DirectoryRoutineNew(SOCKET socket, DIR *dir, const char *webPath, char *rootPath) {
     size_t i;
     DirectoryRoutine self;
-    self.directory = dir, self.socketBuffer = socketBufferNew(socket), self.count = 0, self.rootPath = rootPath;
+    self.count = 0, self.rootPath = rootPath, self.directory = dir;
+    self.socketBuffer = socketBufferNew(socket, SOC_BUF_OPT_EXTEND | SOC_BUF_OPT_HTTP_CHUNK);
 
     for (i = 0; i < FILENAME_MAX; ++i) {
         self.webPath[i] = webPath[i];
