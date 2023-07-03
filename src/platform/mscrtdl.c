@@ -519,6 +519,8 @@ int platformFileSeek(PlatformFile stream, PlatformFileOffset offset, int whence)
 
 PlatformFileOffset platformFileTell(PlatformFile stream) {
     LARGE_INTEGER li;
+
+    ZeroMemory(&li, sizeof(LARGE_INTEGER));
     li.LowPart = SetFilePointer(stream, 0, &li.HighPart, FILE_CURRENT);
 
     if (li.LowPart == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
@@ -528,8 +530,12 @@ PlatformFileOffset platformFileTell(PlatformFile stream) {
 }
 
 size_t platformFileRead(void *ptr, size_t size, size_t n, PlatformFile stream) {
-    DWORD bytes;
-    if (ReadFile(stream, ptr, size * n, &bytes, NULL))
+    DWORD bytes, bufferSize = size * n;
+
+    if(bufferSize > BUFSIZ)
+        bufferSize = BUFSIZ;
+
+    if (ReadFile(stream, ptr, bufferSize, &bytes, NULL))
         return bytes;
 
     return 0;
