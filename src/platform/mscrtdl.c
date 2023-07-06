@@ -11,6 +11,7 @@
 #include "winsock/wsipv6.h"
 
 #include <ctype.h>
+#include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -304,106 +305,7 @@ AdapterAddressArray *platformGetAdapterInformation(sa_family_t family) {
     }
 }
 
-char *platformRealPath(char *path) {
-    char *buf = malloc(MAX_PATH);
-    DWORD e = GetFullPathName(path, MAX_PATH, buf, NULL);
-
-    if (e != 0)
-        return buf;
-
-    free(buf);
-    return NULL;
-}
-
-static void systemTimeToStr(SYSTEMTIME *timeStruct, char *timeStr) {
-    char day[4], month[4];
-    switch (timeStruct->wDayOfWeek) {
-        case 0:
-            memcpy(&day, "Sun", 4);
-            break;
-        case 1:
-            memcpy(&day, "Mon", 4);
-            break;
-        case 2:
-            memcpy(&day, "Tue", 4);
-            break;
-        case 3:
-            memcpy(&day, "Wed", 4);
-            break;
-        case 4:
-            memcpy(&day, "Thu", 4);
-            break;
-        case 5:
-            memcpy(&day, "Fri", 4);
-            break;
-        case 6:
-            memcpy(&day, "Sat", 4);
-            break;
-    }
-
-    switch (timeStruct->wMonth) {
-        case 1:
-            memcpy(&month, "Jan", 4);
-            break;
-        case 2:
-            memcpy(&month, "Feb", 4);
-            break;
-        case 3:
-            memcpy(&month, "Mar", 4);
-            break;
-        case 4:
-            memcpy(&month, "Apr", 4);
-            break;
-        case 5:
-            memcpy(&month, "May", 4);
-            break;
-        case 6:
-            memcpy(&month, "Jun", 4);
-            break;
-        case 7:
-            memcpy(&month, "Jul", 4);
-            break;
-        case 8:
-            memcpy(&month, "Aug", 4);
-            break;
-        case 9:
-            memcpy(&month, "Sep", 4);
-            break;
-        case 10:
-            memcpy(&month, "Oct", 4);
-            break;
-        case 11:
-            memcpy(&month, "Nov", 4);
-            break;
-        case 12:
-            memcpy(&month, "Dec", 4);
-            break;
-    }
-
-    sprintf(timeStr, "%s, %02hu %s %04hu %02hu:%02hu:%02hu GMT", day, timeStruct->wDay, month, timeStruct->wYear,
-            timeStruct->wHour, timeStruct->wMinute, timeStruct->wSecond);
-}
-
-void platformGetTime(void *clock, char *timeStr) {
-    SYSTEMTIME timeStruct;
-    FileTimeToSystemTime(clock, &timeStruct);
-    systemTimeToStr(&timeStruct, timeStr);
-}
-
-void platformGetCurrentTime(char *timeStr) {
-    SYSTEMTIME timeStruct;
-    GetSystemTime(&timeStruct);
-    systemTimeToStr(&timeStruct, timeStr);
-}
-
-char platformGetTimeStruct(void *clock, PlatformTimeStruct *timeStructure) {
-    return FileTimeToSystemTime(clock, timeStructure) ? 0 : 1;
-}
-
-int platformTimeStructEquals(PlatformTimeStruct *t1, PlatformTimeStruct *t2) {
-    return (t1->wYear == t2->wYear && t1->wMonth == t2->wMonth && t1->wDay == t2->wDay && t1->wHour == t2->wHour &&
-            t1->wMinute == t2->wMinute && t1->wSecond == t2->wSecond);
-}
+#pragma region Directory Functions
 
 void *platformDirOpen(char *path) {
     DIR *dir = malloc(sizeof(DIR));
@@ -499,64 +401,9 @@ char platformDirEntryIsDirectory(char *rootPath, char *webPath, PlatformDirEntry
 
 #pragma clang diagnostic pop
 
-char platformTimeGetFromHttpStr(const char *str, PlatformTimeStruct *time) {
-    char day[4] = "", month[4] = "";
-    if (sscanf(str, "%3s, %hu %3s %hu %hu:%hu:%hu GMT", day, &time->wDay, month, /* NOLINT(cert-err34-c) */
-               &time->wYear, &time->wHour, &time->wMinute, &time->wSecond)) {
-        switch (toupper(day[0])) {
-            case 'F':
-                time->wDayOfWeek = 5;
-                break;
-            case 'M':
-                time->wDayOfWeek = 1;
-                break;
-            case 'S':
-                time->wDayOfWeek = toupper(day[1]) == 'A' ? 6 : 0;
-                break;
-            case 'T':
-                time->wDayOfWeek = toupper(day[1]) == 'U' ? 2 : 4;
-                break;
-            case 'W':
-                time->wDayOfWeek = 3;
-                break;
-            default:
-                return 1;
-        }
+#pragma endregion
 
-        switch (toupper(month[0])) {
-            case 'A':
-                time->wMonth = toupper(month[1]) == 'P' ? 4 : 8;
-                break;
-            case 'D':
-                time->wMonth = 12;
-                break;
-            case 'F':
-                time->wMonth = 2;
-                break;
-            case 'J':
-                time->wMonth = toupper(month[1]) == 'A' ? 1 : toupper(month[3]) == 'L' ? 7 : 6;
-                break;
-            case 'M':
-                time->wMonth = toupper(month[2]) == 'R' ? 3 : 5;
-                break;
-            case 'N':
-                time->wMonth = 11;
-                break;
-            case 'O':
-                time->wMonth = 10;
-                break;
-            case 'S':
-                time->wMonth = 9;
-                break;
-            default:
-                return 1;
-        }
-
-        time->wMilliseconds = 0;
-        return 0;
-    }
-    return 1;
-}
+#pragma region File Functions
 
 int platformFileStat(const char *path, PlatformFileStat *stat) {
     DWORD attributes = GetFileAttributes(path);
@@ -582,12 +429,139 @@ int platformFileStat(const char *path, PlatformFileStat *stat) {
     return 1;
 }
 
+static void
+platformFileOpenModeConfigure(const char *fileMode, DWORD *desiredAccess, DWORD *shareMode, DWORD *creationDisposition,
+                              DWORD *flagsAndAttributes, DWORD *openFlags) {
+    size_t len = strlen(fileMode), i;
+    *desiredAccess = *shareMode = *creationDisposition = *openFlags = 0, *flagsAndAttributes = FILE_ATTRIBUTE_NORMAL;
+
+    for (i = 0; i < len; ++i) {
+        switch (fileMode[i]) {
+            case 'r':
+                *desiredAccess |= GENERIC_READ;
+                *shareMode |= FILE_SHARE_READ;
+                *creationDisposition = OPEN_EXISTING;
+                if (fileMode[i + 1] == '+') {
+                    *desiredAccess |= GENERIC_WRITE;
+                    *shareMode |= GENERIC_WRITE;
+                }
+                break;
+            case 'w':
+                *desiredAccess |= GENERIC_WRITE;
+                *shareMode |= FILE_SHARE_WRITE;
+                if (fileMode[i + 1] == '+') {
+                    *desiredAccess |= GENERIC_READ;
+                    *shareMode |= GENERIC_READ;
+                    *creationDisposition = OPEN_EXISTING;
+                } else {
+                    *creationDisposition |= CREATE_ALWAYS;
+                }
+                break;
+            case 'a':
+                *openFlags |= _O_APPEND;
+                *desiredAccess |= GENERIC_WRITE;
+                *shareMode |= FILE_SHARE_WRITE;
+                *creationDisposition = OPEN_EXISTING;
+                if (fileMode[i + 1] == '+') {
+                    *desiredAccess |= GENERIC_READ;
+                    *shareMode |= GENERIC_READ;
+                }
+                break;
+            case 'b':
+                *openFlags |= _O_BINARY;
+                break;
+        }
+    }
+}
+
+PlatformFile platformFileOpen(const char *fileName, const char *fileMode) {
+    DWORD desiredAccess, shareMode, creationDisposition, flagsAndAttributes, openFlags;
+    HANDLE stream;
+    platformFileOpenModeConfigure(fileMode, &desiredAccess, &shareMode, &creationDisposition, &flagsAndAttributes,
+                                  &openFlags);
+    stream = CreateFile(fileName, desiredAccess, shareMode, NULL, creationDisposition, flagsAndAttributes, NULL);
+
+    if (stream != INVALID_HANDLE_VALUE && (openFlags & _O_APPEND) > 0)
+        platformFileSeek(stream, 0, SEEK_END);
+
+    return stream;
+}
+
+int platformFileClose(PlatformFile stream) {
+    return CloseHandle(stream);
+}
+
+int platformFileSeek(PlatformFile stream, PlatformFileOffset offset, int whence) {
+    LARGE_INTEGER li;
+
+    switch (whence) {
+        default:
+            return -1;
+        case SEEK_SET:
+            whence = FILE_BEGIN;
+            break;
+        case SEEK_CUR:
+            whence = FILE_CURRENT;
+            break;
+        case SEEK_END:
+            whence = FILE_END;
+            break;
+    }
+
+    li.QuadPart = offset;
+    li.LowPart = SetFilePointer(stream, (LONG) li.LowPart, &li.HighPart, whence);
+
+    if (li.LowPart == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
+        return -1;
+
+    return 0;
+}
+
+PlatformFileOffset platformFileTell(PlatformFile stream) {
+    LARGE_INTEGER li;
+
+    ZeroMemory(&li, sizeof(LARGE_INTEGER));
+    li.LowPart = SetFilePointer(stream, 0, &li.HighPart, FILE_CURRENT);
+
+    if (li.LowPart == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
+        return -1;
+
+    return li.QuadPart;
+}
+
+size_t platformFileRead(void *ptr, size_t size, size_t n, PlatformFile stream) {
+    DWORD bytes, bufferSize = size * n;
+
+    if(bufferSize > BUFSIZ)
+        bufferSize = BUFSIZ;
+
+    if (ReadFile(stream, ptr, bufferSize, &bytes, NULL))
+        return bytes;
+
+    return 0;
+}
+
 char platformFileStatIsDirectory(PlatformFileStat *stat) {
     return ((stat->st_mode & FILE_ATTRIBUTE_DIRECTORY) > 0) ? 1 : 0;
 }
 
 char platformFileStatIsFile(PlatformFileStat *stat) {
     return ((stat->st_mode & FILE_ATTRIBUTE_NORMAL) > 0) ? 1 : 0;
+}
+
+#pragma endregion
+
+#pragma region Path Functions
+
+char *platformRealPath(char *path) {
+    char *buf = malloc(MAX_PATH);
+    DWORD e = GetFullPathName(path, MAX_PATH, buf, NULL);
+
+    if (e != 0)
+        return buf;
+
+    free(buf);
+    return NULL;
 }
 
 char *platformGetRootPath(char *path) {
@@ -691,3 +665,158 @@ short platformPathSystemToWeb(const char *rootPath, char *absolutePath, char *we
 
     return 0;
 }
+
+#pragma endregion
+
+#pragma region Time Functions
+
+static void systemTimeToStr(SYSTEMTIME *timeStruct, char *timeStr) {
+    char day[4], month[4];
+    switch (timeStruct->wDayOfWeek) {
+        case 0:
+            memcpy(&day, "Sun", 4);
+            break;
+        case 1:
+            memcpy(&day, "Mon", 4);
+            break;
+        case 2:
+            memcpy(&day, "Tue", 4);
+            break;
+        case 3:
+            memcpy(&day, "Wed", 4);
+            break;
+        case 4:
+            memcpy(&day, "Thu", 4);
+            break;
+        case 5:
+            memcpy(&day, "Fri", 4);
+            break;
+        case 6:
+            memcpy(&day, "Sat", 4);
+            break;
+    }
+
+    switch (timeStruct->wMonth) {
+        case 1:
+            memcpy(&month, "Jan", 4);
+            break;
+        case 2:
+            memcpy(&month, "Feb", 4);
+            break;
+        case 3:
+            memcpy(&month, "Mar", 4);
+            break;
+        case 4:
+            memcpy(&month, "Apr", 4);
+            break;
+        case 5:
+            memcpy(&month, "May", 4);
+            break;
+        case 6:
+            memcpy(&month, "Jun", 4);
+            break;
+        case 7:
+            memcpy(&month, "Jul", 4);
+            break;
+        case 8:
+            memcpy(&month, "Aug", 4);
+            break;
+        case 9:
+            memcpy(&month, "Sep", 4);
+            break;
+        case 10:
+            memcpy(&month, "Oct", 4);
+            break;
+        case 11:
+            memcpy(&month, "Nov", 4);
+            break;
+        case 12:
+            memcpy(&month, "Dec", 4);
+            break;
+    }
+
+    sprintf(timeStr, "%s, %02hu %s %04hu %02hu:%02hu:%02hu GMT", day, timeStruct->wDay, month, timeStruct->wYear,
+            timeStruct->wHour, timeStruct->wMinute, timeStruct->wSecond);
+}
+
+void platformGetTime(void *clock, char *timeStr) {
+    SYSTEMTIME timeStruct;
+    FileTimeToSystemTime(clock, &timeStruct);
+    systemTimeToStr(&timeStruct, timeStr);
+}
+
+void platformGetCurrentTime(char *timeStr) {
+    SYSTEMTIME timeStruct;
+    GetSystemTime(&timeStruct);
+    systemTimeToStr(&timeStruct, timeStr);
+}
+
+char platformGetTimeStruct(void *clock, PlatformTimeStruct *timeStructure) {
+    return FileTimeToSystemTime(clock, timeStructure) ? 0 : 1;
+}
+
+int platformTimeStructEquals(PlatformTimeStruct *t1, PlatformTimeStruct *t2) {
+    return (t1->wYear == t2->wYear && t1->wMonth == t2->wMonth && t1->wDay == t2->wDay && t1->wHour == t2->wHour &&
+            t1->wMinute == t2->wMinute && t1->wSecond == t2->wSecond);
+}
+
+char platformTimeGetFromHttpStr(const char *str, PlatformTimeStruct *time) {
+    char day[4] = "", month[4] = "";
+    if (sscanf(str, "%3s, %hu %3s %hu %hu:%hu:%hu GMT", day, &time->wDay, month, /* NOLINT(cert-err34-c) */
+               &time->wYear, &time->wHour, &time->wMinute, &time->wSecond)) {
+        switch (toupper(day[0])) {
+            case 'F':
+                time->wDayOfWeek = 5;
+                break;
+            case 'M':
+                time->wDayOfWeek = 1;
+                break;
+            case 'S':
+                time->wDayOfWeek = toupper(day[1]) == 'A' ? 6 : 0;
+                break;
+            case 'T':
+                time->wDayOfWeek = toupper(day[1]) == 'U' ? 2 : 4;
+                break;
+            case 'W':
+                time->wDayOfWeek = 3;
+                break;
+            default:
+                return 1;
+        }
+
+        switch (toupper(month[0])) {
+            case 'A':
+                time->wMonth = toupper(month[1]) == 'P' ? 4 : 8;
+                break;
+            case 'D':
+                time->wMonth = 12;
+                break;
+            case 'F':
+                time->wMonth = 2;
+                break;
+            case 'J':
+                time->wMonth = toupper(month[1]) == 'A' ? 1 : toupper(month[3]) == 'L' ? 7 : 6;
+                break;
+            case 'M':
+                time->wMonth = toupper(month[2]) == 'R' ? 3 : 5;
+                break;
+            case 'N':
+                time->wMonth = 11;
+                break;
+            case 'O':
+                time->wMonth = 10;
+                break;
+            case 'S':
+                time->wMonth = 9;
+                break;
+            default:
+                return 1;
+        }
+
+        time->wMilliseconds = 0;
+        return 0;
+    }
+    return 1;
+}
+
+#pragma endregion

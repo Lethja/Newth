@@ -71,10 +71,11 @@ size_t DirectoryRoutineContinue(Routine *self) {
 
 Routine DirectoryRoutineNew(SOCKET socket, DIR *dir, const char *webPath, char *rootPath) {
     size_t i;
+
     Routine self;
-    self.type.dir.directory = dir, self.socketBuffer = socketBufferNew(
-            socket), self.type.dir.count = 0, self.type.dir.rootPath = rootPath, self.state =
+    self.type.dir.directory = dir, self.type.dir.count = 0, self.type.dir.rootPath = rootPath, self.state =
             TYPE_DIR_ROUTINE | STATE_CONTINUE;
+    self.socketBuffer = socketBufferNew(socket, SOC_BUF_OPT_EXTEND | SOC_BUF_OPT_HTTP_CHUNK);
 
     for (i = 0; i < FILENAME_MAX; ++i) {
         self.webPath[i] = webPath[i];
@@ -115,7 +116,7 @@ char DirectoryRoutineArrayDel(RoutineArray *self, Routine *directoryRoutine) {
         DirectoryRoutineFree(&array[i].type.dir);
 
         if (i + 1 < self->size)
-            memmove(&array[i], &array[i + 1], sizeof(Routine) * (self->size - i));
+            memmove(&array[i], &array[i + 1], sizeof(Routine) * (self->size - (i + 1)));
 
         --self->size;
 
@@ -136,17 +137,18 @@ Routine FileRoutineNew(SOCKET socket, FILE *file, PlatformFileOffset start, Plat
             TYPE_FILE_ROUTINE | STATE_CONTINUE;
 
     strncpy(self.webPath, webPath, FILENAME_MAX - 1);
-    FSEEK_64(self.type.file.file, self.type.file.start, SEEK_SET);
+    platformFileSeek(self.type.file.file, self.type.file.start, SEEK_SET);
     return self;
 }
 
 size_t FileRoutineContinue(Routine *self) {
     size_t bytesRead, byteWrite;
     char buffer[BUFSIZ];
-    PlatformFileOffset currentPosition = FTELL_64(self->type.file.file);
+
+    PlatformFileOffset currentPosition = platformFileTell(self->type.file.file);
     PlatformFileOffset remaining = self->type.file.end - currentPosition;
 
-    bytesRead = fread(buffer, 1, remaining < BUFSIZ ? remaining : BUFSIZ, self->type.file.file);
+    bytesRead = platformFileRead(buffer, 1, (size_t) (remaining < BUFSIZ ? remaining : BUFSIZ), self->type.file.file);
 
     if (bytesRead > 0) {
         byteWrite = send(self->socketBuffer.clientSocket, buffer, (SOCK_BUF_TYPE) bytesRead, 0);
@@ -161,7 +163,7 @@ size_t FileRoutineContinue(Routine *self) {
 }
 
 void FileRoutineFree(FileRoutine *self) {
-    fclose(self->file);
+    platformFileClose(self->file);
 }
 
 char FileRoutineArrayAdd(RoutineArray *self, Routine fileRoutine) {

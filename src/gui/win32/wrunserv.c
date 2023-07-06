@@ -6,6 +6,7 @@
 #include "iwindows.h"
 
 #include <commctrl.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <tchar.h>
 #include <windows.h>

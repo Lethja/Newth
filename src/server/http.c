@@ -3,7 +3,6 @@
 #include "http.h"
 
 #include <ctype.h>
-#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -190,15 +189,15 @@ char httpHeaderReadRange(const char *request, PlatformFileOffset *start, Platfor
 
 void httpHeaderWriteAcceptRanges(SocketBuffer *socketBuffer) {
     const char *str = "Accept-Ranges: bytes" HTTP_EOL;
-    socketBufferWrite(socketBuffer, str);
+    socketBufferWriteText(socketBuffer, str);
 }
 
 void httpHeaderWriteRange(SocketBuffer *socketBuffer, PlatformFileOffset start, PlatformFileOffset finish,
                           PlatformFileOffset fileLength) {
     char buf[BUFSIZ];
-    sprintf(buf, "Content-Range: bytes %"PRIuMAX"-%"PRIuMAX"/%"PRIuMAX HTTP_EOL, start,
+    sprintf(buf, "Content-Range: bytes %"PF_OFFSET"-%"PF_OFFSET"/%"PF_OFFSET HTTP_EOL, start,
             finish == fileLength ? finish - 1 : finish, fileLength);
-    socketBufferWrite(socketBuffer, buf);
+    socketBufferWriteText(socketBuffer, buf);
 }
 
 void httpHeaderWriteDate(SocketBuffer *socketBuffer) {
@@ -208,18 +207,18 @@ void httpHeaderWriteDate(SocketBuffer *socketBuffer) {
     platformGetCurrentTime(time);
 
     sprintf(buffer, "Date: %s" HTTP_EOL, time);
-    socketBufferWrite(socketBuffer, buffer);
+    socketBufferWriteText(socketBuffer, buffer);
 }
 
 void httpHeaderWriteChunkedEncoding(SocketBuffer *socketBuffer) {
     const char *chunked = "Transfer-Encoding: chunked" HTTP_EOL;
-    socketBufferWrite(socketBuffer, chunked);
+    socketBufferWriteText(socketBuffer, chunked);
 }
 
 void httpHeaderWriteContentLength(SocketBuffer *socketBuffer, PlatformFileOffset length) {
     char buffer[BUFSIZ];
-    sprintf(buffer, "Content-Length: %"PRIuMAX HTTP_EOL, length);
-    socketBufferWrite(socketBuffer, buffer);
+    sprintf(buffer, "Content-Length: %"PF_OFFSET HTTP_EOL, length);
+    socketBufferWriteText(socketBuffer, buffer);
 }
 
 void httpHeaderWriteContentLengthSt(SocketBuffer *socketBuffer, PlatformFileStat *st) {
@@ -232,7 +231,7 @@ void httpHeaderWriteLastModified(SocketBuffer *socketBuffer, PlatformFileStat *s
 
     platformGetTime(&st->st_mtime, time);
     sprintf(buffer, "Last-Modified: %s" HTTP_EOL, time);
-    socketBufferWrite(socketBuffer, buffer);
+    socketBufferWriteText(socketBuffer, buffer);
 }
 
 void httpHeaderWriteContentType(SocketBuffer *socketBuffer, char *type, char *charSet) {
@@ -240,7 +239,7 @@ void httpHeaderWriteContentType(SocketBuffer *socketBuffer, char *type, char *ch
     size_t len = strlen(type) + strlen(charSet) + strlen("Content-Type: ;" HTTP_EOL) + 1;
     if (len < BUFSIZ) {
         sprintf(buffer, "Content-Type: %s; %s" HTTP_EOL, type, charSet);
-        socketBufferWrite(socketBuffer, buffer);
+        socketBufferWriteText(socketBuffer, buffer);
     }
 }
 
@@ -280,7 +279,7 @@ void inline httpHeaderWriteResponseStr(SocketBuffer *socketBuffer, const char *r
 
     if (max < RESPONSE_MAX) {
         sprintf(buffer, "HTTP/1.1 %s" HTTP_EOL, response);
-        socketBufferWrite(socketBuffer, buffer);
+        socketBufferWriteText(socketBuffer, buffer);
     }
 }
 
@@ -291,7 +290,7 @@ void httpHeaderWriteResponse(SocketBuffer *socketBuffer, short response) {
 }
 
 void httpHeaderWriteEnd(SocketBuffer *socketBuffer) {
-    socketBufferWrite(socketBuffer, HTTP_EOL);
+    socketBufferWriteText(socketBuffer, HTTP_EOL);
 }
 
 void htmlHeaderWrite(char buffer[BUFSIZ], char *title) {
@@ -440,11 +439,11 @@ size_t httpBodyWriteFile(SocketBuffer *socketBuffer, FILE *file, PlatformFileOff
     unsigned long bytesRead;
 
     if (start)
-        FSEEK_64(file, start, SEEK_SET);
+        platformFileSeek(file, start, SEEK_SET);
 
-    while ((bytesRead = fread(buffer, 1, length, file)) > 0) {
+    while ((bytesRead = platformFileRead(buffer, 1, (size_t) length, file)) > 0) {
         length -= (PlatformFileOffset) bytesRead;
-        if (socketBufferWrite(socketBuffer, buffer))
+        if (socketBufferWriteText(socketBuffer, buffer))
             return 1;
     }
 
@@ -459,18 +458,18 @@ size_t httpBodyWriteChunk(SocketBuffer *socketBuffer, char buffer[BUFSIZ]) {
     size_t bufLen = strlen(buffer);
     char internalBuffer[HEX_MAX + BUFSIZ + 1];
     sprintf(internalBuffer, "%lx\r\n%s\r\n", (unsigned long) bufLen, buffer);
-    return socketBufferWrite(socketBuffer, internalBuffer);
+    return socketBufferWriteText(socketBuffer, internalBuffer);
 }
 
 size_t httpBodyWriteChunkEnding(SocketBuffer *socketBuffer) {
     const char *chunkEnding = "0" HTTP_EOL HTTP_EOL;
-    if (socketBufferWrite(socketBuffer, chunkEnding))
+    if (socketBufferWriteText(socketBuffer, chunkEnding))
         return 1;
     return socketBufferFlush(socketBuffer);
 }
 
 size_t httpBodyWriteText(SocketBuffer *socketBuffer, const char *text) {
-    return socketBufferWrite(socketBuffer, text);
+    return socketBufferWriteText(socketBuffer, text);
 }
 
 void httpHeaderWriteFileName(SocketBuffer *socketBuffer, char *path) {
@@ -487,7 +486,7 @@ void httpHeaderWriteFileName(SocketBuffer *socketBuffer, char *path) {
         return;
 
     sprintf(buffer, "Content-Disposition: filename=\"%s\"\n", name);
-    socketBufferWrite(socketBuffer, buffer);
+    socketBufferWriteText(socketBuffer, buffer);
 }
 
 char httpHeaderHandleError(SocketBuffer *socketBuffer, const char *path, char httpType, short error) {

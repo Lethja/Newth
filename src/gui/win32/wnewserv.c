@@ -177,8 +177,10 @@ typedef HRESULT (__stdcall *GetFolderPath)(HWND, int, HANDLE, DWORD, LPSTR);
 #endif
 
 static char *getDirectoryPathArg(void) {
-    int i;
     char *dirPath = NULL;
+
+#ifdef __argc
+    int i;
 
     for (i = 1; i < __argc; ++i) {
         PlatformFileStat st;
@@ -188,6 +190,8 @@ static char *getDirectoryPathArg(void) {
             break;
         }
     }
+
+#endif
 
     return dirPath;
 }

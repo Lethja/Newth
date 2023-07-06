@@ -6,8 +6,7 @@
 #define CLOSE_SOCKET(x) closesocket(x)
 #define SOCK_BUF_TYPE int
 #define sa_family_t short
-#define FSEEK_64 _fseeki64
-#define FTELL_64 _ftelli64
+#define PF_OFFSET "I64d"
 
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -15,7 +14,8 @@
 
 typedef SYSTEMTIME PlatformTimeStruct;
 typedef WIN32_FIND_DATA PlatformDirEntry;
-typedef DWORD PlatformFileOffset;
+typedef __int64 PlatformFileOffset;
+typedef HANDLE PlatformFile;
 
 #ifdef MSVC89
 
@@ -124,6 +124,10 @@ typedef struct winSockNativeDir {
 
 #ifndef GAA_FLAG_INCLUDE_PREFIX
 #define GAA_FLAG_INCLUDE_PREFIX 0x0010
+#endif
+
+#ifndef INVALID_SET_FILE_POINTER
+#define INVALID_SET_FILE_POINTER INVALID_FILE_ATTRIBUTES
 #endif
 
 #include <signal.h>
