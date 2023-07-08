@@ -413,6 +413,22 @@ PlatformFileOffset platformFileTell(PlatformFile stream) {
     return ftello(stream);
 }
 
-size_t platformFileRead(void *ptr, size_t size, size_t n, PlatformFile stream) {
-    return fread(ptr, size, n, stream);
+size_t platformFileRead(void *buffer, size_t size, size_t n, PlatformFile stream) {
+    return fread(buffer, size, n, stream);
 }
+
+int platformSocketSetBlock(SOCKET socket, char blocking) {
+    int flags = fcntl(socket, F_GETFL, 0);
+    if (flags == -1) {
+        LINEDBG; /* Should never be here */
+        return 0;
+    }
+
+    flags = blocking ? (flags & ~O_NONBLOCK) : (flags | O_NONBLOCK);
+    return fcntl(socket, F_SETFL, flags);
+}
+
+int platformSocketGetLastError(void) {
+    return errno;
+}
+

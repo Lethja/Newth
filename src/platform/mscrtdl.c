@@ -532,7 +532,7 @@ PlatformFileOffset platformFileTell(PlatformFile stream) {
 size_t platformFileRead(void *ptr, size_t size, size_t n, PlatformFile stream) {
     DWORD bytes, bufferSize = size * n;
 
-    if(bufferSize > BUFSIZ)
+    if (bufferSize > BUFSIZ)
         bufferSize = BUFSIZ;
 
     if (ReadFile(stream, ptr, bufferSize, &bytes, NULL))
@@ -820,3 +820,13 @@ char platformTimeGetFromHttpStr(const char *str, PlatformTimeStruct *time) {
 }
 
 #pragma endregion
+
+int platformSocketSetBlock(SOCKET socket, char blocking) {
+    unsigned long mode = (unsigned char) blocking;
+    return ioctlsocket(socket, FIONBIO, &mode);
+}
+
+int platformSocketGetLastError(void) {
+    return WSAGetLastError();
+}
+

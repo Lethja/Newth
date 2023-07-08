@@ -50,30 +50,30 @@ typedef struct AdapterAddressArray {
 
 /**
  * Get the argv position of the flag parameter (and optionally the argument)
- * @param argc argc from main()
- * @param argv argv from main()
- * @param shortFlag The short flag to look for or '\0' to omit
- * @param longFlag The long flag to look for or NULL to omit
- * @param optArg The argument of the flag or NULL if there wasn't one
+ * @param argc In: argc from main()
+ * @param argv In: argv from main()
+ * @param shortFlag Optional In: The short flag to look for, pass '\0' to omit
+ * @param longFlag Optional In: The long flag to look for, pass NULL to omit
+ * @param optArg Optional Out: The argument of the flag or NULL if there wasn't one, pass NULL to omit
  * @return The position of the flag in argv or 0 if the flag couldn't be found
  */
 int platformArgvGetFlag(int argc, char **argv, char shortFlag, char *longFlag, char **optArg);
 
 /**
  * Bind one of any ports mentioned in a string
- * @param listenSocket The socket to attempt to bind a listen port to
- * @param sockAddr The socket address structure get use as binding information
- * @param socketSize The size of sockAddr
- * @param port A string with all the potential ports in it
+ * @param listenSocket In: The socket to attempt to bind a listen port to
+ * @param sockAddr In: The socket address structure get use as binding information
+ * @param socketSize In: The size of sockAddr
+ * @param port In: A string with all the potential ports in it
  * @return 0 on successful bind, otherwise error
  */
 char platformBindPort(const SOCKET *listenSocket, SA *sockAddr, char *port);
 
 /**
  * Wrapper around reallocation that gracefully hands control back to the caller in the event of a failure
- * @param heap [in/out] pointer to the allocation pointer
- * @param elementSize [in] size of the elements being allocated
- * @param elementNumber [in] number of elements to allocate
+ * @param heap In-out: pointer to the allocation pointer
+ * @param elementSize In: size of the elements being allocated
+ * @param elementNumber In: number of elements to allocate
  * @return 0 on success other on allocation error
  * @note in the event of an allocation error the existing allocation will remain unchanged
  */
@@ -81,9 +81,9 @@ char platformHeapResize(void **heap, size_t elementSize, size_t elementNumber);
 
 /**
  * Combine two path strings together
- * @param output A string buffer with at least the combine amount of space for path1 and path 2
- * @param path1 The string to combine on the left
- * @param path2 The string to combine on the right
+ * @param output Out: A string buffer with at least the combine amount of space for path1 and path 2
+ * @param path1 In: The string to combine on the left
+ * @param path2 In: The string to combine on the right
  */
 void platformPathCombine(char *output, const char *path1, const char *path2);
 
@@ -96,8 +96,8 @@ char *platformRealPath(char *path);
 
 /**
  * Close any open sockets in the file descriptor
- * @param sockets the fd_set to close all open sockets on
- * @param max the maximum socket number select() has seen in the session
+ * @param sockets In: the fd_set to close all open sockets on
+ * @param max In: the maximum socket number select() has seen in the session
  */
 void platformCloseBindSockets(fd_set *sockets, SOCKET max);
 
@@ -156,7 +156,7 @@ AdapterAddressArray *platformGetAdapterInformation(sa_family_t family);
 
 /**
  * Free an adapter address array created with platformGetAdapterInformation()
- * @param array The adapter address array to be freed
+ * @param array In: The adapter address array to be freed
  */
 void platformFreeAdapterInformation(AdapterAddressArray *array);
 
@@ -207,8 +207,8 @@ char platformTimeGetFromHttpStr(const char *str, PlatformTimeStruct *time);
 
 /**
  * Compare two time structures
- * @param t1 The first time structure to compare
- * @param t2 The second time structure
+ * @param t1 In: The first time structure to compare
+ * @param t2 In: The second time structure
  * @return zero when time structures have different times, other when identical
  */
 int platformTimeStructEquals(PlatformTimeStruct *t1, PlatformTimeStruct *t2);
@@ -229,7 +229,7 @@ void platformDirClose(void *dirp);
 
 /**
  * Get the First/Next entry
- * @param dirp A pointer created from platformDirOpen()
+ * @param dirp In: A pointer created from platformDirOpen()
  * @return A PlatformDirEntry pointer that can be used with platformDirEntry functions
  * @remark Do not free or write to the returning pointer struct
  */
@@ -277,14 +277,14 @@ SOCKET platformAcceptConnection(SOCKET fromSocket);
 
 /**
  * Get if the file/folder in this stat structure is a directory
- * @param stat the stat file structure
+ * @param stat In: the stat file structure
  * @return zero if not a directory, other if it is a directory
  */
 char platformFileStatIsDirectory(PlatformFileStat *stat);
 
 /**
  * Get if the file/folder in this stat structure is a regular file
- * @param stat the stat file structure
+ * @param stat In: the stat file structure
  * @return zero if not a regular file, other if it is a regular file
  */
 char platformFileStatIsFile(PlatformFileStat *stat);
@@ -327,8 +327,8 @@ short platformPathSystemToWeb(const char *rootPath, char *absolutePath, char *we
 
 /**
  * Open a file with the largest bit offset the platform supports
- * @param fileName Path to file
- * @param fileMode Modes to use on the file
+ * @param fileName In: Path to file
+ * @param fileMode In: Modes to use on the file
  * @return The platforms native open file type
  * @remark Return value must be run through platformFileClose() before memory freeing or leaving scope
  */
@@ -336,35 +336,49 @@ PlatformFile platformFileOpen(const char *fileName, const char *fileMode);
 
 /**
  * Close a file opened with platformFileOpen
- * @param stream The file stream to be closed
+ * @param stream In: The file stream to be closed
  * @return 0 on success, other on error
  */
 int platformFileClose(PlatformFile stream);
 
 /**
- *
- * @param stream
- * @param offset
- * @param whence
- * @return
+ * Seek through a file stream created with platformFileOpen to a certain position
+ * @param stream In: The file stream to seek on
+ * @param offset In: The amount of bytes to seek, use a negative number to rewind
+ * @param whence In: Where to seek from, start, end or current position
+ * @return 0 on success, other on error
  */
 int platformFileSeek(PlatformFile stream, PlatformFileOffset offset, int whence);
 
 /**
- *
- * @param stream
- * @return
+ * Get the current seek position of a stream created with platformFileOpen
+ * @param stream In: The stream to get the position of
+ * @return The position of the stream on success, -1 on error
  */
 PlatformFileOffset platformFileTell(PlatformFile stream);
 
 /**
- *
- * @param ptr
- * @param size
- * @param n
- * @param stream
- * @return
+ * Read the stream created with platformFileOpen into a memory buffer
+ * @param buffer Out: The memory buffer to write to
+ * @param size In: the number of elements to read
+ * @param n In: the size of each element to be read
+ * @param stream In: the stream to read from
+ * @return The number of elements read or 0 when no elements have been read
  */
-size_t platformFileRead(void *ptr, size_t size, size_t n, PlatformFile stream);
+size_t platformFileRead(void *buffer, size_t size, size_t n, PlatformFile stream);
+
+/**
+ * Set the socket to be blocking or non-blocking in a platform agnostic way
+ * @param socket In: The socket to set blocking to
+ * @param blocking In: Should the socket block? 0 for non-blocking other for blocking
+ * @return -1 on error, other on success. Call platformSocketGetLastError for more information
+ */
+int platformSocketSetBlock(SOCKET socket, char blocking);
+
+/**
+ * Get the last socket error in a platform agnostic way
+ * @return The error the socket returned
+ */
+int platformSocketGetLastError(void);
 
 #endif /* OPEN_WEB_PLATFORM_H */
