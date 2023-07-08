@@ -221,6 +221,7 @@ void platformConnectSignals(void(*noAction)(int), void(*shutdownCrash)(int), voi
 }
 
 SOCKET platformAcceptConnection(SOCKET fromSocket) {
+    const char blocking = 1;
     socklen_t addrSize = sizeof(struct sockaddr_storage);
     SOCKET clientSocket;
     struct sockaddr_storage clientAddress;
@@ -228,6 +229,7 @@ SOCKET platformAcceptConnection(SOCKET fromSocket) {
     LINEDBG;
 
     clientSocket = accept(fromSocket, (SA *) &clientAddress, &addrSize);
+    platformSocketSetBlock(clientSocket, blocking);
 
     eventSocketAcceptInvoke(&clientSocket);
 

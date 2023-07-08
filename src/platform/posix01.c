@@ -71,11 +71,13 @@ char *platformServerStartup(int *listenSocket, sa_family_t family, char *ports) 
 }
 
 int platformAcceptConnection(int fromSocket) {
-    socklen_t addrSize = sizeof(struct sockaddr_in);
+    const char blocking = 1;
+    socklen_t addressSize = sizeof(struct sockaddr_in);
     int clientSocket;
     struct sockaddr_in clientAddress;
 
-    clientSocket = accept(fromSocket, (SA *) &clientAddress, &addrSize);
+    clientSocket = accept(fromSocket, (SA *) &clientAddress, &addressSize);
+    platformSocketSetBlock(clientSocket, blocking);
 
     eventSocketAcceptInvoke(&clientSocket);
 
@@ -184,8 +186,8 @@ void platformGetCurrentTime(char *timeStr) {
 }
 
 char platformGetTimeStruct(void *clock, PlatformTimeStruct *timeStructure) {
-    PlatformTimeStruct timespec, *tm = &timespec;
-    tm = gmtime(clock);
+    PlatformTimeStruct *tm = gmtime(clock);
+
     if (tm) {
         memcpy(timeStructure, tm, sizeof(PlatformTimeStruct));
         return 0;
@@ -287,7 +289,11 @@ char platformDirEntryIsHidden(PlatformDirEntry *entry) {
     return d->d_name[0] == '.' ? 1 : 0;
 }
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnusedParameter"
+
 char platformDirEntryIsDirectory(char *rootPath, char *webPath, PlatformDirEntry *entry) {
+#pragma clang diagnostic pop
     struct dirent *d = entry;
 
 #ifdef _DIRENT_HAVE_D_TYPE
