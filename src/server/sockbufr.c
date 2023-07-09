@@ -12,43 +12,37 @@ size_t socketBufferFlush(SocketBuffer *self) {
     if (self->idx) {
         if (send(self->clientSocket, self->buffer, self->idx, 0) == -1)
             return 1;
+
+        self->idx = 0;
     }
 
-    self->idx = 0;
     return 0;
 }
 
 size_t socketBufferWriteText(SocketBuffer *self, const char *data) {
     while (*data != '\0') {
-        if (self->idx == BUFSIZ) {
-            if (send(self->clientSocket, self->buffer, self->idx, 0) == -1)
+        if (self->idx == BUFSIZ)
+            if (socketBufferFlush(self) == 1)
                 return 1;
-            self->idx = 0;
-        }
 
         self->buffer[self->idx] = *data;
-        ++self->idx;
-        ++data;
+        ++self->idx, ++data;
     }
+
     return 0;
 }
 
 size_t socketBufferWriteData(SocketBuffer *self, const char *data, size_t len) {
-    size_t i = 0;
+    size_t i;
 
-    while (i < len) {
-
-        if (self->idx == BUFSIZ) {
-            if (send(self->clientSocket, self->buffer, self->idx, 0) == -1)
+    for (i = 0; i < len; ++i) {
+        if (self->idx == BUFSIZ)
+            if (socketBufferFlush(self) == 1)
                 return 1;
-            self->idx = 0;
-        }
 
         self->buffer[self->idx] = *data;
-        ++self->idx;
-        ++data;
-        ++i;
-
+        ++self->idx, ++data;
     }
+
     return 0;
 }
