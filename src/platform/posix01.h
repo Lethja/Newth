@@ -31,5 +31,12 @@ typedef FILE *PlatformFile;
 #define SOCKET int
 #define SOCK_BUF_TYPE size_t
 #define PF_OFFSET "ji"
+#define SOCKET_WOULD_BLOCK EWOULDBLOCK
+
+#if EWOULDBLOCK != EAGAIN
+#define SOCKET_TRY_AGAIN EAGAIN
+#else
+#define SOCKET_TRY_AGAIN SOCKET_WOULD_BLOCK
+#endif /* EWOULDBLOCK != EAGAIN */
 
 #endif /* OPEN_WEB_PLATFORM_UNIX_H */

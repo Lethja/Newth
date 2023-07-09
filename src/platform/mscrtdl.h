@@ -7,6 +7,8 @@
 #define SOCK_BUF_TYPE int
 #define sa_family_t short
 #define PF_OFFSET "I64d"
+#define SOCKET_WOULD_BLOCK WSAEWOULDBLOCK
+#define SOCKET_TRY_AGAIN SOCKET_WOULD_BLOCK
 
 #include <winsock2.h>
 #include <ws2tcpip.h>

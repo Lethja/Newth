@@ -200,7 +200,10 @@ char handleConnection(SOCKET clientSocket) {
             case -1:
                 switch (errno) {
                     case 0:
-                    case EAGAIN:
+                    case SOCKET_WOULD_BLOCK:
+#if SOCKET_WOULD_BLOCK != SOCKET_TRY_AGAIN
+                    case SOCKET_TRY_AGAIN:
+#endif
                         ++r;
                         errno = 0;
                         continue;
