@@ -179,32 +179,56 @@ char handlePath(SOCKET clientSocket, const char *header, char *webPath) {
 char handleConnection(SOCKET clientSocket) {
     char r = 0;
     char buffer[BUFSIZ];
-    size_t bytesRead, messageSize = 0;
+    size_t bytesRead, messageSize = errno = 0;
     char *uriPath;
 
     LINEDBG;
 
-    while ((bytesRead = recv(clientSocket, buffer + messageSize, (int) (sizeof(buffer) - messageSize - 1), 0))) {
-        if (bytesRead == -1)
-            return 1;
+    do {
+        bytesRead = recv(clientSocket, buffer + messageSize, (int) (sizeof(buffer) - messageSize - 1), 0);
 
-        messageSize += bytesRead;
-        if (messageSize >= BUFSIZ - 1) {
-            SocketBuffer socketBuffer = socketBufferNew(clientSocket, 0);
+        switch (bytesRead) {
+            case 0:
+                if (messageSize == 0)
+                    return 1;
+                else if (messageSize >= 4 && strncmp(&buffer[messageSize - 4], HTTP_EOL HTTP_EOL, 4) == 0) {
+                    r = 50;
+                    break;
+                }
 
-            httpHeaderWriteResponse(&socketBuffer, 431);
-            httpHeaderWriteDate(&socketBuffer);
-            httpHeaderWriteContentLength(&socketBuffer, 0);
-            httpHeaderWriteEnd(&socketBuffer);
-            socketBufferFlush(&socketBuffer);
-            eventHttpRespondInvoke(&socketBuffer.clientSocket, "", httpUnknown, 431);
+                /* Fall through */
+            case -1:
+                switch (errno) {
+                    case 0:
+                    case EAGAIN:
+                        ++r;
+                        errno = 0;
+                        continue;
+                    default:
+                        return 1;
+                }
+            default:
+                messageSize += bytesRead;
+                if (messageSize >= BUFSIZ - 1) {
+                    SocketBuffer socketBuffer = socketBufferNew(clientSocket, 0);
 
-            return 1;
+                    httpHeaderWriteResponse(&socketBuffer, 431);
+                    httpHeaderWriteDate(&socketBuffer);
+                    httpHeaderWriteContentLength(&socketBuffer, 0);
+                    httpHeaderWriteEnd(&socketBuffer);
+                    socketBufferFlush(&socketBuffer);
+                    eventHttpRespondInvoke(&socketBuffer.clientSocket, "", httpUnknown, 431);
+
+                    return 1;
+                }
+
+                if (messageSize >= 4 && strncmp(&buffer[messageSize - 4], HTTP_EOL HTTP_EOL, 4) == 0)
+                    r = 50;
+                else if (r)
+                    r = 0;
         }
 
-        if (buffer[messageSize - 1] == '\n')
-            break;
-    }
+    } while (r < 50);
 
     if (messageSize == 0)
         return 1;
@@ -233,11 +257,11 @@ unsigned short getPort(const SOCKET *listenSocket) {
     }
 
     if (sock.ss_family == AF_INET) {
-        struct sockaddr_in *addr = (struct sockaddr_in *) &sock;
-        return ntohs(addr->sin_port);
+        struct sockaddr_in *address = (struct sockaddr_in *) &sock;
+        return ntohs(address->sin_port);
     } else if (sock.ss_family == AF_INET6) {
-        struct SOCKIN6 *addr = (struct SOCKIN6 *) &sock;
-        return ntohs(addr->sin6_port);
+        struct SOCKIN6 *address = (struct SOCKIN6 *) &sock;
+        return ntohs(address->sin6_port);
     }
     return 0;
 }
