@@ -133,8 +133,9 @@ Routine FileRoutineNew(SOCKET socket, FILE *file, PlatformFileOffset start, Plat
                        char webPath[FILENAME_MAX]) {
     Routine self;
 
-    self.type.file.file = file, self.type.file.start = start, self.type.file.end = end, self.socketBuffer.clientSocket = socket, self.state =
+    self.type.file.file = file, self.type.file.start = start, self.type.file.end = end, self.state =
             TYPE_FILE_ROUTINE | STATE_CONTINUE;
+    self.socketBuffer = socketBufferNew(socket, 0);
 
     strncpy(self.webPath, webPath, FILENAME_MAX - 1);
     platformFileSeek(self.type.file.file, self.type.file.start, SEEK_SET);
@@ -151,11 +152,12 @@ size_t FileRoutineContinue(Routine *self) {
     bytesRead = platformFileRead(buffer, 1, (size_t) (remaining < BUFSIZ ? remaining : BUFSIZ), self->type.file.file);
 
     if (bytesRead > 0) {
-        byteWrite = send(self->socketBuffer.clientSocket, buffer, (SOCK_BUF_TYPE) bytesRead, 0);
+        byteWrite = socketBufferWriteData(&self->socketBuffer, buffer, bytesRead);
 
-        if (byteWrite == -1)
+        if (byteWrite != 0)
             bytesRead = 0;
     } else {
+        socketBufferFlush(&self->socketBuffer);
         eventHttpFinishInvoke(&self->socketBuffer.clientSocket, self->webPath, httpGet, 0);
     }
 
