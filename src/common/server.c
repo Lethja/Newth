@@ -177,10 +177,9 @@ char handlePath(SOCKET clientSocket, const char *header, char *webPath) {
 }
 
 char handleConnection(SOCKET clientSocket) {
-    char r = 0;
-    char buffer[BUFSIZ];
+    char r = 0, buffer[BUFSIZ], *uriPath;
+    int err;
     size_t bytesRead, messageSize = errno = 0;
-    char *uriPath;
 
     LINEDBG;
 
@@ -198,14 +197,14 @@ char handleConnection(SOCKET clientSocket) {
 
                 /* Fall through */
             case -1:
-                switch (errno) {
+                err = platformSocketGetLastError();
+                switch (err) {
                     case 0:
                     case SOCKET_WOULD_BLOCK:
 #if SOCKET_WOULD_BLOCK != SOCKET_TRY_AGAIN
                     case SOCKET_TRY_AGAIN:
 #endif
                         ++r;
-                        errno = 0;
                         continue;
                     default:
                         return 1;

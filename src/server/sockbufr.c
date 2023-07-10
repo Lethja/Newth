@@ -10,9 +10,21 @@ SocketBuffer socketBufferNew(SOCKET clientSocket, char options) {
 
 size_t socketBufferFlush(SocketBuffer *self) {
     if (self->idx) {
-        if (send(self->clientSocket, self->buffer, self->idx, 0) == -1)
-            return 1;
-
+        socketBufferFlushTryAgain:
+        if (send(self->clientSocket, self->buffer, self->idx, 0) == -1) {
+            int err = platformSocketGetLastError();
+            switch (err) {
+                case 0:
+                case SOCKET_WOULD_BLOCK:
+#if SOCKET_WOULD_BLOCK != SOCKET_TRY_AGAIN
+                case SOCKET_TRY_AGAIN:
+#endif
+                    /* TODO: defer job here */
+                    goto socketBufferFlushTryAgain;
+                default:
+                    return 1;
+            }
+        }
         self->idx = 0;
     }
 
