@@ -10,8 +10,11 @@ SocketBuffer socketBufferNew(SOCKET clientSocket, char options) {
 
 size_t socketBufferFlush(SocketBuffer *self) {
     if (self->idx) {
+        size_t i = 0;
+        SOCK_BUF_TYPE sent;
         socketBufferFlushTryAgain:
-        if (send(self->clientSocket, self->buffer, self->idx, 0) == -1) {
+        sent = send(self->clientSocket, &self->buffer[i], self->idx - i, 0);
+        if (sent == -1) {
             int err = platformSocketGetLastError();
             switch (err) {
                 case 0:
@@ -24,8 +27,16 @@ size_t socketBufferFlush(SocketBuffer *self) {
                 default:
                     return 1;
             }
+        } else if (i < self->idx)
+            i += sent;
+
+        if (i == self->idx) {
+            self->idx = 0;
+            return 0;
         }
-        self->idx = 0;
+
+        /* TODO: Clean this mess up */
+        goto socketBufferFlushTryAgain;
     }
 
     return 0;
