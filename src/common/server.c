@@ -269,16 +269,37 @@ unsigned short getPort(const SOCKET *listenSocket) {
 }
 
 void serverTick(void) {
-    SOCKET i;
+    SOCKET i, d;
     fd_set readyToReadSockets, readyToWriteSockets/*, errorSockets*/;
     struct timeval globalSelectSleep;
 
     while (serverRun) {
         Routine *routineArray = (Routine *) globalRoutineArray.array;
 
-        for (i = 0; i < globalRoutineArray.size; ++i) {
+        for (i = d = 0; i < globalRoutineArray.size; ++i) {
             Routine *routine = &routineArray[i];
+
+#pragma region Routine State Machine
+
             switch (routine->state) {
+                case STATE_DEFER | TYPE_FILE_ROUTINE:
+                case STATE_DEFER | TYPE_DIR_ROUTINE:
+                    if (FD_ISSET(routine->socketBuffer.clientSocket, &serverWriteSockets)) {
+                        ++d;
+                        continue;
+                    } else {
+                        if (socketBufferFlush(&routine->socketBuffer) == 1) {
+                            if (routine->socketBuffer.options & SOC_BUF_ERR_FAIL)
+                                routine->state |= STATE_FAIL;
+                            else if (routine->socketBuffer.options & SOC_BUF_ERR_FULL)
+                                break;
+                        } else
+                            routine->state |= STATE_CONTINUE;
+
+                        routine->state &= ~STATE_DEFER;
+                        break;
+                    }
+
                 case STATE_CONTINUE | TYPE_FILE_ROUTINE:
                     if (FileRoutineContinue(routine))
                         break;
@@ -294,12 +315,24 @@ void serverTick(void) {
                 case STATE_FINISH | TYPE_DIR_ROUTINE:
                 case STATE_FAIL | TYPE_DIR_ROUTINE:
                     DirectoryRoutineArrayDel(&globalRoutineArray, routine);
-                    break;
+                    continue;
             }
+
+#pragma endregion
+
+#pragma region Check socket buffer would block
+
+            if (routine->socketBuffer.options & SOC_BUF_ERR_FULL) {
+                routine->socketBuffer.options &= ~SOC_BUF_ERR_FULL;
+                routine->state |= STATE_DEFER, routine->state &= ~STATE_CONTINUE;
+                FD_SET(routine->socketBuffer.clientSocket, &serverWriteSockets);
+            }
+
+#pragma endregion
         }
 
         globalSelectSleep.tv_usec = 0;
-        globalSelectSleep.tv_sec = globalRoutineArray.size ? 0 : 60;
+        globalSelectSleep.tv_sec = (globalRoutineArray.size - d) ? 0 : 60;
 
         readyToReadSockets = serverReadSockets;
         readyToWriteSockets = serverWriteSockets;
@@ -325,6 +358,8 @@ void serverTick(void) {
                         FD_CLR(i, &serverReadSockets);
                     }
                 }
+            } else if (FD_ISSET(i, &readyToWriteSockets)) {
+                FD_CLR(i, &serverWriteSockets);
             }
         }
     }

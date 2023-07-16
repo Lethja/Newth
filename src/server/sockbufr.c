@@ -1,9 +1,11 @@
-#include <string.h>
+#include "defer.h"
 #include "sockbufr.h"
+
+#include <string.h>
 
 SocketBuffer socketBufferNew(SOCKET clientSocket, char options) {
     SocketBuffer self;
-    self.clientSocket = clientSocket, self.idx = self.ext = 0, self.options = options;
+    self.clientSocket = clientSocket, self.extension = NULL, self.idx = 0, self.options = options;
     memset(self.buffer, 0, BUFSIZ);
     return self;
 }
@@ -20,11 +22,15 @@ size_t socketBufferFlush(SocketBuffer *self) {
                 case 0:
                 case SOCKET_WOULD_BLOCK:
 #if SOCKET_WOULD_BLOCK != SOCKET_TRY_AGAIN
-                case SOCKET_TRY_AGAIN:
+                    case SOCKET_TRY_AGAIN:
 #endif
-                    /* TODO: defer job here */
-                    goto socketBufferFlushTryAgain;
+                    self->options |= SOC_BUF_ERR_FULL;
+
+                    if (self->options & SOC_BUF_OPT_EXTEND)
+                        self->extension = extendedBufferAppend(self->extension, &self->buffer[i], self->idx - i);
+                    return 1;
                 default:
+                    self->options |= SOC_BUF_ERR_FAIL;
                     return 1;
             }
         } else if (i < self->idx)

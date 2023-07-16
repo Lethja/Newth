@@ -23,12 +23,12 @@ void platformPathCombine(char *output, const char *path1, const char *path2) {
 
 void platformCloseBindSockets(fd_set *sockets, SOCKET max) {
     int i;
-    for (i = 0; i <= max; i++) {
+
+    for (i = 0; i <= max; ++i) {
         if (FD_ISSET(i, sockets)) {
             eventSocketCloseInvoke(&i);
             close(i);
         }
-
     }
 }
 
@@ -71,7 +71,7 @@ char *platformServerStartup(int *listenSocket, sa_family_t family, char *ports) 
 }
 
 int platformAcceptConnection(int fromSocket) {
-    const char blocking = 1;
+    const char blocking = 0;
     socklen_t addressSize = sizeof(struct sockaddr_in);
     int clientSocket;
     struct sockaddr_in clientAddress;
@@ -126,7 +126,8 @@ unsigned short platformGetPort(struct sockaddr *addr) {
 AdapterAddressArray *platformGetAdapterInformation(sa_family_t family) {
     struct AdapterAddressArray *array;
     struct ifaddrs *ifap, *ifa;
-    char addr[INET6_ADDRSTRLEN];
+    char address[INET6_ADDRSTRLEN];
+
     if (getifaddrs(&ifap)) {
         return NULL;
     }
@@ -139,19 +140,19 @@ AdapterAddressArray *platformGetAdapterInformation(sa_family_t family) {
             struct sockaddr_in *sa = (struct sockaddr_in *) ifa->ifa_addr;
             char *ip4 = inet_ntoa(sa->sin_addr);
             if (strncmp(ip4, "127", 3) != 0)
-                strcpy(addr, ip4);
+                strcpy(address, ip4);
             else
                 continue;
 
         } else if (ifa->ifa_addr->sa_family == AF_INET6 && family != AF_INET) {
             struct sockaddr_in6 *sa = (struct sockaddr_in6 *) ifa->ifa_addr;
-            inet_ntop(sa->sin6_family, &sa->sin6_addr, addr, INET6_ADDRSTRLEN);
-            if (strncmp(addr, "::", 2) == 0)
+            inet_ntop(sa->sin6_family, &sa->sin6_addr, address, INET6_ADDRSTRLEN);
+            if (strncmp(address, "::", 2) == 0)
                 continue;
 
         } else continue;
 
-        platformFindOrCreateAdapterIp(array, ifa->ifa_name, ifa->ifa_addr->sa_family == AF_INET6, addr);
+        platformFindOrCreateAdapterIp(array, ifa->ifa_name, ifa->ifa_addr->sa_family == AF_INET6, address);
     }
     freeifaddrs(ifap);
 

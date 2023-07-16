@@ -6,13 +6,14 @@
 #include <stdio.h>
 
 enum SOC_BUF_OPT {
-    SOC_BUF_OPT_EXTEND = 1, SOC_BUF_OPT_HTTP_CHUNK = 2
+    SOC_BUF_OPT_EXTEND = 1, SOC_BUF_OPT_HTTP_CHUNK = 2, SOC_BUF_ERR_FULL = 4, SOC_BUF_ERR_FAIL = 8
 };
 
 typedef struct SocketBuffer {
     SOCKET clientSocket;
-    SOCK_BUF_TYPE idx, ext;
-    char options, buffer[BUFSIZ], *extended;
+    SOCK_BUF_TYPE idx;
+    char options, buffer[BUFSIZ];
+    void *extension;
 } SocketBuffer;
 
 /**
