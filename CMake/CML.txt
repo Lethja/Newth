@@ -34,7 +34,6 @@ add_executable(dl ../src/common/client.c ../src/platform/platform.h)
 add_executable(th ../src/cli/th.c
         ../src/common/server.h ../src/common/server.c
         ../src/platform/platform.c ../src/platform/platform.h
-        ../src/server/defer.c ../src/server/defer.h
         ../src/server/event.c ../src/server/event.h
         ../src/server/http.c ../src/server/http.h
         ../src/server/routine.c ../src/server/routine.h
@@ -55,7 +54,6 @@ if (WIN32)
             ../src/gui/win32/wnewserv.c ../src/gui/win32/wnewserv.h
             ../src/gui/win32/wrunserv.c ../src/gui/win32/wrunserv.h
             ../src/platform/platform.c ../src/platform/platform.h
-            ../src/server/defer.c ../src/server/defer.h
             ../src/server/event.c ../src/server/event.h
             ../src/server/http.c ../src/server/http.h
             ../src/server/routine.c ../src/server/routine.h

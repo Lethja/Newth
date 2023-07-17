@@ -1,4 +1,3 @@
-#include "defer.h"
 #include "sockbufr.h"
 
 #include <string.h>
@@ -26,7 +25,7 @@ size_t socketBufferFlush(SocketBuffer *self) {
                     self->options |= SOC_BUF_ERR_FULL;
 
                     if (self->options & SOC_BUF_OPT_EXTEND) {
-                        self->extension = extendedBufferAppend(self->extension, &self->buffer[i], self->idx - i);
+                        self->extension = socketBufferMemoryPoolAppend(self->extension, &self->buffer[i], self->idx - i);
                         /* Not yet implemented */
                         LINEDBG;
                         self->options |= SOC_BUF_ERR_FAIL;
@@ -77,4 +76,28 @@ size_t socketBufferWriteData(SocketBuffer *self, const char *data, size_t len) {
 
 size_t socketBufferWriteText(SocketBuffer *self, const char *data) {
     return socketBufferWriteData(self, data, strlen(data));
+}
+
+MemoryPool *socketBufferMemoryPoolNew(char *data, size_t bytes) {
+    MemoryPool *self = malloc(sizeof(MemoryPool));
+    if (bytes)
+        self->data = malloc(bytes), memcpy(self->data, data, bytes);
+
+    self->length = bytes, self->i = 0;
+    return self;
+}
+
+MemoryPool *socketBufferMemoryPoolAppend(MemoryPool *self, char *data, size_t bytes) {
+    if (self && self->length) {
+        char *new = realloc(self->data, self->length + bytes);
+        if (new)
+            self->data = new, memcpy(&self->data[self->length], data, bytes), self->length += bytes;
+    } else {
+        if (self)
+            free(self);
+
+        return socketBufferMemoryPoolNew(data, bytes);
+    }
+
+    return self;
 }
