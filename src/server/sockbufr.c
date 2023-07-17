@@ -18,27 +18,34 @@ size_t socketBufferFlush(SocketBuffer *self) {
         sent = send(self->clientSocket, &self->buffer[i], self->idx - i, 0);
         if (sent == -1) {
             int err = platformSocketGetLastError();
-            switch (err) {
-                case 0:
+            switch (err) { /* NOLINT(hicpp-multiway-paths-covered) */
                 case SOCKET_WOULD_BLOCK:
 #if SOCKET_WOULD_BLOCK != SOCKET_TRY_AGAIN
                     case SOCKET_TRY_AGAIN:
 #endif
                     self->options |= SOC_BUF_ERR_FULL;
 
-                    if (self->options & SOC_BUF_OPT_EXTEND)
+                    if (self->options & SOC_BUF_OPT_EXTEND) {
                         self->extension = extendedBufferAppend(self->extension, &self->buffer[i], self->idx - i);
-                    return 1;
+                        /* Not yet implemented */
+                        LINEDBG;
+                        self->options |= SOC_BUF_ERR_FAIL;
+                        return 0;
+                    } else if (i) {
+                        LINEDBG;
+                        memmove(self->buffer, &self->buffer[i], self->idx - i), self->idx -= i;
+                    }
+                    return i;
                 default:
                     self->options |= SOC_BUF_ERR_FAIL;
-                    return 1;
+                    return 0;
             }
         } else if (i < self->idx)
             i += sent;
 
         if (i == self->idx) {
             self->idx = 0;
-            return 0;
+            return i;
         }
 
         /* TODO: Clean this mess up */
@@ -48,30 +55,26 @@ size_t socketBufferFlush(SocketBuffer *self) {
     return 0;
 }
 
-size_t socketBufferWriteText(SocketBuffer *self, const char *data) {
-    while (*data != '\0') {
-        if (self->idx == BUFSIZ)
-            if (socketBufferFlush(self) == 1)
-                return 1;
-
-        self->buffer[self->idx] = *data;
-        ++self->idx, ++data;
-    }
-
-    return 0;
-}
-
 size_t socketBufferWriteData(SocketBuffer *self, const char *data, size_t len) {
     size_t i;
 
     for (i = 0; i < len; ++i) {
-        if (self->idx == BUFSIZ)
-            if (socketBufferFlush(self) == 1)
-                return 1;
+        if (self->idx == BUFSIZ) {
+            size_t sent = socketBufferFlush(self);
+
+            if (self->options & SOC_BUF_ERR_FAIL)
+                return 0;
+            else if (!sent || self->options & SOC_BUF_ERR_FULL)
+                return i;
+        }
 
         self->buffer[self->idx] = *data;
         ++self->idx, ++data;
     }
 
-    return 0;
+    return i;
+}
+
+size_t socketBufferWriteText(SocketBuffer *self, const char *data) {
+    return socketBufferWriteData(self, data, strlen(data));
 }

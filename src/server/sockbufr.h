@@ -28,7 +28,8 @@ SocketBuffer socketBufferNew(SOCKET clientSocket, char options);
 /**
  * Flush any data left in the TCP socket buffer out of memory and onto the network
  * @param self In: The socket buffer to flush
- * @return 0 on success, else error
+ * @return Amount of bytes flushed out of the socket buffer
+ * @remark The function will set SOC_BUF_ERR_FULL or SOC_BUF_ERR_FAIL if applicable, caller should check state of these
  */
 size_t socketBufferFlush(SocketBuffer *self);
 
@@ -36,8 +37,9 @@ size_t socketBufferFlush(SocketBuffer *self);
  * Write text to the TCP socket buffer
  * @param self In: The TCP socket to send data over
  * @param data In: A null-terminated string array to send into the TCP socket
- * @return 0 on success, else error
+ * @return Amount of bytes written into the socket buffer
  * @note socketBufferFlush should always be called before a SocketBuffer goes out of scope or is freed from the heap
+ * @remark The function will set SOC_BUF_ERR_FULL or SOC_BUF_ERR_FAIL if applicable, caller should check state of these
  */
 size_t socketBufferWriteText(SocketBuffer *self, const char *data);
 
@@ -46,8 +48,9 @@ size_t socketBufferWriteText(SocketBuffer *self, const char *data);
  * @param self In: The TCP socket to send data over
  * @param data In: The data to send into the TCP socket
  * @param len In: The length of the data in bytes
- * @return 0 on success, else error
+ * @return Amount of bytes written into the socket buffer
  * @note socketBufferFlush should always be called before a SocketBuffer goes out of scope or is freed from the heap
+ * @remark The function will set SOC_BUF_ERR_FULL or SOC_BUF_ERR_FAIL if applicable, caller should check state of these
  */
 size_t socketBufferWriteData(SocketBuffer *self, const char *data, size_t len);
 

@@ -37,25 +37,25 @@ char handleDir(SOCKET clientSocket, char *webPath, char *absolutePath, char type
     eventHttpRespondInvoke(&socketBuffer.clientSocket, webPath, type, 200);
 
     if (type == httpHead) {
-        if (socketBufferFlush(&socketBuffer))
+        if (socketBufferFlush(&socketBuffer) == 0)
             goto handleDirAbort;
     }
 
     htmlHeaderWrite(buf, webPath[0] == '\0' ? "/" : webPath);
 
-    if (httpBodyWriteChunk(&socketBuffer, buf) || socketBufferFlush(&socketBuffer))
+    if (httpBodyWriteChunk(&socketBuffer, buf) == 0 || socketBufferFlush(&socketBuffer) == 0)
         goto handleDirAbort;
 
     buf[0] = '\0';
     htmlBreadCrumbWrite(buf, webPath[0] == '\0' ? "/" : webPath);
 
-    if (httpBodyWriteChunk(&socketBuffer, buf))
+    if (httpBodyWriteChunk(&socketBuffer, buf) == 0)
         goto handleDirAbort;
 
     buf[0] = '\0';
     htmlListStart(buf);
 
-    if (httpBodyWriteChunk(&socketBuffer, buf) || socketBufferFlush(&socketBuffer))
+    if (httpBodyWriteChunk(&socketBuffer, buf) == 0 || socketBufferFlush(&socketBuffer) == 0)
         goto handleDirAbort;
 
     DirectoryRoutineArrayAdd(&globalRoutineArray, DirectoryRoutineNew(clientSocket, dir, webPath, globalRootPath));
@@ -154,7 +154,7 @@ char handlePath(SOCKET clientSocket, const char *header, char *webPath) {
                 httpHeaderWriteEnd(&socketBuffer);
                 eventHttpRespondInvoke(&socketBuffer.clientSocket, webPath, e, 304);
 
-                if (socketBufferFlush(&socketBuffer))
+                if (socketBufferFlush(&socketBuffer) == 0)
                     return 1;
 
                 return 0;
@@ -288,12 +288,12 @@ void serverTick(void) {
                         ++d;
                         continue;
                     } else {
-                        if (socketBufferFlush(&routine->socketBuffer) == 1) {
-                            if (routine->socketBuffer.options & SOC_BUF_ERR_FAIL)
-                                routine->state |= STATE_FAIL;
-                            else if (routine->socketBuffer.options & SOC_BUF_ERR_FULL)
-                                break;
-                        } else
+                        size_t sent = socketBufferFlush(&routine->socketBuffer);
+                        if (sent == 0 && (routine->socketBuffer.options & SOC_BUF_ERR_FAIL) > 0)
+                            routine->state |= STATE_FAIL;
+                        else if (routine->socketBuffer.options & SOC_BUF_ERR_FULL)
+                            break;
+                        else
                             routine->state |= STATE_CONTINUE;
 
                         routine->state &= ~STATE_DEFER;
@@ -301,19 +301,23 @@ void serverTick(void) {
                     }
 
                 case STATE_CONTINUE | TYPE_FILE_ROUTINE:
-                    if (FileRoutineContinue(routine))
+                    if (FileRoutineContinue(routine) || routine->socketBuffer.options & SOC_BUF_ERR_FULL)
                         break;
+                    LINEDBG;
                     /* Fall through */
                 case STATE_FINISH | TYPE_FILE_ROUTINE:
                 case STATE_FAIL | TYPE_FILE_ROUTINE:
+                    FD_CLR(routine->socketBuffer.clientSocket, &serverWriteSockets);
                     FileRoutineArrayDel(&globalRoutineArray, routine);
-                    break;
+                    continue;
                 case STATE_CONTINUE | TYPE_DIR_ROUTINE:
                     if (DirectoryRoutineContinue(routine))
                         break;
+                    LINEDBG;
                     /* Fall through */
                 case STATE_FINISH | TYPE_DIR_ROUTINE:
                 case STATE_FAIL | TYPE_DIR_ROUTINE:
+                    FD_CLR(routine->socketBuffer.clientSocket, &serverWriteSockets);
                     DirectoryRoutineArrayDel(&globalRoutineArray, routine);
                     continue;
             }
@@ -329,6 +333,7 @@ void serverTick(void) {
             }
 
 #pragma endregion
+
         }
 
         globalSelectSleep.tv_usec = 0;
@@ -358,7 +363,9 @@ void serverTick(void) {
                         FD_CLR(i, &serverReadSockets);
                     }
                 }
-            } else if (FD_ISSET(i, &readyToWriteSockets)) {
+            }
+
+            if (FD_ISSET(i, &readyToWriteSockets)) {
                 FD_CLR(i, &serverWriteSockets);
             }
         }

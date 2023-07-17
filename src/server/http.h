@@ -99,14 +99,14 @@ char httpHeaderReadRange(const char *request, PlatformFileOffset *start, Platfor
  * Write a HTTP 1.1 chunk
  * @param socketBuffer In: the TCP socket buffer to append the chunk to
  * @param buffer In: The contents chunk body
- * @return 0 on success, other on error
+ * @return Amount of bytes written
  */
 size_t httpBodyWriteChunk(SocketBuffer *socketBuffer, char buffer[BUFSIZ]);
 
 /**
  * Write the end of a HTTP chunk request and flush
  * @param socketBuffer In: the TCP socket buffer to append the last chunk onto and flush
- * @return 0 on success, other on error
+ * @return Amount of bytes written
  */
 size_t httpBodyWriteChunkEnding(SocketBuffer *socketBuffer);
 
@@ -124,7 +124,7 @@ size_t httpBodyWriteFile(SocketBuffer *socketBuffer, FILE *file, PlatformFileOff
  * Send the entirety of a string over TCP
  * @param socketBuffer In: The TCP socket buffer to append text to
  * @param text In: The string to sent over TCP
- * @return 0 on success, other on error
+ * @return Amount of bytes written
  */
 size_t httpBodyWriteText(SocketBuffer *socketBuffer, const char *text);
 

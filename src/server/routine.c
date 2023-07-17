@@ -37,7 +37,7 @@ size_t DirectoryRoutineContinue(Routine *self) {
                 }
 
                 htmlListWritePathLink(buffer, pathBuf);
-                if (httpBodyWriteChunk(&self->socketBuffer, buffer))
+                if (httpBodyWriteChunk(&self->socketBuffer, buffer) == 0)
                     return 0;
 
                 bytesWrite += strlen(buffer);
@@ -53,7 +53,7 @@ size_t DirectoryRoutineContinue(Routine *self) {
 
             htmlListEnd(buffer);
             htmlFooterWrite(buffer);
-            if (!httpBodyWriteChunk(&self->socketBuffer, buffer))
+            if (httpBodyWriteChunk(&self->socketBuffer, buffer))
                 httpBodyWriteChunkEnding(&self->socketBuffer);
 
             socketBufferFlush(&self->socketBuffer);
@@ -143,7 +143,7 @@ Routine FileRoutineNew(SOCKET socket, FILE *file, PlatformFileOffset start, Plat
 }
 
 size_t FileRoutineContinue(Routine *self) {
-    size_t bytesRead, byteWrite;
+    size_t bytesRead, bytesWrite;
     char buffer[BUFSIZ];
 
     PlatformFileOffset currentPosition = platformFileTell(self->type.file.file);
@@ -152,16 +152,25 @@ size_t FileRoutineContinue(Routine *self) {
     bytesRead = platformFileRead(buffer, 1, (size_t) (remaining < BUFSIZ ? remaining : BUFSIZ), self->type.file.file);
 
     if (bytesRead > 0) {
-        byteWrite = socketBufferWriteData(&self->socketBuffer, buffer, bytesRead);
+        bytesWrite = socketBufferWriteData(&self->socketBuffer, buffer, bytesRead);
 
-        if (byteWrite != 0)
-            bytesRead = 0;
+#pragma region Rewind file descriptor when socket buffer can not send all data
+
+        if (bytesWrite < bytesRead)
+            platformFileSeek(self->type.file.file, (PlatformFileOffset) -(bytesRead - bytesWrite), SEEK_CUR);
+
+#pragma endregion
     } else {
-        socketBufferFlush(&self->socketBuffer);
-        eventHttpFinishInvoke(&self->socketBuffer.clientSocket, self->webPath, httpGet, 0);
+        bytesWrite = socketBufferFlush(&self->socketBuffer);
+
+        if (bytesWrite == 0 && (self->socketBuffer.options & SOC_BUF_ERR_FULL) == 0 &&
+            (self->socketBuffer.options & SOC_BUF_ERR_FAIL)) {
+            self->state &= ~STATE_CONTINUE, self->state |= STATE_FINISH;
+            eventHttpFinishInvoke(&self->socketBuffer.clientSocket, self->webPath, httpGet, 0);
+        }
     }
 
-    return bytesRead;
+    return bytesWrite;
 }
 
 void FileRoutineFree(FileRoutine *self) {

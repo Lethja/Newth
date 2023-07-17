@@ -443,11 +443,11 @@ size_t httpBodyWriteFile(SocketBuffer *socketBuffer, FILE *file, PlatformFileOff
 
     while ((bytesRead = platformFileRead(buffer, 1, (size_t) length, file)) > 0) {
         length -= (PlatformFileOffset) bytesRead;
-        if (socketBufferWriteText(socketBuffer, buffer))
+        if (socketBufferWriteText(socketBuffer, buffer) == 0)
             return 1;
     }
 
-    if (socketBufferFlush(socketBuffer))
+    if (socketBufferFlush(socketBuffer) == 0)
         return 1;
 
     return 0;
@@ -463,8 +463,8 @@ size_t httpBodyWriteChunk(SocketBuffer *socketBuffer, char buffer[BUFSIZ]) {
 
 size_t httpBodyWriteChunkEnding(SocketBuffer *socketBuffer) {
     const char *chunkEnding = "0" HTTP_EOL HTTP_EOL;
-    if (socketBufferWriteText(socketBuffer, chunkEnding))
-        return 1;
+    if (socketBufferWriteText(socketBuffer, chunkEnding) == 0)
+        return 0;
     return socketBufferFlush(socketBuffer);
 }
 
@@ -511,7 +511,7 @@ char httpHeaderHandleError(SocketBuffer *socketBuffer, const char *path, char ht
         httpHeaderWriteEnd(socketBuffer);
         eventHttpRespondInvoke(&socketBuffer->clientSocket, path, httpType, error);
 
-        if (httpBodyWriteText(socketBuffer, errMsg) || socketBufferFlush(socketBuffer))
+        if (httpBodyWriteText(socketBuffer, errMsg) == 0 || socketBufferFlush(socketBuffer) == 0)
             return 1;
     }
     return 0;
