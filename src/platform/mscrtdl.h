@@ -9,6 +9,7 @@
 #define PF_OFFSET "I64d"
 #define SOCKET_WOULD_BLOCK WSAEWOULDBLOCK
 #define SOCKET_TRY_AGAIN SOCKET_WOULD_BLOCK
+#define snprintf _snprintf
 
 #include <winsock2.h>
 #include <ws2tcpip.h>

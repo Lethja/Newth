@@ -7,8 +7,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* TODO: Many cases of s(n)printf() being used against char arrays, use a streams/temporary files instead */
-
 static inline char HexToAscii(const char *hex) {
     char value = 0;
     unsigned char i;
@@ -26,7 +24,7 @@ static inline void AsciiToHex(char ascii, char out[8]) {
     if (isalnum(ascii))
         out[0] = ascii, out[1] = '\0';
     else
-        sprintf(out, "%%%x", ascii);
+        snprintf(out, 8, "%%%x", ascii);
 }
 
 char convertPathToUrl(char *path, size_t max) {
@@ -195,8 +193,8 @@ void httpHeaderWriteAcceptRanges(SocketBuffer *socketBuffer) {
 void httpHeaderWriteRange(SocketBuffer *socketBuffer, PlatformFileOffset start, PlatformFileOffset finish,
                           PlatformFileOffset fileLength) {
     char buf[BUFSIZ];
-    sprintf(buf, "Content-Range: bytes %"PF_OFFSET"-%"PF_OFFSET"/%"PF_OFFSET HTTP_EOL, start,
-            finish == fileLength ? finish - 1 : finish, fileLength);
+    snprintf(buf, BUFSIZ, "Content-Range: bytes %"PF_OFFSET"-%"PF_OFFSET"/%"PF_OFFSET HTTP_EOL, start,
+             finish == fileLength ? finish - 1 : finish, fileLength);
     socketBufferWriteText(socketBuffer, buf);
 }
 
@@ -206,7 +204,7 @@ void httpHeaderWriteDate(SocketBuffer *socketBuffer) {
 
     platformGetCurrentTime(time);
 
-    sprintf(buffer, "Date: %s" HTTP_EOL, time);
+    snprintf(buffer, WRITE_DATE_MAX, "Date: %s" HTTP_EOL, time);
     socketBufferWriteText(socketBuffer, buffer);
 }
 
@@ -217,7 +215,7 @@ void httpHeaderWriteChunkedEncoding(SocketBuffer *socketBuffer) {
 
 void httpHeaderWriteContentLength(SocketBuffer *socketBuffer, PlatformFileOffset length) {
     char buffer[BUFSIZ];
-    sprintf(buffer, "Content-Length: %"PF_OFFSET HTTP_EOL, length);
+    snprintf(buffer, BUFSIZ, "Content-Length: %"PF_OFFSET HTTP_EOL, length);
     socketBufferWriteText(socketBuffer, buffer);
 }
 
@@ -230,7 +228,7 @@ void httpHeaderWriteLastModified(SocketBuffer *socketBuffer, PlatformFileStat *s
     char buffer[LAST_MODIFIED_MAX] = "Last-Modified: ", time[30];
 
     platformGetTime(&st->st_mtime, time);
-    sprintf(buffer, "Last-Modified: %s" HTTP_EOL, time);
+    snprintf(buffer, LAST_MODIFIED_MAX, "Last-Modified: %s" HTTP_EOL, time);
     socketBufferWriteText(socketBuffer, buffer);
 }
 
@@ -238,7 +236,7 @@ void httpHeaderWriteContentType(SocketBuffer *socketBuffer, char *type, char *ch
     char buffer[BUFSIZ];
     size_t len = strlen(type) + strlen(charSet) + strlen("Content-Type: ;" HTTP_EOL) + 1;
     if (len < BUFSIZ) {
-        sprintf(buffer, "Content-Type: %s; %s" HTTP_EOL, type, charSet);
+        snprintf(buffer, BUFSIZ, "Content-Type: %s; %s" HTTP_EOL, type, charSet);
         socketBufferWriteText(socketBuffer, buffer);
     }
 }
@@ -278,7 +276,7 @@ void inline httpHeaderWriteResponseStr(SocketBuffer *socketBuffer, const char *r
     size_t max = 14 + strlen(response);
 
     if (max < RESPONSE_MAX) {
-        sprintf(buffer, "HTTP/1.1 %s" HTTP_EOL, response);
+        snprintf(buffer, RESPONSE_MAX, "HTTP/1.1 %s" HTTP_EOL, response);
         socketBufferWriteText(socketBuffer, buffer);
     }
 }
@@ -422,7 +420,7 @@ void htmlBreadCrumbWrite(char buffer[BUFSIZ], const char *webPath) {
         char internalBuffer[20 + FILENAME_MAX * 2], linkPath[FILENAME_MAX], displayPath[FILENAME_MAX];
         getPathName(webPath, i, linkPath, displayPath);
         convertPathToUrl(linkPath, FILENAME_MAX);
-        sprintf(internalBuffer, "%s%s%s%s%s", h1, linkPath, h2, displayPath, h3);
+        snprintf(internalBuffer, 20 + FILENAME_MAX * 2, "%s%s%s%s%s", h1, linkPath, h2, displayPath, h3);
 
         if (strlen(buffer) + strlen(internalBuffer) + 1 > BUFSIZ - 17)
             break;
@@ -457,7 +455,7 @@ size_t httpBodyWriteChunk(SocketBuffer *socketBuffer, char buffer[BUFSIZ]) {
 #define HEX_MAX 40
     size_t bufLen = strlen(buffer);
     char internalBuffer[HEX_MAX + BUFSIZ + 1];
-    sprintf(internalBuffer, "%lx\r\n%s\r\n", (unsigned long) bufLen, buffer);
+    snprintf(internalBuffer, HEX_MAX + BUFSIZ + 1, "%lx\r\n%s\r\n", (unsigned long) bufLen, buffer);
     return socketBufferWriteText(socketBuffer, internalBuffer);
 }
 
@@ -485,7 +483,7 @@ void httpHeaderWriteFileName(SocketBuffer *socketBuffer, char *path) {
     if (strlen(h1) + strlen(h2) + strlen(name) >= FILENAME_MAX)
         return;
 
-    sprintf(buffer, "Content-Disposition: filename=\"%s\"\n", name);
+    snprintf(buffer, FILENAME_MAX, "Content-Disposition: filename=\"%s\"\n", name);
     socketBufferWriteText(socketBuffer, buffer);
 }
 

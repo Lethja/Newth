@@ -237,16 +237,18 @@ SOCKET platformAcceptConnection(SOCKET fromSocket) {
 }
 
 void ipv6NTop(const void *inAddr6, char *ipStr) {
+#define IPV6MAX 100
     const unsigned char *a = inAddr6;
-    char buf[100];
+    char buf[IPV6MAX];
     size_t i, j, max, best;
 
     if (memcmp(a, "\0\0\0\0\0\0\0\0\0\0\377\377", 12) != 0)
-        sprintf(buf, "%x:%x:%x:%x:%x:%x:%x:%x", 256 * a[0] + a[1], 256 * a[2] + a[3], 256 * a[4] + a[5],
-                256 * a[6] + a[7], 256 * a[8] + a[9], 256 * a[10] + a[11], 256 * a[12] + a[13], 256 * a[14] + a[15]);
+        snprintf(buf, IPV6MAX, "%x:%x:%x:%x:%x:%x:%x:%x", 256 * a[0] + a[1], 256 * a[2] + a[3], 256 * a[4] + a[5],
+                 256 * a[6] + a[7], 256 * a[8] + a[9], 256 * a[10] + a[11], 256 * a[12] + a[13], 256 * a[14] + a[15]);
     else
-        sprintf(buf, "%x:%x:%x:%x:%x:%x:%d.%d.%d.%d", 256 * a[0] + 256 * a[1], 256 * a[2] + a[3], 256 * a[4] + a[5],
-                256 * a[6] + a[7], 256 * a[8] + a[9], 256 * a[10] + a[11], a[12], a[13], a[14], a[15]);
+        snprintf(buf, IPV6MAX, "%x:%x:%x:%x:%x:%x:%d.%d.%d.%d", 256 * a[0] + 256 * a[1], 256 * a[2] + a[3],
+                 256 * a[4] + a[5], 256 * a[6] + a[7], 256 * a[8] + a[9], 256 * a[10] + a[11], a[12], a[13], a[14],
+                 a[15]);
 
     for (i = best = 0, max = 2; buf[i]; ++i) {
         if (i && buf[i] != ':')

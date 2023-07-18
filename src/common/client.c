@@ -347,7 +347,7 @@ char sendRequest(const SOCKET *socket, const char *type, const char *path) {
     char txLine[BUFSIZ];
     int sendBytes;
 
-    sprintf(txLine, "%s %s HTTP/1.1" HTTP_EOL HTTP_EOL, type, path);
+    snprintf(txLine, BUFSIZ, "%s %s HTTP/1.1" HTTP_EOL HTTP_EOL, type, path);
     sendBytes = (int) strlen(txLine);
 
     if (send(*socket, txLine, sendBytes, 0) != sendBytes)
