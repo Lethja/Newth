@@ -9,9 +9,53 @@ SocketBuffer socketBufferNew(SOCKET clientSocket, char options) {
     return self;
 }
 
+static size_t socketBufferFlushExtension(SocketBuffer *self) {
+    MemoryPool *extension = self->extension;
+    size_t sent;
+
+    if(extension->i < extension->length) {
+        sent = send(self->clientSocket, &extension->data[extension->i], extension->length - extension->i, 0);
+        if (sent == -1) {
+            int err = platformSocketGetLastError();
+            switch (err) { /* NOLINT(hicpp-multiway-paths-covered) */
+                case SOCKET_WOULD_BLOCK:
+#if SOCKET_WOULD_BLOCK != SOCKET_TRY_AGAIN
+                case SOCKET_TRY_AGAIN:
+#endif
+                    return 0;
+                default:
+                    self->options &= ~(SOC_BUF_ERR_FULL);
+                    self->options |= SOC_BUF_ERR_FAIL;
+                    return 0;
+            }
+        }
+
+        extension->i += sent;
+    } else
+        sent = 0;
+
+#pragma region Free extension on the run where it has been cleaned out
+
+    if (extension->i == extension->length) {
+        sent = extension->i;
+        free(self->extension), self->extension = NULL;
+        self->options &= ~(SOC_BUF_ERR_FULL);
+    }
+
+#pragma endregion
+
+    return sent;
+}
+
 size_t socketBufferFlush(SocketBuffer *self) {
     if (self->idx) {
-        SOCK_BUF_TYPE i = 0, sent;
+        SOCK_BUF_TYPE i, sent;
+
+        /* TODO: Test me */
+        if (self->idx == BUFSIZ && (self->options & SOC_BUF_ERR_FULL) && self->extension)
+            return socketBufferFlushExtension(self);
+
+        i = 0;
         socketBufferFlushTryAgain:
         sent = send(self->clientSocket, &self->buffer[i], self->idx - i, 0);
         if (sent == -1) {
@@ -19,15 +63,13 @@ size_t socketBufferFlush(SocketBuffer *self) {
             switch (err) { /* NOLINT(hicpp-multiway-paths-covered) */
                 case SOCKET_WOULD_BLOCK:
 #if SOCKET_WOULD_BLOCK != SOCKET_TRY_AGAIN
-                    case SOCKET_TRY_AGAIN:
+                case SOCKET_TRY_AGAIN:
 #endif
                     self->options |= SOC_BUF_ERR_FULL;
 
                     if (self->options & SOC_BUF_OPT_EXTEND) {
-                        self->extension = socketBufferMemoryPoolAppend(self->extension, &self->buffer[i], self->idx - i);
-                        /* Not yet implemented */
-                        LINEDBG;
-                        self->options |= SOC_BUF_ERR_FAIL;
+                        self->extension = socketBufferMemoryPoolAppend(self->extension, &self->buffer[i],
+                                                                       self->idx - i);
                         return 0;
                     } else if (i) {
                         LINEDBG;
@@ -42,7 +84,8 @@ size_t socketBufferFlush(SocketBuffer *self) {
             i += sent;
 
         if (i == self->idx) {
-            self->idx = 0;
+            if (!(self->options & (SOC_BUF_OPT_EXTEND | SOC_BUF_ERR_FULL)))
+                self->idx = 0;
             return i;
         }
 
