@@ -11,8 +11,7 @@ SocketBuffer socketBufferNew(SOCKET clientSocket, char options) {
 
 size_t socketBufferFlush(SocketBuffer *self) {
     if (self->idx) {
-        size_t i = 0;
-        SOCK_BUF_TYPE sent;
+        SOCK_BUF_TYPE i = 0, sent;
         socketBufferFlushTryAgain:
         sent = send(self->clientSocket, &self->buffer[i], self->idx - i, 0);
         if (sent == -1) {

@@ -157,7 +157,7 @@ size_t FileRoutineContinue(Routine *self) {
 #pragma region Rewind file descriptor when socket buffer can not send all data
 
         if (bytesWrite < bytesRead)
-            platformFileSeek(self->type.file.file, (PlatformFileOffset) -(bytesRead - bytesWrite), SEEK_CUR);
+            platformFileSeek(self->type.file.file, (PlatformFileOffset) -((PlatformFileOffset)(bytesRead - bytesWrite)), SEEK_CUR);
 
 #pragma endregion
     } else {
