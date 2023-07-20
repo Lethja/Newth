@@ -37,7 +37,7 @@ size_t socketBufferFlush(SocketBuffer *self);
  * @return The memory pool with appended data
  * @remark The return point might be the same as self but it also might not, always update your pointer
  */
-MemoryPool *socketBufferMemoryPoolAppend(MemoryPool *self, char *data, size_t bytes);
+MemoryPool *socketBufferMemoryPoolAppend(MemoryPool *self, const char *data, size_t bytes);
 
 /**
  * Create a new memory pool. This should only be used when a socket would block but processing cannot be deferred
@@ -45,7 +45,7 @@ MemoryPool *socketBufferMemoryPoolAppend(MemoryPool *self, char *data, size_t by
  * @param bytes In: The length of the data
  * @return A newly created memory pool
  */
-MemoryPool *socketBufferMemoryPoolNew(char *data, size_t bytes);
+MemoryPool *socketBufferMemoryPoolNew(const char *data, size_t bytes);
 
 /**
  * Create a socket buffer for a socket

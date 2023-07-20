@@ -30,6 +30,8 @@ elseif (WIN32)
     endif ()
 endif ()
 
+add_executable(test ../test/sockbufr.c ../src/server/sockbufr.c ../src/platform/mockput.c)
+
 add_executable(dl ../src/common/client.c ../src/platform/platform.h)
 add_executable(th ../src/cli/th.c
         ../src/common/server.h ../src/common/server.c
@@ -41,7 +43,10 @@ add_executable(th ../src/cli/th.c
         ${TH_PLATFORM_SRC})
 
 target_compile_definitions(dl PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
+target_compile_definitions(test PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>" MOCK=1)
 target_compile_definitions(th PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
+
+target_link_libraries(test criterion)
 
 if (WIN32)
     if (STYLISH_WIN32)

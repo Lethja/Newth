@@ -20,6 +20,10 @@
 
 #include "mscrtdl.h"
 
+#elif MOCK
+
+#include "mockput.h"
+
 #else
 
 #include "posix01.h"
