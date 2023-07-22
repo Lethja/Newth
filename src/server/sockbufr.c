@@ -24,8 +24,7 @@ static size_t socketBufferFlushExtension(SocketBuffer *self) {
 #endif
                     return 0;
                 default:
-                    self->options &= ~(SOC_BUF_ERR_FULL);
-                    self->options |= SOC_BUF_ERR_FAIL;
+                    socketBufferKill(self);
                     return 0;
             }
         } else {
@@ -43,8 +42,7 @@ static size_t socketBufferFlushExtension(SocketBuffer *self) {
 #endif
                     return 0;
                 default:
-                    self->options &= ~(SOC_BUF_ERR_FULL);
-                    self->options |= SOC_BUF_ERR_FAIL;
+                    socketBufferKill(self);
                     return 0;
             }
         } else {
@@ -54,13 +52,11 @@ static size_t socketBufferFlushExtension(SocketBuffer *self) {
         sent = 0;
 
 #pragma region Free extension on the run where it has been cleaned out
-
     if (extension->i == extension->length) {
-        free(self->extension), self->extension = NULL;
+        socketBufferMemoryPoolFree(self->extension), self->extension = NULL;
         self->options &= ~(SOC_BUF_ERR_FULL);
         self->idx = 0;
     }
-
 #pragma endregion
 
     return sent;
@@ -90,7 +86,7 @@ size_t socketBufferFlush(SocketBuffer *self) {
 
                     return i;
                 default:
-                    self->options |= SOC_BUF_ERR_FAIL;
+                    socketBufferKill(self);
                     return 0;
             }
         } else if (i < self->idx)
@@ -110,6 +106,13 @@ size_t socketBufferFlush(SocketBuffer *self) {
     }
 
     return 0;
+}
+
+void socketBufferKill(SocketBuffer *self) {
+    if (self->extension)
+        socketBufferMemoryPoolFree(self->extension);
+
+    self->extension = NULL, self->idx = 0, self->options = SOC_BUF_ERR_FAIL;
 }
 
 size_t socketBufferWriteData(SocketBuffer *self, const char *data, size_t len) {
@@ -147,10 +150,9 @@ size_t socketBufferWriteText(SocketBuffer *self, const char *data) {
 
 MemoryPool *socketBufferMemoryPoolNew(const char *data, size_t bytes) {
     MemoryPool *self = malloc(sizeof(MemoryPool));
-    if (bytes) {
-        self->data = malloc(bytes);
-        memcpy(self->data, data, bytes);
-    }
+
+    if (bytes)
+        self->data = malloc(bytes), memcpy(self->data, data, bytes);
 
     self->length = bytes, self->idx = self->i = 0;
     return self;
@@ -160,11 +162,9 @@ MemoryPool *socketBufferMemoryPoolAppend(MemoryPool *self, const char *data, siz
     if (self && self->length) {
         char *new = realloc(self->data, self->length + bytes);
 
-        if (new) {
-            self->data = new;
-            memcpy(&self->data[self->length], data, bytes);
-            self->length += bytes;
-        }
+        if (new)
+            self->data = new, memcpy(&self->data[self->length], data, bytes), self->length += bytes;
+
     } else {
         if (self) {
             if (self->data)
@@ -176,4 +176,11 @@ MemoryPool *socketBufferMemoryPoolAppend(MemoryPool *self, const char *data, siz
     }
 
     return self;
+}
+
+void socketBufferMemoryPoolFree(MemoryPool *self) {
+    if (self->data)
+        free(self->data);
+
+    free(self);
 }

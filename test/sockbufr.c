@@ -123,7 +123,13 @@ static void SocketBufferExtend(void **state) {
     assert_memory_equal(socketBuffer.extension->data, "D", socketBuffer.extension->length);
 #pragma endregion
 
-    free(socketBuffer.extension->data), free(socketBuffer.extension);
+#pragma region Kill buffer
+    socketBufferKill(&socketBuffer);
+
+    assert_null(socketBuffer.extension);
+    assert_false(socketBuffer.idx);
+    assert_true(socketBuffer.options & SOC_BUF_ERR_FAIL);
+#pragma endregion
 }
 
 static void ExtendedMemoryAppend(void **state) {
@@ -163,7 +169,7 @@ static void ExtendedMemoryAppend(void **state) {
     assert_int_equal(memoryPool->length, 10);
     assert_memory_equal(memoryPool->data, "ABCD\0EFGH", memoryPool->length);
 
-    free(memoryPool->data), free(memoryPool);
+    socketBufferMemoryPoolFree(memoryPool);
 }
 
 int main(int argc, char **argv) {

@@ -30,6 +30,12 @@ typedef struct SocketBuffer {
 size_t socketBufferFlush(SocketBuffer *self);
 
 /**
+ * Destroy this socket buffer in the case on an unrecoverable connection error
+ * @param self In: the socket buffer to kill
+ */
+void socketBufferKill(SocketBuffer *self);
+
+/**
  * Append to a memory pool. This should only be used when a socket would block but processing can not be deferred
  * @param self In: The memory pool to append to
  * @param data In: The data to append onto the end of the memory pool
@@ -38,6 +44,12 @@ size_t socketBufferFlush(SocketBuffer *self);
  * @remark The return point might be the same as self but it also might not, always update your pointer
  */
 MemoryPool *socketBufferMemoryPoolAppend(MemoryPool *self, const char *data, size_t bytes);
+
+/**
+ * Free any heap memory held by this memory pool
+ * @param self In: The memory pool to be freed
+ */
+void socketBufferMemoryPoolFree(MemoryPool *self);
 
 /**
  * Create a new memory pool. This should only be used when a socket would block but processing cannot be deferred
