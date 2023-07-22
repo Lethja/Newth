@@ -47,28 +47,23 @@ static void SocketBufferExtend(void **state) {
     SocketBuffer socketBuffer = socketBufferNew(0, SOC_BUF_OPT_EXTEND);
 
 #pragma region Check sane values in new socket buffer
-
     assert_null(socketBuffer.extension);
     assert_false(socketBuffer.idx);
-
 #pragma endregion
 
 #pragma region Populate some data
-
     strcpy(junkData, sampleText);
     for (i = 1; i < bufferMax; ++i)
         strcat(junkData, sampleText);
 
     len = strlen(junkData), mockReset(), mockMaxBuf = SB_DATA_SIZE / 8;
-
 #pragma endregion
 
 #pragma region Create socket buffer extended buffer
-
     sent1 = socketBufferWriteText(&socketBuffer, junkData);
 
     assert_int_equal(socketBuffer.idx, SB_DATA_SIZE);
-    assert_false(memcmp(socketBuffer.buffer, junkData, SB_DATA_SIZE));
+    assert_memory_equal(socketBuffer.buffer, junkData, SB_DATA_SIZE);
 
     assert_int_equal(sent1, len);
     assert_int_equal(socketBuffer.idx, SB_DATA_SIZE);
@@ -76,11 +71,9 @@ static void SocketBufferExtend(void **state) {
     assert_false(socketBuffer.extension->i);
     assert_int_equal(socketBuffer.idx + socketBuffer.extension->length, sent1);
     assert_memory_equal(socketBuffer.extension->data, &junkData[socketBuffer.idx], socketBuffer.extension->length);
-
 #pragma endregion
 
 #pragma region Append to existing socket buffer extension
-
     sent2 = socketBufferWriteText(&socketBuffer, junkData);
     assert_non_null(socketBuffer.extension);
     assert_false(socketBuffer.extension->i);
@@ -88,12 +81,25 @@ static void SocketBufferExtend(void **state) {
 
     sent3 = socketBufferWriteData(&socketBuffer, "", 1);
     assert_int_equal(socketBuffer.idx + socketBuffer.extension->length, sent1 + sent2 + sent3);
-
 #pragma endregion
 
-    free(socketBuffer.extension->data), free(socketBuffer.extension), socketBuffer.extension = NULL;
+#pragma region Freed up correctly when no longer needed
+    sent2 = sent1 + sent2 + sent3, sent1 = 1, sent3 = 0;
+
+    while (sent1 != 0) {
+        mockCurBuf = mockError = 0;
+        sent1 = socketBufferFlush(&socketBuffer);
+        sent3 += sent1;
+    }
+
+    assert_null(socketBuffer.extension);
+    assert_false(socketBuffer.idx);
+    assert_int_equal(sent3, sent2);
+#pragma endregion
 
 #pragma region Data appending integrity
+    socketBufferWriteText(&socketBuffer, junkData);
+    free(socketBuffer.extension->data), free(socketBuffer.extension), socketBuffer.extension = NULL;
 
     socketBufferWriteText(&socketBuffer, "ABCD");
     socketBufferWriteText(&socketBuffer, "EFGH");
@@ -115,7 +121,6 @@ static void SocketBufferExtend(void **state) {
     assert_int_equal(socketBuffer.buffer[SB_DATA_SIZE - 2], 'B');
     assert_int_equal(socketBuffer.buffer[SB_DATA_SIZE - 1], 'C');
     assert_memory_equal(socketBuffer.extension->data, "D", socketBuffer.extension->length);
-
 #pragma endregion
 
     free(socketBuffer.extension->data), free(socketBuffer.extension);

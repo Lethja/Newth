@@ -10,7 +10,7 @@ enum SOC_BUF_OPT {
 };
 
 typedef struct MemoryPool {
-    size_t length, i;
+    size_t length, i, idx;
     char *data;
 } MemoryPool;
 

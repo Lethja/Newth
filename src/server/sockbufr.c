@@ -13,7 +13,26 @@ static size_t socketBufferFlushExtension(SocketBuffer *self) {
     MemoryPool *extension = self->extension;
     size_t sent;
 
-    if (extension->i < extension->length) {
+    if (extension->idx < self->idx) {
+        sent = send(self->clientSocket, &self->buffer[extension->i], self->idx - extension->idx, 0);
+        if (sent == -1) {
+            int err = platformSocketGetLastError();
+            switch (err) { /* NOLINT(hicpp-multiway-paths-covered) */
+                case SOCKET_WOULD_BLOCK:
+#if SOCKET_WOULD_BLOCK != SOCKET_TRY_AGAIN
+                case SOCKET_TRY_AGAIN:
+#endif
+                    return 0;
+                default:
+                    self->options &= ~(SOC_BUF_ERR_FULL);
+                    self->options |= SOC_BUF_ERR_FAIL;
+                    return 0;
+            }
+        } else {
+            extension->idx += sent;
+        }
+        return sent;
+    } else if (extension->i < extension->length) {
         sent = send(self->clientSocket, &extension->data[extension->i], extension->length - extension->i, 0);
         if (sent == -1) {
             int err = platformSocketGetLastError();
@@ -28,18 +47,18 @@ static size_t socketBufferFlushExtension(SocketBuffer *self) {
                     self->options |= SOC_BUF_ERR_FAIL;
                     return 0;
             }
+        } else {
+            extension->i += sent;
         }
-
-        extension->i += sent;
     } else
         sent = 0;
 
 #pragma region Free extension on the run where it has been cleaned out
 
     if (extension->i == extension->length) {
-        sent = extension->i;
         free(self->extension), self->extension = NULL;
         self->options &= ~(SOC_BUF_ERR_FULL);
+        self->idx = 0;
     }
 
 #pragma endregion
@@ -51,8 +70,7 @@ size_t socketBufferFlush(SocketBuffer *self) {
     if (self->idx) {
         SOCK_BUF_TYPE i, sent;
 
-        /* TODO: Test me */
-        if (self->idx == SB_DATA_SIZE && (self->options & SOC_BUF_ERR_FULL) && self->extension)
+        if (self->options & SOC_BUF_ERR_FULL && self->extension)
             return socketBufferFlushExtension(self);
 
         i = 0;
@@ -134,7 +152,7 @@ MemoryPool *socketBufferMemoryPoolNew(const char *data, size_t bytes) {
         memcpy(self->data, data, bytes);
     }
 
-    self->length = bytes, self->i = 0;
+    self->length = bytes, self->idx = self->i = 0;
     return self;
 }
 

@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <sys/select.h>
 
-#define SOCK_BUF_TYPE int
+#define SOCK_BUF_TYPE long int
 
 #ifndef INET_ADDRSTRLEN
 #define INET_ADDRSTRLEN 22
@@ -37,7 +37,7 @@ struct sockaddr {
 };
 
 extern int mockError;
-extern size_t mockMaxBuf;
+extern size_t mockCurBuf, mockMaxBuf;
 
 void mockReset(void);
 
