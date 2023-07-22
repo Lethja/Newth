@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.24)
 project(Newth C)
 
-add_compile_definitions(_FILE_OFFSET_BITS=64)
-
 set(CMAKE_C_STANDARD 90)
 set(CMAKE_C_FLAGS "-pedantic -Wall -Wno-unknown-pragmas")
 
@@ -10,12 +8,14 @@ option(PORTABLE_WIN32 "Force a portable Windows binary" ON)
 option(STYLISH_WIN32 "Enable native visual styling for Windows XP and later" ON)
 option(FORCE_32BIT "Force x86 32-bit binaries" OFF)
 
+add_compile_definitions(_FILE_OFFSET_BITS=64)
+
 if (PORTABLE_WIN32)
     set(CMAKE_SYSTEM_NAME Windows)
 endif ()
 
 if (FORCE_32BIT)
-    set(CMAKE_C_FLAGS "-m32 -march=i386")
+    set(CMAKE_C_FLAGS "-m32")
 endif ()
 
 set(CMAKE_C_FLAGS_RELEASE "-O2 -s")
@@ -30,9 +30,12 @@ elseif (WIN32)
     endif ()
 endif ()
 
-add_executable(test ../test/sockbufr.c ../src/server/sockbufr.c ../src/platform/mockput.c)
-
+# Client
 add_executable(dl ../src/common/client.c ../src/platform/platform.h)
+
+target_compile_definitions(dl PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
+
+# Server
 add_executable(th ../src/cli/th.c
         ../src/common/server.h ../src/common/server.c
         ../src/platform/platform.c ../src/platform/platform.h
@@ -42,10 +45,12 @@ add_executable(th ../src/cli/th.c
         ../src/server/sockbufr.c ../src/server/sockbufr.h
         ${TH_PLATFORM_SRC})
 
-target_compile_definitions(dl PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
-target_compile_definitions(test PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>" MOCK=1)
 target_compile_definitions(th PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
 
+# Unit Test Binary
+add_executable(test ../test/sockbufr.c ../src/server/sockbufr.c ../src/platform/mockput.c)
+set_target_properties(test PROPERTIES C_STANDARD 99) # Criterion unit testing depends on ISO C99 macros
+target_compile_definitions(test PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>" MOCK=1)
 target_link_libraries(test criterion)
 
 if (WIN32)
