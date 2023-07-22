@@ -39,6 +39,8 @@ struct sockaddr {
 extern int mockError;
 extern size_t mockMaxBuf;
 
+void mockReset(void);
+
 ssize_t send(int fd, const void *buf, size_t n, int flags);
 
 int platformSocketGetLastError(void);

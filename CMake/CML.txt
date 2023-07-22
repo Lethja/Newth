@@ -49,9 +49,8 @@ target_compile_definitions(th PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
 
 # Unit Test Binary
 add_executable(test ../test/sockbufr.c ../src/server/sockbufr.c ../src/platform/mockput.c)
-set_target_properties(test PROPERTIES C_STANDARD 99) # Criterion unit testing depends on ISO C99 macros
 target_compile_definitions(test PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>" MOCK=1 SB_DATA_SIZE=128)
-target_link_libraries(test criterion)
+target_link_libraries(test cmocka)
 
 if (WIN32)
     if (STYLISH_WIN32)

@@ -8,6 +8,10 @@ size_t mockCurBuf = 0, mockMaxBuf = SB_DATA_SIZE / 2;
 
 #pragma endregion
 
+void mockReset(void) {
+    mockCurBuf = 0, mockMaxBuf = SB_DATA_SIZE / 2, mockError = 0;
+}
+
 #pragma region System function mockup
 
 /**

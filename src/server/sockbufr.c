@@ -67,13 +67,9 @@ size_t socketBufferFlush(SocketBuffer *self) {
 #endif
                     self->options |= SOC_BUF_ERR_FULL;
 
-                    if (self->options & SOC_BUF_OPT_EXTEND) {
-                        self->extension = socketBufferMemoryPoolAppend(self->extension, &self->buffer[i],
-                                                                       self->idx - i);
-                        return 0;
-                    } else if (i) {
+                    if (i && !(self->options & SOC_BUF_OPT_EXTEND))
                         memmove(self->buffer, &self->buffer[i], self->idx - i), self->idx -= i;
-                    }
+
                     return i;
                 default:
                     self->options |= SOC_BUF_ERR_FAIL;
@@ -107,8 +103,17 @@ size_t socketBufferWriteData(SocketBuffer *self, const char *data, size_t len) {
 
             if (self->options & SOC_BUF_ERR_FAIL)
                 return 0;
-            else if (!sent || self->options & SOC_BUF_ERR_FULL)
-                return i;
+            else if (self->options & SOC_BUF_ERR_FULL) {
+                if (self->options & SOC_BUF_OPT_EXTEND) {
+#pragma region Write directory onto the heap when set to extended mode and buffer is full
+                    size_t start = SB_DATA_SIZE - (SB_DATA_SIZE - i);
+                    self->extension = socketBufferMemoryPoolAppend(self->extension, data, len - start);
+                    return len;
+#pragma endregion
+                } else {
+                    return sent;
+                }
+            }
         }
 
         self->buffer[self->idx] = *data;
@@ -124,8 +129,10 @@ size_t socketBufferWriteText(SocketBuffer *self, const char *data) {
 
 MemoryPool *socketBufferMemoryPoolNew(const char *data, size_t bytes) {
     MemoryPool *self = malloc(sizeof(MemoryPool));
-    if (bytes)
-        self->data = malloc(bytes), memcpy(self->data, data, bytes);
+    if (bytes) {
+        self->data = malloc(bytes);
+        memcpy(self->data, data, bytes);
+    }
 
     self->length = bytes, self->i = 0;
     return self;
@@ -135,11 +142,17 @@ MemoryPool *socketBufferMemoryPoolAppend(MemoryPool *self, const char *data, siz
     if (self && self->length) {
         char *new = realloc(self->data, self->length + bytes);
 
-        if (new)
-            self->data = new, memcpy(&self->data[self->length], data, bytes), self->length += bytes;
+        if (new) {
+            self->data = new;
+            memcpy(&self->data[self->length], data, bytes);
+            self->length += bytes;
+        }
     } else {
-        if (self)
+        if (self) {
+            if (self->data)
+                free(self->data);
             free(self);
+        }
 
         return socketBufferMemoryPoolNew(data, bytes);
     }
