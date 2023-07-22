@@ -4,16 +4,16 @@
 #pragma region Mockup global variables
 
 int mockError = 0;
-size_t mockCurBuf = 0, mockMaxBuf = BUFSIZ / 2;
+size_t mockCurBuf = 0, mockMaxBuf = SB_DATA_SIZE / 2;
 
 #pragma endregion
 
 #pragma region System function mockup
 
 /**
- * Mockup of the POSIX version of send, this mockup dosen't actually use a socket but instead can be programmed to
+ * Mockup of the POSIX version of send, this mockup doesn't actually use a socket but instead can be programmed to
  * respond in certain ways that mimic a system
- * @param fd file descripter, unused in mockup, pass 0
+ * @param fd file descriptor, unused in mockup, pass 0
  * @param buf The buffer, untouched can pass NULL
  * @param n The size of the buffer
  * @param flags Unused in mockup pass 0

@@ -4,8 +4,8 @@
 static char *sampleText = "Glum-Schwartzkopf,vex'd_by NJ&IQ"; /* 32 characters, each unique */
 
 Test(Mockup, Send) {
-    size_t i, bufferMax = ((BUFSIZ * 2) / 32) - 1, sent;
-    char junkData[BUFSIZ * 2] = "";
+    size_t i, bufferMax = ((SB_DATA_SIZE * 2) / 32) - 1, sent;
+    char junkData[SB_DATA_SIZE * 2] = "";
 
     strcpy(junkData, sampleText);
     for (i = 1; i < bufferMax; ++i)
@@ -28,10 +28,11 @@ Test(Mockup, Send) {
 }
 
 Test(SocketBuffer, Extend) {
-    size_t i, bufferMax = ((BUFSIZ * 2) / 32) - 1, sent;
-    char junkData[BUFSIZ * 2] = "";
+    size_t i, bufferMax = ((SB_DATA_SIZE * 2) / 32) - 1, sent1, sent2, sent3, len;
+    char junkData[SB_DATA_SIZE * 2] = "";
     SocketBuffer socketBuffer = socketBufferNew(0, SOC_BUF_OPT_EXTEND);
-    mockMaxBuf = BUFSIZ / 4;
+    mockMaxBuf = SB_DATA_SIZE / 4;
+    cr_log_info("Socket Buffer data size is %d", SB_DATA_SIZE);
 
 #pragma region Check sane values in new socket buffer
 
@@ -46,46 +47,62 @@ Test(SocketBuffer, Extend) {
     for (i = 1; i < bufferMax; ++i)
         strcat(junkData, sampleText);
 
+    len = strlen(junkData);
+
 #pragma endregion
 
 #pragma region Create socket buffer extended buffer
 
-    sent = socketBufferWriteText(&socketBuffer, junkData);
+    sent1 = socketBufferWriteText(&socketBuffer, junkData);
 
-    cr_assert_eq(socketBuffer.idx, BUFSIZ);
-    cr_assert_not(memcmp(socketBuffer.buffer, junkData, BUFSIZ));
+    cr_assert_eq(socketBuffer.idx, SB_DATA_SIZE);
+    cr_assert_not(memcmp(socketBuffer.buffer, junkData, SB_DATA_SIZE));
 
-    cr_assert_eq(sent, BUFSIZ, "Expected %d got %lu", BUFSIZ, sent);
-    cr_assert_eq(socketBuffer.idx, BUFSIZ, "Expected %d got %d", BUFSIZ, socketBuffer.idx);
+    cr_assert_eq(sent1, len, "Expected %zu got %lu", len, sent1);
+    cr_assert_eq(socketBuffer.idx, SB_DATA_SIZE, "Expected %d got %d", SB_DATA_SIZE, socketBuffer.idx);
     cr_assert_not_null(socketBuffer.extension);
     cr_assert_eq(socketBuffer.extension->i, 0);
-    cr_assert_eq(socketBuffer.extension->length, sent - mockMaxBuf, "Expected %lu got %lu", sent - mockMaxBuf,
+    cr_assert_eq(socketBuffer.extension->length, sent1 - mockMaxBuf, "Expected %lu got %lu", sent1 - mockMaxBuf,
                  socketBuffer.extension->length);
-    cr_assert_not(memcmp(socketBuffer.extension->data, &junkData[BUFSIZ / 4], BUFSIZ - (BUFSIZ / 4)));
+    cr_assert_not(memcmp(socketBuffer.extension->data, &junkData[SB_DATA_SIZE / 4], SB_DATA_SIZE - (SB_DATA_SIZE / 4)));
+
+    /* Manual checking info */
+    cr_log_info("Pass 1");
+    cr_log_info("Mock sent internal buffer is %zu", mockMaxBuf);
+    cr_log_info("Socket Buffer data IDX is %d", socketBuffer.idx);
+    cr_log_info("Socket Buffer Extension Length is %zu", socketBuffer.extension->length);
+    cr_log_info("Reported data sent is %zu", sent1);
+    cr_log_info("%d + %zu + %zu = %zu?", socketBuffer.idx, socketBuffer.extension->length, mockMaxBuf, sent1);
 
 #pragma endregion
 
 #pragma region Append to existing socket buffer extension
 
-    sent += socketBufferWriteText(&socketBuffer, junkData);
+    sent2 = socketBufferWriteText(&socketBuffer, junkData);
 
     cr_assert_not_null(socketBuffer.extension);
     cr_assert_eq(socketBuffer.extension->i, 0);
-    cr_assert_eq(socketBuffer.extension->length, sent - mockMaxBuf, "Expected %lu got %lu", sent - mockMaxBuf,
-                 socketBuffer.extension->length);
+    cr_assert_eq(socketBuffer.extension->length, sent1 + sent2 - mockMaxBuf, "Expected %lu got %lu",
+                 sent1 + sent2 - mockMaxBuf, socketBuffer.extension->length);
 
-    sent = socketBuffer.extension->length;
+    /* Manual checking info */
+    cr_log_info("Pass 2");
+    cr_log_info("Mock sent internal buffer is %zu", mockMaxBuf);
+    cr_log_info("Socket Buffer data IDX is %d", socketBuffer.idx);
+    cr_log_info("Socket Buffer Extension Length is %zu", socketBuffer.extension->length);
+    cr_log_info("Reported data sent is %zu", sent2);
+    cr_log_info("%d + %zu + %zu = %zu?", socketBuffer.idx, socketBuffer.extension->length, mockMaxBuf, sent2);
 
-    socketBufferWriteData(&socketBuffer, "", 1);
-    cr_assert_eq(socketBuffer.extension->length, sent + 1, "Expected %lu got %lu", sent + 1,
-                 socketBuffer.extension->length);
+    sent3 = socketBufferWriteData(&socketBuffer, "", 1);
+    cr_assert_eq(socketBuffer.extension->length, sent1 + sent2 + sent3 - mockMaxBuf, "Expected %lu got %lu",
+                 sent1 + sent2 + sent3 - mockMaxBuf, socketBuffer.extension->length);
 
 #pragma endregion
 }
 
 Test(ExtendedMemory, Append) {
-    size_t i, bufferMax = ((BUFSIZ * 2) / 32) - 1;
-    char junkData[BUFSIZ * 2] = "";
+    size_t i, bufferMax = ((SB_DATA_SIZE * 2) / 32) - 1;
+    char junkData[SB_DATA_SIZE * 2] = "";
     MemoryPool *memoryPool = NULL;
 
     strcpy(junkData, sampleText);

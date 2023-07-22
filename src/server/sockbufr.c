@@ -5,7 +5,7 @@
 SocketBuffer socketBufferNew(SOCKET clientSocket, char options) {
     SocketBuffer self;
     self.clientSocket = clientSocket, self.extension = NULL, self.idx = 0, self.options = options;
-    memset(self.buffer, 0, BUFSIZ);
+    memset(self.buffer, 0, SB_DATA_SIZE);
     return self;
 }
 
@@ -52,7 +52,7 @@ size_t socketBufferFlush(SocketBuffer *self) {
         SOCK_BUF_TYPE i, sent;
 
         /* TODO: Test me */
-        if (self->idx == BUFSIZ && (self->options & SOC_BUF_ERR_FULL) && self->extension)
+        if (self->idx == SB_DATA_SIZE && (self->options & SOC_BUF_ERR_FULL) && self->extension)
             return socketBufferFlushExtension(self);
 
         i = 0;
@@ -101,17 +101,8 @@ size_t socketBufferFlush(SocketBuffer *self) {
 size_t socketBufferWriteData(SocketBuffer *self, const char *data, size_t len) {
     size_t i;
 
-#pragma region Write directory onto the heap when set to extended mode and buffer is full
-
-    if(self->options & SOC_BUF_OPT_EXTEND && self->idx == BUFSIZ) {
-        self->extension = socketBufferMemoryPoolAppend(self->extension, data, len);
-        return len;
-    }
-
-#pragma endregion
-
     for (i = 0; i < len; ++i) {
-        if (self->idx == BUFSIZ) {
+        if (self->idx == SB_DATA_SIZE) {
             size_t sent = socketBufferFlush(self);
 
             if (self->options & SOC_BUF_ERR_FAIL)

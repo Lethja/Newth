@@ -17,7 +17,7 @@ typedef struct MemoryPool {
 typedef struct SocketBuffer {
     SOCKET clientSocket;
     SOCK_BUF_TYPE idx;
-    char options, buffer[BUFSIZ];
+    char options, buffer[SB_DATA_SIZE];
     MemoryPool *extension;
 } SocketBuffer;
 
