@@ -1,3 +1,7 @@
+#ifndef NEW_TH_TEST_SOCKET_BUFFER_H
+#define NEW_TH_TEST_SOCKET_BUFFER_H
+
+#include "common.h"
 #include "../src/server/sockbufr.h"
 #include <string.h>
 
@@ -14,32 +18,6 @@
 #include <cmocka.h>
 
 #pragma endregion
-
-static char *sampleText = "Glum-Schwartzkopf,vex'd_by NJ&IQ"; /* 32 characters, each unique */
-
-static void MockSend(void **state) {
-    size_t i, bufferMax = ((SB_DATA_SIZE * 2) / 32) - 1, sent;
-    char junkData[SB_DATA_SIZE * 2] = "";
-
-    strcpy(junkData, sampleText);
-    for (i = 1; i < bufferMax; ++i)
-        strcat(junkData, sampleText);
-
-    i = strlen(junkData), mockReset();
-
-    sent = send(0, junkData, 5, 0);
-    assert_int_equal(sent, 5);
-
-    sent = send(0, junkData, 5, 0);
-    assert_int_equal(sent, 5);
-
-    sent = send(0, junkData, i, 0);
-    assert_int_equal(sent, mockMaxBuf - 10);
-
-    sent = send(0, junkData, i, 0);
-    assert_int_equal(sent, -1);
-    assert_int_equal(platformSocketGetLastError(), EAGAIN);
-}
 
 static void SocketBufferExtend(void **state) {
     size_t i, bufferMax = ((SB_DATA_SIZE * 2) / 32) - 1, sent1, sent2, sent3, len;
@@ -172,11 +150,8 @@ static void ExtendedMemoryAppend(void **state) {
     socketBufferMemoryPoolFree(memoryPool);
 }
 
-int main(int argc, char **argv) {
-    const struct CMUnitTest test[] = {cmocka_unit_test(ExtendedMemoryAppend), cmocka_unit_test(MockSend),
-                                      cmocka_unit_test(SocketBufferExtend),};
+const struct CMUnitTest socketTest[] = {cmocka_unit_test(ExtendedMemoryAppend),
+                                        cmocka_unit_test(SocketBufferExtend)};
 
-    return cmocka_run_group_tests(test, NULL, NULL);
-}
 
-#pragma clang diagnostic pop
+#endif /* NEW_TH_TEST_SOCKET_BUFFER_H */

@@ -48,7 +48,7 @@ add_executable(th ../src/cli/th.c
 target_compile_definitions(th PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
 
 # Unit Test Binary
-add_executable(test ../test/sockbufr.c ../src/server/sockbufr.c ../src/platform/mockput.c)
+add_executable(test ../test/test.c ../src/server/sockbufr.c ../src/platform/mockput.c ../test/mock.h ../test/common.h ../test/sockbufr.h)
 target_compile_definitions(test PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>" MOCK=1 SB_DATA_SIZE=128)
 target_link_libraries(test cmocka)
 
