@@ -127,8 +127,13 @@ size_t socketBufferWriteData(SocketBuffer *self, const char *data, size_t len) {
             else if (self->options & SOC_BUF_ERR_FULL) {
                 if (self->options & SOC_BUF_OPT_EXTEND) {
 #pragma region Write directory onto the heap when set to extended mode and buffer is full
+                    MemoryPool *newPool;
                     size_t start = SB_DATA_SIZE - (SB_DATA_SIZE - i);
-                    self->extension = socketBufferMemoryPoolAppend(self->extension, data, len - start);
+                    newPool = socketBufferMemoryPoolAppend(self->extension, data, len - start);
+                    if(newPool)
+                        self->extension = newPool;
+                    else
+                        self->options = SOC_BUF_ERR_FAIL, len = 0;
                     return len;
 #pragma endregion
                 } else {
@@ -151,10 +156,17 @@ size_t socketBufferWriteText(SocketBuffer *self, const char *data) {
 MemoryPool *socketBufferMemoryPoolNew(const char *data, size_t bytes) {
     MemoryPool *self = malloc(sizeof(MemoryPool));
 
+    if (!self)
+        return NULL;
+
     if (bytes)
         self->data = malloc(bytes), memcpy(self->data, data, bytes);
 
-    self->length = bytes, self->idx = self->i = 0;
+    if (self->data)
+        self->length = bytes, self->idx = self->i = 0;
+    else
+        free(self), self = NULL;
+
     return self;
 }
 
@@ -164,6 +176,8 @@ MemoryPool *socketBufferMemoryPoolAppend(MemoryPool *self, const char *data, siz
 
         if (new)
             self->data = new, memcpy(&self->data[self->length], data, bytes), self->length += bytes;
+        else
+            free(self->data), self = NULL;
 
     } else {
         if (self) {

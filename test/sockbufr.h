@@ -147,7 +147,12 @@ static void ExtendedMemoryAppend(void **state) {
     assert_int_equal(memoryPool->length, 10);
     assert_memory_equal(memoryPool->data, "ABCD\0EFGH", memoryPool->length);
 
-    socketBufferMemoryPoolFree(memoryPool);
+    mockError = ENOMEM;
+    memoryPool = socketBufferMemoryPoolAppend(memoryPool, "IJKL", 5);
+    assert_null(memoryPool);
+
+    memoryPool = socketBufferMemoryPoolAppend(memoryPool, "ABCD", 5);
+    assert_null(memoryPool);
 }
 
 const struct CMUnitTest socketTest[] = {cmocka_unit_test(ExtendedMemoryAppend),
