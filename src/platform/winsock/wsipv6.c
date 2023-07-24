@@ -37,7 +37,9 @@ wSockIpv6GetAdapterInformation(sa_family_t family, void (arrayAdd)(AdapterAddres
 
     do {
         adapter_addresses = malloc(size);
-        /* TODO: if(!adapters_addresses) */
+        if (!adapter_addresses)
+            break;
+
         rv = AdapterInfoFunc(AF_UNSPEC, 0, NULL, adapter_addresses, &size);
         if (rv == ERROR_BUFFER_OVERFLOW) {
             free(adapter_addresses);
@@ -65,13 +67,13 @@ wSockIpv6GetAdapterInformation(sa_family_t family, void (arrayAdd)(AdapterAddres
         return NULL;
     }
 
-    if (!adapter_addresses) {
+    if (!adapter_addresses)
         return NULL;
-    }
-
 
     array = malloc(sizeof(AdapterAddressArray));
-    /* TODO: if(!array) */
+    if (!array)
+        return NULL;
+
     array->size = 0;
 
     for (aa = adapter_addresses; aa != NULL; aa = aa->Next) {
@@ -95,20 +97,24 @@ wSockIpv6GetAdapterInformation(sa_family_t family, void (arrayAdd)(AdapterAddres
                 struct sockaddr_in *sa = (struct sockaddr_in *) ua->Address.lpSockaddr;
                 char *ip4 = inet_ntoa(sa->sin_addr);
                 addrBuf = malloc(BUFSIZ);
-                /* TODO: if(!addrBuf) */
+                if (!addrBuf)
+                    continue;
+
                 strcpy(addrBuf, ip4);
             } else if (ua->Address.lpSockaddr->sa_family == AF_INET6 && family != AF_INET) {
                 struct sockaddr_in6 *sa = (struct sockaddr_in6 *) ua->Address.lpSockaddr;
                 addrBuf = malloc(BUFSIZ);
-                /* TODO: if(!addrBuf) */
+                if (!addrBuf)
+                    continue;
+
                 nTop(&sa->sin6_addr, addrBuf);
             } else
                 continue;
 
-            if (addrBuf) {
-                arrayAdd(array, nameBuf, (char) (ua->Address.lpSockaddr->sa_family == AF_INET6 ? 1 : 0), addrBuf);
-                free(addrBuf), addrBuf = NULL;
-            }
+
+            arrayAdd(array, nameBuf, (char) (ua->Address.lpSockaddr->sa_family == AF_INET6 ? 1 : 0), addrBuf);
+            free(addrBuf), addrBuf = NULL;
+
         }
 
         free(nameBuf);

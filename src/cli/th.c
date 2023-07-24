@@ -157,13 +157,17 @@ int main(int argc, char **argv) {
         globalRootPath = platformGetRootPath(argv[1]);
     } else {
         char *buf = malloc(BUFSIZ + 1), *test = platformGetWorkingDirectory(buf, BUFSIZ);
-        /* TODO: if(!buf) */
 
-        buf[BUFSIZ] = '\0';
-        if (test)
-            globalRootPath = platformGetRootPath(test);
+        if(buf) {
+            buf[BUFSIZ] = '\0';
+            if (test)
+                globalRootPath = platformGetRootPath(test);
 
-        free(buf);
+            free(buf);
+        } else {
+            puts("Unable to get root path");
+            return 1;
+        }
     }
 
     printf("Root Path: %s\n\n", globalRootPath);
