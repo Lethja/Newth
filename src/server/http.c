@@ -78,7 +78,9 @@ char *httpClientReadUri(const char *request) {
     len = end - start;
 
     path = malloc(len + 1);
-    /* TODO: if(!path) */
+    if (!path)
+        return NULL;
+
     memcpy(path, start + 1, len - 1);
     path[len - 1] = '\0';
 
@@ -271,7 +273,7 @@ char *httpHeaderGetResponse(short response) {
     return r;
 }
 
-void inline httpHeaderWriteResponseStr(SocketBuffer *socketBuffer, const char *response) {
+void httpHeaderWriteResponseStr(SocketBuffer *socketBuffer, const char *response) {
 #define RESPONSE_MAX 128
     char buffer[RESPONSE_MAX];
     size_t max = 14 + strlen(response);

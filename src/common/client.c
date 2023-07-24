@@ -103,7 +103,7 @@ ServerHeaderResponse headerStructNew(FILE *headerFile) {
 
 #ifdef WIN32
 
-static inline void *CreateTempFile() {
+static inline void *CreateTempFile(void) {
     char path[BUFSIZ];
     GetTempPath(BUFSIZ, path);
     strncat(path, "dlbuf", BUFSIZ - 1);

@@ -11,9 +11,9 @@ WNDCLASSEX iWindowCreateClass(HINSTANCE hThisInstance, const TCHAR className[], 
 
 BOOL CALLBACK iWindowSetSystemFontEnumerator(HWND hWnd, LPARAM lParam);
 
-void iWindowSetupSystemFontStyle();
+void iWindowSetupSystemFontStyle(void);
 
-void iWindowTearDownSystemFontStyle();
+void iWindowTearDownSystemFontStyle(void);
 
 #pragma region Font Management
 

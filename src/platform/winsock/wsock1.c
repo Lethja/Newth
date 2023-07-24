@@ -163,12 +163,12 @@ static void nicFree(void) {
 HMODULE wsock32;
 WsControlProc WsControlFunc;
 
-static void wSock1Free() {
+static void wSock1Free(void) {
     if (wsock32)
         FreeLibrary(wsock32);
 }
 
-void *wSock1Available() {
+void *wSock1Available(void) {
     wsock32 = LoadLibrary("wsock32.dll");
     if (wsock32) {
         LINEDBG;

@@ -634,53 +634,6 @@ short platformPathWebToSystem(const char *rootPath, char *webPath, char *absolut
     return 0;
 }
 
-short platformPathSystemToWeb(const char *rootPath, char *absolutePath, char *webPath) {
-    size_t rootPathLen = strlen(rootPath), absolutePathLen = strlen(absolutePath), webPathLen;
-    char *start, *it;
-    DWORD attributes;
-
-    /* The absolutePath must be under a rootPath */
-    if (rootPathLen > absolutePathLen || memcmp(rootPath, absolutePath, rootPathLen) != 0) {
-        return 404;
-    }
-
-    attributes = GetFileAttributes(absolutePath);
-    if (attributes == INVALID_FILE_ATTRIBUTES) {
-        return 404;
-    }
-
-    /* Check if absolutePath has the folder divider where expected */
-    if (absolutePath[rootPathLen - 1] == '\\' || absolutePath[rootPathLen - 1] == '/')
-        start = &absolutePath[rootPathLen - 1];
-    else
-        start = NULL;
-
-    /* Add if needed */
-    if (start) {
-        memcpy(webPath, start, strlen(start) + 1);
-    } else {
-        webPath[0] = '/';
-        memcpy(webPath + 1, start, strlen(start) + 1);
-    }
-
-    /* Flip all DOS path dividers to web format */
-    it = webPath;
-    while (*it != '\0') {
-        if (*it == '\\')
-            *it = '/';
-        ++it;
-    }
-
-    /* Add a trailing zero if it's a directory */
-    if ((attributes & FILE_ATTRIBUTE_DIRECTORY) > 0) {
-        webPathLen = strlen(webPath);
-        if (webPath[webPathLen - 1] != '/')
-            webPath[webPathLen - 1] = '/';
-    }
-
-    return 0;
-}
-
 #pragma endregion
 
 #pragma region Time Functions

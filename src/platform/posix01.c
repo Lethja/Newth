@@ -375,36 +375,11 @@ short platformPathWebToSystem(const char *rootPath, char *webPath, char *absolut
 
     platformPathCombine(internal, rootPath, webPath);
 
+    /* TODO: Fix conditional jump warning */
     if (absolutePathLen > 1 && internal[absolutePathLen - 1] == '/')
         internal[absolutePathLen - 1] = '\0';
 
     strcpy(absolutePath, internal);
-    return 0;
-}
-
-short platformPathSystemToWeb(const char *rootPath, char *absolutePath, char *webPath) {
-    size_t rootPathLen = strlen(rootPath), absolutePathLen = strlen(absolutePath)/*, webPathLen*/;
-    char *start/*, *it*/;
-
-    /* The absolutePath must be under a rootPath */
-    if (rootPathLen > absolutePathLen || memcmp(rootPath, absolutePath, rootPathLen) != 0) {
-        return 404;
-    }
-
-    /* Check if absolutePath has the folder divider where expected */
-    if (absolutePath[rootPathLen - 1] == '/')
-        start = &absolutePath[rootPathLen - 1];
-    else
-        start = NULL;
-
-    /* Add if needed */
-    if (start) {
-        memcpy(webPath, start, strlen(start) + 1);
-    } else {
-        webPath[0] = '/';
-        memcpy(webPath + 1, start, strlen(start) + 1);
-    }
-
     return 0;
 }
 

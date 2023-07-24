@@ -75,7 +75,9 @@ Routine DirectoryRoutineNew(SOCKET socket, DIR *dir, const char *webPath, char *
     Routine self;
     self.type.dir.directory = dir, self.type.dir.count = 0, self.type.dir.rootPath = rootPath, self.state =
             TYPE_DIR_ROUTINE | STATE_CONTINUE;
-    self.socketBuffer = socketBufferNew(socket, SOC_BUF_OPT_EXTEND | SOC_BUF_OPT_HTTP_CHUNK);
+
+    /* TODO: Make SOC_BUF_OPT_EXTEND work */
+    self.socketBuffer = socketBufferNew(socket, /*SOC_BUF_OPT_EXTEND | SOC_BUF_OPT_HTTP_CHUNK*/ 0);
 
     for (i = 0; i < FILENAME_MAX; ++i) {
         self.webPath[i] = webPath[i];
@@ -95,7 +97,8 @@ char DirectoryRoutineArrayAdd(RoutineArray *self, Routine directoryRoutine) {
     else if (platformHeapResize((void **) &self->array, sizeof(Routine), self->size))
         return 1;
 
-    /* TODO: if(!self->array) */
+    if (!self->array)
+        return 1;
 
     array = (Routine *) self->array;
     memcpy(&array[self->size - 1], &directoryRoutine, sizeof(Routine));
@@ -189,7 +192,8 @@ char FileRoutineArrayAdd(RoutineArray *self, Routine fileRoutine) {
     else if (platformHeapResize((void **) &self->array, sizeof(Routine), self->size))
         return 1;
 
-    /* TODO: if(!self->array) */
+    if (!self->array)
+        return 1;
 
     array = (Routine *) self->array;
     memcpy(&array[self->size - 1], &fileRoutine, sizeof(Routine));

@@ -14,7 +14,7 @@ static void wSockIpv6Free(void) {
         FreeLibrary(wSockIpv6);
 }
 
-void *wSockIpv6Available() {
+void *wSockIpv6Available(void) {
     wSockIpv6 = LoadLibrary("Iphlpapi.dll");
     if (wSockIpv6) {
         AdapterInfoFunc = (AdapterInfoCall) GetProcAddress(wSockIpv6, "GetAdaptersAddresses");

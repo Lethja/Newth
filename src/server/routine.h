@@ -32,7 +32,7 @@ typedef struct Routine {
 
 typedef struct RoutineArray {
     size_t size;
-    char *array;
+    Routine *array;
 } RoutineArray;
 
 size_t DirectoryRoutineContinue(Routine *self);

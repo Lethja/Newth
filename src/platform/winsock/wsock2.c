@@ -6,12 +6,12 @@ typedef DWORD (WINAPI *AdapterInfoCall)(PIP_ADAPTER_INFO, PULONG);
 HMODULE wSock2;
 static AdapterInfoCall AdapterInfoFunc;
 
-static void wSock2Free() {
+static void wSock2Free(void) {
     if (wSock2)
         FreeLibrary(wSock2);
 }
 
-void *wSock2Available() {
+void *wSock2Available(void) {
     wSock2 = LoadLibrary("Iphlpapi.dll");
     if (wSock2) {
         AdapterInfoFunc = (AdapterInfoCall) GetProcAddress(wSock2, "GetAdaptersInfo");
