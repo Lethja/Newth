@@ -78,6 +78,7 @@ char *httpClientReadUri(const char *request) {
     len = end - start;
 
     path = malloc(len + 1);
+    /* TODO: if(!path) */
     memcpy(path, start + 1, len - 1);
     path[len - 1] = '\0';
 

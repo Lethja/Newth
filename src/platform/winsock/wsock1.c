@@ -130,6 +130,7 @@ static void nicAdd(ULONG index, char *desc) {
             networkInterfaces = tmp;
     } else {
         networkInterfaces = malloc(sizeof(NIC) * networkInterfacesSize);
+        /* TODO: if(!networkInterfaces) */
     }
 
     networkInterfaces[i].desc = desc;
@@ -279,6 +280,7 @@ AdapterAddressArray *wSock1GetAdapterInformation(void (arrayAdd)(AdapterAddressA
                     /* print interface index and description */
                     *(ifEntry->if_descr + ifEntry->if_descrlen) = 0;
                     desc = malloc(ifEntry->if_descrlen);
+                    /* TODO: if(!desc) */
                     strncpy(desc, (char *) ifEntry->if_descr, ifEntry->if_descrlen);
                     nicAdd(ifEntry->if_index, desc);
                 }
@@ -334,6 +336,8 @@ AdapterAddressArray *wSock1GetAdapterInformation(void (arrayAdd)(AdapterAddressA
 
                     if (ifCount)
                         array = malloc(sizeof(AdapterAddressArray)), array->size = 0;
+
+                    /* TODO: if(!array) */
 
                     /* Add ip address if interface is found */
                     for (j = 0; j < ifCount; j++) {

@@ -186,6 +186,7 @@ static char *getDirectoryPathArg(void) {
         PlatformFileStat st;
         if (!platformFileStat(__argv[i], &st) && platformFileStatIsDirectory(&st)) {
             dirPath = malloc(strlen(__argv[i]) + 1);
+            /* TODO: if(!dirpath) */
             strcpy(dirPath, __argv[i]);
             break;
         }
@@ -219,6 +220,7 @@ static void SetRootStartUpPath(HWND window) {
         GetFolderPath FolderPathFunc = (GetFolderPath) GetProcAddress(module, FOLDER_FUNCTION);
         if (FolderPathFunc) {
             path = malloc(MAX_PATH);
+            /* TODO: if(!path) */
             FolderPathFunc(NULL, CSIDL_DESKTOP, NULL, 0, path);
             if (path[0])
                 SetWindowText(GetDlgItem(window, EDT_ROOT_PATH), path);
@@ -235,6 +237,7 @@ static void SetRootStartUpPath(HWND window) {
 #pragma region Fallback For DOS based Windows To Get Desktop Path
 
     path = malloc(MAX_PATH);
+    /* TODO: if(!path) */
     GetWindowsDirectory(path, MAX_PATH);
     /* TODO: Is this path name the same in all languages? */
     strncat(path, "\\Desktop", MAX_PATH);

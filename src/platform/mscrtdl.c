@@ -559,6 +559,7 @@ char platformFileStatIsFile(PlatformFileStat *stat) {
 
 char *platformRealPath(char *path) {
     char *buf = malloc(MAX_PATH);
+    /* TODO: if(!buf) */
     DWORD e = GetFullPathName(path, MAX_PATH, buf, NULL);
 
     if (e != 0)
@@ -573,6 +574,7 @@ char *platformGetRootPath(char *path) {
     if (strlen(path) == 1 || (strlen(path) < 4 && path[1] == ':' && path[2] == '\\')) {
         if (isupper(*path)) {
             test = malloc(5); /* +1 is intended */
+            /* TODO: if(!test) */
             test[0] = *path, test[1] = ':', test[2] = '\\', test[3] = '\0';
             return test;
         }

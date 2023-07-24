@@ -25,6 +25,8 @@ void platformFindOrCreateAdapterIp(AdapterAddressArray *array, char adapter[ADAP
         array->adapter = array->size ? realloc(array->adapter, sizeof(NetworkAdapter) * (array->size + 1)) : malloc(
                 sizeof(NetworkAdapter));
 
+        /* TODO: if(!array->adapter) */
+
         array->adapter[i].addresses.size = 0;
         strncpy(array->adapter[i].name, adapter, ADAPTER_NAME_LENGTH - 1);
         array->adapter[i].name[ADAPTER_NAME_LENGTH - 1] = '\0';
@@ -35,6 +37,8 @@ void platformFindOrCreateAdapterIp(AdapterAddressArray *array, char adapter[ADAP
                                                                                    sizeof(Address) *
                                                                                    (array->adapter[i].addresses.size +
                                                                                     1)) : malloc(sizeof(Address));
+    /* TODO: if(!array->adapter[i].addresses.array) */
+
     j = array->adapter[i].addresses.size;
     ++array->adapter[i].addresses.size;
 

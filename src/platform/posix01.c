@@ -133,6 +133,7 @@ AdapterAddressArray *platformGetAdapterInformation(sa_family_t family) {
     }
 
     array = malloc(sizeof(AdapterAddressArray));
+    /* TODO: if(!array) */
     array->size = 0;
 
     for (ifa = ifap; ifa; ifa = ifa->ifa_next) {

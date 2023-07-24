@@ -95,6 +95,8 @@ char DirectoryRoutineArrayAdd(RoutineArray *self, Routine directoryRoutine) {
     else if (platformHeapResize((void **) &self->array, sizeof(Routine), self->size))
         return 1;
 
+    /* TODO: if(!self->array) */
+
     array = (Routine *) self->array;
     memcpy(&array[self->size - 1], &directoryRoutine, sizeof(Routine));
 
@@ -157,7 +159,8 @@ size_t FileRoutineContinue(Routine *self) {
 #pragma region Rewind file descriptor when socket buffer can not send all data
 
         if (bytesWrite < bytesRead)
-            platformFileSeek(self->type.file.file, (PlatformFileOffset) -((PlatformFileOffset)(bytesRead - bytesWrite)), SEEK_CUR);
+            platformFileSeek(self->type.file.file,
+                             (PlatformFileOffset) -((PlatformFileOffset) (bytesRead - bytesWrite)), SEEK_CUR);
 
 #pragma endregion
     } else {
@@ -185,6 +188,8 @@ char FileRoutineArrayAdd(RoutineArray *self, Routine fileRoutine) {
         self->array = malloc(sizeof(Routine));
     else if (platformHeapResize((void **) &self->array, sizeof(Routine), self->size))
         return 1;
+
+    /* TODO: if(!self->array) */
 
     array = (Routine *) self->array;
     memcpy(&array[self->size - 1], &fileRoutine, sizeof(Routine));

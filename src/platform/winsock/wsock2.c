@@ -46,6 +46,7 @@ AdapterAddressArray *wSock2GetAdapterInformation(void (arrayAdd)(AdapterAddressA
         if ((dwRetVal = AdapterInfoFunc(pAdapterInfo, &ulOutBufLen)) == NO_ERROR) {
             pAdapter = pAdapterInfo;
             array = malloc(sizeof(AdapterAddressArray));
+            /* TODO: if(!array) */
             array->size = 0;
 
             while (pAdapter) {
