@@ -13,7 +13,7 @@ static size_t socketBufferFlushExtension(SocketBuffer *self) {
     MemoryPool *extension = self->extension;
     size_t sent;
 
-    if (extension->idx < self->idx) {
+    if (extension->idx < (size_t) self->idx) {
         sent = send(self->clientSocket, &self->buffer[extension->i], self->idx - extension->idx, 0);
         if (sent == -1) {
             int err = platformSocketGetLastError();
@@ -130,7 +130,7 @@ size_t socketBufferWriteData(SocketBuffer *self, const char *data, size_t len) {
                     MemoryPool *newPool;
                     size_t start = SB_DATA_SIZE - (SB_DATA_SIZE - i);
                     newPool = socketBufferMemoryPoolAppend(self->extension, data, len - start);
-                    if(newPool)
+                    if (newPool)
                         self->extension = newPool;
                     else
                         self->options = SOC_BUF_ERR_FAIL, len = 0;

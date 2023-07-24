@@ -54,12 +54,10 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-O2" />
-					<Add option="-m64" />
 					<Add option="-DNDEBUG=1" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
-					<Add option="-m64" />
 				</Linker>
 			</Target>
 		</Build>

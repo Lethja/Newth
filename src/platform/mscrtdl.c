@@ -409,26 +409,34 @@ char platformDirEntryIsDirectory(char *rootPath, char *webPath, PlatformDirEntry
 #pragma region File Functions
 
 int platformFileStat(const char *path, PlatformFileStat *stat) {
-    DWORD attributes = GetFileAttributes(path);
+    WIN32_FILE_ATTRIBUTE_DATA fad;
 
-    if (attributes != INVALID_FILE_ATTRIBUTES) {
+    if (GetFileAttributesEx(path, GetFileExInfoStandard, &fad)) {
         HANDLE handle = CreateFile(path, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
-                                   attributes & FILE_ATTRIBUTE_DIRECTORY ? FILE_FLAG_BACKUP_SEMANTICS : 0, NULL);
+                                   fad.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY ? FILE_FLAG_BACKUP_SEMANTICS : 0,
+                                   NULL);
 
         if (handle != INVALID_HANDLE_VALUE) {
+            LARGE_INTEGER li;
+
             GetFileTime(handle, NULL, NULL, &stat->st_mtime);
-            stat->st_size = GetFileSize(handle, NULL);
-            stat->st_mode = attributes & FILE_ATTRIBUTE_DIRECTORY ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL;
             CloseHandle(handle);
+
+            if (stat->st_mtime.dwHighDateTime == 0 && stat->st_mtime.dwLowDateTime == 0)
+                GetSystemTimeAsFileTime(&stat->st_mtime); /* Avoid a false 304 condition */
+
+            li.LowPart = fad.nFileSizeLow, li.HighPart = fad.nFileSizeHigh, stat->st_size = li.QuadPart;
+            stat->st_mode =
+                    fad.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL;
+
             return 0;
-        } else if (attributes & FILE_ATTRIBUTE_DIRECTORY) { /* Must be a FAT partition directory */
+        } else if (fad.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) { /* Might be a FAT partition directory */
             stat->st_mode = FILE_ATTRIBUTE_DIRECTORY;
             stat->st_size = 0;
             GetSystemTimeAsFileTime(&stat->st_mtime); /* Avoid a false 304 condition */
             return 0;
         }
     }
-
     return 1;
 }
 

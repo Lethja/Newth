@@ -93,7 +93,7 @@ typedef struct sockaddr_in6_nt6 {
 #define in_addr_t unsigned long
 
 typedef struct winSockNativeStat {
-    unsigned long st_size;
+    PlatformFileOffset st_size;
     unsigned int st_mode;
     FILETIME st_mtime;
 } PlatformFileStat;

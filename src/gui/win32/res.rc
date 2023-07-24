@@ -10,27 +10,27 @@ FILEVERSION 1,0,0,0
 PRODUCTVERSION 1,0,0,0
 FILETYPE VFT_APP
 {
-  BLOCK "StringFileInfo"
-	 {
-		 BLOCK "040904E4"
-		 {
-			 VALUE "FileVersion", "1.0"
-			 VALUE "FileDescription", "HTTP File Server"
-             VALUE "LegalCopyright", "Copyleft 2023"
-			 VALUE "OriginalFilename", "th-gui"
-			 VALUE "ProductName", "Newth HTTP File Server"
-			 VALUE "ProductVersion", "1.0"
-             /*
-             VALUE "InternalName", "write version info here"
-			 VALUE "LegalTrademarks", "write version info here"
-             VALUE "CompanyName", "write version info here"
-             */
+    BLOCK "StringFileInfo"
+    {
+        BLOCK "040904E4"
+        {
+            VALUE "FileVersion", "1.0"
+            VALUE "FileDescription", "HTTP File Server"
+            VALUE "LegalCopyright", "Copyleft 2023"
+            VALUE "OriginalFilename", "th-gui"
+            VALUE "ProductName", "Newth HTTP File Server"
+            VALUE "ProductVersion", "1.0"
+            /*
+            VALUE "InternalName", "write version info here"
+            VALUE "LegalTrademarks", "write version info here"
+            VALUE "CompanyName", "write version info here"
+            */
 		 }
-	 }
-  BLOCK "VarFileInfo"
-	 {
-		 VALUE "Translation", 0x0409, 1252 //language codes
-	 }
+    }
+    BLOCK "VarFileInfo"
+    {
+        VALUE "Translation", 0x0409, 1252 /* language codes */
+    }
 }
 
 /* Visual Styles */
