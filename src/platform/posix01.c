@@ -18,7 +18,7 @@ void platformPathCombine(char *output, const char *path1, const char *path2) {
     if (path2Jump > 1)
         output[a] = pathDivider;
 
-    memcpy(output + a + path2Jump - 1, path2, b + 1);
+    strncpy(output + a + path2Jump - 1, path2, b + 1);
 }
 
 void platformCloseBindSockets(fd_set *sockets, SOCKET max) {
@@ -375,7 +375,6 @@ short platformPathWebToSystem(const char *rootPath, char *webPath, char *absolut
 
     platformPathCombine(internal, rootPath, webPath);
 
-    /* TODO: Fix conditional jump warning */
     if (absolutePathLen > 1 && internal[absolutePathLen - 1] == '/')
         internal[absolutePathLen - 1] = '\0';
 
