@@ -5,13 +5,13 @@
 #pragma region Mockup global variables
 
 int mockOptions = 0;
-size_t mockSendMaxBuf = 0;
+size_t mockSendMaxBuf = 0, mockSendCountBuf = 0;
 FILE *mockSendStream = NULL;
 
 #pragma endregion
 
 void mockReset(void) {
-    mockSendMaxBuf = mockOptions = 0;
+    mockSendCountBuf = mockSendMaxBuf = mockOptions = 0;
 
     if (mockSendStream)
         fclose(mockSendStream), mockSendStream = NULL;
@@ -65,7 +65,16 @@ ssize_t __wrap_send(int fd, const void *buf, size_t n, int flags) {
             return -1;
         }
 
-        r = n < mockSendMaxBuf ? n : mockSendMaxBuf;
+        if (mockOptions & MOCK_SEND_COUNT) {
+            if (mockSendCountBuf >= mockSendMaxBuf) {
+                errno = EAGAIN;
+                return -1;
+            }
+
+            r = n < mockSendMaxBuf - mockSendCountBuf ? n : mockSendMaxBuf - mockSendCountBuf;
+            mockSendCountBuf += mockSendMaxBuf;
+        } else
+            r = n < mockSendMaxBuf ? n : mockSendMaxBuf;
 
         if (mockSendStream)
             return (ssize_t) fwrite(buf, r, 1, mockSendStream);

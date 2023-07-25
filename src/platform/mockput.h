@@ -44,7 +44,7 @@ typedef off_t PlatformFileOffset;
 typedef FILE *PlatformFile;
 
 enum mockOptions {
-    MOCK_ALLOC_NO_MEMORY = 1, MOCK_SEND = 2
+    MOCK_ALLOC_NO_MEMORY = 1, MOCK_SEND = 2, MOCK_SEND_COUNT = 4
 };
 
 extern int mockOptions;
