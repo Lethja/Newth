@@ -23,7 +23,7 @@ static void MockMalloc(void **state) {
     test = malloc(1);
     assert_non_null(test);
     free(test);
-    mockError = ENOMEM;
+    mockOptions = MOCK_ALLOC_NO_MEMORY;
     test = malloc(1);
     assert_null(test);
 }
@@ -36,11 +36,15 @@ static void MockRealloc(void **state) {
     assert_non_null(test);
     new = realloc(test, 2);
     assert_non_null(new);
-    mockError = ENOMEM;
+    mockOptions = MOCK_ALLOC_NO_MEMORY;
     test = realloc(new, 3);
     assert_null(test);
     assert_non_null(new);
-    free(new);
+
+    if (!test)
+        free(new);
+    else
+        free(test);
 }
 
 static void MockSend(void **state) {
@@ -51,17 +55,23 @@ static void MockSend(void **state) {
     for (i = 1; i < bufferMax; ++i)
         strcat(junkData, sampleText);
 
-    i = strlen(junkData), mockReset();
+    i = strlen(junkData), mockReset(), mockOptions = MOCK_SEND, mockSendMaxBuf = i;
 
+    /* Send should return the amount of data we give it */
     sent = send(0, junkData, 5, 0);
     assert_int_equal(sent, 5);
 
+    /* The amount of data should be how much was sent this call and not accumulate */
     sent = send(0, junkData, 5, 0);
     assert_int_equal(sent, 5);
 
+    /* When the maximum is reached it should return as much as it can fit */
+    mockSendMaxBuf -= 10;
     sent = send(0, junkData, i, 0);
-    assert_int_equal(sent, mockMaxBuf - 10);
+    assert_int_equal(sent, mockSendMaxBuf);
 
+    /* If there's no room left a non-blocking socket should return -1 and set EAGAIN/EWOULDBLOCK */
+    mockSendMaxBuf = 0;
     sent = send(0, junkData, i, 0);
     assert_int_equal(sent, -1);
     assert_int_equal(platformSocketGetLastError(), EAGAIN);

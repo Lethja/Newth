@@ -6,7 +6,7 @@
 #include <stdio.h>
 
 enum SOC_BUF_OPT {
-    SOC_BUF_OPT_EXTEND = 1, SOC_BUF_OPT_HTTP_CHUNK = 2, SOC_BUF_ERR_FULL = 4, SOC_BUF_ERR_FAIL = 8
+    SOC_BUF_OPT_EXTEND = 1, SOC_BUF_ERR_CLEAR = 2, SOC_BUF_ERR_FULL = 4, SOC_BUF_ERR_FAIL = 8
 };
 
 typedef struct MemoryPool {

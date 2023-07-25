@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "../src/server/sockbufr.h"
+#include <errno.h>
 #include <string.h>
 
 #pragma clang diagnostic push
@@ -34,7 +35,7 @@ static void SocketBufferExtend(void **state) {
     for (i = 1; i < bufferMax; ++i)
         strcat(junkData, sampleText);
 
-    len = strlen(junkData), mockReset(), mockMaxBuf = SB_DATA_SIZE / 8;
+    len = strlen(junkData), mockReset(), mockOptions = MOCK_SEND, mockSendMaxBuf = SB_DATA_SIZE / 8;
 #pragma endregion
 
 #pragma region Create socket buffer extended buffer
@@ -65,7 +66,7 @@ static void SocketBufferExtend(void **state) {
     sent2 = sent1 + sent2 + sent3, sent1 = 1, sent3 = 0;
 
     while (sent1 != 0) {
-        mockCurBuf = mockError = 0;
+        mockResetError();
         sent1 = socketBufferFlush(&socketBuffer);
         sent3 += sent1;
     }
@@ -119,7 +120,7 @@ static void ExtendedMemoryAppend(void **state) {
     for (i = 1; i < bufferMax; ++i)
         strcat(junkData, sampleText);
 
-    i = 128, mockReset(), mockMaxBuf = SB_DATA_SIZE / 8;
+    i = 128, mockReset(), mockSendMaxBuf = SB_DATA_SIZE / 8;
 
     memoryPool = socketBufferMemoryPoolNew(junkData, i);
 
@@ -147,7 +148,7 @@ static void ExtendedMemoryAppend(void **state) {
     assert_int_equal(memoryPool->length, 10);
     assert_memory_equal(memoryPool->data, "ABCD\0EFGH", memoryPool->length);
 
-    mockError = ENOMEM;
+    mockOptions = MOCK_ALLOC_NO_MEMORY;
     memoryPool = socketBufferMemoryPoolAppend(memoryPool, "IJKL", 5);
     assert_null(memoryPool);
 
@@ -155,8 +156,7 @@ static void ExtendedMemoryAppend(void **state) {
     assert_null(memoryPool);
 }
 
-const struct CMUnitTest socketTest[] = {cmocka_unit_test(ExtendedMemoryAppend),
-                                        cmocka_unit_test(SocketBufferExtend)};
+const struct CMUnitTest socketTest[] = {cmocka_unit_test(ExtendedMemoryAppend), cmocka_unit_test(SocketBufferExtend)};
 
 
 #endif /* NEW_TH_TEST_SOCKET_BUFFER_H */

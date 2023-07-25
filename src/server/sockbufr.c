@@ -66,6 +66,7 @@ size_t socketBufferFlush(SocketBuffer *self) {
     if (self->idx) {
         SOCK_BUF_TYPE i, sent;
 
+        /* TODO: segregate and untangle state machines for SOC_BUF_OPT_EXTENDED vs normal mode */
         if (self->options & SOC_BUF_ERR_FULL && self->extension)
             return socketBufferFlushExtension(self);
 
@@ -118,6 +119,7 @@ void socketBufferKill(SocketBuffer *self) {
 size_t socketBufferWriteData(SocketBuffer *self, const char *data, size_t len) {
     size_t i;
 
+    /* TODO: segregate and untangle state machines for SOC_BUF_OPT_EXTENDED vs normal mode */
     for (i = 0; i < len; ++i) {
         if (self->idx == SB_DATA_SIZE) {
             size_t sent = socketBufferFlush(self);
