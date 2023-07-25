@@ -14,7 +14,7 @@ static size_t socketBufferFlushExtension(SocketBuffer *self) {
     size_t sent;
 
     if (extension->idx < (size_t) self->idx) {
-        sent = send(self->clientSocket, &self->buffer[extension->i], self->idx - extension->idx, 0);
+        sent = send(self->clientSocket, &self->buffer[extension->idx], self->idx - extension->idx, 0);
         if (sent == -1) {
             int err = platformSocketGetLastError();
             switch (err) { /* NOLINT(hicpp-multiway-paths-covered) */
@@ -117,12 +117,12 @@ void socketBufferKill(SocketBuffer *self) {
 }
 
 size_t socketBufferWriteData(SocketBuffer *self, const char *data, size_t len) {
-    size_t i;
+    size_t i, l, sent = l = 0;
 
     /* TODO: segregate and untangle state machines for SOC_BUF_OPT_EXTENDED vs normal mode */
-    for (i = 0; i < len; ++i) {
-        if (self->idx == SB_DATA_SIZE) {
-            size_t sent = socketBufferFlush(self);
+    for (i = 0; l < len; ++i, ++l) {
+        if (self->idx == SB_DATA_SIZE || l == len) {
+            sent += socketBufferFlush(self);
 
             if (self->options & SOC_BUF_ERR_FAIL)
                 return 0;
@@ -141,6 +141,9 @@ size_t socketBufferWriteData(SocketBuffer *self, const char *data, size_t len) {
                 } else {
                     return sent;
                 }
+            } else if (l < len) {
+                i = self->idx = 0;
+                continue;
             }
         }
 
@@ -148,7 +151,7 @@ size_t socketBufferWriteData(SocketBuffer *self, const char *data, size_t len) {
         ++self->idx, ++data;
     }
 
-    return i;
+    return l;
 }
 
 size_t socketBufferWriteText(SocketBuffer *self, const char *data) {
