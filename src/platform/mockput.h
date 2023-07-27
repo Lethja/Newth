@@ -1,6 +1,7 @@
 #ifndef NEWTH_MOCK_POSIX_UNIT_TEST_H
 #define NEWTH_MOCK_POSIX_UNIT_TEST_H
 
+#include <dirent.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/select.h>
