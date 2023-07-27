@@ -10,6 +10,22 @@ FILE *mockSendStream = NULL;
 
 #pragma endregion
 
+void mockDumpFile(FILE *file) {
+    int fd;
+    char path[BUFSIZ] = "/tmp/dump-XXXXXX", buffer[BUFSIZ];
+    PlatformFileOffset fileOffset = platformFileTell(file);
+
+    platformFileSeek(file, 0, SEEK_SET);
+    fd = mkstemp(path);
+
+    while (fgets(buffer, BUFSIZ, file)) {
+        write(fd, buffer, strlen(buffer));
+    }
+
+    platformFileSeek(file, fileOffset, SEEK_SET);
+    close(fd);
+}
+
 void mockReset(void) {
     mockSendCountBuf = mockSendMaxBuf = mockOptions = 0;
 
@@ -77,7 +93,7 @@ ssize_t __wrap_send(int fd, const void *buf, size_t n, int flags) {
             r = n < mockSendMaxBuf ? n : mockSendMaxBuf;
 
         if (mockSendStream)
-            return (ssize_t) fwrite(buf, r, 1, mockSendStream);
+            return (ssize_t) fwrite(buf, 1, r, mockSendStream);
 
         return (ssize_t) r;
     }
@@ -88,7 +104,3 @@ ssize_t __wrap_send(int fd, const void *buf, size_t n, int flags) {
 #pragma clang diagnostic pop
 
 #pragma endregion
-
-int platformSocketGetLastError(void) {
-    return errno;
-}

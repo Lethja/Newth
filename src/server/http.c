@@ -196,6 +196,7 @@ void httpHeaderWriteAcceptRanges(SocketBuffer *socketBuffer) {
 void httpHeaderWriteRange(SocketBuffer *socketBuffer, PlatformFileOffset start, PlatformFileOffset finish,
                           PlatformFileOffset fileLength) {
     char buf[BUFSIZ];
+#pragma GCC diagnostic ignored "-Wformat" /* PF_OFFSET can be defined by the build system */
     snprintf(buf, BUFSIZ, "Content-Range: bytes %"PF_OFFSET"-%"PF_OFFSET"/%"PF_OFFSET HTTP_EOL, start,
              finish == fileLength ? finish - 1 : finish, fileLength);
     socketBufferWriteText(socketBuffer, buf);
@@ -218,6 +219,7 @@ void httpHeaderWriteChunkedEncoding(SocketBuffer *socketBuffer) {
 
 void httpHeaderWriteContentLength(SocketBuffer *socketBuffer, PlatformFileOffset length) {
     char buffer[BUFSIZ];
+#pragma GCC diagnostic ignored "-Wformat" /* PF_OFFSET can be defined by the build system */
     snprintf(buffer, BUFSIZ, "Content-Length: %"PF_OFFSET HTTP_EOL, length);
     socketBufferWriteText(socketBuffer, buffer);
 }
@@ -486,7 +488,7 @@ void httpHeaderWriteFileName(SocketBuffer *socketBuffer, char *path) {
     if (strlen(h1) + strlen(h2) + strlen(name) >= FILENAME_MAX)
         return;
 
-    snprintf(buffer, FILENAME_MAX, "Content-Disposition: filename=\"%s\"\n", name);
+    snprintf(buffer, FILENAME_MAX, "Content-Disposition: filename=\"%s\"" HTTP_EOL, name);
     socketBufferWriteText(socketBuffer, buffer);
 }
 

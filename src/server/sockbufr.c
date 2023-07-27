@@ -95,7 +95,7 @@ size_t socketBufferFlush(SocketBuffer *self) {
 
         if (i == self->idx) {
             LINEDBG;
-            if ((!(self->options & SOC_BUF_OPT_EXTEND)) || (self->options & SOC_BUF_ERR_FULL)) {
+            if (!self->extension) {
                 LINEDBG;
                 self->idx = 0;
             }

@@ -48,8 +48,15 @@ add_executable(th ../src/cli/th.c
 target_compile_definitions(th PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
 
 # Unit Test Binary
-add_executable(test ../test/test.c ../src/server/sockbufr.c ../src/platform/mockput.c ../test/mock.h ../test/common.h ../test/sockbufr.h
-        ../Autotools/test/request.h)
+add_executable(test ../test/test.c ../test/mock.h ../test/common.h ../test/sockbufr.h ../test/request.h
+        ../src/common/server.h ../src/common/server.c
+        ../src/platform/platform.c ../src/platform/platform.h
+        ../src/server/event.c ../src/server/event.h
+        ../src/server/http.c ../src/server/http.h
+        ../src/server/routine.c ../src/server/routine.h
+        ../src/server/sockbufr.c ../src/server/sockbufr.h
+        ${TH_PLATFORM_SRC} ../src/platform/mockput.c)
+
 target_compile_definitions(test PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>" MOCK=1 SB_DATA_SIZE=128 EWOULDBLOCK=41)
 target_link_libraries(test cmocka)
 set_property(TARGET test PROPERTY LINK_FLAGS "${DEFAULT_LINK_FLAGS} -Wl,--wrap=malloc,--wrap=calloc,--wrap=realloc,--wrap=send")
