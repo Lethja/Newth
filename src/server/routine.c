@@ -62,8 +62,6 @@ size_t DirectoryRoutineContinue(Routine *self) {
 
             socketBufferFlush(&self->socketBuffer);
 
-            eventHttpFinishInvoke(&self->socketBuffer.clientSocket, self->webPath, httpGet, 0);
-
             return 0;
         }
     }
@@ -78,7 +76,7 @@ Routine DirectoryRoutineNew(SocketBuffer socketBuffer, DIR *dir, const char *web
 
     Routine self;
     self.type.dir.directory = dir, self.type.dir.count = 0, self.type.dir.rootPath = rootPath, self.state =
-            TYPE_DIR_ROUTINE | STATE_CONTINUE;
+            TYPE_ROUTINE_DIR | STATE_FLUSH;
 
     self.socketBuffer = socketBuffer;
 
@@ -91,59 +89,17 @@ Routine DirectoryRoutineNew(SocketBuffer socketBuffer, DIR *dir, const char *web
     return self;
 }
 
-char DirectoryRoutineArrayAdd(RoutineArray *self, Routine directoryRoutine) {
-    Routine *array;
-
-    ++self->size;
-    if (self->size == 1)
-        self->array = malloc(sizeof(Routine));
-    else if (platformHeapResize((void **) &self->array, sizeof(Routine), self->size))
-        return 1;
-
-    if (!self->array)
-        return 1;
-
-    array = (Routine *) self->array;
-    memcpy(&array[self->size - 1], &directoryRoutine, sizeof(Routine));
-
-    return 0;
-}
-
 void DirectoryRoutineFree(DirectoryRoutine *self) {
     platformDirClose(self->directory);
 }
 
-char DirectoryRoutineArrayDel(RoutineArray *self, Routine *directoryRoutine) {
-    size_t i;
-    Routine *array = (Routine *) self->array;
-
-    for (i = 0; i < self->size; ++i) {
-        if (&array[i] != directoryRoutine)
-            continue;
-
-        DirectoryRoutineFree(&array[i].type.dir);
-
-        if (i + 1 < self->size)
-            memmove(&array[i], &array[i + 1], sizeof(Routine) * (self->size - (i + 1)));
-
-        --self->size;
-
-        if (self->size)
-            platformHeapResize((void **) &self->array, sizeof(Routine), self->size);
-        else
-            free(self->array);
-
-    }
-    return 0;
-}
-
-Routine FileRoutineNew(SOCKET socket, FILE *file, PlatformFileOffset start, PlatformFileOffset end,
+Routine FileRoutineNew(SocketBuffer socketBuffer, FILE *file, PlatformFileOffset start, PlatformFileOffset end,
                        char webPath[FILENAME_MAX]) {
     Routine self;
 
     self.type.file.file = file, self.type.file.start = start, self.type.file.end = end, self.state =
-            TYPE_FILE_ROUTINE | STATE_CONTINUE;
-    self.socketBuffer = socketBufferNew(socket, 0);
+            TYPE_ROUTINE_FILE | STATE_FLUSH;
+    self.socketBuffer = socketBuffer;
 
     strncpy(self.webPath, webPath, FILENAME_MAX - 1);
     platformFileSeek(self.type.file.file, self.type.file.start, SEEK_SET);
@@ -166,7 +122,7 @@ size_t FileRoutineContinue(Routine *self) {
 #pragma region Rewind file descriptor when socket buffer can not send all data
 
         if (bytesWrite < bytesRead)
-            platformFileSeek(self->type.file.file, (PlatformFileOffset) (currentPosition + bytesWrite), SEEK_CUR);
+            platformFileSeek(self->type.file.file, (PlatformFileOffset) (currentPosition + bytesWrite), SEEK_SET);
 
 #pragma endregion
     } else {
@@ -175,7 +131,6 @@ size_t FileRoutineContinue(Routine *self) {
         if (bytesWrite == 0 && (self->socketBuffer.options & SOC_BUF_ERR_FULL) == 0 &&
             (self->socketBuffer.options & SOC_BUF_ERR_FAIL)) {
             self->state &= ~STATE_CONTINUE, self->state |= STATE_FINISH;
-            eventHttpFinishInvoke(&self->socketBuffer.clientSocket, self->webPath, httpGet, 0);
         }
     }
 
@@ -186,7 +141,7 @@ void FileRoutineFree(FileRoutine *self) {
     platformFileClose(self->file);
 }
 
-char FileRoutineArrayAdd(RoutineArray *self, Routine fileRoutine) {
+char RoutineArrayAdd(RoutineArray *self, Routine fileRoutine) {
     Routine *array;
 
     ++self->size;
@@ -204,15 +159,18 @@ char FileRoutineArrayAdd(RoutineArray *self, Routine fileRoutine) {
     return 0;
 }
 
-char FileRoutineArrayDel(RoutineArray *self, Routine *fileRoutine) {
+char RoutineArrayDel(RoutineArray *self, Routine *routine) {
     size_t i;
     Routine *array = (Routine *) self->array;
 
     for (i = 0; i < self->size; i++) {
-        if (&array[i] != fileRoutine)
+        if (&array[i] != routine)
             continue;
 
-        FileRoutineFree(&array[i].type.file);
+        if(routine->state & TYPE_ROUTINE_FILE)
+            FileRoutineFree(&array[i].type.file);
+        else if(routine->state & TYPE_ROUTINE_DIR)
+            DirectoryRoutineFree(&array[i].type.dir);
 
         if (i + 1 < self->size)
             memmove(&array[i], &array[i + 1], sizeof(Routine) * (self->size - (i + 1)));
@@ -227,4 +185,19 @@ char FileRoutineArrayDel(RoutineArray *self, Routine *fileRoutine) {
         break; /* There should never be any duplicates in the array, early return */
     }
     return 0;
+}
+
+Routine RoutineNew(SocketBuffer socketBuffer, const char *webPath) {
+    size_t i;
+
+    Routine self;
+    self.state = TYPE_ROUTINE | STATE_FLUSH, self.socketBuffer = socketBuffer;
+
+    for (i = 0; i < FILENAME_MAX; ++i) {
+        self.webPath[i] = webPath[i];
+        if (webPath[i] == '\0')
+            break;
+    }
+
+    return self;
 }

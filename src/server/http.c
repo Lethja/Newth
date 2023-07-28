@@ -203,26 +203,31 @@ char httpHeaderReadRange(const char *request, PlatformFileOffset *start, Platfor
 
 void httpHeaderWriteAcceptRanges(SocketBuffer *socketBuffer) {
     const char *str = "Accept-Ranges: bytes" HTTP_EOL;
-    socketBufferWriteText(socketBuffer, str);
+    FILE *buf = socketBufferGetBuffer(socketBuffer);
+
+    if (buf)
+        fprintf(buf, "%s", str);
 }
 
 void httpHeaderWriteRange(SocketBuffer *socketBuffer, PlatformFileOffset start, PlatformFileOffset finish,
                           PlatformFileOffset fileLength) {
-    char buf[BUFSIZ];
+    FILE *buf = socketBufferGetBuffer(socketBuffer);
+
+    if (buf)
 #pragma GCC diagnostic ignored "-Wformat" /* PF_OFFSET can be defined by the build system */
-    snprintf(buf, BUFSIZ, "Content-Range: bytes %"PF_OFFSET"-%"PF_OFFSET"/%"PF_OFFSET HTTP_EOL, start,
-             finish == fileLength ? finish - 1 : finish, fileLength);
-    socketBufferWriteText(socketBuffer, buf);
+        fprintf(buf, "Content-Range: bytes %"PF_OFFSET"-%"PF_OFFSET"/%"PF_OFFSET HTTP_EOL, start,
+                finish == fileLength ? finish - 1 : finish, fileLength);
 }
 
 void httpHeaderWriteDate(SocketBuffer *socketBuffer) {
-#define WRITE_DATE_MAX 39
-    char buffer[WRITE_DATE_MAX], time[30];
+    FILE *buf = socketBufferGetBuffer(socketBuffer);
 
-    platformGetCurrentTime(time);
+    if (buf) {
+        char time[30];
+        platformGetCurrentTime(time);
 
-    snprintf(buffer, WRITE_DATE_MAX, "Date: %s" HTTP_EOL, time);
-    socketBufferWriteText(socketBuffer, buffer);
+        fprintf(buf, "Date: %s" HTTP_EOL, time);
+    }
 }
 
 void httpHeaderWriteChunkedEncoding(SocketBuffer *socketBuffer) {
@@ -231,10 +236,10 @@ void httpHeaderWriteChunkedEncoding(SocketBuffer *socketBuffer) {
 }
 
 void httpHeaderWriteContentLength(SocketBuffer *socketBuffer, PlatformFileOffset length) {
-    char buffer[BUFSIZ];
-#pragma GCC diagnostic ignored "-Wformat" /* PF_OFFSET can be defined by the build system */
-    snprintf(buffer, BUFSIZ, "Content-Length: %"PF_OFFSET HTTP_EOL, length);
-    socketBufferWriteText(socketBuffer, buffer);
+    FILE *buf = socketBufferGetBuffer(socketBuffer);
+
+    if (buf)
+        fprintf(buf, "Content-Length: %"PF_OFFSET HTTP_EOL, length);
 }
 
 void httpHeaderWriteContentLengthSt(SocketBuffer *socketBuffer, PlatformFileStat *st) {
@@ -242,12 +247,14 @@ void httpHeaderWriteContentLengthSt(SocketBuffer *socketBuffer, PlatformFileStat
 }
 
 void httpHeaderWriteLastModified(SocketBuffer *socketBuffer, PlatformFileStat *st) {
-#define LAST_MODIFIED_MAX 47
-    char buffer[LAST_MODIFIED_MAX] = "Last-Modified: ", time[30];
+    FILE *buf = socketBufferGetBuffer(socketBuffer);
 
-    platformGetTime(&st->st_mtime, time);
-    snprintf(buffer, LAST_MODIFIED_MAX, "Last-Modified: %s" HTTP_EOL, time);
-    socketBufferWriteText(socketBuffer, buffer);
+    if (buf) {
+        char time[30];
+        platformGetTime(&st->st_mtime, time);
+
+        fprintf(buf, "Last-Modified: %s" HTTP_EOL, time);
+    }
 }
 
 void httpHeaderWriteContentType(SocketBuffer *socketBuffer, char *type, char *charSet) {

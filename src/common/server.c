@@ -56,7 +56,7 @@ char handleDir(SOCKET clientSocket, char *webPath, char *absolutePath, char type
 
     free(buf);
 
-    DirectoryRoutineArrayAdd(&globalRoutineArray, DirectoryRoutineNew(socketBuffer, dir, webPath, globalRootPath));
+    RoutineArrayAdd(&globalRoutineArray, DirectoryRoutineNew(socketBuffer, dir, webPath, globalRootPath));
 
     return 0;
 
@@ -113,8 +113,7 @@ char handleFile(SOCKET clientSocket, const char *header, char *webPath, char *ab
         return 0;
 
     /* Body */
-    FileRoutineArrayAdd(&globalRoutineArray,
-                        FileRoutineNew(clientSocket, fp, start, e ? st->st_size : finish, webPath));
+    RoutineArrayAdd(&globalRoutineArray, FileRoutineNew(socketBuffer, fp, start, e ? st->st_size : finish, webPath));
     return 0;
 }
 
@@ -143,8 +142,7 @@ char handlePath(SOCKET clientSocket, const char *header, char *webPath) {
                 httpHeaderWriteEnd(&socketBuffer);
                 eventHttpRespondInvoke(&socketBuffer.clientSocket, webPath, e, 304);
 
-                if (socketBufferFlush(&socketBuffer) == 0)
-                    return 1;
+                RoutineArrayAdd(&globalRoutineArray, RoutineNew(socketBuffer, webPath));
 
                 return 0;
             }
@@ -191,7 +189,7 @@ char handleConnection(SOCKET clientSocket) {
                     case 0:
                     case SOCKET_WOULD_BLOCK:
 #if SOCKET_WOULD_BLOCK != SOCKET_TRY_AGAIN
-                        case SOCKET_TRY_AGAIN:
+                    case SOCKET_TRY_AGAIN:
 #endif
                         ++r;
                         continue;
@@ -271,8 +269,9 @@ void serverTick(void) {
 #pragma region Routine State Machine
 
             switch (routine->state) {
-                case STATE_DEFER | TYPE_FILE_ROUTINE:
-                case STATE_DEFER | TYPE_DIR_ROUTINE:
+                case STATE_DEFER | TYPE_ROUTINE:
+                case STATE_DEFER | TYPE_ROUTINE_FILE:
+                case STATE_DEFER | TYPE_ROUTINE_DIR:
                     if (FD_ISSET(routine->socketBuffer.clientSocket, &serverWriteSockets)) {
                         ++d;
                         continue;
@@ -289,25 +288,54 @@ void serverTick(void) {
                         break;
                     }
 
-                case STATE_CONTINUE | TYPE_FILE_ROUTINE:
+                case STATE_FLUSH | TYPE_ROUTINE:
+                case STATE_FLUSH | TYPE_ROUTINE_FILE:
+                case STATE_FLUSH | TYPE_ROUTINE_DIR:
+                    if (routine->socketBuffer.buffer) {
+                        size_t sent = socketBufferFlush(&routine->socketBuffer);
+                        if (sent == 0 && (routine->socketBuffer.options & SOC_BUF_ERR_FAIL) > 0)
+                            routine->state |= STATE_FAIL;
+                    } else {
+                        routine->state |= STATE_CONTINUE, routine->state &= ~STATE_FLUSH;
+                    }
+                    break;
+
+                case STATE_CONTINUE | TYPE_ROUTINE:
+                    routine->state |= STATE_FINISH, routine->state &= ~STATE_CONTINUE;
+                    break;
+
+                case STATE_CONTINUE | TYPE_ROUTINE_FILE:
                     if (FileRoutineContinue(routine) || routine->socketBuffer.options & SOC_BUF_ERR_FULL)
                         break;
                     LINEDBG;
                     /* Fall through */
-                case STATE_FINISH | TYPE_FILE_ROUTINE:
-                case STATE_FAIL | TYPE_FILE_ROUTINE:
+                case STATE_FINISH | TYPE_ROUTINE_FILE:
+                case STATE_FAIL | TYPE_ROUTINE_FILE:
                     FD_CLR(routine->socketBuffer.clientSocket, &serverWriteSockets);
-                    FileRoutineArrayDel(&globalRoutineArray, routine);
+                    eventHttpFinishInvoke(&routine->socketBuffer.clientSocket, routine->webPath, httpGet,
+                                          routine->state & STATE_FAIL ? 1 : 0);
+                    socketBufferFailFree(&routine->socketBuffer);
+                    RoutineArrayDel(&globalRoutineArray, routine);
                     continue;
-                case STATE_CONTINUE | TYPE_DIR_ROUTINE:
+
+                case STATE_CONTINUE | TYPE_ROUTINE_DIR:
                     if (DirectoryRoutineContinue(routine))
                         break;
                     LINEDBG;
                     /* Fall through */
-                case STATE_FINISH | TYPE_DIR_ROUTINE:
-                case STATE_FAIL | TYPE_DIR_ROUTINE:
+                case STATE_FINISH | TYPE_ROUTINE_DIR:
+                case STATE_FAIL | TYPE_ROUTINE_DIR:
                     FD_CLR(routine->socketBuffer.clientSocket, &serverWriteSockets);
-                    DirectoryRoutineArrayDel(&globalRoutineArray, routine);
+                    eventHttpFinishInvoke(&routine->socketBuffer.clientSocket, routine->webPath, httpGet,
+                                          routine->state & STATE_FAIL ? 1 : 0);
+                    socketBufferFailFree(&routine->socketBuffer);
+                    RoutineArrayDel(&globalRoutineArray, routine);
+                    continue;
+
+                case STATE_FINISH | TYPE_ROUTINE:
+                case STATE_FAIL | TYPE_ROUTINE:
+                    socketBufferFailFree(&routine->socketBuffer);
+                    RoutineArrayDel(&globalRoutineArray, routine);
                     continue;
             }
 
@@ -315,10 +343,15 @@ void serverTick(void) {
 
 #pragma region Check socket buffer would block
 
-            if (routine->socketBuffer.options & SOC_BUF_ERR_FULL) {
-                routine->socketBuffer.options &= ~SOC_BUF_ERR_FULL;
-                routine->state |= STATE_DEFER, routine->state &= ~STATE_CONTINUE;
-                FD_SET(routine->socketBuffer.clientSocket, &serverWriteSockets);
+            if (routine->socketBuffer.options & SOC_BUF_ERR_FAIL) {
+                if (routine->state & TYPE_ROUTINE_FILE)
+                    routine->state = TYPE_ROUTINE_FILE | STATE_FAIL;
+                else if (routine->state & TYPE_ROUTINE_FILE)
+                    routine->state = TYPE_ROUTINE_DIR | STATE_FAIL;
+                else
+                    routine->state = TYPE_ROUTINE | STATE_FAIL;
+
+                FD_CLR(routine->socketBuffer.clientSocket, &serverWriteSockets);
             }
 
 #pragma endregion

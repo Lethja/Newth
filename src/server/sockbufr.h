@@ -25,10 +25,10 @@ typedef struct SocketBuffer {
 size_t socketBufferFlush(SocketBuffer *self);
 
 /**
- * Destroy this socket buffer in the case on an unrecoverable connection error
- * @param self In: the socket buffer to kill
+ * Free any and all memory allocations held by this socket buffer in the case on an unrecoverable connection error
+ * @param self In: the socket buffer to free resources from
  */
-void socketBufferKill(SocketBuffer *self);
+void socketBufferFailFree(SocketBuffer *self);
 
 /**
  * Create a socket buffer for a socket

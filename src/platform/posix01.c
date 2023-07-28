@@ -243,7 +243,7 @@ char platformTimeGetFromHttpStr(const char *str, PlatformTimeStruct *time) {
                 tm->tm_mon = 1;
                 break;
             case 'J':
-                tm->tm_mon = toupper(month[1]) == 'A' ? 0 : toupper(month[3]) == 'L' ? 6 : 5;
+                tm->tm_mon = toupper(month[1]) == 'A' ? 0 : toupper(month[2]) == 'L' ? 6 : 5;
                 break;
             case 'M':
                 tm->tm_mon = toupper(month[2]) == 'R' ? 2 : 4;

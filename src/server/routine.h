@@ -6,7 +6,14 @@
 #include "sockbufr.h"
 
 enum state {
-    TYPE_FILE_ROUTINE = 1, TYPE_DIR_ROUTINE = 2, STATE_CONTINUE = 4, STATE_DEFER = 8, STATE_FINISH = 16, STATE_FAIL = 32
+    TYPE_ROUTINE = 1,
+    TYPE_ROUTINE_DIR = 2,
+    TYPE_ROUTINE_FILE = 4,
+    STATE_CONTINUE = 8,
+    STATE_DEFER = 16,
+    STATE_FLUSH = 32,
+    STATE_FINISH = 64,
+    STATE_FAIL = 128
 };
 
 typedef struct FileRoutine {
@@ -21,7 +28,7 @@ typedef struct DirectoryRoutine {
 } DirectoryRoutine;
 
 typedef struct Routine {
-    char state;
+    unsigned char state;
     SocketBuffer socketBuffer;
     char webPath[FILENAME_MAX];
     union {
@@ -39,21 +46,19 @@ size_t DirectoryRoutineContinue(Routine *self);
 
 Routine DirectoryRoutineNew(SocketBuffer socket, DIR *dir, const char *webPath, char *rootPath);
 
-char DirectoryRoutineArrayAdd(RoutineArray *self, Routine directoryRoutine);
-
 void DirectoryRoutineFree(DirectoryRoutine *self);
 
-char DirectoryRoutineArrayDel(RoutineArray *self, Routine *directoryRoutine);
-
-Routine
-FileRoutineNew(SOCKET socket, FILE *file, PlatformFileOffset start, PlatformFileOffset end, char webPath[FILENAME_MAX]);
+Routine FileRoutineNew(SocketBuffer socketBuffer, FILE *file, PlatformFileOffset start, PlatformFileOffset end,
+                       char webPath[FILENAME_MAX]);
 
 size_t FileRoutineContinue(Routine *self);
 
 void FileRoutineFree(FileRoutine *self);
 
-char FileRoutineArrayAdd(RoutineArray *self, Routine fileRoutine);
+char RoutineArrayAdd(RoutineArray *self, Routine routine);
 
-char FileRoutineArrayDel(RoutineArray *self, Routine *fileRoutine);
+char RoutineArrayDel(RoutineArray *self, Routine *fileRoutine);
+
+Routine RoutineNew(SocketBuffer socketBuffer, const char *webPath);
 
 #endif /* OPEN_WEB_ROUTINE_H */

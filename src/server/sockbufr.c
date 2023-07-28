@@ -2,6 +2,11 @@
 
 #include <string.h>
 
+void socketBufferFailFree(SocketBuffer *socketBuffer) {
+    if (socketBuffer->buffer)
+        fclose(socketBuffer->buffer);
+}
+
 SocketBuffer socketBufferNew(SOCKET clientSocket, char options) {
     SocketBuffer self;
     self.clientSocket = clientSocket, self.idx = 0, self.options = options, self.buffer = NULL;
@@ -39,6 +44,7 @@ size_t socketBufferFlush(SocketBuffer *self) {
                     return bytesFlushed;
 #pragma endregion
                 default:
+                    self->options = SOC_BUF_ERR_FAIL;
                     return 0;
             }
 
@@ -73,6 +79,7 @@ size_t socketBufferWriteData(SocketBuffer *self, const char *data, size_t len) {
                     break;
 #pragma endregion
                 default:
+                    self->options = SOC_BUF_ERR_FAIL;
                     return 0;
             }
         } else
