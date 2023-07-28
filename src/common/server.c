@@ -112,21 +112,9 @@ char handleFile(SOCKET clientSocket, const char *header, char *webPath, char *ab
         return 0;
 
     /* Body */
-    if (st->st_size < BUFSIZ) {
-        if (httpBodyWriteFile(&socketBuffer, fp, start, e ? st->st_size : finish))
-            goto handleFileAbort;
-        platformFileClose(fp);
-        eventHttpFinishInvoke(&socketBuffer.clientSocket, webPath, httpType, 0);
-        return 0;
-    } else
-        FileRoutineArrayAdd(&globalRoutineArray,
-                            FileRoutineNew(clientSocket, fp, start, e ? st->st_size : finish, webPath));
+    FileRoutineArrayAdd(&globalRoutineArray,
+                        FileRoutineNew(clientSocket, fp, start, e ? st->st_size : finish, webPath));
     return 0;
-
-    handleFileAbort:
-    if (fp)
-        platformFileClose(fp);
-    return 1;
 }
 
 char handlePath(SOCKET clientSocket, const char *header, char *webPath) {
@@ -202,7 +190,7 @@ char handleConnection(SOCKET clientSocket) {
                     case 0:
                     case SOCKET_WOULD_BLOCK:
 #if SOCKET_WOULD_BLOCK != SOCKET_TRY_AGAIN
-                    case SOCKET_TRY_AGAIN:
+                        case SOCKET_TRY_AGAIN:
 #endif
                         ++r;
                         continue;

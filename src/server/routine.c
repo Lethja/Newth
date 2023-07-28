@@ -149,12 +149,13 @@ Routine FileRoutineNew(SOCKET socket, FILE *file, PlatformFileOffset start, Plat
 
 size_t FileRoutineContinue(Routine *self) {
     size_t bytesRead, bytesWrite;
-    char buffer[BUFSIZ];
+    char buffer[SB_DATA_SIZE];
 
     PlatformFileOffset currentPosition = platformFileTell(self->type.file.file);
     PlatformFileOffset remaining = self->type.file.end - currentPosition;
 
-    bytesRead = platformFileRead(buffer, 1, (size_t) (remaining < BUFSIZ ? remaining : BUFSIZ), self->type.file.file);
+    bytesRead = platformFileRead(buffer, 1, (size_t) (remaining < SB_DATA_SIZE ? remaining : SB_DATA_SIZE),
+                                 self->type.file.file);
 
     if (bytesRead > 0) {
         bytesWrite = socketBufferWriteData(&self->socketBuffer, buffer, bytesRead);
@@ -162,8 +163,7 @@ size_t FileRoutineContinue(Routine *self) {
 #pragma region Rewind file descriptor when socket buffer can not send all data
 
         if (bytesWrite < bytesRead)
-            platformFileSeek(self->type.file.file,
-                             (PlatformFileOffset) -((PlatformFileOffset) (bytesRead - bytesWrite)), SEEK_CUR);
+            platformFileSeek(self->type.file.file, (PlatformFileOffset) (currentPosition + bytesWrite), SEEK_CUR);
 
 #pragma endregion
     } else {

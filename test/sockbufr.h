@@ -18,161 +18,79 @@
 
 #include <cmocka.h>
 
-#pragma endregion
-
-static void SocketBufferExtend(void **state) {
-    size_t i, bufferMax = ((SB_DATA_SIZE * 2) / 32) - 1, sent1, sent2, sent3, len;
-    char junkData[SB_DATA_SIZE * 2] = "";
-    SocketBuffer socketBuffer = socketBufferNew(0, SOC_BUF_OPT_EXTEND);
-
-#pragma region Check sane values in new socket buffer
-    assert_null(socketBuffer.extension);
-    assert_false(socketBuffer.idx);
-#pragma endregion
-
-#pragma region Populate some data
-    strcpy(junkData, sampleText);
-    for (i = 1; i < bufferMax; ++i)
-        strcat(junkData, sampleText);
-
-    len = strlen(junkData), mockReset(), mockOptions = MOCK_SEND | MOCK_SEND_COUNT, mockSendMaxBuf = SB_DATA_SIZE / 8;
-
-    /* Tests are pointless if junk data is smaller than the socket buffer */
-    assert_true(len > SB_DATA_SIZE);
-#pragma endregion
-
-#pragma region Create socket buffer extended buffer
-    sent1 = socketBufferWriteText(&socketBuffer, junkData);
-
-    assert_int_equal(socketBuffer.idx, SB_DATA_SIZE);
-    assert_memory_equal(socketBuffer.buffer, junkData, SB_DATA_SIZE);
-
-    assert_int_equal(sent1, len);
-    assert_int_equal(socketBuffer.idx, SB_DATA_SIZE);
-    assert_non_null(socketBuffer.extension);
-    assert_false(socketBuffer.extension->i);
-    assert_int_equal(socketBuffer.idx + socketBuffer.extension->length, sent1);
-    assert_memory_equal(socketBuffer.extension->data, &junkData[socketBuffer.idx], socketBuffer.extension->length);
-#pragma endregion
-
-#pragma region Append to existing socket buffer extension
-    sent2 = socketBufferWriteText(&socketBuffer, junkData);
-    assert_non_null(socketBuffer.extension);
-    assert_false(socketBuffer.extension->i);
-    assert_int_equal(socketBuffer.idx + socketBuffer.extension->length, sent1 + sent2);
-
-    sent3 = socketBufferWriteData(&socketBuffer, "", 1);
-    assert_int_equal(socketBuffer.idx + socketBuffer.extension->length, sent1 + sent2 + sent3);
-#pragma endregion
-
-#pragma region Freed up correctly when no longer needed
-    sent2 = sent1 + sent2 + sent3, sent1 = 1, sent3 = 0;
-    mockOptions = MOCK_SEND;
-
-    while (sent1 != 0) {
-        mockResetError();
-        sent1 = socketBufferFlush(&socketBuffer);
-        sent3 += sent1;
-    }
-
-    assert_null(socketBuffer.extension);
-    assert_false(socketBuffer.idx);
-    assert_int_equal(sent3, sent2);
-#pragma endregion
-
-#pragma region Data appending integrity
-    mockOptions = MOCK_SEND | MOCK_SEND_COUNT;
-
-#pragma region Fill idx, expand into extension memory
-    socketBufferWriteText(&socketBuffer, junkData);
-    free(socketBuffer.extension->data), free(socketBuffer.extension), socketBuffer.extension = NULL;
-#pragma endregion
-
-#pragma region Does appending work when extension is uninitialized but idx is maxed?
-    socketBufferWriteText(&socketBuffer, "ABCD");
-    socketBufferWriteText(&socketBuffer, "EFGH");
-    assert_memory_equal(socketBuffer.extension->data, "ABCDEFGH", socketBuffer.extension->length);
-#pragma endregion
-
-#pragma region Does appending work when idx becomes is maxed out during writing?
-    --socketBuffer.idx, socketBuffer.buffer[SB_DATA_SIZE - 1] = '\0';
-    free(socketBuffer.extension->data), free(socketBuffer.extension), socketBuffer.extension = NULL;
-
-    socketBufferWriteText(&socketBuffer, "ABCD");
-    assert_int_equal(socketBuffer.buffer[SB_DATA_SIZE - 1], 'A');
-    assert_int_equal(socketBuffer.extension->length, 3);
-    assert_memory_equal(socketBuffer.extension->data, "BCD", socketBuffer.extension->length);
-
-    socketBuffer.idx -= 3;
-    memset(&socketBuffer.buffer[SB_DATA_SIZE - 3], 0, 3);
-    free(socketBuffer.extension->data), free(socketBuffer.extension), socketBuffer.extension = NULL;
-
-    socketBufferWriteText(&socketBuffer, "ABCD");
-    assert_int_equal(socketBuffer.buffer[SB_DATA_SIZE - 3], 'A');
-    assert_int_equal(socketBuffer.buffer[SB_DATA_SIZE - 2], 'B');
-    assert_int_equal(socketBuffer.buffer[SB_DATA_SIZE - 1], 'C');
-    assert_int_equal(socketBuffer.extension->length, 1);
-    assert_memory_equal(socketBuffer.extension->data, "D", socketBuffer.extension->length);
-#pragma endregion
-
-#pragma endregion
-
-#pragma region Kill buffer
-    socketBufferKill(&socketBuffer);
-
-    assert_null(socketBuffer.extension);
-    assert_false(socketBuffer.idx);
-    assert_true(socketBuffer.options & SOC_BUF_ERR_FAIL);
-#pragma endregion
+static void SocketTextWrite(void **state) {
+    const char *text = "Hello Socket Buffer Text";
+    const size_t textLen = strlen(text);
+    SocketBuffer socketBuffer = socketBufferNew(0, 0);
+    mockOptions = MOCK_SEND, mockSendMaxBuf = BUFSIZ, mockSendStream = fopen("/tmp/nt_SocketTextWrite_Send.txt", "wb");
+    assert_int_equal(textLen, socketBufferWriteText(&socketBuffer, text));
+    assert_int_equal(textLen, platformFileTell(mockSendStream));
+    mockReset();
 }
 
-static void ExtendedMemoryAppend(void **state) {
-    size_t i, bufferMax = ((SB_DATA_SIZE * 2) / 32) - 1;
-    char junkData[SB_DATA_SIZE * 4] = "";
-    MemoryPool *memoryPool = NULL, *x;
-
-    strcpy(junkData, sampleText);
-    for (i = 1; i < bufferMax; ++i)
-        strcat(junkData, sampleText);
-
-    i = 128, mockReset(), mockSendMaxBuf = SB_DATA_SIZE / 8;
-
-    memoryPool = socketBufferMemoryPoolNew(junkData, i);
-
-    assert_non_null(memoryPool);
-    assert_non_null(memoryPool->data);
-    assert_false(memoryPool->i);
-    assert_int_equal(memoryPool->length, i);
-    assert_memory_equal(memoryPool->data, junkData, memoryPool->length);
-
-    free(memoryPool->data), free(memoryPool), memoryPool = NULL;
-
-    memoryPool = socketBufferMemoryPoolAppend(memoryPool, "ABCD", 5);
-
-    assert_non_null(memoryPool);
-    assert_non_null(memoryPool->data);
-    assert_false(memoryPool->i);
-    assert_int_equal(memoryPool->length, 5);
-    assert_memory_equal(memoryPool->data, "ABCD", memoryPool->length);
-
-    memoryPool = socketBufferMemoryPoolAppend(memoryPool, "EFGH", 5);
-
-    assert_non_null(memoryPool);
-    assert_non_null(memoryPool->data);
-    assert_false(memoryPool->i);
-    assert_int_equal(memoryPool->length, 10);
-    assert_memory_equal(memoryPool->data, "ABCD\0EFGH", memoryPool->length);
-
-    mockOptions = MOCK_ALLOC_NO_MEMORY, x = memoryPool;
-    memoryPool = socketBufferMemoryPoolAppend(memoryPool, "IJKL", 5);
-    free(x);
-    assert_null(memoryPool);
-
-    memoryPool = socketBufferMemoryPoolAppend(memoryPool, "ABCD", 5);
-    assert_null(memoryPool);
+static void SocketDataWrite(void **state) {
+    const char *data = "Hello Socket Buffer Data";
+    const size_t dataLen = strlen(data);
+    SocketBuffer socketBuffer = socketBufferNew(0, 0);
+    mockOptions = MOCK_SEND, mockSendMaxBuf = BUFSIZ, mockSendStream = fopen("/tmp/nt_SocketDataWrite_Send.txt", "wb");
+    assert_int_equal(dataLen, socketBufferWriteData(&socketBuffer, data, dataLen));
+    assert_int_equal(dataLen, platformFileTell(mockSendStream));
+    mockReset();
 }
 
-const struct CMUnitTest socketTest[] = {cmocka_unit_test(ExtendedMemoryAppend), cmocka_unit_test(SocketBufferExtend)};
+static void SocketFlush(void **state) {
+    const char *text = "Hello Socket Buffer Flush";
+    const size_t textLen = strlen(text), bufSize = 5;
+    SocketBuffer socketBuffer = socketBufferNew(0, 0);
+    mockOptions = MOCK_SEND, mockSendMaxBuf = bufSize, mockSendStream = fopen("/tmp/nt_SocketFlush_Send.txt", "wb");
+
+#pragma region Write some text that will overflow
+    assert_int_equal(textLen, socketBufferWriteText(&socketBuffer, text));
+    fflush(mockSendStream);
+    assert_int_equal(bufSize, platformFileTell(mockSendStream)); /* Break here for manual verification */
+#pragma endregion
+
+#pragma region Flush where no data is sent
+    mockSendMaxBuf = 0;
+    assert_int_equal(0, socketBufferFlush(&socketBuffer));
+    fflush(mockSendStream);
+    assert_int_equal(bufSize, platformFileTell(mockSendStream)); /* Break here for manual verification */
+#pragma endregion
+
+#pragma region Flush where some data is sent
+    mockSendMaxBuf = bufSize;
+    assert_int_equal(bufSize, socketBufferFlush(&socketBuffer));
+    fflush(mockSendStream);
+    assert_int_equal(bufSize * 2, platformFileTell(mockSendStream)); /* Break here for manual verification */
+#pragma endregion
+
+#pragma region Another flush where no data is sent
+    mockSendMaxBuf = 0;
+    assert_int_equal(0, socketBufferFlush(&socketBuffer));
+    fflush(mockSendStream);
+    assert_int_equal(bufSize * 2, platformFileTell(mockSendStream)); /* Break here for manual verification */
+#pragma endregion
+
+#pragma region Another flush where some data is sent
+    mockSendMaxBuf = bufSize;
+    assert_int_equal(bufSize, socketBufferFlush(&socketBuffer));
+    fflush(mockSendStream);
+    assert_int_equal(bufSize * 3, platformFileTell(mockSendStream)); /* Break here for manual verification */
+#pragma endregion
+
+#pragma region Flush where all remaining data is sent
+    mockSendMaxBuf = BUFSIZ;
+    assert_int_equal(textLen - (bufSize * 3), socketBufferFlush(&socketBuffer));
+    assert_int_equal(textLen, platformFileTell(mockSendStream));
+    fflush(mockSendStream);
+    assert_false(socketBuffer.buffer); /* Break here for manual verification */
+#pragma endregion
+
+    mockReset();
+}
+
+const struct CMUnitTest socketTest[] = {cmocka_unit_test(SocketDataWrite), cmocka_unit_test(SocketTextWrite),
+                                        cmocka_unit_test(SocketFlush)};
 
 
 #endif /* NEW_TH_TEST_SOCKET_BUFFER_H */

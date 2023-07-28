@@ -10,27 +10,11 @@ FILE *mockSendStream = NULL;
 
 #pragma endregion
 
-void mockDumpFile(FILE *file) {
-    int fd;
-    char path[BUFSIZ] = "/tmp/dump-XXXXXX", buffer[BUFSIZ];
-    PlatformFileOffset fileOffset = platformFileTell(file);
-
-    platformFileSeek(file, 0, SEEK_SET);
-    fd = mkstemp(path);
-
-    while (fgets(buffer, BUFSIZ, file)) {
-        write(fd, buffer, strlen(buffer));
-    }
-
-    platformFileSeek(file, fileOffset, SEEK_SET);
-    close(fd);
-}
-
 void mockReset(void) {
     mockSendCountBuf = mockSendMaxBuf = mockOptions = 0;
 
     if (mockSendStream)
-        fclose(mockSendStream), mockSendStream = NULL;
+        fflush(mockSendStream), fclose(mockSendStream), mockSendStream = NULL;
 }
 
 void mockResetError(void) {

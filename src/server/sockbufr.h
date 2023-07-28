@@ -9,16 +9,11 @@ enum SOC_BUF_OPT {
     SOC_BUF_OPT_EXTEND = 1, SOC_BUF_ERR_CLEAR = 2, SOC_BUF_ERR_FULL = 4, SOC_BUF_ERR_FAIL = 8
 };
 
-typedef struct MemoryPool {
-    size_t length, i, idx;
-    char *data;
-} MemoryPool;
-
 typedef struct SocketBuffer {
+    PlatformFileOffset idx;
+    PlatformFile buffer;
     SOCKET clientSocket;
-    SOCK_BUF_TYPE idx;
-    char options, buffer[SB_DATA_SIZE];
-    MemoryPool *extension;
+    char options;
 } SocketBuffer;
 
 /**
@@ -34,30 +29,6 @@ size_t socketBufferFlush(SocketBuffer *self);
  * @param self In: the socket buffer to kill
  */
 void socketBufferKill(SocketBuffer *self);
-
-/**
- * Append to a memory pool. This should only be used when a socket would block but processing can not be deferred
- * @param self In: The memory pool to append to
- * @param data In: The data to append onto the end of the memory pool
- * @param bytes In: The length of the data
- * @return The memory pool with appended data
- * @remark The return point might be the same as self but it also might not, always update your pointer
- */
-MemoryPool *socketBufferMemoryPoolAppend(MemoryPool *self, const char *data, size_t bytes);
-
-/**
- * Free any heap memory held by this memory pool
- * @param self In: The memory pool to be freed
- */
-void socketBufferMemoryPoolFree(MemoryPool *self);
-
-/**
- * Create a new memory pool. This should only be used when a socket would block but processing cannot be deferred
- * @param data In: The data to write to into the memory pool
- * @param bytes In: The length of the data
- * @return A newly created memory pool
- */
-MemoryPool *socketBufferMemoryPoolNew(const char *data, size_t bytes);
 
 /**
  * Create a socket buffer for a socket

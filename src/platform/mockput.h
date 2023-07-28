@@ -16,6 +16,8 @@ ssize_t __wrap_send(int fd, const void *buf, size_t n, int flags);
 
 #pragma clang diagnostic pop
 
+#define SOCKET_WOULD_BLOCK 41
+
 #include "posix01.h"
 
 #ifndef INET_ADDRSTRLEN
@@ -29,8 +31,6 @@ ssize_t __wrap_send(int fd, const void *buf, size_t n, int flags);
 #define    ENOERR      0   /* No error */
 #define    EAGAIN      11  /* Try again */
 #define    ENOMEM      12  /* Out of memory */
-
-#define SOCKET_WOULD_BLOCK EWOULDBLOCK
 
 enum mockOptions {
     MOCK_ALLOC_NO_MEMORY = 1, MOCK_SEND = 2, MOCK_SEND_COUNT = 4
