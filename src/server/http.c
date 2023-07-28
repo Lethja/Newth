@@ -7,6 +7,19 @@
 #include <stdlib.h>
 #include <string.h>
 
+static inline void allocStrAppend(char **alloc, char *append) {
+    size_t len2 = strlen(append);
+    if (*alloc) {
+        size_t len1 = strlen(*alloc);
+        platformHeapResize((void **) alloc, 1, len1 + len2 + 1);
+        if (*alloc)
+            strncat(*alloc, append, len2 + 1);
+    } else {
+        *alloc = malloc(len2 + 1);
+        strncpy(*alloc, append, len2 + 1);
+    }
+}
+
 static inline char HexToAscii(const char *hex) {
     char value = 0;
     unsigned char i;
@@ -276,18 +289,13 @@ char *httpHeaderGetResponse(short response) {
 }
 
 void httpHeaderWriteResponseStr(SocketBuffer *socketBuffer, const char *response) {
-#define RESPONSE_MAX 128
-    char buffer[RESPONSE_MAX];
-    size_t max = 14 + strlen(response);
+    FILE *buf = socketBufferGetBuffer(socketBuffer);
 
-    if (max < RESPONSE_MAX) {
-        snprintf(buffer, RESPONSE_MAX, "HTTP/1.1 %s" HTTP_EOL, response);
-        socketBufferWriteText(socketBuffer, buffer);
-    }
+    if (buf)
+        fprintf(buf, "HTTP/1.1 %s" HTTP_EOL, response);
 }
 
 void httpHeaderWriteResponse(SocketBuffer *socketBuffer, short response) {
-#define RESPONSE_MAX 128
     char *r = httpHeaderGetResponse(response);
     httpHeaderWriteResponseStr(socketBuffer, r);
 }
@@ -296,7 +304,7 @@ void httpHeaderWriteEnd(SocketBuffer *socketBuffer) {
     socketBufferWriteText(socketBuffer, HTTP_EOL);
 }
 
-void htmlHeaderWrite(char buffer[BUFSIZ], char *title) {
+void htmlHeaderWrite(char **buffer, char *title) {
     const char *h1 = "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"\n"
                      "\t\"http://www.w3.org/TR/html4/strict.dtd\">\n"
                      "<HTML>\n"
@@ -314,35 +322,35 @@ void htmlHeaderWrite(char buffer[BUFSIZ], char *title) {
                                           "\t</HEAD>\n\n"
                                           "\t<BODY>\n";
 
-    size_t max = BUFSIZ - (strlen(h1) + strlen(h2));
-    strcpy(buffer, h1);
-    if (strlen(title) + 1 >= max)
-        title = "/?";
+    size_t max = strlen(h1) + strlen(h2) + strlen(title);
 
-    strcat(buffer, title);
-    strncat(buffer, h2, BUFSIZ - 1);
-    buffer[BUFSIZ - 1] = '\0';
+    char *tmp = malloc(max + 1);
+    snprintf(tmp, max + 1, "%s%s%s", h1, title, h2);
+
+    allocStrAppend(buffer, tmp);
+    free(tmp);
 }
 
-void htmlListStart(char buffer[BUFSIZ]) {
+void htmlListStart(char **buffer) {
     const char *listStart = "\t\t<UL>\n";
-    strncat(buffer, listStart, strlen(listStart) + 1);
+    allocStrAppend(buffer, (char *) listStart);
 }
 
-void htmlListEnd(char buffer[BUFSIZ]) {
+void htmlListEnd(char **buffer) {
     const char *listEnd = "\t\t</UL>\n";
-    strcat(buffer, listEnd);
+    allocStrAppend(buffer, (char *) listEnd);
 }
 
-void htmlFooterWrite(char buffer[BUFSIZ]) {
+void htmlFooterWrite(char **buffer) {
     const char *htmlEnd = "\t</BODY>\n" "</HTML>\n";
-    strcat(buffer, htmlEnd);
+    allocStrAppend(buffer, (char *) htmlEnd);
 }
 
-void htmlListWritePathLink(char buffer[BUFSIZ], char *webPath) {
+void htmlListWritePathLink(char **buffer, char *webPath) {
     const char *h1 = "\t\t\t<LI><A HREF=\"", *h2 = "\">", *h3 = "</A></LI>\n";
-    char linkPath[FILENAME_MAX], *filePath = NULL;
+    char linkPath[FILENAME_MAX], *filePath = NULL, *tmp;
     size_t pathLen = strlen(webPath) + 1, i;
+    size_t total;
 
     memcpy(linkPath, webPath, pathLen);
 
@@ -359,10 +367,13 @@ void htmlListWritePathLink(char buffer[BUFSIZ], char *webPath) {
         filePath = webPath;
 
     convertPathToUrl(linkPath, FILENAME_MAX);
-    if (strlen(linkPath) + strlen(filePath + 1) + strlen(h1) + strlen(h2) + strlen(h3) + 1 >= BUFSIZ)
-        return;
+    total = strlen(linkPath) + strlen(filePath + 1) + strlen(h1) + strlen(h2) + strlen(h3);
+    tmp = malloc(total + 1);
 
-    sprintf(buffer, "\t\t\t<LI><A HREF=\"%s\">%s</A></LI>\n", linkPath, filePath + 1);
+    snprintf(tmp, total + 1, "\t\t\t<LI><A HREF=\"%s\">%s</A></LI>\n", linkPath, filePath + 1);
+    allocStrAppend(buffer, tmp);
+
+    free(tmp);
 }
 
 static inline void
@@ -415,10 +426,10 @@ static inline size_t getPathCount(const char *path) {
     return r;
 }
 
-void htmlBreadCrumbWrite(char buffer[BUFSIZ], const char *webPath) {
+void htmlBreadCrumbWrite(char **buffer, const char *webPath) {
     size_t i, max = getPathCount(webPath) + 1;
 
-    strncat(buffer, "\t\t<DIV>\n", 9);
+    allocStrAppend(buffer, "\t\t<DIV>\n");
 
     for (i = 0; i < max; ++i) {
         const char *h1 = "\t\t\t<A HREF=\"", *h2 = "\">", *h3 = "</A>\n";
@@ -426,42 +437,19 @@ void htmlBreadCrumbWrite(char buffer[BUFSIZ], const char *webPath) {
         getPathName(webPath, i, linkPath, displayPath);
         convertPathToUrl(linkPath, FILENAME_MAX);
         snprintf(internalBuffer, 20 + FILENAME_MAX * 2, "%s%s%s%s%s", h1, linkPath, h2, displayPath, h3);
-
-        if (strlen(buffer) + strlen(internalBuffer) + 1 > BUFSIZ - 17)
-            break;
-
-        strncat(buffer, internalBuffer, BUFSIZ - 1);
+        allocStrAppend(buffer, internalBuffer);
     }
 
-    strncat(buffer, "\t\t</DIV>\n\t\t<HR>\n", 17);
+    allocStrAppend(buffer, "\t\t</DIV>\n\t\t<HR>\n");
 }
 
-size_t httpBodyWriteFile(SocketBuffer *socketBuffer, FILE *file, PlatformFileOffset start, PlatformFileOffset finish) {
-    char buffer[BUFSIZ];
-    PlatformFileOffset length = finish - start;
-    unsigned long bytesRead;
+size_t httpBodyWriteChunk(SocketBuffer *socketBuffer, char **buffer) {
+    size_t bufLen = strlen(*buffer);
+    FILE *buf = socketBufferGetBuffer(socketBuffer);
 
-    if (start)
-        platformFileSeek(file, start, SEEK_SET);
-
-    while ((bytesRead = platformFileRead(buffer, 1, (size_t) length, file)) > 0) {
-        length -= (PlatformFileOffset) bytesRead;
-        if (socketBufferWriteText(socketBuffer, buffer) == 0)
-            return 1;
-    }
-
-    if (socketBufferFlush(socketBuffer) == 0)
-        return 1;
-
+    if (buf)
+        return fprintf(buf, "%lx\r\n%s\r\n", (unsigned long) bufLen, *buffer);
     return 0;
-}
-
-size_t httpBodyWriteChunk(SocketBuffer *socketBuffer, char buffer[BUFSIZ]) {
-#define HEX_MAX 40
-    size_t bufLen = strlen(buffer);
-    char internalBuffer[HEX_MAX + BUFSIZ + 1];
-    snprintf(internalBuffer, HEX_MAX + BUFSIZ + 1, "%lx\r\n%s\r\n", (unsigned long) bufLen, buffer);
-    return socketBufferWriteText(socketBuffer, internalBuffer);
 }
 
 size_t httpBodyWriteChunkEnding(SocketBuffer *socketBuffer) {

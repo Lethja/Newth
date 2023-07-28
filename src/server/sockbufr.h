@@ -60,4 +60,11 @@ size_t socketBufferWriteData(SocketBuffer *self, const char *data, size_t len);
  */
 size_t socketBufferWriteText(SocketBuffer *self, const char *data);
 
+/**
+ * Create a new buffer or set an existing one ready for appending
+ * @param self The socket buffer to get the create or get the buffer of
+ * @return A file pointer ready for fprintf() or fwrite() on success, NULL on failure
+ */
+FILE *socketBufferGetBuffer(SocketBuffer *self);
+
 #endif /* OPEN_WEB_SOCKET_BUFFER_H */

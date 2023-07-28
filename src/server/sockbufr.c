@@ -98,3 +98,12 @@ size_t socketBufferWriteData(SocketBuffer *self, const char *data, size_t len) {
 size_t socketBufferWriteText(SocketBuffer *self, const char *data) {
     return socketBufferWriteData(self, data, strlen(data));
 }
+
+FILE *socketBufferGetBuffer(SocketBuffer *self) {
+    if (!self->buffer)
+        self->buffer = tmpfile();
+    else
+        fseek(self->buffer, 0, SEEK_END);
+
+    return self->buffer;
+}

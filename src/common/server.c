@@ -18,7 +18,7 @@ void noAction(int signal) {}
 #pragma clang diagnostic pop
 
 char handleDir(SOCKET clientSocket, char *webPath, char *absolutePath, char type, PlatformFileStat *st) {
-    char buf[BUFSIZ];
+    char *buf = NULL;
     SocketBuffer socketBuffer = socketBufferNew(clientSocket, 0);
     DIR *dir = platformDirOpen(absolutePath);
 
@@ -41,28 +41,29 @@ char handleDir(SOCKET clientSocket, char *webPath, char *absolutePath, char type
             goto handleDirAbort;
     }
 
-    htmlHeaderWrite(buf, webPath[0] == '\0' ? "/" : webPath);
+    htmlHeaderWrite(&buf, webPath[0] == '\0' ? "/" : webPath);
 
-    if (httpBodyWriteChunk(&socketBuffer, buf) == 0 || socketBufferFlush(&socketBuffer) == 0)
+    if (httpBodyWriteChunk(&socketBuffer, &buf) == 0 || socketBufferFlush(&socketBuffer) == 0)
+        goto handleDirAbort;
+    free(buf), buf = NULL;
+
+    htmlBreadCrumbWrite(&buf, webPath[0] == '\0' ? "/" : webPath);
+
+    htmlListStart(&buf);
+
+    if (httpBodyWriteChunk(&socketBuffer, &buf) == 0 || socketBufferFlush(&socketBuffer) == 0)
         goto handleDirAbort;
 
-    buf[0] = '\0';
-    htmlBreadCrumbWrite(buf, webPath[0] == '\0' ? "/" : webPath);
+    free(buf);
 
-    if (httpBodyWriteChunk(&socketBuffer, buf) == 0)
-        goto handleDirAbort;
-
-    buf[0] = '\0';
-    htmlListStart(buf);
-
-    if (httpBodyWriteChunk(&socketBuffer, buf) == 0 || socketBufferFlush(&socketBuffer) == 0)
-        goto handleDirAbort;
-
-    DirectoryRoutineArrayAdd(&globalRoutineArray, DirectoryRoutineNew(clientSocket, dir, webPath, globalRootPath));
+    DirectoryRoutineArrayAdd(&globalRoutineArray, DirectoryRoutineNew(socketBuffer, dir, webPath, globalRootPath));
 
     return 0;
 
     handleDirAbort:
+    if (buf)
+        free(buf);
+
     if (dir)
         platformDirClose(dir);
 

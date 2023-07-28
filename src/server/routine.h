@@ -37,7 +37,7 @@ typedef struct RoutineArray {
 
 size_t DirectoryRoutineContinue(Routine *self);
 
-Routine DirectoryRoutineNew(SOCKET socket, DIR *dir, const char *webPath, char *rootPath);
+Routine DirectoryRoutineNew(SocketBuffer socket, DIR *dir, const char *webPath, char *rootPath);
 
 char DirectoryRoutineArrayAdd(RoutineArray *self, Routine directoryRoutine);
 

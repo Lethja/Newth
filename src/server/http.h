@@ -21,39 +21,39 @@ typedef enum httpType {
  * @param buffer Concat: The buffer to write the bread crumb to
  * @param webPath In: The path to convert into a bread crumb
  */
-void htmlBreadCrumbWrite(char buffer[BUFSIZ], const char *webPath);
+void htmlBreadCrumbWrite(char **buffer, const char *webPath);
 
 /**
  * Write a basic HTML4 header with a title
  * @param buffer Out: The array to write into
  * @param title In: The title to set in the HTML4 <TITLE> tag
  */
-void htmlHeaderWrite(char buffer[BUFSIZ], char *title);
+void htmlHeaderWrite(char **buffer, char *title);
 
 /**
  * Start of a HTML4 <UL>
  * @param buffer Out: The array to write into
  */
-void htmlListStart(char buffer[BUFSIZ]);
+void htmlListStart(char **buffer);
 
 /**
  * End of the HTML4 <UL> tag started by htmlListStart()
  * @param buffer Out: The array to write into
  */
-void htmlListEnd(char buffer[BUFSIZ]);
+void htmlListEnd(char **buffer);
 
 /**
  * HTML footer to finish document started by htmlHeaderWrite()
  * @param buffer Out: The array to write into
  */
-void htmlFooterWrite(char buffer[BUFSIZ]);
+void htmlFooterWrite(char **buffer);
 
 /**
  * HTML List element with formatted <A HREF=> to the link
  * @param buffer Out: The array to write into
  * @param webPath In: String representation of the path to make a link to
  */
-void htmlListWritePathLink(char buffer[BUFSIZ], char *webPath);
+void htmlListWritePathLink(char **buffer, char *webPath);
 
 #pragma endregion
 
@@ -101,7 +101,7 @@ char httpHeaderReadRange(const char *request, PlatformFileOffset *start, Platfor
  * @param buffer In: The contents chunk body
  * @return Amount of bytes written
  */
-size_t httpBodyWriteChunk(SocketBuffer *socketBuffer, char buffer[BUFSIZ]);
+size_t httpBodyWriteChunk(SocketBuffer *socketBuffer, char **buffer);
 
 /**
  * Write the end of a HTTP chunk request and flush
@@ -109,16 +109,6 @@ size_t httpBodyWriteChunk(SocketBuffer *socketBuffer, char buffer[BUFSIZ]);
  * @return Amount of bytes written
  */
 size_t httpBodyWriteChunkEnding(SocketBuffer *socketBuffer);
-
-/**
- * Send the entirety of a file over TCP
- * @param socketBuffer In: The TCP socket buffer to send the file over
- * @param file In: The file to be sent over TCP
- * @param start In: The offset to start the transfer at
- * @param finish In: The offset to stop the transfer at
- * @return 0 on success, other on error
- */
-size_t httpBodyWriteFile(SocketBuffer *socketBuffer, FILE *file, PlatformFileOffset start, PlatformFileOffset finish);
 
 /**
  * Send the entirety of a string over TCP

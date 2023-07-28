@@ -8,12 +8,13 @@ size_t DirectoryRoutineContinue(Routine *self) {
     const size_t max = 10;
     size_t bytesWrite = 0, i, pathLen = strlen(self->webPath);
     PlatformDirEntry *entry;
+    char *buffer = NULL;
 
     for (i = 0; i < max; ++i) {
         entry = platformDirRead(self->type.dir.directory);
         if (entry) {
             size_t entryLen;
-            char buffer[BUFSIZ], pathBuf[BUFSIZ], *entryName;
+            char pathBuf[BUFSIZ], *entryName;
 
             if (platformDirEntryIsHidden(entry)) {
                 --i;
@@ -36,25 +37,28 @@ size_t DirectoryRoutineContinue(Routine *self) {
                     pathBuf[len] = '/', pathBuf[len + 1] = '\0';
                 }
 
-                htmlListWritePathLink(buffer, pathBuf);
-                if (httpBodyWriteChunk(&self->socketBuffer, buffer) == 0)
-                    return 0;
+                htmlListWritePathLink(&buffer, pathBuf);
+                httpBodyWriteChunk(&self->socketBuffer, &buffer);
 
                 bytesWrite += strlen(buffer);
                 ++self->type.dir.count;
             }
-        } else {
-            char buffer[BUFSIZ];
-            buffer[0] = '\0';
 
+            if (buffer)
+                free(buffer), buffer = NULL;
+
+        } else {
+            const char *emptyDirectory = "\t\t\t<LI>Empty Directory</LI>\n";
             /* If the directory is empty, say so */
             if (!self->type.dir.count)
-                strcpy(buffer, "\t\t\t<LI>Empty Directory</LI>\n");
+                buffer = malloc(strlen(emptyDirectory) + 1), strcpy(buffer, emptyDirectory);
 
-            htmlListEnd(buffer);
-            htmlFooterWrite(buffer);
-            if (httpBodyWriteChunk(&self->socketBuffer, buffer))
+            htmlListEnd(&buffer);
+            htmlFooterWrite(&buffer);
+            if (httpBodyWriteChunk(&self->socketBuffer, &buffer))
                 httpBodyWriteChunkEnding(&self->socketBuffer);
+
+            free(buffer);
 
             socketBufferFlush(&self->socketBuffer);
 
@@ -69,15 +73,14 @@ size_t DirectoryRoutineContinue(Routine *self) {
     return bytesWrite;
 }
 
-Routine DirectoryRoutineNew(SOCKET socket, DIR *dir, const char *webPath, char *rootPath) {
+Routine DirectoryRoutineNew(SocketBuffer socketBuffer, DIR *dir, const char *webPath, char *rootPath) {
     size_t i;
 
     Routine self;
     self.type.dir.directory = dir, self.type.dir.count = 0, self.type.dir.rootPath = rootPath, self.state =
             TYPE_DIR_ROUTINE | STATE_CONTINUE;
 
-    /* TODO: Make SOC_BUF_OPT_EXTEND work */
-    self.socketBuffer = socketBufferNew(socket, /*SOC_BUF_OPT_EXTEND | SOC_BUF_OPT_HTTP_CHUNK*/ 0);
+    self.socketBuffer = socketBuffer;
 
     for (i = 0; i < FILENAME_MAX; ++i) {
         self.webPath[i] = webPath[i];
