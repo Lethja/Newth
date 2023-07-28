@@ -307,8 +307,17 @@ void serverTick(void) {
                 case STATE_CONTINUE | TYPE_ROUTINE_FILE:
                     if (FileRoutineContinue(routine) || routine->socketBuffer.options & SOC_BUF_ERR_FULL)
                         break;
-                    LINEDBG;
-                    /* Fall through */
+
+                    if (routine->socketBuffer.options & SOC_BUF_ERR_FAIL)
+                        routine->state = STATE_FAIL | TYPE_ROUTINE_FILE;
+                    else if (routine->socketBuffer.buffer) {
+                        FD_SET(routine->socketBuffer.clientSocket, &serverWriteSockets);
+                        routine->state = STATE_DEFER | TYPE_ROUTINE_FILE;
+                    } else
+                        routine->state = STATE_FINISH | TYPE_ROUTINE_FILE;
+
+                    break;
+
                 case STATE_FINISH | TYPE_ROUTINE_FILE:
                 case STATE_FAIL | TYPE_ROUTINE_FILE:
                     FD_CLR(routine->socketBuffer.clientSocket, &serverWriteSockets);

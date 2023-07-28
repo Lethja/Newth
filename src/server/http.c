@@ -471,20 +471,17 @@ size_t httpBodyWriteText(SocketBuffer *socketBuffer, const char *text) {
 }
 
 void httpHeaderWriteFileName(SocketBuffer *socketBuffer, char *path) {
-    const char *h1 = "Content-Disposition: filename=\"", *h2 = "\"\n";
-    char buffer[FILENAME_MAX];
     char *name = strrchr(path, '/');
+    FILE *buf = socketBufferGetBuffer(socketBuffer);
 
-    if (!name)
-        name = path;
-    else
-        ++name;
+    if (buf) {
+        if (!name)
+            name = path;
+        else
+            ++name;
 
-    if (strlen(h1) + strlen(h2) + strlen(name) >= FILENAME_MAX)
-        return;
-
-    snprintf(buffer, FILENAME_MAX, "Content-Disposition: filename=\"%s\"" HTTP_EOL, name);
-    socketBufferWriteText(socketBuffer, buffer);
+        fprintf(buf, "Content-Disposition: filename=\"%s\"" HTTP_EOL, name);
+    }
 }
 
 char httpHeaderHandleError(SocketBuffer *socketBuffer, const char *path, char httpType, short error) {

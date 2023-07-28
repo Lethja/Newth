@@ -36,22 +36,28 @@ extern void *__real_realloc(void *ptr, size_t size);
 extern ssize_t *__real_send(int fd, const void *buf, size_t n, int flags);
 
 void *__wrap_calloc(size_t nmemb, size_t size) {
-    if (mockOptions & MOCK_ALLOC_NO_MEMORY)
+    if (mockOptions & MOCK_ALLOC_NO_MEMORY) {
+        errno = ENOMEM;
         return 0;
+    }
 
     return __real_calloc(nmemb, size);
 }
 
 void *__wrap_malloc(size_t size) {
-    if (mockOptions & MOCK_ALLOC_NO_MEMORY)
+    if (mockOptions & MOCK_ALLOC_NO_MEMORY) {
+        errno = ENOMEM;
         return 0;
+    }
 
     return __real_malloc(size);
 }
 
 void *__wrap_realloc(void *ptr, size_t size) {
-    if (mockOptions & MOCK_ALLOC_NO_MEMORY)
+    if (mockOptions & MOCK_ALLOC_NO_MEMORY) {
+        errno = ENOMEM;
         return 0;
+    }
 
     return __real_realloc(ptr, size);
 }
