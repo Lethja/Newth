@@ -22,8 +22,6 @@ char handleDir(SOCKET clientSocket, char *webPath, char *absolutePath, char type
     SocketBuffer socketBuffer = socketBufferNew(clientSocket, 0);
     DIR *dir = platformDirOpen(absolutePath);
 
-    LINEDBG;
-
     if (dir == NULL)
         return httpHeaderHandleError(&socketBuffer, webPath, httpGet, 404);
 
@@ -77,8 +75,6 @@ char handleFile(SOCKET clientSocket, const char *header, char *webPath, char *ab
     PlatformFileOffset start, finish;
     char e;
 
-    LINEDBG;
-
     if (fp == NULL) {
         LINEDBG;
         return 1;
@@ -121,8 +117,6 @@ char handlePath(SOCKET clientSocket, const char *header, char *webPath) {
     PlatformFileStat st;
     PlatformTimeStruct tm;
     char absolutePath[FILENAME_MAX], e = 0;
-
-    LINEDBG;
 
     if (platformPathWebToSystem(globalRootPath, webPath, absolutePath) || platformFileStat(absolutePath, &st)) {
         LINEDBG;
