@@ -102,7 +102,6 @@ char handleFile(SOCKET clientSocket, const char *header, char *webPath, char *ab
     }
 
     httpHeaderWriteEnd(&socketBuffer);
-    socketBufferFlush(&socketBuffer);
     eventHttpRespondInvoke(&socketBuffer.clientSocket, webPath, httpType, (short) (e ? 200 : 206));
 
     if (httpType == httpHead)

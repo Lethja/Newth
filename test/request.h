@@ -72,6 +72,65 @@ static void RequestResumeFile(void **state) {
     fclose(read), free(globalRootPath), globalRootPath = NULL, mockReset();
 }
 
-const struct CMUnitTest requestTest[] = {cmocka_unit_test(RequestSmallFile), cmocka_unit_test(RequestResumeFile)};
+static void TransferInterruptStart(void **state) {
+    const char *header = "GET / HTTP/1.1" HTTP_EOL HTTP_EOL;
+    char path[FILENAME_MAX] = "/tmp/nt_TransferInterruptStart_File.txt", *fdStr;
+    FILE *read = fopen(path, "w+b");
+    mockSendStream = fopen("/tmp/nt_TransferInterruptStart_Send.txt", "w+b");
+
+    mockOptions = MOCK_SEND, mockSendMaxBuf = BUFSIZ, writeSampleFile(read, SB_DATA_SIZE), mockSendError = EPIPE;
+
+    globalRootPath = malloc(FILENAME_MAX);
+    fdStr = strrchr(path, '/'), strncpy(globalRootPath, path, FILENAME_MAX), globalRootPath[fdStr - path] = '\0';
+    ++fdStr;
+
+    assert_false(handlePath(0, header, fdStr));
+
+    do {
+        SOCKET deferred;
+        fd_set writeWait;
+        RoutineTick(&globalRoutineArray, &writeWait, &deferred);
+    } while (globalRoutineArray.size);
+
+    assert_false(platformFileTell(mockSendStream));
+
+    fclose(read), free(globalRootPath), globalRootPath = NULL, mockReset(), mockSendError = ENOERR;
+}
+
+static void TransferInterruptMiddle(void **state) {
+    const char *header = "GET / HTTP/1.1" HTTP_EOL HTTP_EOL;
+    char path[FILENAME_MAX] = "/tmp/nt_TransferInterruptMiddle_File.txt", *fdStr;
+    FILE *read = fopen(path, "w+b");
+    int i = 0;
+    mockSendStream = fopen("/tmp/nt_TransferInterruptMiddle_Send.txt", "w+b");
+
+    mockOptions = MOCK_SEND, mockSendMaxBuf = 10, writeSampleFile(read, SB_DATA_SIZE);
+
+    globalRootPath = malloc(FILENAME_MAX);
+    fdStr = strrchr(path, '/'), strncpy(globalRootPath, path, FILENAME_MAX), globalRootPath[fdStr - path] = '\0';
+    ++fdStr;
+
+    assert_false(handlePath(0, header, fdStr));
+
+    do {
+        SOCKET deferred;
+        fd_set writeWait;
+        RoutineTick(&globalRoutineArray, &writeWait, &deferred);
+
+        if (i == 3)
+            mockSendError = EPIPE;
+        else
+            ++i;
+
+    } while (globalRoutineArray.size);
+
+    assert_int_equal(platformFileTell(mockSendStream), 40);
+
+    fclose(read), free(globalRootPath), globalRootPath = NULL, mockReset(), mockSendError = ENOERR;
+}
+
+const struct CMUnitTest requestTest[] = {cmocka_unit_test(RequestSmallFile), cmocka_unit_test(RequestResumeFile),
+                                         cmocka_unit_test(TransferInterruptStart),
+                                         cmocka_unit_test(TransferInterruptMiddle)};
 
 #endif /* NEW_TH_TEST_REQUEST_H */

@@ -36,7 +36,7 @@ enum mockOptions {
     MOCK_ALLOC_NO_MEMORY = 1, MOCK_SEND = 2, MOCK_SEND_COUNT = 4
 };
 
-extern int mockOptions;
+extern int mockOptions, mockSendError;
 extern size_t mockSendMaxBuf;
 extern FILE *mockSendStream;
 

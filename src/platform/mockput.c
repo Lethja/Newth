@@ -4,14 +4,14 @@
 
 #pragma region Mockup global variables
 
-int mockOptions = 0;
+int mockOptions = 0, mockSendError = 0;
 size_t mockSendMaxBuf = 0, mockSendCountBuf = 0;
 FILE *mockSendStream = NULL;
 
 #pragma endregion
 
 void mockReset(void) {
-    mockSendCountBuf = mockSendMaxBuf = mockOptions = 0;
+    mockSendCountBuf = mockSendMaxBuf = mockOptions = mockSendError = 0;
 
     if (mockSendStream)
         fflush(mockSendStream), fclose(mockSendStream), mockSendStream = NULL;
@@ -65,6 +65,11 @@ void *__wrap_realloc(void *ptr, size_t size) {
 ssize_t __wrap_send(int fd, const void *buf, size_t n, int flags) {
     if (mockOptions & MOCK_SEND) {
         size_t r;
+
+        if (mockSendError) {
+            errno = mockSendError;
+            return -1;
+        }
 
         if (!mockSendMaxBuf) {
             errno = EAGAIN;
