@@ -338,9 +338,16 @@ short platformPathSystemToWeb(const char *rootPath, char *absolutePath, char *we
  * @param fileName In: Path to file
  * @param fileMode In: Modes to use on the file
  * @return The platforms native open file type
- * @remark Return value must be run through platformFileClose() before memory freeing or leaving scope
+ * @remark Return value must be run through platformFileClose() before freeing memory or leaving scope
  */
 PlatformFile platformFileOpen(const char *fileName, const char *fileMode);
+
+/**
+ * Open a temporary file stream
+ * @return The platforms native memory stream
+ * @remark Return value must be run through platformFileClose() before freeing memory or leaving scope
+ */
+PlatformFile platformFileTemp(const char *prefix);
 
 /**
  * Close a file opened with platformFileOpen

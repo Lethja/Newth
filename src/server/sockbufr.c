@@ -40,7 +40,7 @@ size_t socketBufferFlush(SocketBuffer *self) {
 #pragma region Handle socket error
                 case SOCKET_TRY_AGAIN:
 #if SOCKET_TRY_AGAIN != SOCKET_WOULD_BLOCK
-                case SOCKET_WOULD_BLOCK:
+                    case SOCKET_WOULD_BLOCK:
 #endif
                     return bytesFlushed;
 #pragma endregion
@@ -75,7 +75,7 @@ size_t socketBufferWriteData(SocketBuffer *self, const char *data, size_t len) {
 #pragma region Handle socket error
                 case SOCKET_TRY_AGAIN:
 #if SOCKET_TRY_AGAIN != SOCKET_WOULD_BLOCK
-                case SOCKET_WOULD_BLOCK:
+                    case SOCKET_WOULD_BLOCK:
 #endif
                     break;
 #pragma endregion
@@ -89,7 +89,7 @@ size_t socketBufferWriteData(SocketBuffer *self, const char *data, size_t len) {
 
         if (bytesSent < len) {
 #pragma region Write what does not fit into a memory stream
-            self->buffer = tmpfile();
+            self->buffer = platformFileTemp("thc");
             bytesSent += fwrite(&data[len - (len - bytesSent)], 1, len - bytesSent, self->buffer);
 #pragma endregion
         }
@@ -109,7 +109,7 @@ size_t socketBufferWriteText(SocketBuffer *self, const char *data) {
 
 FILE *socketBufferGetBuffer(SocketBuffer *self) {
     if (!self->buffer)
-        self->buffer = tmpfile();
+        self->buffer = platformFileTemp("thb");
     else
         fseek(self->buffer, 0, SEEK_END);
 
