@@ -109,7 +109,8 @@ static void SelfTestHttpBodyStart(void **state) {
 }
 
 static void RequestSmallFile(void **state) {
-    char path[FILENAME_MAX] = "/tmp/nt_RequestSmallFile_File.txt", *fdStr, *header = "GET / HTTP/1.1" HTTP_EOL HTTP_EOL;
+    const char *header = "GET / HTTP/1.1" HTTP_EOL HTTP_EOL;
+    char path[FILENAME_MAX] = "/tmp/nt_RequestSmallFile_File.txt", *fdStr;
     FILE *read = fopen(path, "w+b");
     mockSendStream = fopen("/tmp/nt_RequestSmallFile_Send.txt", "w+b");
 
@@ -134,6 +135,34 @@ static void RequestSmallFile(void **state) {
     fclose(read), free(globalRootPath), globalRootPath = NULL, mockReset();
 }
 
-const struct CMUnitTest requestTest[] = {cmocka_unit_test(SelfTestHttpBodyStart), cmocka_unit_test(RequestSmallFile)};
+static void RequestResumeFile(void **state) {
+    const char *header = "GET / HTTP/1.1" HTTP_EOL "Range: bytes=50-" HTTP_EOL HTTP_EOL;
+    char path[FILENAME_MAX] = "/tmp/nt_RequestResumeFile_File.txt", *fdStr;
+    FILE *read = fopen(path, "w+b");
+    mockSendStream = fopen("/tmp/nt_RequestResumeFile_Send.txt", "w+b");
+
+    mockOptions = MOCK_SEND, mockSendMaxBuf = BUFSIZ, writeSampleFile(read, SB_DATA_SIZE);
+
+    globalRootPath = malloc(FILENAME_MAX);
+    fdStr = strrchr(path, '/'), strncpy(globalRootPath, path, FILENAME_MAX), globalRootPath[fdStr - path] = '\0';
+    ++fdStr;
+
+    assert_false(handlePath(0, header, fdStr));
+
+    do {
+        SOCKET deferred;
+        fd_set writeWait;
+        RoutineTick(&globalRoutineArray, &writeWait, &deferred);
+    } while (globalRoutineArray.size);
+
+    platformFileSeek(read, 50, SEEK_SET), findHttpBodyStart(mockSendStream);
+
+    CompareStreams(state, read, mockSendStream);
+
+    fclose(read), free(globalRootPath), globalRootPath = NULL, mockReset();
+}
+
+const struct CMUnitTest requestTest[] = {cmocka_unit_test(SelfTestHttpBodyStart), cmocka_unit_test(RequestSmallFile),
+                                         cmocka_unit_test(RequestResumeFile)};
 
 #endif /* NEW_TH_TEST_REQUEST_H */
