@@ -59,6 +59,8 @@ char RoutineArrayAdd(RoutineArray *self, Routine routine);
 
 char RoutineArrayDel(RoutineArray *self, Routine *fileRoutine);
 
+char RoutineArrayDelSocket(RoutineArray *self, SOCKET socket);
+
 Routine RoutineNew(SocketBuffer socketBuffer, const char *webPath);
 
 void RoutineTick(RoutineArray *routineArray, fd_set *serverWriteSockets, SOCKET *deferredSockets);

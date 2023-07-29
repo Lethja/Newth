@@ -125,14 +125,8 @@ size_t FileRoutineContinue(Routine *self) {
             platformFileSeek(self->type.file.file, (PlatformFileOffset) (currentPosition + bytesWrite), SEEK_SET);
 
 #pragma endregion
-    } else {
-        bytesWrite = socketBufferFlush(&self->socketBuffer);
-
-        if (bytesWrite == 0 && (self->socketBuffer.options & SOC_BUF_ERR_FULL) == 0 &&
-            (self->socketBuffer.options & SOC_BUF_ERR_FAIL)) {
-            self->state &= ~STATE_CONTINUE, self->state |= STATE_FINISH;
-        }
-    }
+    } else
+        bytesWrite = 0, self->state &= ~STATE_CONTINUE, self->state |= STATE_FLUSH;
 
     return bytesWrite;
 }
@@ -159,6 +153,39 @@ char RoutineArrayAdd(RoutineArray *self, Routine fileRoutine) {
     return 0;
 }
 
+static inline void RoutineArrayDelIdx(RoutineArray *self, size_t idx) {
+    Routine *array = (Routine *) self->array, *routine = &array[idx];
+    if (routine->state & TYPE_ROUTINE_FILE)
+        FileRoutineFree(&array[idx].type.file);
+    else if (routine->state & TYPE_ROUTINE_DIR)
+        DirectoryRoutineFree(&array[idx].type.dir);
+
+    if (idx + 1 < self->size)
+        memmove(&array[idx], &array[idx + 1], sizeof(Routine) * (self->size - (idx + 1)));
+
+    --self->size;
+
+    if (self->size)
+        platformHeapResize((void **) &self->array, sizeof(Routine), self->size);
+    else
+        free(self->array);
+}
+
+char RoutineArrayDelSocket(RoutineArray *self, SOCKET socket) {
+    size_t i;
+    Routine *array = (Routine *) self->array;
+
+    for (i = 0; i < self->size; i++) {
+        if (array[i].socketBuffer.clientSocket != socket)
+            continue;
+
+        RoutineArrayDelIdx(self, i);
+
+        break; /* There should never be any duplicates in the array, early return */
+    }
+    return 0;
+}
+
 char RoutineArrayDel(RoutineArray *self, Routine *routine) {
     size_t i;
     Routine *array = (Routine *) self->array;
@@ -167,20 +194,7 @@ char RoutineArrayDel(RoutineArray *self, Routine *routine) {
         if (&array[i] != routine)
             continue;
 
-        if (routine->state & TYPE_ROUTINE_FILE)
-            FileRoutineFree(&array[i].type.file);
-        else if (routine->state & TYPE_ROUTINE_DIR)
-            DirectoryRoutineFree(&array[i].type.dir);
-
-        if (i + 1 < self->size)
-            memmove(&array[i], &array[i + 1], sizeof(Routine) * (self->size - (i + 1)));
-
-        --self->size;
-
-        if (self->size)
-            platformHeapResize((void **) &self->array, sizeof(Routine), self->size);
-        else
-            free(self->array);
+        RoutineArrayDelIdx(self, i);
 
         break; /* There should never be any duplicates in the array, early return */
     }
@@ -218,13 +232,17 @@ void RoutineTick(RoutineArray *routineArray, fd_set *serverWriteSockets, SOCKET 
                     ++*deferredSockets;
                     continue;
                 } else {
-                    size_t sent = socketBufferFlush(&routine->socketBuffer);
-                    if (sent == 0 && (routine->socketBuffer.options & SOC_BUF_ERR_FAIL) > 0)
+                    if (routine->socketBuffer.options & SOC_BUF_ERR_FAIL) {
                         routine->state |= STATE_FAIL;
-                    else if (routine->socketBuffer.options & SOC_BUF_ERR_FULL)
-                        break;
-                    else
-                        routine->state |= STATE_CONTINUE;
+                    } else {
+                        size_t sent = socketBufferFlush(&routine->socketBuffer);
+                        if (sent == 0 || routine->socketBuffer.options & SOC_BUF_ERR_FAIL)
+                            routine->state |= STATE_FAIL;
+                        else if (routine->socketBuffer.options & SOC_BUF_ERR_FULL)
+                            break;
+                        else
+                            routine->state |= STATE_FLUSH;
+                    }
 
                     routine->state &= ~STATE_DEFER;
                     break;
@@ -258,8 +276,9 @@ void RoutineTick(RoutineArray *routineArray, fd_set *serverWriteSockets, SOCKET 
                 } else
                     routine->state = STATE_FINISH | TYPE_ROUTINE_FILE;
 
-                break;
-
+                if (!(routine->state & STATE_FAIL))
+                    break;
+                LINEDBG;
             case STATE_FINISH | TYPE_ROUTINE_FILE:
             case STATE_FAIL | TYPE_ROUTINE_FILE:
                 FD_CLR(routine->socketBuffer.clientSocket, serverWriteSockets);
@@ -267,7 +286,7 @@ void RoutineTick(RoutineArray *routineArray, fd_set *serverWriteSockets, SOCKET 
                                       routine->state & STATE_FAIL ? 1 : 0);
                 socketBufferFailFree(&routine->socketBuffer);
                 RoutineArrayDel(routineArray, routine);
-                continue;
+                break;
 
             case STATE_CONTINUE | TYPE_ROUTINE_DIR:
                 if (DirectoryRoutineContinue(routine))
@@ -281,26 +300,14 @@ void RoutineTick(RoutineArray *routineArray, fd_set *serverWriteSockets, SOCKET 
                                       routine->state & STATE_FAIL ? 1 : 0);
                 socketBufferFailFree(&routine->socketBuffer);
                 RoutineArrayDel(routineArray, routine);
-                continue;
+                break;
 
             case STATE_FINISH | TYPE_ROUTINE:
             case STATE_FAIL | TYPE_ROUTINE:
+                FD_CLR(routine->socketBuffer.clientSocket, serverWriteSockets);
                 socketBufferFailFree(&routine->socketBuffer);
                 RoutineArrayDel(routineArray, routine);
-                continue;
-        }
-#pragma endregion
-
-#pragma region Check socket buffer would block
-        if (routine->socketBuffer.options & SOC_BUF_ERR_FAIL) {
-            if (routine->state & TYPE_ROUTINE_FILE)
-                routine->state = TYPE_ROUTINE_FILE | STATE_FAIL;
-            else if (routine->state & TYPE_ROUTINE_FILE)
-                routine->state = TYPE_ROUTINE_DIR | STATE_FAIL;
-            else
-                routine->state = TYPE_ROUTINE | STATE_FAIL;
-
-            FD_CLR(routine->socketBuffer.clientSocket, serverWriteSockets);
+                break;
         }
 #pragma endregion
 

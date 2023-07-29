@@ -279,6 +279,7 @@ void serverTick(void) {
                 } else {
                     if (handleConnection(i)) {
                         eventSocketCloseInvoke(&i);
+                        RoutineArrayDelSocket(&globalRoutineArray, i);
                         CLOSE_SOCKET(i);
                         FD_CLR(i, &serverReadSockets);
                     }
