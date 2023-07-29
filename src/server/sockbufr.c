@@ -35,7 +35,8 @@ size_t socketBufferFlush(SocketBuffer *self) {
 
         flush = send(self->clientSocket, data, read, 0);
         if (flush == -1) {
-            switch (platformSocketGetLastError()) {
+            int error = platformSocketGetLastError();
+            switch (error) { /* NOLINT(*-multiway-paths-covered) */
 #pragma region Handle socket error
                 case SOCKET_TRY_AGAIN:
 #if SOCKET_TRY_AGAIN != SOCKET_WOULD_BLOCK
@@ -69,8 +70,8 @@ size_t socketBufferWriteData(SocketBuffer *self, const char *data, size_t len) {
         sent = send(self->clientSocket, data, len, 0);
 
         if (sent == -1) {
-
-            switch (platformSocketGetLastError()) {
+            int error = platformSocketGetLastError();
+            switch (error) { /* NOLINT(*-multiway-paths-covered) */
 #pragma region Handle socket error
                 case SOCKET_TRY_AGAIN:
 #if SOCKET_TRY_AGAIN != SOCKET_WOULD_BLOCK
