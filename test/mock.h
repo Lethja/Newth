@@ -26,6 +26,7 @@ static void MockMalloc(void **state) {
     mockOptions = MOCK_ALLOC_NO_MEMORY;
     test = malloc(1);
     assert_null(test);
+    assert_int_equal(platformSocketGetLastError(), ENOMEM);
 }
 
 static void MockRealloc(void **state) {
@@ -39,6 +40,7 @@ static void MockRealloc(void **state) {
     mockOptions = MOCK_ALLOC_NO_MEMORY;
     test = realloc(new, 3);
     assert_null(test);
+    assert_int_equal(platformSocketGetLastError(), ENOMEM);
     assert_non_null(new);
 
     if (!test)
@@ -77,7 +79,34 @@ static void MockSend(void **state) {
     assert_int_equal(platformSocketGetLastError(), EAGAIN);
 }
 
-const struct CMUnitTest mockTest[] = {cmocka_unit_test(MockMalloc), cmocka_unit_test(MockRealloc),
-                                      cmocka_unit_test(MockSend)};
+static void MockHttpBodyFindStart(void **state) {
+    const char *http = "HTTP/1.1 200 OK\n"
+                       "Date: Thu, 27 Jul 2023 05:57:33 GMT" HTTP_EOL
+                       "Content-Type: text/html; charset=utf-8" HTTP_EOL
+                       "Content-Length: 6434" HTTP_EOL HTTP_EOL;
+    const char *body = "<!DOCTYPE HTML>" HTTP_EOL
+                       "<html>" HTTP_EOL HTTP_EOL
+                       "<head>\n"
+                       "<title>There are no easter eggs here</title>\n"
+                       "</head>\n"
+                       "</html>";
+
+    FILE *tmpFile1 = tmpfile(), *tmpFile2;
+    long correctPosition, testPosition;
+
+    fwrite(http, strlen(http), 1, tmpFile1), correctPosition = ftell(tmpFile1);
+
+    fwrite(body, strlen(body), 1, tmpFile1);
+    testPosition = findHttpBodyStart(tmpFile1);
+    assert_int_equal(correctPosition, testPosition);
+
+    tmpFile2 = tmpfile(), fwrite(body, 1, strlen(body), tmpFile2), rewind(tmpFile2);
+    CompareStreams(state, tmpFile1, tmpFile2);
+
+    fclose(tmpFile1), fclose(tmpFile2);
+}
+
+const struct CMUnitTest mockTest[] = {cmocka_unit_test(MockHttpBodyFindStart), cmocka_unit_test(MockMalloc),
+                                      cmocka_unit_test(MockRealloc), cmocka_unit_test(MockSend)};
 
 #endif /* NEW_TH_TEST_MOCK_H */
