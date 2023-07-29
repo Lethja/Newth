@@ -256,119 +256,15 @@ unsigned short getPort(const SOCKET *listenSocket) {
 }
 
 void serverTick(void) {
-    SOCKET i, d;
+    SOCKET i, deferredSockets;
     fd_set readyToReadSockets, readyToWriteSockets/*, errorSockets*/;
     struct timeval globalSelectSleep;
 
     while (serverRun) {
-        Routine *routineArray = (Routine *) globalRoutineArray.array;
-
-        for (i = d = 0; i < globalRoutineArray.size; ++i) {
-            Routine *routine = &routineArray[i];
-
-#pragma region Routine State Machine
-
-            switch (routine->state) {
-                case STATE_DEFER | TYPE_ROUTINE:
-                case STATE_DEFER | TYPE_ROUTINE_FILE:
-                case STATE_DEFER | TYPE_ROUTINE_DIR:
-                    if (FD_ISSET(routine->socketBuffer.clientSocket, &serverWriteSockets)) {
-                        ++d;
-                        continue;
-                    } else {
-                        size_t sent = socketBufferFlush(&routine->socketBuffer);
-                        if (sent == 0 && (routine->socketBuffer.options & SOC_BUF_ERR_FAIL) > 0)
-                            routine->state |= STATE_FAIL;
-                        else if (routine->socketBuffer.options & SOC_BUF_ERR_FULL)
-                            break;
-                        else
-                            routine->state |= STATE_CONTINUE;
-
-                        routine->state &= ~STATE_DEFER;
-                        break;
-                    }
-
-                case STATE_FLUSH | TYPE_ROUTINE:
-                case STATE_FLUSH | TYPE_ROUTINE_FILE:
-                case STATE_FLUSH | TYPE_ROUTINE_DIR:
-                    if (routine->socketBuffer.buffer) {
-                        size_t sent = socketBufferFlush(&routine->socketBuffer);
-                        if (sent == 0 && (routine->socketBuffer.options & SOC_BUF_ERR_FAIL) > 0)
-                            routine->state |= STATE_FAIL;
-                    } else {
-                        routine->state |= STATE_CONTINUE, routine->state &= ~STATE_FLUSH;
-                    }
-                    break;
-
-                case STATE_CONTINUE | TYPE_ROUTINE:
-                    routine->state |= STATE_FINISH, routine->state &= ~STATE_CONTINUE;
-                    break;
-
-                case STATE_CONTINUE | TYPE_ROUTINE_FILE:
-                    if (FileRoutineContinue(routine) || routine->socketBuffer.options & SOC_BUF_ERR_FULL)
-                        break;
-
-                    if (routine->socketBuffer.options & SOC_BUF_ERR_FAIL)
-                        routine->state = STATE_FAIL | TYPE_ROUTINE_FILE;
-                    else if (routine->socketBuffer.buffer) {
-                        FD_SET(routine->socketBuffer.clientSocket, &serverWriteSockets);
-                        routine->state = STATE_DEFER | TYPE_ROUTINE_FILE;
-                    } else
-                        routine->state = STATE_FINISH | TYPE_ROUTINE_FILE;
-
-                    break;
-
-                case STATE_FINISH | TYPE_ROUTINE_FILE:
-                case STATE_FAIL | TYPE_ROUTINE_FILE:
-                    FD_CLR(routine->socketBuffer.clientSocket, &serverWriteSockets);
-                    eventHttpFinishInvoke(&routine->socketBuffer.clientSocket, routine->webPath, httpGet,
-                                          routine->state & STATE_FAIL ? 1 : 0);
-                    socketBufferFailFree(&routine->socketBuffer);
-                    RoutineArrayDel(&globalRoutineArray, routine);
-                    continue;
-
-                case STATE_CONTINUE | TYPE_ROUTINE_DIR:
-                    if (DirectoryRoutineContinue(routine))
-                        break;
-                    LINEDBG;
-                    /* Fall through */
-                case STATE_FINISH | TYPE_ROUTINE_DIR:
-                case STATE_FAIL | TYPE_ROUTINE_DIR:
-                    FD_CLR(routine->socketBuffer.clientSocket, &serverWriteSockets);
-                    eventHttpFinishInvoke(&routine->socketBuffer.clientSocket, routine->webPath, httpGet,
-                                          routine->state & STATE_FAIL ? 1 : 0);
-                    socketBufferFailFree(&routine->socketBuffer);
-                    RoutineArrayDel(&globalRoutineArray, routine);
-                    continue;
-
-                case STATE_FINISH | TYPE_ROUTINE:
-                case STATE_FAIL | TYPE_ROUTINE:
-                    socketBufferFailFree(&routine->socketBuffer);
-                    RoutineArrayDel(&globalRoutineArray, routine);
-                    continue;
-            }
-
-#pragma endregion
-
-#pragma region Check socket buffer would block
-
-            if (routine->socketBuffer.options & SOC_BUF_ERR_FAIL) {
-                if (routine->state & TYPE_ROUTINE_FILE)
-                    routine->state = TYPE_ROUTINE_FILE | STATE_FAIL;
-                else if (routine->state & TYPE_ROUTINE_FILE)
-                    routine->state = TYPE_ROUTINE_DIR | STATE_FAIL;
-                else
-                    routine->state = TYPE_ROUTINE | STATE_FAIL;
-
-                FD_CLR(routine->socketBuffer.clientSocket, &serverWriteSockets);
-            }
-
-#pragma endregion
-
-        }
+        RoutineTick(&globalRoutineArray, &serverWriteSockets, &deferredSockets);
 
         globalSelectSleep.tv_usec = 0;
-        globalSelectSleep.tv_sec = (globalRoutineArray.size - d) ? 0 : 60;
+        globalSelectSleep.tv_sec = (globalRoutineArray.size - deferredSockets) ? 0 : 60;
 
         readyToReadSockets = serverReadSockets;
         readyToWriteSockets = serverWriteSockets;

@@ -121,15 +121,16 @@ static void RequestSmallFile(void **state) {
 
     assert_false(handlePath(0, header, fdStr));
 
-    while (FileRoutineContinue(globalRoutineArray.array));
-
-    while (socketBufferFlush(&globalRoutineArray.array->socketBuffer));
+    do {
+        SOCKET deferred;
+        fd_set writeWait;
+        RoutineTick(&globalRoutineArray, &writeWait, &deferred);
+    } while (globalRoutineArray.size);
 
     rewind(read), findHttpBodyStart(mockSendStream);
 
     CompareStreams(state, read, mockSendStream);
 
-    FileRoutineFree(&globalRoutineArray.array->type.file);
     fclose(read), free(globalRootPath), globalRootPath = NULL, mockReset();
 }
 

@@ -167,9 +167,9 @@ char RoutineArrayDel(RoutineArray *self, Routine *routine) {
         if (&array[i] != routine)
             continue;
 
-        if(routine->state & TYPE_ROUTINE_FILE)
+        if (routine->state & TYPE_ROUTINE_FILE)
             FileRoutineFree(&array[i].type.file);
-        else if(routine->state & TYPE_ROUTINE_DIR)
+        else if (routine->state & TYPE_ROUTINE_DIR)
             DirectoryRoutineFree(&array[i].type.dir);
 
         if (i + 1 < self->size)
@@ -200,4 +200,109 @@ Routine RoutineNew(SocketBuffer socketBuffer, const char *webPath) {
     }
 
     return self;
+}
+
+void RoutineTick(RoutineArray *routineArray, fd_set *serverWriteSockets, SOCKET *deferredSockets) {
+    SOCKET i;
+    Routine *routines = (Routine *) routineArray->array;
+
+    for (i = *deferredSockets = 0; i < routineArray->size; ++i) {
+        Routine *routine = &routines[i];
+
+#pragma region Routine State Machine
+        switch (routine->state) {
+            case STATE_DEFER | TYPE_ROUTINE:
+            case STATE_DEFER | TYPE_ROUTINE_FILE:
+            case STATE_DEFER | TYPE_ROUTINE_DIR:
+                if (FD_ISSET(routine->socketBuffer.clientSocket, serverWriteSockets)) {
+                    ++*deferredSockets;
+                    continue;
+                } else {
+                    size_t sent = socketBufferFlush(&routine->socketBuffer);
+                    if (sent == 0 && (routine->socketBuffer.options & SOC_BUF_ERR_FAIL) > 0)
+                        routine->state |= STATE_FAIL;
+                    else if (routine->socketBuffer.options & SOC_BUF_ERR_FULL)
+                        break;
+                    else
+                        routine->state |= STATE_CONTINUE;
+
+                    routine->state &= ~STATE_DEFER;
+                    break;
+                }
+
+            case STATE_FLUSH | TYPE_ROUTINE:
+            case STATE_FLUSH | TYPE_ROUTINE_FILE:
+            case STATE_FLUSH | TYPE_ROUTINE_DIR:
+                if (routine->socketBuffer.buffer) {
+                    size_t sent = socketBufferFlush(&routine->socketBuffer);
+                    if (sent == 0 && (routine->socketBuffer.options & SOC_BUF_ERR_FAIL) > 0)
+                        routine->state |= STATE_FAIL;
+                } else {
+                    routine->state |= STATE_CONTINUE, routine->state &= ~STATE_FLUSH;
+                }
+                break;
+
+            case STATE_CONTINUE | TYPE_ROUTINE:
+                routine->state |= STATE_FINISH, routine->state &= ~STATE_CONTINUE;
+                break;
+
+            case STATE_CONTINUE | TYPE_ROUTINE_FILE:
+                if (FileRoutineContinue(routine) || routine->socketBuffer.options & SOC_BUF_ERR_FULL)
+                    break;
+
+                if (routine->socketBuffer.options & SOC_BUF_ERR_FAIL)
+                    routine->state = STATE_FAIL | TYPE_ROUTINE_FILE;
+                else if (routine->socketBuffer.buffer) {
+                    FD_SET(routine->socketBuffer.clientSocket, serverWriteSockets);
+                    routine->state = STATE_DEFER | TYPE_ROUTINE_FILE;
+                } else
+                    routine->state = STATE_FINISH | TYPE_ROUTINE_FILE;
+
+                break;
+
+            case STATE_FINISH | TYPE_ROUTINE_FILE:
+            case STATE_FAIL | TYPE_ROUTINE_FILE:
+                FD_CLR(routine->socketBuffer.clientSocket, serverWriteSockets);
+                eventHttpFinishInvoke(&routine->socketBuffer.clientSocket, routine->webPath, httpGet,
+                                      routine->state & STATE_FAIL ? 1 : 0);
+                socketBufferFailFree(&routine->socketBuffer);
+                RoutineArrayDel(routineArray, routine);
+                continue;
+
+            case STATE_CONTINUE | TYPE_ROUTINE_DIR:
+                if (DirectoryRoutineContinue(routine))
+                    break;
+                LINEDBG;
+                /* Fall through */
+            case STATE_FINISH | TYPE_ROUTINE_DIR:
+            case STATE_FAIL | TYPE_ROUTINE_DIR:
+                FD_CLR(routine->socketBuffer.clientSocket, serverWriteSockets);
+                eventHttpFinishInvoke(&routine->socketBuffer.clientSocket, routine->webPath, httpGet,
+                                      routine->state & STATE_FAIL ? 1 : 0);
+                socketBufferFailFree(&routine->socketBuffer);
+                RoutineArrayDel(routineArray, routine);
+                continue;
+
+            case STATE_FINISH | TYPE_ROUTINE:
+            case STATE_FAIL | TYPE_ROUTINE:
+                socketBufferFailFree(&routine->socketBuffer);
+                RoutineArrayDel(routineArray, routine);
+                continue;
+        }
+#pragma endregion
+
+#pragma region Check socket buffer would block
+        if (routine->socketBuffer.options & SOC_BUF_ERR_FAIL) {
+            if (routine->state & TYPE_ROUTINE_FILE)
+                routine->state = TYPE_ROUTINE_FILE | STATE_FAIL;
+            else if (routine->state & TYPE_ROUTINE_FILE)
+                routine->state = TYPE_ROUTINE_DIR | STATE_FAIL;
+            else
+                routine->state = TYPE_ROUTINE | STATE_FAIL;
+
+            FD_CLR(routine->socketBuffer.clientSocket, serverWriteSockets);
+        }
+#pragma endregion
+
+    }
 }

@@ -61,4 +61,6 @@ char RoutineArrayDel(RoutineArray *self, Routine *fileRoutine);
 
 Routine RoutineNew(SocketBuffer socketBuffer, const char *webPath);
 
+void RoutineTick(RoutineArray *routineArray, fd_set *serverWriteSockets, SOCKET *deferredSockets);
+
 #endif /* OPEN_WEB_ROUTINE_H */
