@@ -343,13 +343,6 @@ short platformPathSystemToWeb(const char *rootPath, char *absolutePath, char *we
 PlatformFile platformFileOpen(const char *fileName, const char *fileMode);
 
 /**
- * Open a temporary file stream
- * @return The platforms native memory stream
- * @remark Return value must be run through platformFileClose() before freeing memory or leaving scope
- */
-PlatformFile platformFileTemp(const char *prefix);
-
-/**
  * Close a file opened with platformFileOpen
  * @param stream In: The file stream to be closed
  * @return 0 on success, other on error
@@ -381,6 +374,35 @@ PlatformFileOffset platformFileTell(PlatformFile stream);
  * @return The number of elements read or 0 when no elements have been read
  */
 size_t platformFileRead(void *buffer, size_t size, size_t n, PlatformFile stream);
+
+/**
+ * Open a temporary file stream
+ * @return The platforms native memory stream
+ * @remark Return value must be run through platformMemoryStreamFree() before freeing memory or leaving scope
+ */
+FILE *platformMemoryStreamNew(void);
+
+/**
+ * Free a memory stream
+ * @param stream The memory stream to free
+ */
+void platformMemoryStreamFree(FILE *stream);
+
+/**
+ * Seek through a memory stream created with platformMemoryStreamNew to a certain position
+ * @param stream In: The memory stream to seek on
+ * @param offset In: The amount of bytes to seek, use a negative number to rewind
+ * @param origin In: Where to seek from, start, end or current position
+ * @return
+ */
+int platformMemoryStreamSeek(FILE *stream, long offset, int origin);
+
+/**
+ * Get the current seek position of a stream created with platformMemoryStreamNew
+ * @param stream In: The stream to get the position of
+ * @return The position of the stream on success, -1 on error
+ */
+long platformMemoryStreamTell(FILE *stream);
 
 /**
  * Set the socket to be blocking or non-blocking in a platform agnostic way

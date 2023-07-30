@@ -498,18 +498,6 @@ PlatformFile platformFileOpen(const char *fileName, const char *fileMode) {
     return stream;
 }
 
-PlatformFile platformFileTemp(const char *prefix) {
-    char path[MAX_PATH + 1];
-    if (GetTempPath(MAX_PATH + 1, (LPSTR) &path)) {
-        char tmpAbs[MAX_PATH];
-        if (GetTempFileName(path, prefix, 0, (LPSTR) &tmpAbs))
-            return CreateFile((LPTSTR) tmpAbs, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
-                              FILE_ATTRIBUTE_TEMPORARY | FILE_DELETE_ON_CLOSE, NULL);
-    }
-
-    return INVALID_HANDLE_VALUE;
-}
-
 int platformFileClose(PlatformFile stream) {
     return CloseHandle(stream);
 }

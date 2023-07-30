@@ -11,6 +11,7 @@
 #define SOCKET_TRY_AGAIN SOCKET_WOULD_BLOCK
 #define snprintf _snprintf
 
+#include <stdio.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <windows.h>

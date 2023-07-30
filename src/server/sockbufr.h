@@ -10,8 +10,8 @@ enum SOC_BUF_OPT {
 };
 
 typedef struct SocketBuffer {
-    PlatformFileOffset idx;
-    PlatformFile buffer;
+    long idx;
+    FILE *buffer;
     SOCKET clientSocket;
     char options;
 } SocketBuffer;

@@ -176,3 +176,20 @@ char platformHeapResize(void **heap, size_t elementSize, size_t elementNumber) {
     }
     return 1;
 }
+
+FILE *platformMemoryStreamNew(void) {
+    return tmpfile();
+}
+
+void platformMemoryStreamFree(FILE *stream) {
+    fclose(stream);
+}
+
+int platformMemoryStreamSeek(FILE *stream, long offset, int origin) {
+    return fseek(stream, offset, origin);
+}
+
+long platformMemoryStreamTell(FILE *stream) {
+    return ftell(stream);
+}
+

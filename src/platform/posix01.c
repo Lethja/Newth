@@ -386,10 +386,6 @@ PlatformFile platformFileOpen(const char *fileName, const char *fileMode) {
     return fopen(fileName, fileMode);
 }
 
-PlatformFile platformFileTemp(const char *prefix) {
-    return tmpfile();
-}
-
 int platformFileClose(PlatformFile stream) {
     return fclose(stream);
 }

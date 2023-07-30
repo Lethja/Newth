@@ -4,7 +4,7 @@
 
 void socketBufferFailFree(SocketBuffer *socketBuffer) {
     if (socketBuffer->buffer)
-        fclose(socketBuffer->buffer);
+        platformMemoryStreamFree(socketBuffer->buffer);
 }
 
 SocketBuffer socketBufferNew(SOCKET clientSocket, char options) {
@@ -21,19 +21,19 @@ size_t socketBufferFlush(SocketBuffer *self) {
     if (!self->buffer)
         return bytesFlushed;
 
-    platformFileSeek(self->buffer, self->idx, SEEK_SET);
+    platformMemoryStreamSeek(self->buffer, self->idx, SEEK_SET);
 
     do {
         read = fread(data, 1, SB_DATA_SIZE, self->buffer);
 
         if (read == 0) {
 #pragma region Handle end of memory stream
-            fclose(self->buffer), self->buffer = NULL, self->idx = 0;
+            platformMemoryStreamFree(self->buffer), self->buffer = NULL, self->idx = 0;
 #pragma endregion
             return bytesFlushed;
         }
 
-        flush = send(self->clientSocket, data, read, 0);
+        flush = send(self->clientSocket, data, (SOCK_BUF_TYPE) read, 0);
         if (flush == -1) {
             int error = platformSocketGetLastError();
             switch (error) { /* NOLINT(*-multiway-paths-covered) */
@@ -50,13 +50,13 @@ size_t socketBufferFlush(SocketBuffer *self) {
             }
 
         } else if (flush < read) {
-            platformFileSeek(self->buffer, (PlatformFileOffset) (flush - read), SEEK_CUR);
-            self->idx += (PlatformFileOffset) flush;
+            platformMemoryStreamSeek(self->buffer, (long) (flush - read), SEEK_CUR);
+            self->idx += (long) flush;
             bytesFlushed += flush;
             return bytesFlushed;
         }
 
-        self->idx += (PlatformFileOffset) flush;
+        self->idx += (long) flush;
         bytesFlushed += flush;
     } while (1);
 }
@@ -89,14 +89,14 @@ size_t socketBufferWriteData(SocketBuffer *self, const char *data, size_t len) {
 
         if (bytesSent < len) {
 #pragma region Write what does not fit into a memory stream
-            self->buffer = platformFileTemp("thc");
+            self->buffer = platformMemoryStreamNew();
             bytesSent += fwrite(&data[len - (len - bytesSent)], 1, len - bytesSent, self->buffer);
 #pragma endregion
         }
         return bytesSent;
     } else {
 #pragma region Append onto the end of the memory stream
-        platformFileSeek(self->buffer, 0, SEEK_END);
+        platformMemoryStreamSeek(self->buffer, 0, SEEK_END);
         bytesSent = fwrite(data, 1, len, self->buffer);
 #pragma endregion
         return bytesSent;
@@ -109,9 +109,9 @@ size_t socketBufferWriteText(SocketBuffer *self, const char *data) {
 
 FILE *socketBufferGetBuffer(SocketBuffer *self) {
     if (!self->buffer)
-        self->buffer = platformFileTemp("thb");
+        self->buffer = platformMemoryStreamNew();
     else
-        fseek(self->buffer, 0, SEEK_END);
+        platformMemoryStreamSeek(self->buffer, 0, SEEK_END);
 
     return self->buffer;
 }
