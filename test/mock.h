@@ -106,6 +106,8 @@ static void MockHttpBodyFindStart(void **state) {
     fclose(tmpFile1), fclose(tmpFile2);
 }
 
+#pragma clang diagnostic pop
+
 const struct CMUnitTest mockTest[] = {cmocka_unit_test(MockHttpBodyFindStart), cmocka_unit_test(MockMalloc),
                                       cmocka_unit_test(MockRealloc), cmocka_unit_test(MockSend)};
 

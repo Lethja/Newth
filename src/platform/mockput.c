@@ -6,12 +6,13 @@
 
 int mockOptions = 0, mockSendError = 0;
 size_t mockSendMaxBuf = 0, mockSendCountBuf = 0;
-FILE *mockSendStream = NULL;
+FILE *mockSendStream = NULL, *mockLastFileClosed = NULL;
+void *mockLastFree = NULL;
 
 #pragma endregion
 
 void mockReset(void) {
-    mockSendCountBuf = mockSendMaxBuf = mockOptions = mockSendError = 0;
+    mockSendCountBuf = mockSendMaxBuf = mockOptions = mockSendError = 0, mockLastFree = mockLastFileClosed = NULL;
 
     if (mockSendStream)
         fflush(mockSendStream), fclose(mockSendStream), mockSendStream = NULL;
@@ -34,6 +35,10 @@ extern void *__real_malloc(size_t size);
 extern void *__real_realloc(void *ptr, size_t size);
 
 extern ssize_t *__real_send(int fd, const void *buf, size_t n, int flags);
+
+extern void __real_free(void *ptr);
+
+extern int __real_fclose(FILE *ptr);
 
 void *__wrap_calloc(size_t nmemb, size_t size) {
     if (mockOptions & MOCK_ALLOC_NO_MEMORY) {
@@ -60,6 +65,15 @@ void *__wrap_realloc(void *ptr, size_t size) {
     }
 
     return __real_realloc(ptr, size);
+}
+
+void __wrap_free(void *ptr) {
+    mockLastFree = ptr, __real_free(ptr);
+}
+
+int __wrap_fclose(FILE *file) {
+    mockLastFileClosed = file;
+    return __real_fclose(file);
 }
 
 ssize_t __wrap_send(int fd, const void *buf, size_t n, int flags) {

@@ -129,6 +129,8 @@ static void TransferInterruptMiddle(void **state) {
     fclose(read), free(globalRootPath), globalRootPath = NULL, mockReset(), mockSendError = ENOERR;
 }
 
+#pragma clang diagnostic pop
+
 const struct CMUnitTest requestTest[] = {cmocka_unit_test(RequestSmallFile), cmocka_unit_test(RequestResumeFile),
                                          cmocka_unit_test(TransferInterruptStart),
                                          cmocka_unit_test(TransferInterruptMiddle)};

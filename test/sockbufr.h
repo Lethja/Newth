@@ -18,6 +18,18 @@
 
 #include <cmocka.h>
 
+#pragma endregion
+
+static void SocketMemoryFree(void **state) {
+    SocketBuffer socketBuffer = socketBufferNew(0, 0);
+
+    mockReset(), socketBuffer.buffer = platformMemoryStreamNew();
+
+    assert_true(&socketBuffer.buffer);
+    socketBufferFailFree(&socketBuffer);
+    assert_ptr_equal(socketBuffer.buffer, mockLastFileClosed);
+}
+
 static void SocketTextWrite(void **state) {
     const char *text = "Hello Socket Buffer Text";
     const size_t textLen = strlen(text);
@@ -89,8 +101,10 @@ static void SocketFlush(void **state) {
     mockReset();
 }
 
-const struct CMUnitTest socketTest[] = {cmocka_unit_test(SocketDataWrite), cmocka_unit_test(SocketTextWrite),
-                                        cmocka_unit_test(SocketFlush)};
+#pragma clang diagnostic pop
+
+const struct CMUnitTest socketTest[] = {cmocka_unit_test(SocketDataWrite), cmocka_unit_test(SocketMemoryFree),
+                                        cmocka_unit_test(SocketTextWrite), cmocka_unit_test(SocketFlush)};
 
 
 #endif /* NEW_TH_TEST_SOCKET_BUFFER_H */
