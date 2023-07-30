@@ -7,18 +7,19 @@
 
 void platformPathCombine(char *output, const char *path1, const char *path2) {
     const char pathDivider = '/';
-    size_t a = strlen(path1), path2Jump = 1;
+    size_t path1Len = strlen(path1);
+    char p1[FILENAME_MAX], *p2;
 
-    if (path1[a - 1] != pathDivider && path2[0] != pathDivider)
-        ++path2Jump;
-    else if (path1[a - 1] == pathDivider && path2[0] == pathDivider)
-        ++path2;
+    if (path1Len < FILENAME_MAX) {
+        size_t idx = path1Len - 1;
+        strcpy(p1, path1);
+        if (p1[idx] == pathDivider)
+            p1[idx] = '\0';
+    }
 
-    strncpy(output, path1, FILENAME_MAX);
-    if (path2Jump > 1)
-        output[a] = pathDivider;
+    p2 = (char *) (path2[0] == pathDivider ? &path2[1] : path2);
 
-    strncpy(output + a + path2Jump - 1, path2, FILENAME_MAX);
+    snprintf(output, FILENAME_MAX, "%s/%s", p1, p2);
 }
 
 void platformCloseBindSockets(fd_set *sockets, SOCKET max) {
