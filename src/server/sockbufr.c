@@ -40,7 +40,7 @@ size_t socketBufferFlush(SocketBuffer *self) {
 #pragma region Handle socket error
                 case SOCKET_TRY_AGAIN:
 #if SOCKET_TRY_AGAIN != SOCKET_WOULD_BLOCK
-                    case SOCKET_WOULD_BLOCK:
+                case SOCKET_WOULD_BLOCK:
 #endif
                     return bytesFlushed;
 #pragma endregion
@@ -49,7 +49,7 @@ size_t socketBufferFlush(SocketBuffer *self) {
                     return 0;
             }
 
-        } else if (flush < read) {
+        } else if ((size_t) flush < read) {
             platformMemoryStreamSeek(self->buffer, (long) (flush - read), SEEK_CUR);
             self->idx += (long) flush;
             bytesFlushed += flush;
@@ -75,7 +75,7 @@ size_t socketBufferWriteData(SocketBuffer *self, const char *data, size_t len) {
 #pragma region Handle socket error
                 case SOCKET_TRY_AGAIN:
 #if SOCKET_TRY_AGAIN != SOCKET_WOULD_BLOCK
-                    case SOCKET_WOULD_BLOCK:
+                case SOCKET_WOULD_BLOCK:
 #endif
                     break;
 #pragma endregion

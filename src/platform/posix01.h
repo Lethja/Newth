@@ -33,6 +33,10 @@ typedef FILE *PlatformFile;
 #define STD_FILE_TYPE size_t
 #define PF_OFFSET "ji"
 
+#ifndef SB_DATA_SIZE
+#define SB_DATA_SIZE BUFSIZ
+#endif
+
 #ifndef SOCKET_TRY_AGAIN
 #define SOCKET_TRY_AGAIN EAGAIN
 #endif

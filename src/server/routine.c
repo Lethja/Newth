@@ -265,8 +265,14 @@ void RoutineTick(RoutineArray *routineArray, fd_set *serverWriteSockets, SOCKET 
                 break;
 
             case STATE_CONTINUE | TYPE_ROUTINE_FILE:
-                if (FileRoutineContinue(routine) || routine->socketBuffer.options & SOC_BUF_ERR_FULL)
+                if (FileRoutineContinue(routine) || routine->socketBuffer.options & SOC_BUF_ERR_FULL) {
+                    if(routine->socketBuffer.buffer && platformMemoryStreamTell(routine->socketBuffer.buffer) > SB_DATA_SIZE) {
+                        FD_SET(routine->socketBuffer.clientSocket, serverWriteSockets);
+                        routine->state = STATE_DEFER | TYPE_ROUTINE_FILE;
+                    }
+
                     break;
+                }
 
                 if (routine->socketBuffer.options & SOC_BUF_ERR_FAIL)
                     routine->state = STATE_FAIL | TYPE_ROUTINE_FILE;
@@ -283,7 +289,7 @@ void RoutineTick(RoutineArray *routineArray, fd_set *serverWriteSockets, SOCKET 
             case STATE_FAIL | TYPE_ROUTINE_FILE:
                 FD_CLR(routine->socketBuffer.clientSocket, serverWriteSockets);
                 eventHttpFinishInvoke(&routine->socketBuffer.clientSocket, routine->webPath, httpGet,
-                                      routine->state & STATE_FAIL ? 1 : 0);
+                                      (short) (routine->state & STATE_FAIL ? 1 : 0));
                 socketBufferFailFree(&routine->socketBuffer);
                 RoutineArrayDel(routineArray, routine);
                 break;
@@ -297,7 +303,7 @@ void RoutineTick(RoutineArray *routineArray, fd_set *serverWriteSockets, SOCKET 
             case STATE_FAIL | TYPE_ROUTINE_DIR:
                 FD_CLR(routine->socketBuffer.clientSocket, serverWriteSockets);
                 eventHttpFinishInvoke(&routine->socketBuffer.clientSocket, routine->webPath, httpGet,
-                                      routine->state & STATE_FAIL ? 1 : 0);
+                                      (short) (routine->state & STATE_FAIL ? 1 : 0));
                 socketBufferFailFree(&routine->socketBuffer);
                 RoutineArrayDel(routineArray, routine);
                 break;

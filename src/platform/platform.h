@@ -30,10 +30,6 @@
 
 #endif
 
-#ifndef SB_DATA_SIZE
-#define SB_DATA_SIZE BUFSIZ
-#endif
-
 #define ADAPTER_NAME_LENGTH 512
 
 typedef struct Address {

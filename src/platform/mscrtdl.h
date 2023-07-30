@@ -11,6 +11,10 @@
 #define SOCKET_TRY_AGAIN SOCKET_WOULD_BLOCK
 #define snprintf _snprintf
 
+#ifndef SB_DATA_SIZE
+#define SB_DATA_SIZE 8192
+#endif
+
 #include <stdio.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
