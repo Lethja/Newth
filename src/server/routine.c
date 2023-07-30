@@ -253,8 +253,8 @@ void RoutineTick(RoutineArray *routineArray, fd_set *serverWriteSockets, SOCKET 
             case STATE_FLUSH | TYPE_ROUTINE_DIR:
                 if (routine->socketBuffer.buffer) {
                     size_t sent = socketBufferFlush(&routine->socketBuffer);
-                    if (sent == 0 && (routine->socketBuffer.options & SOC_BUF_ERR_FAIL) > 0)
-                        routine->state |= STATE_FAIL;
+                    if (sent == 0 && (routine->socketBuffer.options & SOC_BUF_ERR_FAIL))
+                        routine->state |= STATE_FAIL, routine->state &= ~STATE_FLUSH;
                 } else {
                     routine->state |= STATE_CONTINUE, routine->state &= ~STATE_FLUSH;
                 }
