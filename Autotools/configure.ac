@@ -6,6 +6,14 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_MACRO_DIRS([m4])
 
+# Check if this is a Windows build
+AC_MSG_CHECKING([whether to build with mingw for a Windows host])
+AS_CASE([$host_os],
+        [*mingw*], [windows_host=yes],
+        [windows_host=no])
+AC_MSG_RESULT([$windows_host])
+AM_CONDITIONAL([WINDOWS_HOST], [test "x$windows_host" = "xyes"])
+
 m4_include([m4/ax_check_enable_debug.m4])
 AX_CHECK_ENABLE_DEBUG([no])
 

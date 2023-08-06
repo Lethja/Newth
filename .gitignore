@@ -1,0 +1,10 @@
+# Typical build system file types
+*.o
+*.deps
+*.dirstamp
+
+# Build system directories
+Autotools
+CMake
+CodeBlocks
+VC6
