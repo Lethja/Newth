@@ -13,16 +13,16 @@
 #define inline
 #endif
 
+#ifdef MOCK
+#include "mockput.h"
+#endif
+
 #ifdef _WIN32
 
 /* Disable unknown pragma warning */
 #pragma warning(disable:4068)
 
 #include "mscrtdl.h"
-
-#elif MOCK
-
-#include "mockput.h"
 
 #else
 

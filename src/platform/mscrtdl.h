@@ -8,7 +8,6 @@
 #define sa_family_t short
 #define PF_OFFSET "I64d"
 #define SOCKET_WOULD_BLOCK WSAEWOULDBLOCK
-#define SOCKET_TRY_AGAIN SOCKET_WOULD_BLOCK
 #define snprintf _snprintf
 
 #ifndef SB_DATA_SIZE
@@ -141,6 +140,10 @@ typedef struct winSockNativeDir {
 #include <signal.h>
 
 #include "platform.h"
+
+#ifndef SOCKET_TRY_AGAIN
+#define SOCKET_TRY_AGAIN SOCKET_WOULD_BLOCK
+#endif
 
 void ipv6NTop(const void *inAddr6, char *ipStr);
 

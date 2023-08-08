@@ -5,6 +5,7 @@ AC_CONFIG_SRCDIR([src])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_MACRO_DIRS([m4])
+AC_CANONICAL_HOST
 
 # Check if this is a Windows build
 AC_MSG_CHECKING([whether to build with mingw for a Windows host])
@@ -26,7 +27,7 @@ AC_PROG_CC
 AC_SYS_LARGEFILE
 
 # Checks for libraries.
-PKG_CHECK_MODULES([CMOCKA], [cmocka], [have_cmocka=yes], [have_cmocka=no])
+PKG_CHECK_MODULES([cmocka], [cmocka], [have_cmocka=yes], [have_cmocka=no])
 AM_CONDITIONAL([CMOCKA], [test "$have_cmocka" = "yes"])
 
 # Checks for header files.

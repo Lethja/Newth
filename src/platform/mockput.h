@@ -16,9 +16,12 @@ ssize_t __wrap_send(int fd, const void *buf, size_t n, int flags);
 
 #pragma clang diagnostic pop
 
+#ifdef _WIN32
+#include "mscrtdl.h"
+#else
 #define SOCKET_WOULD_BLOCK 41
-
 #include "posix01.h"
+#endif
 
 #ifndef INET_ADDRSTRLEN
 #define INET_ADDRSTRLEN 22
@@ -46,7 +49,5 @@ void mockDumpFile(FILE *file);
 void mockReset(void);
 
 void mockResetError(void);
-
-int platformSocketGetLastError(void);
 
 #endif /* NEWTH_MOCK_POSIX_UNIT_TEST_H */
