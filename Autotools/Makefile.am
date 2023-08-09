@@ -36,7 +36,7 @@ if CMOCKA
     unittest_LDFLAGS = ${cmocka_LIBS} \
 		-Wl,--wrap=malloc,--wrap=calloc,--wrap=realloc,--wrap=free,--wrap=send,--wrap=fclose
 
-    unittest_SOURCES = test/test.c test/mock.h test/common.h \
+    unittest_SOURCES = test/test.c test/mock.h test/common.h test/platform.h \
 		test/request.h test/sockbufr.h
 
     unittest_SOURCES += src/platform/mockput.c src/platform/mockput.h \

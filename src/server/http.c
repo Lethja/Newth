@@ -209,12 +209,12 @@ void httpHeaderWriteAcceptRanges(SocketBuffer *socketBuffer) {
         fprintf(buf, "%s", str);
 }
 
+#pragma GCC diagnostic ignored "-Wformat" /* PF_OFFSET is defined in posix01.h */
 void httpHeaderWriteRange(SocketBuffer *socketBuffer, PlatformFileOffset start, PlatformFileOffset finish,
                           PlatformFileOffset fileLength) {
     FILE *buf = socketBufferGetBuffer(socketBuffer);
 
     if (buf)
-#pragma GCC diagnostic ignored "-Wformat" /* PF_OFFSET can be defined by the build system */
         fprintf(buf, "Content-Range: bytes %"PF_OFFSET"-%"PF_OFFSET"/%"PF_OFFSET HTTP_EOL, start,
                 finish == fileLength ? finish - 1 : finish, fileLength);
 }
