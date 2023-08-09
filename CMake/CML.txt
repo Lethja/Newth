@@ -21,17 +21,19 @@ endif ()
 set(CMAKE_C_FLAGS_RELEASE "-O2 -s")
 
 if (UNIX)
-    set(TH_PLATFORM_SRC ../src/platform/posix01.c ../src/platform/posix01.h)
+    set(PLATFORM_SRC ../src/platform/posix01.c ../src/platform/posix01.h)
 elseif (WIN32)
     if (PORTABLE_WIN32)
-        set(TH_PLATFORM_SRC ../src/platform/mscrtdl.c ../src/platform/winsock/wsock1.c ../src/platform/winsock/wsock2.c ../src/platform/winsock/wsipv6.c)
+        set(PLATFORM_SRC ../src/platform/mscrtdl.c ../src/platform/winsock/wsock1.c ../src/platform/winsock/wsock2.c ../src/platform/winsock/wsipv6.c)
     else ()
-        set(TH_PLATFORM_SRC ../src/platform/mscrtdl.c ../src/platform/winsock/wsock2.c ../src/platform/winsock/wsipv6.c)
+        set(PLATFORM_SRC ../src/platform/mscrtdl.c ../src/platform/winsock/wsock2.c ../src/platform/winsock/wsipv6.c)
     endif ()
 endif ()
 
 # Client
-add_executable(dl ../src/common/client.c ../src/platform/platform.h)
+add_executable(dl ../src/common/client.c ../src/platform/platform.h ../src/platform/platform.c
+        ../src/server/event.c ../src/server/event.h
+        ${PLATFORM_SRC})
 
 target_compile_definitions(dl PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
 
@@ -43,7 +45,7 @@ add_executable(th ../src/cli/th.c
         ../src/server/http.c ../src/server/http.h
         ../src/server/routine.c ../src/server/routine.h
         ../src/server/sockbufr.c ../src/server/sockbufr.h
-        ${TH_PLATFORM_SRC})
+        ${PLATFORM_SRC})
 
 target_compile_definitions(th PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
 
@@ -55,7 +57,7 @@ add_executable(test ../test/test.c ../test/mock.h ../test/common.h ../test/sockb
         ../src/server/http.c ../src/server/http.h
         ../src/server/routine.c ../src/server/routine.h
         ../src/server/sockbufr.c ../src/server/sockbufr.h
-        ${TH_PLATFORM_SRC} ../src/platform/mockput.c)
+        ${PLATFORM_SRC} ../src/platform/mockput.c)
 
 target_compile_definitions(test PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>" MOCK=1 SB_DATA_SIZE=128 EWOULDBLOCK=41)
 target_link_libraries(test cmocka)
@@ -76,7 +78,7 @@ if (WIN32)
             ../src/server/http.c ../src/server/http.h
             ../src/server/routine.c ../src/server/routine.h
             ../src/server/sockbufr.c ../src/server/sockbufr.h
-            ${TH_PLATFORM_SRC} ${W32_RES})
+            ${PLATFORM_SRC} ${W32_RES})
 
     target_compile_definitions(th-gui PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
     if (PORTABLE_WIN32)
