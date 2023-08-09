@@ -309,32 +309,19 @@ char platformDirEntryIsDirectory(char *rootPath, char *webPath, PlatformDirEntry
 #else
 
     struct stat st;
-    char *a, *b = NULL;
+    char a[FILENAME_MAX] = "\0", b[FILENAME_MAX] = "\0";
 
-    a = platformPathCombine(rootPath, webPath);
+    platformPathCombine(a, rootPath, webPath);
 
-    if (!a)
+    if (!a[0])
         return 0;
 
-    b = platformPathCombine(a, platformDirEntryGetName(entry, NULL));
-    if (!b)
-        goto platformIsEntryDirectoryFail;
+    platformPathCombine(b, a, platformDirEntryGetName(d, NULL));
+    if (!b[0] || stat(b, &st))
+        return 0;
 
-    free(a), a = NULL;
 
-    if (stat(b, &st))
-        goto platformIsEntryDirectoryFail;
-
-    free(b);
     return S_ISDIR(st.st_mode);
-
-    platformIsEntryDirectoryFail:
-    if (a)
-        free(a);
-    if (b)
-        free(b);
-
-    return 0;
 
 #endif /* _DIRENT_HAVE_D_TYPE */
 
