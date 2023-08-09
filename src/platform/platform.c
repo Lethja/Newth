@@ -13,7 +13,7 @@ void platformFreeAdapterInformation(AdapterAddressArray *array) {
     free(array);
 }
 
-void platformFindOrCreateAdapterIp(AdapterAddressArray *array, char adapter[ADAPTER_NAME_LENGTH], sa_family_t type,
+void platformFindOrCreateAdapterIp(AdapterAddressArray *array, const char *adapter, sa_family_t type,
                                    char ip[INET6_ADDRSTRLEN]) {
     size_t i, j;
     for (i = 0; i < array->size; ++i) {

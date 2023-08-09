@@ -17,11 +17,12 @@
 #include <stdlib.h>
 
 typedef AdapterAddressArray *(*adapterInformationIpv6)(sa_family_t family,
-                                                       void (*arrayAdd)(AdapterAddressArray *, char *, sa_family_t,
-                                                                        char *), void (*nTop)(const void *, char *));
+                                                       void (*arrayAdd)(AdapterAddressArray *, const char *,
+                                                                        sa_family_t, char *),
+                                                       void (*nTop)(const void *, char *));
 
 typedef AdapterAddressArray *(*adapterInformationIpv4)(
-        void (*arrayAdd)(AdapterAddressArray *, char *, sa_family_t, char *));
+        void (*arrayAdd)(AdapterAddressArray *, const char *, sa_family_t, char *));
 
 adapterInformationIpv4 getAdapterInformationIpv4 = NULL;
 adapterInformationIpv6 getAdapterInformationIpv6 = NULL;

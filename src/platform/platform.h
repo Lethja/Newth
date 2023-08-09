@@ -171,7 +171,7 @@ void platformFreeAdapterInformation(AdapterAddressArray *array);
  * @param type In: Family type of the ip string, choose between AF_INET or AF_INET6
  * @param ip In: A human readable representation of the ip address (and only the ip address)
  */
-void platformFindOrCreateAdapterIp(AdapterAddressArray *array, char adapter[ADAPTER_NAME_LENGTH], sa_family_t type,
+void platformFindOrCreateAdapterIp(AdapterAddressArray *array, const char *adapter, sa_family_t type,
                                    char ip[INET6_ADDRSTRLEN]);
 
 /**

@@ -5,7 +5,8 @@
 
 void *wSock2Available(void);
 
-AdapterAddressArray *wSock2GetAdapterInformation(void (arrayAdd)(AdapterAddressArray *, char *, sa_family_t, char *));
+AdapterAddressArray *
+wSock2GetAdapterInformation(void (arrayAdd)(AdapterAddressArray *, const char *, sa_family_t, char *));
 
 #pragma region portable iphlpapi.h
 
@@ -34,7 +35,7 @@ typedef __int64 __time64_t;
 #endif /* _TIME64_T_DEFINED */
 
 #ifndef MSVC89
-typedef unsigned long ULONG,*PULONG;
+typedef unsigned long ULONG, *PULONG;
 #else
 typedef unsigned char UINT8,*PUINT8;
 typedef unsigned short UINT16,*PUINT16;

@@ -182,7 +182,8 @@ void *wSock1Available(void) {
 
 WSADATA WSAData;
 
-AdapterAddressArray *wSock1GetAdapterInformation(void (arrayAdd)(AdapterAddressArray *, char *, sa_family_t, char *)) {
+AdapterAddressArray *
+wSock1GetAdapterInformation(void (arrayAdd)(AdapterAddressArray *, const char *, sa_family_t, char *)) {
     if (WsControlFunc) {
         int result;
         TCP_REQUEST_QUERY_INFORMATION_EX tcpRequestQueryInfoEx;

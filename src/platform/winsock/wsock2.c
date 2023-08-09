@@ -20,7 +20,8 @@ void *wSock2Available(void) {
     return NULL;
 }
 
-AdapterAddressArray *wSock2GetAdapterInformation(void (arrayAdd)(AdapterAddressArray *, char *, sa_family_t, char *)) {
+AdapterAddressArray *
+wSock2GetAdapterInformation(void (arrayAdd)(AdapterAddressArray *, const char *, sa_family_t, char *)) {
     LINEDBG;
     if (AdapterInfoFunc) {
         AdapterAddressArray *array = NULL;
