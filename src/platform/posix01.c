@@ -141,6 +141,9 @@ AdapterAddressArray *platformGetAdapterInformation(sa_family_t family) {
     array->size = 0;
 
     for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+        if (!ifa->ifa_addr)
+            continue;
+
         if (ifa->ifa_addr->sa_family == AF_INET && family != AF_INET6) {
             struct sockaddr_in *sa = (struct sockaddr_in *) ifa->ifa_addr;
             char *ip4 = inet_ntoa(sa->sin_addr);
