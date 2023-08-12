@@ -1,4 +1,5 @@
 #include <ifaddrs.h>
+#include <net/if.h>
 #include <time.h>
 #include <ctype.h>
 #include "platform.h"
@@ -141,23 +142,16 @@ AdapterAddressArray *platformGetAdapterInformation(sa_family_t family) {
     array->size = 0;
 
     for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-        if (!ifa->ifa_addr)
+        if (!ifa->ifa_name || !ifa->ifa_addr || ifa->ifa_flags & IFF_LOOPBACK || ifa->ifa_flags & IFF_POINTOPOINT)
             continue;
 
         if (ifa->ifa_addr->sa_family == AF_INET && family != AF_INET6) {
             struct sockaddr_in *sa = (struct sockaddr_in *) ifa->ifa_addr;
             char *ip4 = inet_ntoa(sa->sin_addr);
-            if (strncmp(ip4, "127", 3) != 0)
-                strcpy(address, ip4);
-            else
-                continue;
-
+            strcpy(address, ip4);
         } else if (ifa->ifa_addr->sa_family == AF_INET6 && family != AF_INET) {
             struct sockaddr_in6 *sa = (struct sockaddr_in6 *) ifa->ifa_addr;
             inet_ntop(sa->sin6_family, &sa->sin6_addr, address, INET6_ADDRSTRLEN);
-            if (strncmp(address, "::", 2) == 0)
-                continue;
-
         } else continue;
 
         platformFindOrCreateAdapterIp(array, ifa->ifa_name, ifa->ifa_addr->sa_family == AF_INET6, address);
