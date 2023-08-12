@@ -17,10 +17,6 @@ AM_CONDITIONAL([WINDOWS_HOST], [test "x$windows_host" = "xyes"])
 m4_include([m4/ax_check_enable_debug.m4])
 AX_CHECK_ENABLE_DEBUG([no])
 
-if test -z $CFLAGS; then
-    CFLAGS='-O2 -s'
-fi
-
 # Checks for programs.
 AC_PROG_CC
 AC_SYS_LARGEFILE
