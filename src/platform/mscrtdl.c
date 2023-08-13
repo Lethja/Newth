@@ -1,7 +1,7 @@
 #include "mscrtdl.h"
 #include "../server/event.h"
 
-#ifdef PORTABLE_WIN32
+#ifdef ENABLE_WS1
 
 #include "winsock/wsock1.h"
 
@@ -109,7 +109,7 @@ char *platformIpStackInit(void) {
         getAdapterInformationIpv4 = (adapterInformationIpv4) wSock2GetAdapterInformation;
         LINEDBG;
     }
-#ifdef PORTABLE_WIN32
+#ifdef ENABLE_WS1
     else {
         LINEDBG;
         wsIpv4 = wSock1Available();

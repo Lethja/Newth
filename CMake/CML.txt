@@ -4,26 +4,20 @@ project(Newth C)
 set(CMAKE_C_STANDARD 90)
 set(CMAKE_C_FLAGS "-pedantic -Wall -Wno-unknown-pragmas")
 
-option(PORTABLE_WIN32 "Force a portable Windows binary" ON)
-option(STYLISH_WIN32 "Enable native visual styling for Windows XP and later" ON)
+option(ENABLE_WS1 "Force a portable Windows binary" ON)
+option(STYLISH_W32 "Enable native visual styling for Windows XP and later" ON)
 option(FORCE_32BIT "Force x86 32-bit binaries" OFF)
 
 add_compile_definitions(_FILE_OFFSET_BITS=64)
 
-if (PORTABLE_WIN32)
+if (ENABLE_WS1)
     set(CMAKE_SYSTEM_NAME Windows)
 endif ()
-
-if (FORCE_32BIT)
-    set(CMAKE_C_FLAGS "-m32")
-endif ()
-
-set(CMAKE_C_FLAGS_RELEASE "-O2 -s")
 
 if (UNIX)
     set(PLATFORM_SRC ../src/platform/posix01.c ../src/platform/posix01.h)
 elseif (WIN32)
-    if (PORTABLE_WIN32)
+    if (ENABLE_WS1)
         set(PLATFORM_SRC ../src/platform/mscrtdl.c ../src/platform/winsock/wsock1.c ../src/platform/winsock/wsock2.c ../src/platform/winsock/wsipv6.c)
     else ()
         set(PLATFORM_SRC ../src/platform/mscrtdl.c ../src/platform/winsock/wsock2.c ../src/platform/winsock/wsipv6.c)
@@ -61,10 +55,11 @@ add_executable(test ../test/test.c ../test/mock.h ../test/common.h ../test/sockb
 
 target_compile_definitions(test PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>" MOCK=1 SB_DATA_SIZE=128 EWOULDBLOCK=41)
 target_link_libraries(test cmocka)
-set_property(TARGET test PROPERTY LINK_FLAGS "${DEFAULT_LINK_FLAGS} -Wl,--wrap=malloc,--wrap=calloc,--wrap=realloc,--wrap=free,--wrap=send,--wrap=fclose")
+set_property(TARGET test PROPERTY LINK_FLAGS
+        "${DEFAULT_LINK_FLAGS} -Wl,--wrap=malloc,--wrap=calloc,--wrap=realloc,--wrap=free,--wrap=send,--wrap=fclose")
 
 if (WIN32)
-    if (STYLISH_WIN32)
+    if (STYLISH_W32)
         set(W32_RES ../src/gui/win32/res.rc ../src/gui/win32/resource.h)
     endif ()
 
@@ -81,8 +76,8 @@ if (WIN32)
             ${PLATFORM_SRC} ${W32_RES})
 
     target_compile_definitions(th-gui PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
-    if (PORTABLE_WIN32)
-        target_compile_definitions(th PUBLIC PORTABLE_WIN32=1)
+    if (ENABLE_WS1)
+        target_compile_definitions(th PUBLIC ENABLE_WS1=1)
     endif ()
 
     target_link_libraries(dl wsock32)

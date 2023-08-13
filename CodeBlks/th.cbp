@@ -6,9 +6,9 @@
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Build>
-			<Target title="Unix GCC Debug">
+			<Target title="GCC Debug">
 				<Option platforms="Unix;Mac;" />
-				<Option output="bin/unix/Debug/newth" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/unix/Debug/th" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/unix/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
@@ -16,9 +16,9 @@
 					<Add option="-g" />
 				</Compiler>
 			</Target>
-			<Target title="Unix GCC Release">
+			<Target title="GCC Release">
 				<Option platforms="Unix;Mac;" />
-				<Option output="bin/unix/Release/newth" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/unix/Release/th" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/unix/Release/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
@@ -33,14 +33,14 @@
 			</Target>
 			<Target title="MingW32 Debug">
 				<Option platforms="Windows;" />
-				<Option output="bin/mingw32/Debug/newth" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/mingw32/Debug/th" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/mingw32/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-m32" />
 					<Add option="-g" />
-					<Add option="-DPORTABLE_WIN32=1" />
+					<Add option="-DENABLE_WS1=1" />
 				</Compiler>
 				<Linker>
 					<Add option="-m32" />
@@ -50,7 +50,7 @@
 			</Target>
 			<Target title="MingW32 Release">
 				<Option platforms="Windows;" />
-				<Option output="bin/mingw32/Release/newth" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/mingw32/Release/th" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/mingw32/Release/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
@@ -59,7 +59,7 @@
 					<Add option="-O2" />
 					<Add option="-m32" />
 					<Add option="-DNDEBUG=1" />
-					<Add option="-DPORTABLE_WIN32=1" />
+					<Add option="-DENABLE_WS1=1" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -70,7 +70,7 @@
 			</Target>
 			<Target title="MingW64 Debug">
 				<Option platforms="Windows;" />
-				<Option output="bin/mingw64/Debug/newth" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/mingw64/Debug/th" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/mingw64/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
@@ -86,7 +86,7 @@
 			</Target>
 			<Target title="MingW64 Release">
 				<Option platforms="Windows;" />
-				<Option output="bin/mingw64/Release/newth" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/mingw64/Release/th" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/mingw64/Release/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
@@ -105,7 +105,7 @@
 			</Target>
 			<Target title="Watcom NT Debug">
 				<Option platforms="Windows;" />
-				<Option output="bin/wcnt/Debug/newth" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/wcnt/Debug/th" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/wcnt/Debug/" />
 				<Option type="1" />
 				<Option compiler="ow" />
@@ -119,7 +119,7 @@
 					<Add option="-3s" />
 					<Add option="-3r" />
 					<Add option="-cc" />
-					<Add option="-dPORTABLE_WIN32=1" />
+					<Add option="-dENABLE_WS1=1" />
 				</Compiler>
 				<Linker>
 					<Add library="wsock32" />
@@ -127,7 +127,7 @@
 			</Target>
 			<Target title="Watcom NT Release">
 				<Option platforms="Windows;" />
-				<Option output="bin/wcnt/Release/newth" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/wcnt/Release/th" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/wcnt/Release/" />
 				<Option type="1" />
 				<Option compiler="ow" />
@@ -144,7 +144,7 @@
 					<Add option="-3r" />
 					<Add option="-cc" />
 					<Add option="-dNDEBUG=1" />
-					<Add option="-dPORTABLE_WIN32=1" />
+					<Add option="-dENABLE_WS1=1" />
 				</Compiler>
 				<Linker>
 					<Add library="wsock32" />

@@ -4,7 +4,7 @@
 *.dirstamp
 
 # Build system directories
-Autotools
+Autotool
 CMake
-CodeBlocks
+CodeBlks
 VC6

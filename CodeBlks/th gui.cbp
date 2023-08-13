@@ -6,7 +6,7 @@
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Build>
-			<Target title="Debug">
+			<Target title="MingW32 Debug">
 				<Option output="bin/mingw32/Debug/th-gui" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/mingw32/Debug/" />
 				<Option type="0" />
@@ -19,7 +19,7 @@
 					<Add option="-m32" />
 				</Linker>
 			</Target>
-			<Target title="Release">
+			<Target title="MingW32 Release">
 				<Option output="bin/mingw32/Release/th-gui" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/mingw32/Release/" />
 				<Option type="0" />
@@ -34,7 +34,7 @@
 					<Add option="-m32" />
 				</Linker>
 			</Target>
-			<Target title="Debug64">
+			<Target title="MingW64 Debug">
 				<Option output="bin/mingw64/Debug/th-gui" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/mingw64/Debug/" />
 				<Option type="0" />
@@ -47,7 +47,7 @@
 					<Add option="-m64" />
 				</Linker>
 			</Target>
-			<Target title="Release64">
+			<Target title="MingW64 Release">
 				<Option output="bin/mingw64/Release/th-gui" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/mingw64/Release/" />
 				<Option type="0" />
