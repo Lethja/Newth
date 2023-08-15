@@ -6,6 +6,65 @@
 #include "posix01.h"
 #include "../server/event.h"
 
+#pragma region Manual Interface Binding
+
+static SOCKET *BindAllSockets(int af, char *bindname, const char *bindport) {
+    struct addrinfo hints, *res, *r;
+    int error, maxs, *s, *socks;
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_flags = AI_PASSIVE;
+    hints.ai_family = af;
+    hints.ai_socktype = SOCK_STREAM;
+    error = getaddrinfo(bindname, bindport, &hints, &res);
+    if (error)
+        return NULL;
+
+    for (maxs = 0, r = res; r; r = r->ai_next, maxs++);
+
+    socks = (int *) malloc((maxs + 1) * sizeof(int));
+    if (!socks) {
+        freeaddrinfo(res);
+        return NULL;
+    }
+
+    *socks = 0, s = socks + 1;
+    for (r = res; r; r = r->ai_next) {
+        *s = socket(r->ai_family, r->ai_socktype, r->ai_protocol);
+        if (*s < 0)
+            continue;
+
+        if (bind(*s, r->ai_addr, r->ai_addrlen) < 0) {
+            close(*s);
+            continue;
+        }
+        (*socks)++;
+        s++;
+    }
+
+    if (res) freeaddrinfo(res);
+
+    if (*socks == 0) {
+        free(socks);
+        return NULL;
+    }
+    return (socks);
+}
+
+static void ListenAllSockets(SOCKET *listenSocket, fd_set *listenSocketSet, SOCKET *maxfd) {
+    SOCKET i;
+    for (i = 1; i <= *listenSocket; i++) {
+        FD_SET(listenSocket[i], listenSocketSet);
+        if (listen(listenSocket[i], 10) < 0)
+            exit(1);
+
+        if (*maxfd < listenSocket[i])
+            *maxfd = listenSocket[i];
+    }
+}
+
+#pragma endregion
+
 void platformPathCombine(char *output, const char *path1, const char *path2) {
     const char pathDivider = '/';
     size_t path1Len = strlen(path1);
