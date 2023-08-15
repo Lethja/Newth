@@ -34,6 +34,7 @@
 
 typedef struct Address {
     sa_family_t type;
+    unsigned short port;
     char address[INET6_ADDRSTRLEN];
 } Address;
 
@@ -170,9 +171,10 @@ void platformFreeAdapterInformation(AdapterAddressArray *array);
  * @param adapter In: The string name that represents this adapter (differs depending on underlying system)
  * @param type In: Family type of the ip string, choose between AF_INET or AF_INET6
  * @param ip In: A human readable representation of the ip address (and only the ip address)
+ * @param port In: The port number this adapter should be assigned
  */
 void platformFindOrCreateAdapterIp(AdapterAddressArray *array, const char *adapter, sa_family_t type,
-                                   char ip[INET6_ADDRSTRLEN]);
+                                   char ip[INET6_ADDRSTRLEN], unsigned short port);
 
 /**
  * Check if the platform is know to have a stable IPv6 stack

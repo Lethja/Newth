@@ -88,16 +88,18 @@ static void printHttpEvent(eventHttpRespond *event) {
         printf("%c%03d:[%s]:%u/%s\n", type, *event->response, ip, port, event->path);
 }
 
-static void printAdapterInformation(char *protocol, sa_family_t family, unsigned short port) {
+static void printAdapterInformation(char *protocol, sa_family_t family) {
     AdapterAddressArray *adapters = platformGetAdapterInformation(family);
     size_t i, j;
     for (i = 0; i < adapters->size; ++i) {
         printf("%s:\n", adapters->adapter[i].name);
         for (j = 0; j < adapters->adapter[i].addresses.size; ++j) {
             if (!adapters->adapter[i].addresses.array[j].type)
-                printf("\t%s://%s:%u\n", protocol, adapters->adapter[i].addresses.array[j].address, port);
+                printf("\t%s://%s:%u\n", protocol, adapters->adapter[i].addresses.array[j].address,
+                       adapters->adapter[i].addresses.array[j].port);
             else
-                printf("\t%s://[%s]:%u\n", protocol, adapters->adapter[i].addresses.array[j].address, port);
+                printf("\t%s://[%s]:%u\n", protocol, adapters->adapter[i].addresses.array[j].address,
+                       adapters->adapter[i].addresses.array[j].port);
         }
     }
 
@@ -136,7 +138,7 @@ static int setup(int argc, char **argv) {
         return 1;
     }
 
-    printAdapterInformation("http", family, getPort(&serverListenSocket));
+    printAdapterInformation("http", family);
 
     serverMaxSocket = serverListenSocket;
     FD_ZERO(&serverReadSockets);
@@ -158,7 +160,7 @@ int main(int argc, char **argv) {
     } else {
         char *buf = malloc(BUFSIZ + 1), *test = platformGetWorkingDirectory(buf, BUFSIZ);
 
-        if(buf) {
+        if (buf) {
             buf[BUFSIZ] = '\0';
             if (test)
                 globalRootPath = platformGetRootPath(test);
