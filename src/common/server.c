@@ -6,7 +6,8 @@ volatile int serverRun = 1;
 RoutineArray globalRoutineArray;
 
 SOCKET serverMaxSocket;
-SOCKET serverListenSocket;
+SOCKET *serverListenSocket;
+fd_set serverListenSockets;
 fd_set serverReadSockets;
 fd_set serverWriteSockets;
 
@@ -270,8 +271,8 @@ void serverTick(void) {
 
         for (i = 0; i <= serverMaxSocket; ++i) {
             if (FD_ISSET(i, &readyToReadSockets)) {
-                if (i == serverListenSocket) {
-                    SOCKET clientSocket = platformAcceptConnection(serverListenSocket);
+                if (FD_ISSET(i, &serverListenSockets)) {
+                    SOCKET clientSocket = platformAcceptConnection(i);
                     if (clientSocket > serverMaxSocket)
                         serverMaxSocket = clientSocket;
 
@@ -293,6 +294,14 @@ void serverTick(void) {
     }
 }
 
+void socketArrayToFdSet(const SOCKET *array, fd_set *fdSet) {
+    if (array && fdSet) {
+        SOCKET i, max = array[0] + 1;
+        for (i = 1; i < max; ++i)
+            FD_SET(array[i], fdSet);
+    }
+}
+
 void serverPoke(void) {
     SOCKET sock;
     struct sockaddr_in ipv4;
@@ -303,8 +312,14 @@ void serverPoke(void) {
     }
 
     ipv4.sin_addr.s_addr = inet_addr("127.0.0.1"), ipv4.sin_family = AF_INET, ipv4.sin_port = htons(
-            getPort(&serverListenSocket));
+            getPort(&serverListenSocket[1]));
 
     if (connect(sock, (SA *) &ipv4, sizeof(ipv4)) == 0)
         CLOSE_SOCKET(sock);
 }
+
+void serverFreeResources(void) {
+    if(serverListenSocket)
+        free(serverListenSocket);
+}
+

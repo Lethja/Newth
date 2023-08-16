@@ -10,13 +10,14 @@
 
 extern char *globalRootPath;
 
+extern fd_set serverListenSockets;
 extern fd_set serverReadSockets;
 extern fd_set serverWriteSockets;
 
 extern RoutineArray globalRoutineArray;
 
 extern SOCKET serverMaxSocket;
-extern SOCKET serverListenSocket;
+extern SOCKET *serverListenSocket;
 
 extern volatile int serverRun;
 
@@ -41,5 +42,12 @@ extern unsigned short getPort(const SOCKET *listenSocket);
 extern void serverTick(void);
 
 extern void serverPoke(void);
+
+extern void socketArrayToFdSet(const SOCKET *array, fd_set *fdSet);
+
+/**
+ * Free any memory platformServerStartup allocated
+ */
+extern void serverFreeResources(void);
 
 #endif /* NEW_TH_SERVER_H */

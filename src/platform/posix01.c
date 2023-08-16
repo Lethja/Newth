@@ -6,9 +6,13 @@
 #include "posix01.h"
 #include "../server/event.h"
 
-#pragma region Manual Interface Binding
+#define MAX_LISTEN 32
 
-static SOCKET *BindAllSockets(int af, char *bindname, const char *bindport) {
+#pragma region Manual Interface Binding Compatibility
+
+#ifdef MANUAL_IFACE_LISTEN
+
+static inline SOCKET *BindAllSockets(sa_family_t af, char *bindName, const char *bindPort, char **err) {
     struct addrinfo hints, *res, *r;
     int error, maxs, *s, *socks;
 
@@ -16,15 +20,18 @@ static SOCKET *BindAllSockets(int af, char *bindname, const char *bindport) {
     hints.ai_flags = AI_PASSIVE;
     hints.ai_family = af;
     hints.ai_socktype = SOCK_STREAM;
-    error = getaddrinfo(bindname, bindport, &hints, &res);
-    if (error)
+    error = getaddrinfo(bindName, bindPort, &hints, &res);
+    if (error) {
+        *err = "Unable to get address information";
         return NULL;
+    }
 
     for (maxs = 0, r = res; r; r = r->ai_next, maxs++);
 
     socks = (int *) malloc((maxs + 1) * sizeof(int));
     if (!socks) {
         freeaddrinfo(res);
+        *err = strerror(errno);
         return NULL;
     }
 
@@ -46,22 +53,44 @@ static SOCKET *BindAllSockets(int af, char *bindname, const char *bindport) {
 
     if (*socks == 0) {
         free(socks);
+        *err = "No adapters to bind to";
         return NULL;
     }
     return (socks);
 }
 
-static void ListenAllSockets(SOCKET *listenSocket, fd_set *listenSocketSet, SOCKET *maxfd) {
+static inline int ListenAllSockets(SOCKET *listenSocket, fd_set *listenSocketSet, SOCKET *maxSocket, char **err) {
     SOCKET i;
     for (i = 1; i <= *listenSocket; i++) {
         FD_SET(listenSocket[i], listenSocketSet);
-        if (listen(listenSocket[i], 10) < 0)
-            exit(1);
+        if (listen(listenSocket[i], MAX_LISTEN) < 0) {
+            *err = strerror(errno);
+            return -1;
+        }
 
-        if (*maxfd < listenSocket[i])
-            *maxfd = listenSocket[i];
+        if (*maxSocket < listenSocket[i])
+            *maxSocket = listenSocket[i];
     }
+    return 0;
 }
+
+static SOCKET *BindAllPortsManually(sa_family_t family, char *ports, SOCKET *max, char **err) {
+    fd_set socketSet;
+    SOCKET *sockets;
+    char *comma = strchr(ports, ',');
+
+    if (comma)
+        comma[0] = '\0';
+
+    sockets = BindAllSockets(family, NULL, ports, err);
+    if (sockets)
+        if (ListenAllSockets(sockets, &socketSet, max, err))
+            free(sockets), sockets = NULL;
+
+    return sockets;
+}
+
+#endif
 
 #pragma endregion
 
@@ -93,7 +122,16 @@ void platformCloseBindSockets(fd_set *sockets, SOCKET max) {
     }
 }
 
-char *platformServerStartup(int *listenSocket, sa_family_t family, char *ports) {
+SOCKET *platformServerStartup(sa_family_t family, char *ports, SOCKET *maxSocket, char **err) {
+    SOCKET *r;
+#ifdef MANUAL_IFACE_LISTEN
+    r = BindAllPortsManually(family, ports, maxSocket, err);
+    if (r)
+        return r;
+
+    return NULL;
+#else
+    SOCKET listenSocket;
     struct sockaddr_storage serverAddress;
     memset(&serverAddress, 0, sizeof(struct sockaddr_storage));
 
@@ -101,8 +139,10 @@ char *platformServerStartup(int *listenSocket, sa_family_t family, char *ports) 
         default:
         case AF_INET: {
             struct sockaddr_in *sock = (struct sockaddr_in *) &serverAddress;
-            if ((*listenSocket = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-                return "Unable to acquire socket from system";
+            if ((listenSocket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+                *err = "Unable to acquire IPV4 socket from system";
+                return NULL;
+            }
 
             sock->sin_family = AF_INET;
             sock->sin_addr.s_addr = htonl(INADDR_ANY);
@@ -112,23 +152,41 @@ char *platformServerStartup(int *listenSocket, sa_family_t family, char *ports) 
         case AF_UNSPEC: {
             struct sockaddr_in6 *sock = (struct sockaddr_in6 *) &serverAddress;
             size_t v6Only = family == AF_INET6;
-            if ((*listenSocket = socket(AF_INET6, SOCK_STREAM, 0)) < 0)
-                return "Unable to acquire socket from system";
+            if ((listenSocket = socket(AF_INET6, SOCK_STREAM, 0)) < 0) {
+                *err = "Unable to acquire IPV6 socket from system";
+                return NULL;
+            }
 
             sock->sin6_family = AF_INET6;
             sock->sin6_addr = in6addr_any;
-            setsockopt(*listenSocket, IPPROTO_IPV6, IPV6_V6ONLY, &v6Only, sizeof(v6Only));
+            setsockopt(listenSocket, IPPROTO_IPV6, IPV6_V6ONLY, &v6Only, sizeof(v6Only));
             break;
         }
     }
 
-    if (platformBindPort(listenSocket, (struct sockaddr *) &serverAddress, ports))
-        return "Unable to bind to designated port numbers";
+    if (platformBindPort(&listenSocket, (struct sockaddr *) &serverAddress, ports)) {
+        *err = "Unable to bind to designated port numbers";
+        return NULL;
+    }
 
-    if ((listen(*listenSocket, 10)) < 0)
-        return "Unable to listen to assigned socket";
+    if ((listen(listenSocket, MAX_LISTEN)) < 0) {
+        *err = "Unable to listen to assigned socket";
+        return NULL;
+    }
+
+    r = malloc(sizeof(SOCKET) * 2);
+    if (r) {
+        if (listenSocket > *maxSocket)
+            *maxSocket = listenSocket;
+
+        r[0] = 1, r[1] = listenSocket;
+
+        return r;
+    } else
+        *err = strerror(errno);
 
     return NULL;
+#endif
 }
 
 int platformAcceptConnection(int fromSocket) {

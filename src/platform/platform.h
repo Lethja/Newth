@@ -119,12 +119,14 @@ char *platformIpStackInit(void);
 
 /**
  * Start up the server
- * @param listenSocket Out: the socket the server has been bound to
  * @param family In: protocol to start the server under
  * @param ports In: A port of comma separated ports to try to bind to from left to right
- * @return NULL on success, human readable string to print error
+ * @param maxSocket In-Out: The maximum socket currently assigned to the server
+ * @param err Out: The const string to describe an error
+ * @return heap allocation of an array of sockets on success, NULL on error
+ * @remark value must be freed when server is stopped
  */
-char *platformServerStartup(SOCKET *listenSocket, sa_family_t family, char *ports);
+SOCKET *platformServerStartup(sa_family_t family, char *ports, SOCKET *maxSocket, char **err);
 
 /**
  * Attach signals to comment interrupts

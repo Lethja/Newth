@@ -4,6 +4,7 @@ static void shutdownCrash(int signal) {
     switch (signal) {
         default: /* Close like normal unless something has gone catastrophically wrong */
             platformCloseBindSockets(&serverReadSockets, serverMaxSocket);
+            serverFreeResources();
             platformIpStackExit();
             printf("Emergency shutdown: %d\n", signal);
             /* Fallthrough */
@@ -17,6 +18,7 @@ static void shutdownProgram(int signal) {
     if (signal == SIGINT)
         printf("\n"); /* Put next message on a different line from ^C */
     platformCloseBindSockets(&serverReadSockets, serverMaxSocket);
+    serverFreeResources();
     platformIpStackExit();
     exit(0);
 }
@@ -88,7 +90,7 @@ static void printHttpEvent(eventHttpRespond *event) {
         printf("%c%03d:[%s]:%u/%s\n", type, *event->response, ip, port, event->path);
 }
 
-static void printAdapterInformation(char *protocol, sa_family_t family) {
+static void printAdapterInformation(char *protocol, sa_family_t family, unsigned short port) {
     AdapterAddressArray *adapters = platformGetAdapterInformation(family);
     size_t i, j;
     for (i = 0; i < adapters->size; ++i) {
@@ -96,10 +98,10 @@ static void printAdapterInformation(char *protocol, sa_family_t family) {
         for (j = 0; j < adapters->adapter[i].addresses.size; ++j) {
             if (!adapters->adapter[i].addresses.array[j].type)
                 printf("\t%s://%s:%u\n", protocol, adapters->adapter[i].addresses.array[j].address,
-                       adapters->adapter[i].addresses.array[j].port);
+                       port);
             else
                 printf("\t%s://[%s]:%u\n", protocol, adapters->adapter[i].addresses.array[j].address,
-                       adapters->adapter[i].addresses.array[j].port);
+                       port);
         }
     }
 
@@ -108,6 +110,7 @@ static void printAdapterInformation(char *protocol, sa_family_t family) {
 
 static int setup(int argc, char **argv) {
     sa_family_t family;
+    SOCKET *sockets;
     char *ports, *err;
 
     /* Get the list of ports then try to bind one */
@@ -130,20 +133,23 @@ static int setup(int argc, char **argv) {
         return 1;
     }
 
-    err = platformServerStartup(&serverListenSocket, family, ports);
-    if (err) {
+    serverMaxSocket = 0;
+    sockets = platformServerStartup(family, ports, &serverMaxSocket, &err);
+    if (!sockets) {
         LINEDBG;
         puts(err);
         platformIpStackExit();
         return 1;
     }
 
-    printAdapterInformation("http", family);
+    printAdapterInformation("http", family, getPort(&sockets[1]));
 
-    serverMaxSocket = serverListenSocket;
     FD_ZERO(&serverReadSockets);
     FD_ZERO(&serverWriteSockets);
-    FD_SET(serverListenSocket, &serverReadSockets);
+
+    socketArrayToFdSet(sockets, &serverListenSockets);
+    socketArrayToFdSet(sockets, &serverReadSockets);
+    serverListenSocket = sockets;
 
     globalRoutineArray.size = 0, globalRoutineArray.array = NULL;
 
