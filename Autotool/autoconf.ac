@@ -34,6 +34,11 @@ AC_ARG_ENABLE(
 PKG_CHECK_MODULES([cmocka], [cmocka], [have_cmocka=yes], [have_cmocka=no])
 AM_CONDITIONAL([CMOCKA], [test "$have_cmocka" = "yes"])
 
+AC_SEARCH_LIBS([getsockname], [nsl socket resolv network])
+AC_SEARCH_LIBS([getifaddrs], [nsl socket resolv network])
+AC_SEARCH_LIBS([inet_ntoa], [nsl socket resolv network])
+AC_SEARCH_LIBS([inet_ntop], [nsl socket resolv network])
+
 # Checks for header files.
 AC_CHECK_HEADERS([string.h])
 
