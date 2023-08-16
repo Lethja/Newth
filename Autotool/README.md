@@ -104,6 +104,10 @@ This should generate the `configure` and `makefile` among other files required f
 
 Run the configuration with the `./configure` script. the configuration script has several options specific to Newth:
 
+| Parameter         | Comment                                                                                                                                                                                        |
+|-------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `--enable-iiface` | Manually bind a socket to every network adapter at the application level. This option should only be enabled when targeting operating systems that can't do this internally; possible but rare |
+
 > Tip: Autoconf configurations are persistent (even after shutdowns).
 > You can run `./config.status --config` to see the current setup configuration
 > and `./configure --help` to see all configuration options.

@@ -22,6 +22,15 @@ AC_PROG_CC
 AC_SYS_LARGEFILE
 
 # Checks for libraries.
+AC_ARG_ENABLE(
+    [iiface],
+	AS_HELP_STRING(
+	    [--enable-iiface],
+		[Manually bind a socket to every network adapter at the application level (use only if the operating system can't do this internally)]
+    ),
+    [AC_DEFINE(MANUAL_IFACE_LISTEN)]
+)
+
 PKG_CHECK_MODULES([cmocka], [cmocka], [have_cmocka=yes], [have_cmocka=no])
 AM_CONDITIONAL([CMOCKA], [test "$have_cmocka" = "yes"])
 
