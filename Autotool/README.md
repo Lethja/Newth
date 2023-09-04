@@ -133,7 +133,7 @@ Run `make dist` or `make distcheck` to put the project into a tarball archive re
 
 ## Running the test (optional)
 
-If CMocka was detected in the configure stage `make check` will to build and run unit tests. 
+If CMocka was detected in the configure stage `make check` will be able to build and run unit tests. 
 The binary will be called `unittest`
 
 The test executable will run a bunch of tests with functions throughout the project

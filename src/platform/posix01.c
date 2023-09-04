@@ -242,6 +242,46 @@ unsigned short platformGetPort(struct sockaddr *addr) {
     return 0;
 }
 
+/* TODO: Store all adapters with correct port numbers (for Haiku) */
+/*
+AdapterAddressArray *
+platformSetAdapterInformationWithSocket(AdapterAddressArray *self, struct ifaddrs *interface, SOCKET socket,
+                                        sa_family_t family) {
+    struct sockaddr_storage sockaddr;
+    socklen_t sockLen = sizeof(struct sockaddr_storage);
+    char address[INET6_ADDRSTRLEN];
+    unsigned short port;
+
+    getsockname(socket, (struct sockaddr *) &sockaddr, &sockLen);
+
+    if (interface->ifa_addr->sa_family == AF_INET && family != AF_INET6) {
+        struct sockaddr_in *sa = (struct sockaddr_in *) interface->ifa_addr;
+        char *ip4 = inet_ntoa(sa->sin_addr);
+        strcpy(address, ip4);
+    } else if (interface->ifa_addr->sa_family == AF_INET6 && family != AF_INET) {
+        struct sockaddr_in6 *sa = (struct sockaddr_in6 *) interface->ifa_addr;
+        inet_ntop(sa->sin6_family, &sa->sin6_addr, address, INET6_ADDRSTRLEN);
+    } else
+        return self;
+
+    if (sockaddr.ss_family == AF_INET) {
+        struct sockaddr_in *sock = (struct sockaddr_in *) &sockaddr;
+        port = ntohs(sock->sin_port);
+    } else if (sockaddr.ss_family == AF_INET6) {
+        struct SOCKIN6 *sock = (struct SOCKIN6 *) &sockaddr;
+        port = ntohs(sock->sin6_port);
+    } else
+        return self;
+
+    if (!self)
+        self = malloc(sizeof(AdapterAddressArray));
+
+    platformFindOrCreateAdapterIp(self, interface->ifa_name, interface->ifa_addr->sa_family, address, port);
+
+    return self;
+}
+*/
+
 AdapterAddressArray *platformGetAdapterInformation(sa_family_t family) {
     struct AdapterAddressArray *array;
     struct ifaddrs *ifap, *ifa;
