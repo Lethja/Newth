@@ -333,8 +333,13 @@ char *platformIpStackInit(void) {
 }
 
 int platformOfficiallySupportsIpv6(void) {
-    /* TODO: POSIX IPv6 checks */
-    return 1;
+#ifdef __linux__
+    const char *inet6File = "/proc/net/if_inet6";
+    PlatformFileStat fileStat;
+    if (!platformFileStat(inet6File, &fileStat) && platformFileStatIsFile(&fileStat))
+        return 1;
+#endif
+    return 0;
 }
 
 void platformGetTime(void *clock, char *time) {
