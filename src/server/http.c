@@ -24,11 +24,11 @@ static inline char HexToAscii(const char *hex) {
     char value = 0;
     unsigned char i;
     for (i = 0; i < 2; i++) {
-        unsigned char byte = hex[i];
-        if (byte >= '0' && byte <= '9') byte = byte - '0';
-        else if (byte >= 'a' && byte <= 'f') byte = byte - 'a' + 10;
-        else if (byte >= 'A' && byte <= 'F') byte = byte - 'A' + 10;
-        value = (char) (value << 4 | (byte & 0xF));
+        unsigned char ch = hex[i];
+        if (ch >= '0' && ch <= '9') ch = ch - '0';
+        else if (ch >= 'a' && ch <= 'f') ch = ch - 'a' + 10;
+        else if (ch >= 'A' && ch <= 'F') ch = ch - 'A' + 10;
+        value = (char) (value << 4 | (ch & 0xF));
     }
     return value;
 }

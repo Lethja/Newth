@@ -24,6 +24,10 @@
 
 #include "mscrtdl.h"
 
+#elif WATT32
+
+#include "watt32.h"
+
 #else
 
 #include "posix01.h"

@@ -5,6 +5,7 @@
   * [Installing Watcom](#installing-watcom)
 * [Building Newth](#building-newth)
   * [Setup the build environment](#setup-the-build-environment)
+  * [Adding Watt32 includes](#adding-watt32-includes)
   * [Build Newth](#build-newth)
 <!-- TOC -->
 
@@ -21,7 +22,7 @@ To build Newth with Watcom you will need the following:
 - A i386 machine or softcore
 - A i386 compatible DOS operating system or emulator
 - Open Watcom C 1.9
-- Watt32 library compiled with the same version of Open Watcom
+- [Watt32 library](https://watt-32.net/) compiled with the same version of Watcom
 
 > Tip: Don't have a real DOS machine? Try [Dosbox-X](https://dosbox-x.com/)
 
@@ -56,10 +57,17 @@ Some common operating systems are listed in the table below:
 The Watcom build environment needs to be setup before it can be used. A script is included to do this.
 On a typical DOS installation of Open Watcom run the following to enable the build environment.
 ```
-%dosdir%\DEVEL\OW\OWSETENV.BAT
+%DOSDIR%\DEVEL\OW\OWSETENV.BAT
 ```
 > Tip: `wcc`, `wlink` & `wmake` should now be valid commands
 if this isn't the case check the directories in the script and modify them as necessary.
+
+## Adding Watt32 includes
+Watcom needs to see Watt32s headers as if they're from the system path when compiling Newth.
+To achieve this append the full path to Watt32s include directory to the `INCLUDE` environment variable like so
+```
+set INCLUDE=%INCLUDE%;C:\NEWTH\EXT\WATT32S\INC
+```
 
 ## Build Newth
 Run `wmake -f TH.MAK` to build the project.
