@@ -8,3 +8,7 @@ Autotool
 CMake
 CodeBlks
 VC6
+Watcom
+
+# External dependencies
+ext
