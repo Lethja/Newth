@@ -10,10 +10,9 @@
 <!-- TOC -->
 
 # What is Watcom
-Watcom C/C++ was an integrated development environment (IDE) product 
-from Watcom International Corporation for C, C++, and Fortran programming languages.
-Watcom C/C++ was a commercial product until it was discontinued, 
-it has since been released under the Sybase Open Watcom Public License as Open Watcom C/C++.
+Watcom C/C++ was an integrated development environment for C, C++, and Fortran programming languages that
+was a commercial product until it was discontinued, it has since been released under the 
+Sybase Open Watcom Public License as Open Watcom.
 
 # Setup Autotools
 

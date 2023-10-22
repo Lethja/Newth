@@ -1,6 +1,7 @@
 #ifndef NEW_TH_WATT32_H
 #define NEW_TH_WATT32_H
 
+#include <dos.h>
 #include <stdio.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -12,12 +13,17 @@
 
 typedef int SOCKET;
 typedef struct tm PlatformTimeStruct;
-typedef struct dirent PlatformDirEntry;
+typedef struct _wfind_t PlatformDirEntry;
 typedef struct stat PlatformFileStat;
 typedef off_t PlatformFileOffset;
 typedef FILE *PlatformFile;
-/* TODO: Investigate how to iterate over files in a directory on DOS systems */
-typedef int DIR;
+
+typedef struct watcomNativeDir {
+    PlatformDirEntry nextEntry;
+    PlatformDirEntry lastEntry;
+    unsigned directoryHandle;
+    int error;
+} DIR;
 
 #define SOCKIN6 sockaddr_in6
 #define CLOSE_SOCKET(x) closesocket(x)
