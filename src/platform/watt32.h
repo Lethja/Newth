@@ -8,12 +8,13 @@
 #include <string.h>
 #include <tcp.h>
 
+#include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 
 typedef int SOCKET;
 typedef struct tm PlatformTimeStruct;
-typedef struct _wfind_t PlatformDirEntry;
+typedef struct find_t PlatformDirEntry;
 typedef struct stat PlatformFileStat;
 typedef off_t PlatformFileOffset;
 typedef FILE *PlatformFile;
@@ -21,7 +22,6 @@ typedef FILE *PlatformFile;
 typedef struct watcomNativeDir {
     PlatformDirEntry nextEntry;
     PlatformDirEntry lastEntry;
-    unsigned directoryHandle;
     int error;
 } DIR;
 

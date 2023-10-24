@@ -14,8 +14,8 @@ CFLAGS=-dWATT32=1 -bt=dos -q -d0 -ml -0 -osr -zc -s
 # -s        : Ignore stack overflow checks
 # -zc       : Place const data into code segment
 
-
-th.exe: th.obj server.obj platform.obj event.obj http.obj routine.obj sockbufr.obj
+# Default building process
+th.exe: obj
     %write test.lnk NAME    $@
     %write test.lnk SYSTEM  DOS
     %write test.lnk LIB     ..\ext\watt32s\lib\wattcpwl.lib
@@ -27,6 +27,9 @@ th.exe: th.obj server.obj platform.obj event.obj http.obj routine.obj sockbufr.o
     %write test.lnk FILE    routine.obj
     %write test.lnk FILE    sockbufr.obj
     wlink  @test.lnk
+
+# Compile without doing the final link
+obj: th.obj server.obj platform.obj event.obj http.obj routine.obj sockbufr.obj watt32.obj
 
 th.obj:
     $(CC) $(CFLAGS) -fo=th.obj ..\src\cli\th.c
@@ -42,6 +45,8 @@ routine.obj:
     $(CC) $(CFLAGS) -fo=routine.obj ..\src\server\routine.c
 sockbufr.obj:
     $(CC) $(CFLAGS) -fo=sockbufr.obj ..\src\server\sockbufr.c
+watt32.obj:
+    $(CC) $(CFLAGS) -fo=watt32.obj ..\src\platform\watt32.c
 
 clean: .SYMBOLIC
     DEL *.OBJ
