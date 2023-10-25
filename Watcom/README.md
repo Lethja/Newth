@@ -18,12 +18,12 @@ Sybase Open Watcom Public License as Open Watcom.
 
 ## Requirements
 To build Newth with Watcom you will need the following:
-- A i386 machine or softcore
-- A i386 compatible DOS operating system or emulator
+- A i386 machine
+- A i386 compatible DOS operating system
 - Open Watcom C 1.9
 - [Watt32 library](https://watt-32.net/) compiled with the same version of Watcom
 
-> Tip: Don't have a real DOS machine? Try [Dosbox-X](https://dosbox-x.com/)
+> Tip: If hardware isn't available it's possible to proceed with a emulator such as [Dosbox-X](https://dosbox-x.com/)
 
 ## Installing Watcom
 Installation instructions for Watcom differ depending on the build machines operating system.
