@@ -502,7 +502,7 @@ char platformFileStatIsFile(PlatformFileStat *stat) {
     return S_ISREG(stat->st_mode);
 }
 
-char *platformGetRootPath(char *path) {
+char *platformGetDiskPath(char *path) {
     char *test = platformRealPath(path);
     if (!test) {
         printf("No such directory \"%s\"\n", path);

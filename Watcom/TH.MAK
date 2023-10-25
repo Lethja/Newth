@@ -24,12 +24,13 @@ th.exe: obj
     %write test.lnk FILE    platform.obj
     %write test.lnk FILE    event.obj
     %write test.lnk FILE    http.obj
+    %write test.lnk FILE    owatcom.obj
     %write test.lnk FILE    routine.obj
     %write test.lnk FILE    sockbufr.obj
     wlink  @test.lnk
 
 # Compile without doing the final link
-obj: th.obj server.obj platform.obj event.obj http.obj routine.obj sockbufr.obj watt32.obj
+obj: th.obj server.obj platform.obj event.obj http.obj owatcom.obj routine.obj sockbufr.obj
 
 th.obj:
     $(CC) $(CFLAGS) -fo=th.obj ..\src\cli\th.c
@@ -41,12 +42,12 @@ event.obj:
     $(CC) $(CFLAGS) -fo=event.obj ..\src\server\event.c
 http.obj:
     $(CC) $(CFLAGS) -fo=http.obj ..\src\server\http.c
+owatcom.obj:
+    $(CC) $(CFLAGS) -fo=owatcom.obj ..\src\platform\owatcom.c
 routine.obj:
     $(CC) $(CFLAGS) -fo=routine.obj ..\src\server\routine.c
 sockbufr.obj:
     $(CC) $(CFLAGS) -fo=sockbufr.obj ..\src\server\sockbufr.c
-watt32.obj:
-    $(CC) $(CFLAGS) -fo=watt32.obj ..\src\platform\watt32.c
 
 clean: .SYMBOLIC
     DEL *.OBJ

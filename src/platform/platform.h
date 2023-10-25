@@ -1,6 +1,13 @@
 #ifndef OPEN_WEB_PLATFORM_H
 #define OPEN_WEB_PLATFORM_H
 
+/* Platform.h consolidates different ways of achieving the same thing between different platforms portable functions
+ * If you want to see how a platform implements something look at the applicable function in one of these files:
+ * mscrtdl.c - Win32 (MingW/MSVC6, 80386 compatible on Windows 95A or later)
+ * owatcom.c - Dos16 (Open Watcom, 8086 on IBM compatibles using WATT32 as the TCP stack on a packet driver)
+ * posix01.c - Linux (Clang & GCC, should also work well on your other *nix-like friends like *BSD, Haiku, OSX)
+ */
+
 #ifdef NDEBUG
 #define LINEDBG
 #else
@@ -26,7 +33,7 @@
 
 #elif WATT32
 
-#include "watt32.h"
+#include "owatcom.h"
 
 #else
 
@@ -302,11 +309,11 @@ char platformFileStatIsDirectory(PlatformFileStat *stat);
 char platformFileStatIsFile(PlatformFileStat *stat);
 
 /**
- * Get the absolute path of a directory
+ * Same as platformGetRealPath except Get the absolute path of a directory including drive letters on DOS-like
  * @param path In: The path to expand into a full path
  * @return The full path or NULL or error
  */
-char *platformGetRootPath(char *path);
+char *platformGetDiskPath(char *path);
 
 /**
  * Get the working directory of the process

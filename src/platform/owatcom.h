@@ -1,29 +1,40 @@
 #ifndef NEW_TH_WATT32_H
 #define NEW_TH_WATT32_H
 
+#include "platform.h"
+
+#pragma region DOS/WatcomC Specific headers
+
 #include <dos.h>
+#include <direct.h>
+
+#pragma endregion
+
+#pragma region ANSI C headers
+
+#include <ctype.h>
 #include <stdio.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
-#include <tcp.h>
+#include <time.h>
+
+#pragma endregion
+
+#pragma region Watt32 library headers
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <tcp.h>
 
-typedef int SOCKET;
+#pragma endregion
+
 typedef struct tm PlatformTimeStruct;
-typedef struct find_t PlatformDirEntry;
+typedef struct dirent PlatformDirEntry;
 typedef struct stat PlatformFileStat;
 typedef off_t PlatformFileOffset;
 typedef FILE *PlatformFile;
-
-typedef struct watcomNativeDir {
-    PlatformDirEntry nextEntry;
-    PlatformDirEntry lastEntry;
-    int error;
-} DIR;
 
 #define SOCKIN6 sockaddr_in6
 #define CLOSE_SOCKET(x) closesocket(x)

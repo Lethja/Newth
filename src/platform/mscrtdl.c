@@ -75,8 +75,8 @@ static char platformVersionAbove(DWORD major, DWORD minor) {
 
     dwVersion = GetVersion();
 
-    dwMajorVersion = (DWORD) (LOBYTE(LOWORD(dwVersion)));
-    dwMinorVersion = (DWORD) (HIBYTE(LOWORD(dwVersion)));
+    dwMajorVersion = (DWORD)(LOBYTE(LOWORD(dwVersion)));
+    dwMinorVersion = (DWORD)(HIBYTE(LOWORD(dwVersion)));
 
     if (dwMajorVersion > major)
         return 2;
@@ -578,7 +578,7 @@ char *platformRealPath(char *path) {
     return NULL;
 }
 
-char *platformGetRootPath(char *path) {
+char *platformGetDiskPath(char *path) {
     char *test;
     if (strlen(path) == 1 || (strlen(path) < 4 && path[1] == ':' && path[2] == '\\')) {
         if (isupper(*path)) {

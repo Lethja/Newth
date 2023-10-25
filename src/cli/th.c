@@ -97,11 +97,9 @@ static void printAdapterInformation(char *protocol, sa_family_t family, unsigned
         printf("%s:\n", adapters->adapter[i].name);
         for (j = 0; j < adapters->adapter[i].addresses.size; ++j) {
             if (!adapters->adapter[i].addresses.array[j].type)
-                printf("\t%s://%s:%u\n", protocol, adapters->adapter[i].addresses.array[j].address,
-                       port);
+                printf("\t%s://%s:%u\n", protocol, adapters->adapter[i].addresses.array[j].address, port);
             else
-                printf("\t%s://[%s]:%u\n", protocol, adapters->adapter[i].addresses.array[j].address,
-                       port);
+                printf("\t%s://[%s]:%u\n", protocol, adapters->adapter[i].addresses.array[j].address, port);
         }
     }
 
@@ -162,14 +160,14 @@ int main(int argc, char **argv) {
     platformConnectSignals(noAction, shutdownCrash, shutdownProgram);
 
     if (argc > 1) {
-        globalRootPath = platformGetRootPath(argv[1]);
+        globalRootPath = platformGetDiskPath(argv[1]);
     } else {
         char *buf = malloc(BUFSIZ + 1), *test = platformGetWorkingDirectory(buf, BUFSIZ);
 
         if (buf) {
             buf[BUFSIZ] = '\0';
             if (test)
-                globalRootPath = platformGetRootPath(test);
+                globalRootPath = platformGetDiskPath(test);
 
             free(buf);
         } else {
