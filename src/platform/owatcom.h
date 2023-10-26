@@ -36,6 +36,8 @@ typedef struct stat PlatformFileStat;
 typedef off_t PlatformFileOffset;
 typedef FILE *PlatformFile;
 
+/* TODO: Test select_s actually works as intended */
+#define select select_s
 #define SOCKIN6 sockaddr_in6
 #define CLOSE_SOCKET(x) closesocket(x)
 #define SOCKET int
