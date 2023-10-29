@@ -42,7 +42,7 @@ debug: .SYMBOLIC
 
 release: .SYMBOLIC
     @del flag.lnk
-    %write flag.lnk -dWATT32=1 -bt=dos -mf -3 -d0 -osr -zc -s
+    %write flag.lnk -dWATT32=1 -bt=dos -mf -3 -d0 -osr -zc -s -dNDEBUG=1
 
 objfolder: .SYMBOLIC
     IF NOT EXIST D32 MD D32
@@ -50,3 +50,4 @@ objfolder: .SYMBOLIC
 clean: .SYMBOLIC
     IF EXIST D32 DELTREE /Y D32
     IF EXIST TH32.EXE DEL TH32.EXE
+    IF EXIST TH32DBG.EXE DEL TH32DBG.EXE

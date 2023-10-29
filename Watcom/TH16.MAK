@@ -42,7 +42,7 @@ debug: .SYMBOLIC
 
 release: .SYMBOLIC
     @del flag.lnk
-    %write flag.lnk -dWATT32=1 -bt=dos -ml -0 -d0 -osr -zc -s
+    %write flag.lnk -dWATT32=1 -bt=dos -ml -0 -d0 -osr -zc -dNDEBUG=1
 
 objfolder: .SYMBOLIC
     IF NOT EXIST D16 MD D16
@@ -50,3 +50,4 @@ objfolder: .SYMBOLIC
 clean: .SYMBOLIC
     IF EXIST D16 DELTREE /Y D16
     IF EXIST TH16.EXE DEL TH16.EXE
+    IF EXIST TH16DBG.EXE DEL TH16DBG.EXE
