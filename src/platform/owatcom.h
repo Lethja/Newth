@@ -3,6 +3,12 @@
 
 #include "platform.h"
 
+#pragma region Documentation
+/* To use Watt32 with Newth. You must edit 'watt32s/src/config.h' so that 'USE_BSD_API' is defined.
+ * Defining 'USE_BSD_FATAL' and 'USE_DHCP' is also recommended
+ * Build the large and/or flat memory model for Watcom */
+#pragma endregion
+
 #pragma region DOS/WatcomC Specific headers
 
 #include <dos.h>
