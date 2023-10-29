@@ -10,6 +10,8 @@
 
 #ifdef NDEBUG
 #define LINEDBG
+#elif DBGHALT
+#define LINEDBG printf("%s:%d\n", __FILE__, __LINE__); do {} while(getchar() != '\n')
 #else
 #define LINEDBG printf("%s:%d\n", __FILE__, __LINE__)
 #endif

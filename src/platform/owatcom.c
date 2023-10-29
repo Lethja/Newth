@@ -1,4 +1,8 @@
 #include "platform.h"
+#include "owatcom.h"
+#include "../server/event.h"
+
+#define MAX_LISTEN 2
 
 void platformPathCombine(char *output, const char *path1, const char *path2) {
     const char pathDivider = '/', pathDivider2 = '\\';
@@ -234,70 +238,133 @@ size_t platformFileRead(void *buffer, size_t size, size_t n, PlatformFile stream
 
 #pragma region Watt32 Networking
 
-SOCKET platformAcceptConnection(SOCKET fromSocket) {
-    /* TODO: Segregate Watt32 from DOS as a platform */
+int platformAcceptConnection(int fromSocket) {
+    const char blocking = 0;
+    socklen_t addressSize = sizeof(struct sockaddr_in);
+    int clientSocket;
+    struct sockaddr_in clientAddress;
+
+    clientSocket = accept(fromSocket, (SA *) &clientAddress, &addressSize);
+    platformSocketSetBlock(clientSocket, blocking);
+
+    eventSocketAcceptInvoke(&clientSocket);
+
+    LINEDBG;
+
+    return clientSocket;
+}
+
+int platformSocketSetBlock(SOCKET socket, char blocking) {
+    /* TODO: Get non-blocking sockets setup */
     LINEDBG;
     return 0;
 }
 
-int platformSocketSetBlock(SOCKET socket, char blocking) {
-    /* TODO: Segregate Watt32 from DOS as a platform */
-    LINEDBG;
-    return -1;
-}
-
 int platformSocketGetLastError(void) {
-    /* TODO: Segregate Watt32 from DOS as a platform */
     LINEDBG;
-    return ENOMEM;
+    return errno;
 }
 
 void platformCloseBindSockets(fd_set *sockets, SOCKET max) {
-    /* TODO: Segregate Watt32 from DOS as a platform */
+    int i;
+
+    LINEDBG;
+
+    for (i = 0; i <= max; ++i) {
+        if (FD_ISSET(i, sockets)) {
+            eventSocketCloseInvoke(&i);
+            close(i);
+        }
+    }
+
     LINEDBG;
 }
 
 void platformIpStackExit(void) {
-    /* TODO: Segregate Watt32 from DOS as a platform */
     LINEDBG;
 }
 
 char *platformIpStackInit(void) {
-    /* TODO: Segregate Watt32 from DOS as a platform */
     LINEDBG;
-    return 0;
+    return NULL;
 }
 
 SOCKET *platformServerStartup(sa_family_t family, char *ports, SOCKET *maxSocket, char **err) {
-    /* TODO: Segregate Watt32 from DOS as a platform */
+    SOCKET *r;
+    SOCKET listenSocket;
+    struct sockaddr_storage serverAddress;
+    memset(&serverAddress, 0, sizeof(struct sockaddr_storage));
+
     LINEDBG;
-    return 0;
+
+    switch (family) {
+        default:
+        case AF_INET:
+        case AF_UNSPEC: {
+            struct sockaddr_in *sock = (struct sockaddr_in *) &serverAddress;
+            if ((listenSocket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+                *err = "Unable to acquire IPV4 socket from system";
+                return NULL;
+            }
+
+            sock->sin_family = AF_INET;
+            sock->sin_addr.s_addr = htonl(INADDR_ANY);
+            LINEDBG;
+            break;
+        }
+    }
+
+    if (platformBindPort(&listenSocket, (struct sockaddr *) &serverAddress, ports)) {
+        *err = "Unable to bind to designated port numbers";
+        return NULL;
+    }
+
+    if ((listen(listenSocket, MAX_LISTEN)) < 0) {
+        *err = "Unable to listen to assigned socket";
+        return NULL;
+    }
+
+    r = malloc(sizeof(SOCKET) * 2);
+    if (r) {
+        if (listenSocket > *maxSocket)
+            *maxSocket = listenSocket;
+
+        r[0] = 1, r[1] = listenSocket;
+
+        LINEDBG;
+
+        return r;
+    } else
+        *err = strerror(errno);
+
+    LINEDBG;
+
+    return NULL;
 }
 
 void platformGetIpString(struct sockaddr *addr, char ipStr[INET6_ADDRSTRLEN], sa_family_t *family) {
-    /* TODO: Segregate Watt32 from DOS as a platform */
+    *family = addr->sa_family;
+    if (addr->sa_family == AF_INET) {
+        struct sockaddr_in *s4 = (struct sockaddr_in *) addr;
+        char *ip = inet_ntoa(s4->sin_addr);
+        strcpy(ipStr, ip);
+    } else
+        strcpy(ipStr, "???");
+
     LINEDBG;
 }
 
 unsigned short platformGetPort(struct sockaddr *addr) {
-    /* TODO: Segregate Watt32 from DOS as a platform */
-    LINEDBG;
+    if (addr->sa_family == AF_INET) {
+        struct sockaddr_in *s4 = (struct sockaddr_in *) addr;
+        LINEDBG;
+        return ntohs(s4->sin_port);
+    }
+
     return 0;
 }
 
-void platformFreeAdapterInformation(AdapterAddressArray *array) {
-    /* TODO: Segregate Watt32 from DOS as a platform */
-    LINEDBG;
-}
-
-void platformFindOrCreateAdapterIp(AdapterAddressArray *array, const char *adapter, sa_family_t type,
-                                   char ip[INET6_ADDRSTRLEN], unsigned short port) {
-    /* TODO: Segregate Watt32 from DOS as a platform */
-    LINEDBG;
-}
-
 int platformOfficiallySupportsIpv6(void) {
-    /* TODO: Segregate Watt32 from DOS as a platform */
     LINEDBG;
     return 0;
 }

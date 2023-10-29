@@ -1,7 +1,10 @@
 <!-- TOC -->
 * [What is Open Watcom](#what-is-open-watcom)
+  * [Watcom compiler flags](#watcom-compiler-flags)
 * [Setup Open Watcom](#setup-open-watcom)
   * [Requirements](#requirements)
+    * [Choose processor architecture](#choose-processor-architecture)
+      * [Processor compatibility matrix](#processor-compatibility-matrix)
   * [Installing Open Watcom](#installing-open-watcom)
     * [Installing SvarDOS package manager onto another DOS (optional)](#installing-svardos-package-manager-onto-another-dos-optional)
 * [Building Newth](#building-newth)
@@ -9,6 +12,8 @@
   * [Adding Watt32 includes](#adding-watt32-includes)
   * [Configuring Watt32 library for linking with Newth](#configuring-watt32-library-for-linking-with-newth)
   * [Build Newth](#build-newth)
+    * [Build for 16-bit (real mode)](#build-for-16-bit-real-mode)
+    * [Build for 32-bit (DOS4GW)](#build-for-32-bit-dos4gw)
 <!-- TOC -->
 
 # What is Open Watcom
@@ -17,7 +22,31 @@ Watcom C/C++ was an integrated development environment for C, C++, and Fortran p
 was a commercial product until it was discontinued, it has since been released under the
 Sybase Open Watcom Public License as Open Watcom. Open Watcoms niche over other typical compiler choices is it's
 build targets for legacy hardware and software. Open Watcom builds native code for 16-bit x86 processors and can compile
-code from a modern Linux/Windows host for ancient versions of DOS, OS/2 & Windows. 
+code from a modern Linux/Windows host for ancient versions of DOS, OS/2 & Windows.
+
+## Watcom compiler flags
+
+Open Watcoms compiler flags are quite unique compared to a typical GCC. Here are some of the more common ones:
+
+```
+-bt=      : Set build target...
+    com   : ... 16-bit DOS COM file
+    dos   : ... 16-bit DOS EXE file
+    dos4g : ... 32-bit DOS EXE file
+-d0       : No debugging information
+-m        : Memory model...
+  f       : ... flat  (32-bit only)
+  s       : ... small (16-bit only)
+  l       : ... large (16-bit only)
+-0        : Optimize for 8086
+-3        : Optimize for 386
+-o        : Optimize...
+  r       : ... instructions to make the most effective use of the CPU pipeline
+  s       : ... for space over performance
+-q        : Be quiet!
+-s        : Ignore stack overflow checks
+-zc       : Place const data into code segment
+```
 
 # Setup Open Watcom
 
@@ -28,9 +57,25 @@ To build Newth with Watcom you will need the following:
 - A i386 machine
 - A i386 compatible DOS operating system
 - Open Watcom C 1.9
-- [Watt32 library](https://github.com/gvanem/Watt-32) compiled with the same version of Watcom
+- [Watt32 library](https://github.com/gvanem/Watt-32) compiled with the same version of Open Watcom
 
 > Tip: If hardware isn't available it's possible to proceed with a emulator such as [Dosbox-X](https://dosbox-x.com/)
+
+### Choose processor architecture
+
+Open Watcom can build DOS executables for both 16-bit real mode and 32-bit protected mode.
+It is important to decide what version to build (if not both) before proceeding.
+The 16-bit version can run on 32-bit processors and this might be desired for portability but typically,
+the 32-bit version should be used whenever a processor can run it as it will give the program more memory to use
+and take advantage of the ISA.
+
+#### Processor compatibility matrix
+
+| Compatibility            | 8086 | 8088   | 80186 | 80286 | 80386  | 80486 | i586 | i686 | x86_64 |
+|--------------------------|------|--------|-------|-------|--------|-------|------|------|--------|
+| Newth 16-bit (real mode) | Yes  | Native | Yes   | Yes   | Yes    | Yes   | Yes  | Yes  | Yes    |
+| Newth 32-bit (DOS4GW)    | No   | No     | No    | No    | Native | Yes   | Yes  | Yes  | Yes    |
+| Open Watcom              | No   | No     | No    | No    | Yes    | Yes   | Yes  | Yes  | Yes    |
 
 ## Installing Open Watcom
 
@@ -43,22 +88,26 @@ Some common operating systems are listed in the table below:
 | SvarDOS             | Run `PKGNET pull ow` or [download manually](http://www.svardos.org/?p=repo&cat=devel) then run `PKG install ow.svp`     |
 | Linux/MacOS/Windows | Download and run [Open Watcom installer](https://github.com/open-watcom/open-watcom-v2/releases)                        |
 
-> Note: although Open Watcom can cross compile from Linux/Posix & NT systems 
+> Note: although Open Watcom can cross compile from Linux/Posix & NT systems
 > these instruction will assume Newth is being built by a DOS-like system.
 
 ### Installing SvarDOS package manager onto another DOS (optional)
+
 If you already have a packet driver setup on your DOS system then it is relatively straight forward to setup the SvarDOS
 package manager. `.SVP` files are normal zip files so it should be possible to bootstrap the SvarDOS repository by
 extracting `PKG.EXE` and moving it and `PKGNET.SVP` onto the system. After which you can use `PKG.EXE` to install
 `PKGNET.SVP` to download `PKG.SVP` to install.
 
 Make sure the network packet driver is loaded and both `%DOSDIR%` & `%PATH%` are set correctly then run the following:
+
 ```
 PKG.EXE install PKGNET.SVP
 PKGNET pull pkg
 PKG.EXE install PKG.SVP
 ```
+
 Optionally, remove the extracted `PKG.EXE` and `.SVP` files to free disk space:
+
 ```
 DEL PKG.EXE
 DEL *.SVP
@@ -72,8 +121,8 @@ The Open Watcom build environment needs to be setup before it can be used. A scr
 On a typical DOS installation of Open Watcom run the following to enable the build environment.
 
 > Note: the following steps will need to be repeated each time DOS boots.
-> If this system is using Open Watcom frequently consider making the following commands 
-> part of your `AUTOEXEC.BAT`/`FDAUTO.BAT` script  
+> If this system is using Open Watcom frequently consider making the following commands
+> part of your `AUTOEXEC.BAT`/`FDAUTO.BAT` script
 
 ```
 %DOSDIR%\DEVEL\OW\OWSETENV.BAT
@@ -128,6 +177,14 @@ Recommended changes:
 
 ## Build Newth
 
-Run `wmake -f TH.MAK` to build the project.
-A self contained 16-bit EXE binary called `TH.EXE` will be made
-and can be run from any path including a floppy diskette.
+### Build for 16-bit (real mode)
+
+Run `wmake -f TH16.MAK` to build the project.
+A self contained 16-bit EXE binary called `TH16.EXE` will be made
+and can be run from any path (including a floppy diskette) on any DOS 3.0+ computer.
+
+### Build for 32-bit (DOS4GW)
+
+Run `wmake -f TH32.MAK` to build the project.
+A self contained 32-bit EXE binary called `TH32.EXE` will be made
+and can be run from any path (including a floppy diskette) on any DOS 4.0+ computer with a 80386 compatible CPU.

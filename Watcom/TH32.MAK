@@ -1,0 +1,52 @@
+CC=wcc386
+
+# Default building process
+th32.exe: release d32/th.o d32/server.o d32/platform.o d32/event.o d32/http.o d32/owatcom.o d32/routine.o d32/sockbufr.o
+    %write link.lnk NAME $@
+    %write link.lnk SYS  dos4g
+    %write link.lnk FILE d32/th.o,d32/server.o,d32/platform.o,d32/event.o,d32/http.o,d32/owatcom.o,d32/routine.o,d32/sockbufr.o
+    %write link.lnk LIBP ../ext/watt32s/lib/
+    %write link.lnk LIBF wattcpwf.lib
+    wlink @link.lnk
+    
+th32dbg.exe: debug d32/th.o d32/server.o d32/platform.o d32/event.o d32/http.o d32/owatcom.o d32/routine.o d32/sockbufr.o
+    %write link.lnk NAME $@
+    %write link.lnk SYS  dos4g
+    %write link.lnk FILE d32/th.o,d32/server.o,d32/platform.o,d32/event.o,d32/http.o,d32/owatcom.o,d32/routine.o,d32/sockbufr.o
+    %write link.lnk LIBP ../ext/watt32s/lib/
+    %write link.lnk LIBF wattcpwf.lib
+    wlink @link.lnk
+
+dbg: .SYMBOLIC th32dbg.exe
+
+d32/th.o: objfolder
+    $(CC) @flag.lnk -fo="$@" "../src/cli/th.c"
+d32/server.o: objfolder
+    $(CC) @flag.lnk -fo="$@" "../src/common/server.c"
+d32/platform.o: objfolder
+    $(CC) @flag.lnk -fo="$@" "../src/platform/platform.c"
+d32/event.o: objfolder
+    $(CC) @flag.lnk -fo="$@" "../src/server/event.c"
+d32/http.o: objfolder
+    $(CC) @flag.lnk -fo="$@" "../src/server/http.c"
+d32/owatcom.o: objfolder
+    $(CC) @flag.lnk -fo="$@" "../src/platform/owatcom.c"
+d32/routine.o: objfolder
+    $(CC) @flag.lnk -fo="$@" "../src/server/routine.c"
+d32/sockbufr.o: objfolder
+    $(CC) @flag.lnk -fo="$@" "../src/server/sockbufr.c"
+
+debug: .SYMBOLIC
+    @del flag.lnk
+    %write flag.lnk -dWATT32=1 -bt=dos -mf -3 -d3 -db -dDBGHALT=1
+
+release: .SYMBOLIC
+    @del flag.lnk
+    %write flag.lnk -dWATT32=1 -bt=dos -mf -3 -d0 -osr -zc -s
+
+objfolder: .SYMBOLIC
+    IF NOT EXIST D32 MD D32
+
+clean: .SYMBOLIC
+    IF EXIST D32 DELTREE /Y D32
+    IF EXIST TH32.EXE DEL TH32.EXE

@@ -92,18 +92,22 @@ static void printHttpEvent(eventHttpRespond *event) {
 
 static void printAdapterInformation(char *protocol, sa_family_t family, unsigned short port) {
     AdapterAddressArray *adapters = platformGetAdapterInformation(family);
-    size_t i, j;
-    for (i = 0; i < adapters->size; ++i) {
-        printf("%s:\n", adapters->adapter[i].name);
-        for (j = 0; j < adapters->adapter[i].addresses.size; ++j) {
-            if (!adapters->adapter[i].addresses.array[j].type)
-                printf("\t%s://%s:%u\n", protocol, adapters->adapter[i].addresses.array[j].address, port);
-            else
-                printf("\t%s://[%s]:%u\n", protocol, adapters->adapter[i].addresses.array[j].address, port);
+    if (adapters) {
+        size_t i, j;
+        for (i = 0; i < adapters->size; ++i) {
+            printf("%s:\n", adapters->adapter[i].name);
+            for (j = 0; j < adapters->adapter[i].addresses.size; ++j) {
+                if (!adapters->adapter[i].addresses.array[j].type)
+                    printf("\t%s://%s:%u\n", protocol, adapters->adapter[i].addresses.array[j].address, port);
+                else
+                    printf("\t%s://[%s]:%u\n", protocol, adapters->adapter[i].addresses.array[j].address, port);
+            }
         }
+        platformFreeAdapterInformation(adapters);
+    } else {
+        printf("%s:\n", "Unknown network adapter(s)");
+        printf("\t%s://???:%u\n", protocol, port);
     }
-
-    platformFreeAdapterInformation(adapters);
 }
 
 static int setup(int argc, char **argv) {
