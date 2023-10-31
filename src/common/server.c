@@ -262,7 +262,7 @@ void serverTick(void) {
         RoutineTick(&globalRoutineArray, &serverWriteSockets, &deferredSockets);
 
         globalSelectSleep.tv_usec = 0;
-        globalSelectSleep.tv_sec = (globalRoutineArray.size - deferredSockets) ? 0 : 60;
+        globalSelectSleep.tv_sec = (globalRoutineArray.size - deferredSockets) ? 0 : PLATFORM_SELECT_MAX_TIMEOUT;
 
         readyToReadSockets = serverReadSockets;
         readyToWriteSockets = serverWriteSockets;

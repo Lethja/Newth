@@ -26,6 +26,8 @@ typedef struct stat PlatformFileStat;
 typedef off_t PlatformFileOffset;
 typedef FILE *PlatformFile;
 
+#define PLATFORM_SELECT_MAX_TIMEOUT 60
+
 #define SOCKIN6 sockaddr_in6
 #define CLOSE_SOCKET(x) close(x)
 #define SOCKET int

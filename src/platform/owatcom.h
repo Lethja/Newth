@@ -42,6 +42,8 @@ typedef struct stat PlatformFileStat;
 typedef off_t PlatformFileOffset;
 typedef FILE *PlatformFile;
 
+#define PLATFORM_SELECT_MAX_TIMEOUT 1
+
 /* TODO: Test select_s actually works as intended */
 #define select select_s
 #define SOCKIN6 sockaddr_in6

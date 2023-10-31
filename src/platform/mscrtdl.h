@@ -24,6 +24,8 @@ typedef WIN32_FIND_DATA PlatformDirEntry;
 typedef __int64 PlatformFileOffset;
 typedef HANDLE PlatformFile;
 
+#define PLATFORM_SELECT_MAX_TIMEOUT 60
+
 #ifdef MSVC89
 
 #pragma warning(disable:4068)
