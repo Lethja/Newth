@@ -3,11 +3,14 @@
 #include "../server/event.h"
 
 #include <bios.h>
+#ifdef DJGPP
+#include <limits.h>
+#include <sys/stat.h>
+#endif
 
 #define MAX_LISTEN 2
 
 char platformShouldExit(void) {
-    /* TODO: Double check this actually works on 8086, 286 and 386+ */
     if (_bios_keybrd(1)) {
         unsigned short key = _bios_keybrd(0);
         switch (key) {
@@ -44,7 +47,14 @@ void platformPathCombine(char *output, const char *path1, const char *path2) {
 }
 
 char *platformRealPath(char *path) {
+#ifdef DJGPP
+    char *abs = malloc(PATH_MAX + 1);
+    if(abs)
+        realpath(path, abs);
+    return abs;
+#else /* Watcom */
     return _fullpath(NULL, path, _MAX_PATH);
+#endif
 }
 
 void platformConnectSignals(void(*noAction)(int), void(*shutdownCrash)(int), void(*shutdownProgram)(int)) {
@@ -171,11 +181,19 @@ char *platformDirEntryGetName(PlatformDirEntry *entry, size_t *length) {
 }
 
 char platformDirEntryIsHidden(PlatformDirEntry *entry) {
+#ifdef DJGPP
+    return 0;
+#else /* Watcom */
     return (entry->d_attr & _A_HIDDEN);
+#endif
 }
 
 char platformDirEntryIsDirectory(char *rootPath, char *webPath, PlatformDirEntry *entry) {
+#ifdef DJGPP
+    return (entry->d_type & DT_DIR);
+#else /* Watcom */
     return (entry->d_attr & _A_SUBDIR);
+#endif
 }
 
 int platformFileStat(const char *path, PlatformFileStat *fileStat) {
@@ -254,11 +272,19 @@ int platformFileClose(PlatformFile stream) {
 }
 
 int platformFileSeek(PlatformFile stream, PlatformFileOffset offset, int whence) {
+#ifdef DJGPP
+    return fseeko64(stream, offset, whence);
+#else /* Watcom */
     return _fseeki64(stream, offset, whence);
+#endif
 }
 
 PlatformFileOffset platformFileTell(PlatformFile stream) {
+#ifdef DJGPP
+    return ftello64(stream);
+#else /* Watcom */
     return _ftelli64(stream);
+#endif
 }
 
 size_t platformFileRead(void *buffer, size_t size, size_t n, PlatformFile stream) {
