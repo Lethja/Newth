@@ -4,6 +4,7 @@ CC=wcc386
 th32.exe: release d32/th.o d32/server.o d32/platform.o d32/event.o d32/http.o d32/owatcom.o d32/routine.o d32/sockbufr.o
     %write link.lnk NAME $@
     %write link.lnk SYS  dos4g
+    %write link.lnk OPT  st=8192
     %write link.lnk FILE d32/th.o,d32/server.o,d32/platform.o,d32/event.o,d32/http.o,d32/owatcom.o,d32/routine.o,d32/sockbufr.o
     %write link.lnk LIBP ../ext/watt32s/lib/
     %write link.lnk LIBF wattcpwf.lib
@@ -12,6 +13,7 @@ th32.exe: release d32/th.o d32/server.o d32/platform.o d32/event.o d32/http.o d3
 th32dbg.exe: debug d32/th.o d32/server.o d32/platform.o d32/event.o d32/http.o d32/owatcom.o d32/routine.o d32/sockbufr.o
     %write link.lnk NAME $@
     %write link.lnk SYS  dos4g
+    %write link.lnk OPT  st=8192
     %write link.lnk FILE d32/th.o,d32/server.o,d32/platform.o,d32/event.o,d32/http.o,d32/owatcom.o,d32/routine.o,d32/sockbufr.o
     %write link.lnk LIBP ../ext/watt32s/lib/
     %write link.lnk LIBF wattcpwf.lib
