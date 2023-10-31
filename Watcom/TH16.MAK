@@ -1,20 +1,20 @@
 CC=wcc
 
 # Default building process
-th16.exe: release d16/th.o d16/server.o d16/platform.o d16/event.o d16/http.o d16/owatcom.o d16/routine.o d16/sockbufr.o
+th16.exe: release d16/th.o d16/server.o d16/platform.o d16/event.o d16/http.o d16/doswatb.o d16/routine.o d16/sockbufr.o
     %write link.lnk NAME $@
     %write link.lnk SYS  dos
     %write link.lnk OPT  st=8192
-    %write link.lnk FILE d16/th.o,d16/server.o,d16/platform.o,d16/event.o,d16/http.o,d16/owatcom.o,d16/routine.o,d16/sockbufr.o
+    %write link.lnk FILE d16/th.o,d16/server.o,d16/platform.o,d16/event.o,d16/http.o,d16/doswatb.o,d16/routine.o,d16/sockbufr.o
     %write link.lnk LIBP ../ext/watt32s/lib/
     %write link.lnk LIBF wattcpwl.lib
     wlink @link.lnk
 
-th16dbg.exe: debug d16/th.o d16/server.o d16/platform.o d16/event.o d16/http.o d16/owatcom.o d16/routine.o d16/sockbufr.o
+th16dbg.exe: debug d16/th.o d16/server.o d16/platform.o d16/event.o d16/http.o d16/doswatb.o d16/routine.o d16/sockbufr.o
     %write link.lnk NAME $@
     %write link.lnk SYS  dos
     %write link.lnk OPT  st=8192
-    %write link.lnk FILE d16/th.o,d16/server.o,d16/platform.o,d16/event.o,d16/http.o,d16/owatcom.o,d16/routine.o,d16/sockbufr.o
+    %write link.lnk FILE d16/th.o,d16/server.o,d16/platform.o,d16/event.o,d16/http.o,d16/doswatb.o,d16/routine.o,d16/sockbufr.o
     %write link.lnk LIBP ../ext/watt32s/lib/
     %write link.lnk LIBF wattcpwl.lib
     wlink @link.lnk
@@ -25,14 +25,14 @@ d16/th.o: objfolder
     $(CC) @flag.lnk -fo="$@" "../src/cli/th.c"
 d16/server.o: objfolder
     $(CC) @flag.lnk -fo="$@" "../src/common/server.c"
+d16/doswatb.o: objfolder
+    $(CC) @flag.lnk -fo="$@" "../src/platform/doswatb.c"
 d16/platform.o: objfolder
     $(CC) @flag.lnk -fo="$@" "../src/platform/platform.c"
 d16/event.o: objfolder
     $(CC) @flag.lnk -fo="$@" "../src/server/event.c"
 d16/http.o: objfolder
     $(CC) @flag.lnk -fo="$@" "../src/server/http.c"
-d16/owatcom.o: objfolder
-    $(CC) @flag.lnk -fo="$@" "../src/platform/owatcom.c"
 d16/routine.o: objfolder
     $(CC) @flag.lnk -fo="$@" "../src/server/routine.c"
 d16/sockbufr.o: objfolder

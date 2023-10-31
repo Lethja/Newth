@@ -3,9 +3,9 @@
 
 /* Platform.h consolidates different ways of achieving the same thing between different platforms portable functions
  * If you want to see how a platform implements something look at the applicable function in one of these files:
- * mscrtdl.c - Win32 (MingW/MSVC6, 80386 compatible on Windows 95A or later)
- * owatcom.c - Dos16 (Open Watcom, 8086 on IBM compatibles using WATT32 as the TCP stack on a packet driver)
- * posix01.c - Linux (Clang & GCC, should also work well on your other *nix-like friends like *BSD, Haiku, OSX)
+ * doswatb.c - Dos16/32 (DJGPP/OWatcom, DOS on IBM compatibles using WATT32 as the TCP stack on a packet driver)
+ * mscrtdl.c - Win32/NT (MingW & MSVC6, 80386 compatible on Windows 95A or later)
+ * posix01.c - nix-like (Clang and GCC, should work well with C89/POSIX.1-2001 compliant systems like *BSD, Haiku, OSX)
  */
 
 #ifdef NDEBUG
@@ -35,7 +35,7 @@
 
 #elif WATT32
 
-#include "owatcom.h"
+#include "doswatb.h"
 
 #else
 

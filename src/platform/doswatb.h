@@ -1,18 +1,23 @@
-#ifndef NEW_TH_WATT32_H
-#define NEW_TH_WATT32_H
+#ifndef NEW_TH_DOS_WATT32_H
+#define NEW_TH_DOS_WATT32_H
 
 #include "platform.h"
 
 #pragma region Documentation
 /* To use Watt32 with Newth. You must edit 'watt32s/src/config.h' so that 'USE_BSD_API' is defined.
- * Defining 'USE_BSD_FATAL' and 'USE_DHCP' is also recommended
+ * Defining 'USE_BOOTP', 'USE_BSD_FATAL' and 'USE_DHCP' is also recommended
  * Build the large and/or flat memory model for Watcom */
 #pragma endregion
 
-#pragma region DOS/WatcomC Specific headers
+#pragma region DOS/Compiler Specific headers
 
 #include <dos.h>
+
+#ifdef DJGPP
+#include <dirent.h>
+#else /* Open Watcom assumed */
 #include <direct.h>
+#endif
 
 #pragma endregion
 
@@ -65,4 +70,4 @@ extern char platformShouldExit(void);
 #define SOCKET_WOULD_BLOCK EWOULDBLOCK
 #endif
 
-#endif /* NEW_TH_WATT32_H */
+#endif /* NEW_TH_DOS_WATT32_H */

@@ -1,12 +1,10 @@
 #include "platform.h"
-#include "owatcom.h"
+#include "doswatb.h"
 #include "../server/event.h"
 
 #include <bios.h>
 
 #define MAX_LISTEN 2
-
-/* unsigned int _stacksize = {8 * 1024}; */
 
 char platformShouldExit(void) {
     /* TODO: Double check this actually works on 8086, 286 and 386+ */
