@@ -295,6 +295,9 @@ void serverTick(void) {
                 FD_CLR(i, &serverWriteSockets);
             }
         }
+#ifdef PLATFORM_SHOULD_EXIT
+        serverRun = PLATFORM_SHOULD_EXIT();
+#endif
     }
 }
 
@@ -323,7 +326,7 @@ void serverPoke(void) {
 }
 
 void serverFreeResources(void) {
-    if(serverListenSocket)
+    if (serverListenSocket)
         free(serverListenSocket);
 }
 

@@ -1,5 +1,5 @@
-#ifndef OPEN_WEB_PLATFORM_WIN_SOCK_2_H
-#define OPEN_WEB_PLATFORM_WIN_SOCK_2_H
+#ifndef OPEN_WEB_PLATFORM_WIN32_H
+#define OPEN_WEB_PLATFORM_WIN32_H
 
 #undef UNICODE
 
@@ -149,4 +149,4 @@ typedef struct winSockNativeDir {
 
 void ipv6NTop(const void *inAddr6, char *ipStr);
 
-#endif /* OPEN_WEB_PLATFORM_WIN_SOCK_2_H */
+#endif /* OPEN_WEB_PLATFORM_WIN32_H */

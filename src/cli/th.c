@@ -192,5 +192,10 @@ int main(int argc, char **argv) {
 
     serverTick();
 
+    /* Clean up in case serverTick() returns */
+    platformCloseBindSockets(&serverReadSockets, serverMaxSocket);
+    serverFreeResources();
+    platformIpStackExit();
+
     return 0;
 }

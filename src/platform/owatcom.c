@@ -2,7 +2,28 @@
 #include "owatcom.h"
 #include "../server/event.h"
 
+#include <bios.h>
+
 #define MAX_LISTEN 2
+
+/* unsigned int _stacksize = {8 * 1024}; */
+
+char platformShouldExit(void) {
+    /* TODO: Double check this actually works on 8086, 286 and 386+ */
+    if (_bios_keybrd(1)) {
+        unsigned short key = _bios_keybrd(0);
+        switch (key) {
+            case 0x2d00: /* Alt + X  */
+            case 0x2e03: /* Ctrl + C */
+            case 0x11b:  /* Esc      */
+                return 0;
+                break;
+            default:
+                return 1;
+        }
+    }
+    return 1;
+}
 
 void platformPathCombine(char *output, const char *path1, const char *path2) {
     const char pathDivider = '/', pathDivider2 = '\\';
@@ -29,7 +50,7 @@ char *platformRealPath(char *path) {
 }
 
 void platformConnectSignals(void(*noAction)(int), void(*shutdownCrash)(int), void(*shutdownProgram)(int)) {
-    signal(SIGINT, shutdownProgram);
+    /* See platformShouldExit() */
 }
 
 AdapterAddressArray *platformGetAdapterInformation(sa_family_t family) {
