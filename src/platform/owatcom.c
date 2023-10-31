@@ -33,7 +33,17 @@ void platformConnectSignals(void(*noAction)(int), void(*shutdownCrash)(int), voi
 }
 
 AdapterAddressArray *platformGetAdapterInformation(sa_family_t family) {
-    return NULL;
+    struct AdapterAddressArray *array = malloc(sizeof(AdapterAddressArray));
+    struct in_addr address;
+
+    if (!array)
+        return NULL;
+
+    array->size = 0;
+    address.s_addr = htonl(my_ip_addr);
+    platformFindOrCreateAdapterIp(array, "Loaded Packet Driver", 0, inet_ntoa(address), 0);
+
+    return array;
 }
 
 void platformGetTime(void *clock, char *time) {
