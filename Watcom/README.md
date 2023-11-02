@@ -12,8 +12,9 @@
   * [Adding Watt32 includes](#adding-watt32-includes)
   * [Configuring Watt32 library for linking with Newth](#configuring-watt32-library-for-linking-with-newth)
   * [Build Newth](#build-newth)
-    * [Build for 16-bit (real mode)](#build-for-16-bit-real-mode)
+    * [Build for 16-bit (Real Mode)](#build-for-16-bit-real-mode)
     * [Build for 32-bit (DOS4GW)](#build-for-32-bit-dos4gw)
+    * [Compress (optional)](#compress-optional)
 <!-- TOC -->
 
 # What is Open Watcom
@@ -57,6 +58,7 @@ To build Newth with Watcom you will need the following:
 - A i386 machine
 - A i386 compatible DOS operating system
 - Open Watcom C 1.9
+- [UPX](https://upx.github.io/) (optional)
 - [Watt32 library](https://github.com/gvanem/Watt-32) compiled with the same version of Open Watcom
 
 > Tip: If hardware isn't available it's possible to proceed with a emulator such as [Dosbox-X](https://dosbox-x.com/)
@@ -71,22 +73,23 @@ and take advantage of the ISA.
 
 #### Processor compatibility matrix
 
-| Compatibility            | 8086 | 8088   | 80186 | 80286 | 80386  | 80486 | i586 | i686 | x86_64 |
-|--------------------------|------|--------|-------|-------|--------|-------|------|------|--------|
-| Newth 16-bit (real mode) | Yes  | Native | Yes   | Yes   | Yes    | Yes   | Yes  | Yes  | Yes    |
-| Newth 32-bit (DOS4GW)    | No   | No     | No    | No    | Native | Yes   | Yes  | Yes  | Yes    |
-| Open Watcom              | No   | No     | No    | No    | Yes    | Yes   | Yes  | Yes  | Yes    |
+| Compatibility | 8086 | 8088   | 80186 | 80286 | 80386  | 80486 | i586 | i686 | x86_64 |
+|---------------|------|--------|-------|-------|--------|-------|------|------|--------|
+| Real Mode     | Yes  | Native | Yes   | Yes   | Yes    | Yes   | Yes  | Yes  | Yes    |
+| DOS4GW        | No   | No     | No    | No    | Native | Yes   | Yes  | Yes  | Yes    |
+
+> Note: Open Watcom is a DOS4GW binary
 
 ## Installing Open Watcom
 
 Installation instructions for Watcom differ depending on the build machines operating system.
 Some common operating systems are listed in the table below:
 
-| Operating System    | Installation Instructions                                                                                               |
-|---------------------|-------------------------------------------------------------------------------------------------------------------------|
-| FreeDOS             | Load the bonus CD/ISO then run `FDIMPLES`, navigate to the **Development** group and check **WATCOMC** for installation |
-| SvarDOS             | Run `PKGNET pull ow` or [download manually](http://www.svardos.org/?p=repo&cat=devel) then run `PKG install ow.svp`     |
-| Linux/MacOS/Windows | Download and run [Open Watcom installer](https://github.com/open-watcom/open-watcom-v2/releases)                        |
+| Operating System | Installation Instructions                                                                                               |
+|------------------|-------------------------------------------------------------------------------------------------------------------------|
+| FreeDOS          | Load the bonus CD/ISO then run `FDIMPLES`, navigate to the **Development** group and check **WATCOMC** for installation |
+| SvarDOS          | Run `PKGNET pull ow` or [download manually](http://www.svardos.org/?p=repo&cat=devel) then run `PKG install ow.svp`     |
+| Other            | Download and run [Open Watcom installer](https://github.com/open-watcom/open-watcom-v2/releases)                        |
 
 > Note: although Open Watcom can cross compile from Linux/Posix & NT systems
 > these instruction will assume Newth is being built by a DOS-like system.
@@ -159,10 +162,11 @@ Recommended changes:
  #undef USE_BIND
 -#undef USE_BSD_API
 -#undef USE_BSD_FATAL
+-#undef USE_BOOTP
+-#undef USE_DHCP
 +#define USE_BSD_API
 +#define USE_BSD_FATAL
- #undef USE_BOOTP
--#undef USE_DHCP
++#define USE_BOOTP
 +#define USE_DHCP
  #undef USE_RARP
  #undef USE_GEOIP
@@ -177,7 +181,7 @@ Recommended changes:
 
 ## Build Newth
 
-### Build for 16-bit (real mode)
+### Build for 16-bit (Real Mode)
 
 Run `wmake -f TH16.MAK` to build the project.
 A self contained 16-bit EXE binary called `TH16.EXE` will be made
@@ -188,3 +192,14 @@ and can be run from any path (including a floppy diskette) on any DOS 3.0+ compu
 Run `wmake -f TH32.MAK` to build the project.
 A self contained 32-bit EXE binary called `TH32.EXE` will be made
 and can be run from any path (including a floppy diskette) on any DOS 4.0+ computer with a 80386 compatible CPU.
+
+### Compress (optional)
+
+On DOS machines disk space is usually at a premium.
+Even though the release builds are stripped of all debugging symbols it is possible to make the binary take
+substantially less disk space with UPX compression so that it fits comfortably on a smaller diskette standard.
+
+| Build     | UPX Command                  | Fits on           |
+|-----------|------------------------------|-------------------|
+| Real Mode | `UPX TH16.EXE --best --8086` | 5¼-inch DD (360k) |
+| DOS4GW    | `UPX TH32.EXE --best`        | 5¼-inch QD (720k) |

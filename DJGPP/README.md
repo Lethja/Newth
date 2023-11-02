@@ -8,6 +8,8 @@
   * [Setup DJGPP build environment](#setup-djgpp-build-environment)
   * [Configuring Watt32 library for linking with Newth](#configuring-watt32-library-for-linking-with-newth)
   * [Build Newth](#build-newth)
+    * [Build](#build)
+    * [Compress (optional)](#compress-optional)
 <!-- TOC -->
 
 # What is DJGPP
@@ -117,6 +119,18 @@ Recommended changes:
 
 ## Build Newth
 
+### Build
+
 Run `make` to build the project.
 A self contained 32-bit EXE binary called `TH32.EXE` will be made
 and can be run from any path (including a floppy diskette) on any DOS 4.0+ computer with a 80386 compatible CPU.
+
+### Compress (optional)
+
+On DOS machines disk space is usually at a premium.
+Even though the release builds are stripped of all debugging symbols it is possible to make the binary take
+substantially less disk space with UPX compression so that it fits comfortably on a smaller diskette standard.
+
+| Build | UPX command           | Fits on           |
+|-------|-----------------------|-------------------|
+| DJGPP | `UPX TH32.EXE --best` | 5¼-inch QD (720k) |
