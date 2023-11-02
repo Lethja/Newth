@@ -57,8 +57,8 @@ To build Newth with Watcom you will need the following:
 
 - A i386 machine
 - A i386 compatible DOS operating system
-- Open Watcom C 1.9
-- [UPX](https://upx.github.io/) (optional)
+- [Open Watcom 1.9](http://openwatcom.org/)
+- [UPX binary compression](https://upx.github.io/) (optional)
 - [Watt32 library](https://github.com/gvanem/Watt-32) compiled with the same version of Open Watcom
 
 > Tip: If hardware isn't available it's possible to proceed with a emulator such as [Dosbox-X](https://dosbox-x.com/)
@@ -85,11 +85,11 @@ and take advantage of the ISA.
 Installation instructions for Watcom differ depending on the build machines operating system.
 Some common operating systems are listed in the table below:
 
-| Operating System | Installation Instructions                                                                                               |
-|------------------|-------------------------------------------------------------------------------------------------------------------------|
-| FreeDOS          | Load the bonus CD/ISO then run `FDIMPLES`, navigate to the **Development** group and check **WATCOMC** for installation |
-| SvarDOS          | Run `PKGNET pull ow` or [download manually](http://www.svardos.org/?p=repo&cat=devel) then run `PKG install ow.svp`     |
-| Other            | Download and run [Open Watcom installer](https://github.com/open-watcom/open-watcom-v2/releases)                        |
+| Operating System | Installation Instructions                                                                                                                                                                                                                                                                 |
+|------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| FreeDOS          | Load the bonus CD/ISO then run `FDIMPLES`, navigate to the **Development** group and check **WATCOMC** for installation                                                                                                                                                                   |
+| SvarDOS          | Run `PKGNET pull ow` or [download manually](http://www.svardos.org/?p=repo&cat=devel) then run `PKG install ow.svp`                                                                                                                                                                       |
+| Other            | Download and run the [Open Watcom](https://github.com/open-watcom/open-watcom-v2/releases) installation binary. If choosing a selective installation then make sure the **16-bit compiler** with **Large memory model** and **DOS Target operating system** are selected for installation |
 
 > Note: although Open Watcom can cross compile from Linux/Posix & NT systems
 > these instruction will assume Newth is being built by a DOS-like system.

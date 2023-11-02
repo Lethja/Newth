@@ -25,7 +25,8 @@ To build Newth with DJGPP you will need the following:
 
 - A i386 machine
 - A i386 compatible DOS operating system
-- DJGPP v2
+- [DJGPP v2.05](https://www.delorie.com/djgpp/)
+- [UPX binary compression](https://upx.github.io/) (optional)
 - [Watt32 library](https://github.com/gvanem/Watt-32) compiled with the same version of DJGPP
 
 > Tip: If hardware isn't available it's possible to proceed with a emulator such as [Dosbox-X](https://dosbox-x.com/)
@@ -38,7 +39,7 @@ Some common operating systems are listed in the table below:
 | Operating System | Installation Instructions                                                                                                                                                                                                                                                                   |
 |------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | FreeDOS          | Load the bonus CD/ISO then run `FDIMPLES`, navigate to the **Development** group and check **DJGPP**, **DJGPP_BN**, **DJGPP_GC** & **DJGPP_MK** for installation                                                                                                                            |
-| SvarDOS          | Run `PKGNET pull DJGPP`, `PKGNET pull DJGPP_BN`, `PKGNET pull DJGPP_GC` and `PKGNET pull DJGPP_MK` or [download manually](http://www.svardos.org/?p=repo&cat=devel) then run `PKG install djgpp.svp`, `PKG install djgpp_bn.svp`, `PKG install djgpp_gc.svp` and `PKG install djgpp_mk.svp` |
+| SvarDOS          | Run `PKGNET pull djgpp`, `PKGNET pull djgpp_bn`, `PKGNET pull djgpp_gc` and `PKGNET pull djgpp_mk` or [download manually](http://www.svardos.org/?p=repo&cat=devel) then run `PKG install djgpp.svp`, `PKG install djgpp_bn.svp`, `PKG install djgpp_gc.svp` and `PKG install djgpp_mk.svp` |
 
 ### Installing SvarDOS package manager onto another DOS (optional)
 
