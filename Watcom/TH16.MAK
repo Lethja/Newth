@@ -4,7 +4,7 @@ CC=wcc
 th16.exe: release d16/th.o d16/server.o d16/platform.o d16/event.o d16/http.o d16/doswatb.o d16/routine.o d16/sockbufr.o
     %write link.lnk NAME $@
     %write link.lnk SYS  dos
-    %write link.lnk OPT  st=8192
+    %write link.lnk OPT  st=4608
     %write link.lnk FILE d16/th.o,d16/server.o,d16/platform.o,d16/event.o,d16/http.o,d16/doswatb.o,d16/routine.o,d16/sockbufr.o
     %write link.lnk LIBP ../ext/watt32s/lib/
     %write link.lnk LIBF wattcpwl.lib
@@ -13,7 +13,7 @@ th16.exe: release d16/th.o d16/server.o d16/platform.o d16/event.o d16/http.o d1
 th16dbg.exe: debug d16/th.o d16/server.o d16/platform.o d16/event.o d16/http.o d16/doswatb.o d16/routine.o d16/sockbufr.o
     %write link.lnk NAME $@
     %write link.lnk SYS  dos
-    %write link.lnk OPT  st=8192
+    %write link.lnk OPT  st=4608
     %write link.lnk FILE d16/th.o,d16/server.o,d16/platform.o,d16/event.o,d16/http.o,d16/doswatb.o,d16/routine.o,d16/sockbufr.o
     %write link.lnk LIBP ../ext/watt32s/lib/
     %write link.lnk LIBF wattcpwl.lib
