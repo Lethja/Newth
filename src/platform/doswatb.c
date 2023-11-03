@@ -182,7 +182,7 @@ char *platformDirEntryGetName(PlatformDirEntry *entry, size_t *length) {
 
 char platformDirEntryIsHidden(PlatformDirEntry *entry) {
 #ifdef DJGPP
-    return 0;
+    return entry->d_name[0] == '.' ? 1 : 0;
 #else /* Watcom */
     return (entry->d_attr & _A_HIDDEN);
 #endif
@@ -273,7 +273,7 @@ int platformFileClose(PlatformFile stream) {
 
 int platformFileSeek(PlatformFile stream, PlatformFileOffset offset, int whence) {
 #ifdef DJGPP
-    return fseeko64(stream, offset, whence);
+    return fseek(stream, offset, whence);
 #else /* Watcom */
     return _fseeki64(stream, offset, whence);
 #endif
@@ -281,7 +281,7 @@ int platformFileSeek(PlatformFile stream, PlatformFileOffset offset, int whence)
 
 PlatformFileOffset platformFileTell(PlatformFile stream) {
 #ifdef DJGPP
-    return ftello64(stream);
+    return ftell(stream);
 #else /* Watcom */
     return _ftelli64(stream);
 #endif

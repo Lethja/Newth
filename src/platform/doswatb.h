@@ -44,7 +44,7 @@
 typedef struct tm PlatformTimeStruct;
 typedef struct dirent PlatformDirEntry;
 typedef struct stat PlatformFileStat;
-typedef off_t PlatformFileOffset;
+typedef long PlatformFileOffset;
 typedef FILE *PlatformFile;
 
 extern char platformShouldExit(void);
@@ -56,7 +56,7 @@ extern char platformShouldExit(void);
 #define SOCKET int
 #define SOCK_BUF_TYPE size_t
 #define STD_FILE_TYPE size_t
-#define PF_OFFSET "ji"
+#define PF_OFFSET "lu"
 
 #ifndef SB_DATA_SIZE
 #define SB_DATA_SIZE BUFSIZ
