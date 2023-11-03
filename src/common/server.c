@@ -255,7 +255,7 @@ unsigned short getPort(const SOCKET *listenSocket) {
 
 void serverTick(void) {
     SOCKET i, deferredSockets;
-    fd_set readyToReadSockets, readyToWriteSockets/*, errorSockets*/;
+    fd_set readyToReadSockets, readyToWriteSockets, errorSockets;
     struct timeval globalSelectSleep;
 
     while (serverRun) {
@@ -267,13 +267,23 @@ void serverTick(void) {
         readyToReadSockets = serverReadSockets;
         readyToWriteSockets = serverWriteSockets;
 
-        if (select((int) serverMaxSocket + 1, &readyToReadSockets, &readyToWriteSockets, NULL, &globalSelectSleep) <
+        if (select((int) serverMaxSocket + 1, &readyToReadSockets, &readyToWriteSockets, &errorSockets, &globalSelectSleep) <
             0) {
             LINEDBG;
             exit(1);
         }
 
         for (i = 0; i <= serverMaxSocket; ++i) {
+            /* TODO: Retest all platforms with this code */
+            if (FD_ISSET(i, &errorSockets)) {
+                eventSocketCloseInvoke(&i);
+                RoutineArrayDelSocket(&globalRoutineArray, i);
+                CLOSE_SOCKET(i);
+                FD_CLR(i, &serverReadSockets);
+                FD_CLR(i, &serverWriteSockets);
+                continue;
+            }
+
             if (FD_ISSET(i, &readyToReadSockets)) {
                 if (FD_ISSET(i, &serverListenSockets)) {
                     SOCKET clientSocket = platformAcceptConnection(i);
@@ -287,6 +297,7 @@ void serverTick(void) {
                         RoutineArrayDelSocket(&globalRoutineArray, i);
                         CLOSE_SOCKET(i);
                         FD_CLR(i, &serverReadSockets);
+                        FD_CLR(i, &serverWriteSockets);
                     }
                 }
             }
