@@ -14,6 +14,13 @@ typedef enum httpType {
 
 #define HTTP_EOL "\r\n"
 
+/* Hint to the client that this server should have it's TCP connection closed each request */
+#ifdef HTTP_CONNECTION_NEVER_REUSE
+#define HTTP_HEADER_CONNECTION_NO_REUSE_WRITE(socket) httpHeaderWriteConnectionClose(socket)
+#else
+#define HTTP_HEADER_CONNECTION_NO_REUSE_WRITE(socket)
+#endif
+
 #pragma region HTML
 
 /**
@@ -133,6 +140,14 @@ void httpHeaderWriteAcceptRanges(SocketBuffer *socketBuffer);
  * @param socketBuffer In: The socketBuffer to write to
  */
 void httpHeaderWriteChunkedEncoding(SocketBuffer *socketBuffer);
+
+/**
+ * Write the HTTP header Connection: close
+ * @param socketBuffer In: The socketBuffer to write to
+ * @remark This function is probably not what you want. Use HTTP_CONNECTION_NO_REUSE_WRITE() to automatically add this
+ * header in appropriate builds
+ */
+void httpHeaderWriteConnectionClose(SocketBuffer *socketBuffer);
 
 /**
  * Write the HTTP header Content-Length

@@ -40,11 +40,11 @@ d32/sockbufr.o: objfolder
 
 debug: .SYMBOLIC
     @del flag.lnk
-    %write flag.lnk -dWATT32=1 -bt=dos -mf -3 -d3 -db -dDBGHALT=1
+    %write flag.lnk -dWATT32=1 -dHTTP_CONNECTION_NEVER_REUSE=1 -bt=dos -mf -3 -d3 -db -dDBGHALT=1
 
 release: .SYMBOLIC
     @del flag.lnk
-    %write flag.lnk -dWATT32=1 -bt=dos -mf -3 -d0 -osr -zc -s -dNDEBUG=1
+    %write flag.lnk -dWATT32=1 -dHTTP_CONNECTION_NEVER_REUSE=1 -bt=dos -mf -3 -d0 -osr -zc -s -dNDEBUG=1
 
 objfolder: .SYMBOLIC
     IF NOT EXIST D32 MD D32

@@ -40,6 +40,10 @@ void eventHttpFinishInvoke(SOCKET *clientSocket, const char *path, char type, sh
                 path[0] == '/' ? path + 1 : path;
         eventHttpFinishCallback(&st);
     }
+#ifdef TH_TCP_NEVER_REUSE
+    eventSocketCloseCallback(clientSocket);
+    CLOSE_SOCKET(*clientSocket);
+#endif
 }
 
 void eventSocketAcceptInvoke(SOCKET *clientSocket) {

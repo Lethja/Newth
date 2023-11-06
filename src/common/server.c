@@ -32,6 +32,7 @@ char handleDir(SOCKET clientSocket, char *webPath, char *absolutePath, char type
 
     /* Headers */
     httpHeaderWriteResponse(&socketBuffer, 200);
+    HTTP_HEADER_CONNECTION_NO_REUSE_WRITE(&socketBuffer);
     httpHeaderWriteDate(&socketBuffer);
     httpHeaderWriteLastModified(&socketBuffer, st);
     httpHeaderWriteContentType(&socketBuffer, "text/html", "");
@@ -90,6 +91,7 @@ char handleFile(SOCKET clientSocket, const char *header, char *webPath, char *ab
 
     /* Headers */
     httpHeaderWriteResponse(&socketBuffer, (short) (e ? 200 : 206));
+    HTTP_HEADER_CONNECTION_NO_REUSE_WRITE(&socketBuffer);
     httpHeaderWriteDate(&socketBuffer);
     httpHeaderWriteFileName(&socketBuffer, webPath);
     httpHeaderWriteLastModified(&socketBuffer, st);
@@ -136,6 +138,7 @@ char handlePath(SOCKET clientSocket, const char *header, char *webPath) {
                 SocketBuffer socketBuffer = socketBufferNew(clientSocket, 0);
 
                 httpHeaderWriteResponse(&socketBuffer, 304);
+                HTTP_HEADER_CONNECTION_NO_REUSE_WRITE(&socketBuffer);
                 httpHeaderWriteDate(&socketBuffer);
                 httpHeaderWriteEnd(&socketBuffer);
                 eventHttpRespondInvoke(&socketBuffer.clientSocket, webPath, e, 304);
@@ -200,6 +203,7 @@ char handleConnection(SOCKET clientSocket) {
                     SocketBuffer socketBuffer = socketBufferNew(clientSocket, 0);
 
                     httpHeaderWriteResponse(&socketBuffer, 431);
+                    HTTP_HEADER_CONNECTION_NO_REUSE_WRITE(&socketBuffer);
                     httpHeaderWriteDate(&socketBuffer);
                     httpHeaderWriteContentLength(&socketBuffer, 0);
                     httpHeaderWriteEnd(&socketBuffer);

@@ -219,6 +219,11 @@ void httpHeaderWriteRange(SocketBuffer *socketBuffer, PlatformFileOffset start, 
                 finish == fileLength ? finish - 1 : finish, fileLength);
 }
 
+void httpHeaderWriteConnectionClose(SocketBuffer *socketBuffer) {
+    const char *connection = "Connection: close" HTTP_EOL;
+    socketBufferWriteText(socketBuffer, connection);
+}
+
 void httpHeaderWriteDate(SocketBuffer *socketBuffer) {
     FILE *buf = socketBufferGetBuffer(socketBuffer);
 
@@ -501,6 +506,7 @@ char httpHeaderHandleError(SocketBuffer *socketBuffer, const char *path, char ht
     {
         char *errMsg = httpHeaderGetResponse(error);
         httpHeaderWriteResponseStr(socketBuffer, errMsg);
+        HTTP_HEADER_CONNECTION_NO_REUSE_WRITE(socketBuffer);
         httpHeaderWriteDate(socketBuffer);
         httpHeaderWriteContentLength(socketBuffer, (PlatformFileOffset) strlen(errMsg));
         httpHeaderWriteEnd(socketBuffer);

@@ -40,11 +40,11 @@ d16/sockbufr.o: objfolder
 
 debug: .SYMBOLIC
     @del flag.lnk
-    %write flag.lnk -dWATT32=1 -bt=dos -ml -0 -d3 -db -dDBGHALT=1
+    %write flag.lnk -dWATT32=1 -dHTTP_CONNECTION_NEVER_REUSE=1 -bt=dos -ml -0 -d3 -db -dDBGHALT=1
 
 release: .SYMBOLIC
     @del flag.lnk
-    %write flag.lnk -dWATT32=1 -bt=dos -ml -0 -d0 -osr -zc -dNDEBUG=1
+    %write flag.lnk -dWATT32=1 -dHTTP_CONNECTION_NEVER_REUSE=1 -bt=dos -ml -0 -d0 -osr -zc -dNDEBUG=1
 
 objfolder: .SYMBOLIC
     IF NOT EXIST D16 MD D16
