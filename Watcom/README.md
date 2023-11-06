@@ -14,7 +14,16 @@
   * [Build Newth](#build-newth)
     * [Build for 16-bit (Real Mode)](#build-for-16-bit-real-mode)
     * [Build for 32-bit (DOS4GW)](#build-for-32-bit-dos4gw)
-    * [Compress (optional)](#compress-optional)
+* [After building](#after-building)
+  * [Compress binary (optional)](#compress-binary-optional)
+  * [Create diskette image (optional)](#create-diskette-image-optional)
+      * [On Compressed Binaries](#on-compressed-binaries)
+        * [Real Mode 5¼-inch DD Diskette](#real-mode-5-inch-dd-diskette)
+        * [DOS4GW 5¼-inch QD Diskette](#dos4gw-5-inch-qd-diskette)
+        * [Multi-arch 3½-inch HD Diskette](#multi-arch-3-inch-hd-diskette)
+      * [On Uncompressed Binaries](#on-uncompressed-binaries)
+        * [Real Mode 5¼-inch QD Diskette](#real-mode-5-inch-qd-diskette)
+        * [DOS4GW 3½-inch HD Diskette](#dos4gw-3-inch-hd-diskette)
 <!-- TOC -->
 
 # What is Open Watcom
@@ -57,6 +66,7 @@ To build Newth with Watcom you will need the following:
 
 - A i386 machine
 - A i386 compatible DOS operating system
+- [GNU Mtools](https://www.gnu.org/software/mtools/) (optional)
 - [Open Watcom 1.9](http://openwatcom.org/)
 - [UPX binary compression](https://upx.github.io/) (optional)
 - [Watt32 library](https://github.com/gvanem/Watt-32) compiled with the same version of Open Watcom
@@ -193,7 +203,9 @@ Run `wmake -f DOSTH4GW.MAK` to build the project.
 A self contained 32-bit EXE binary called `TH4GW.EXE` will be made
 and can be run from any path (including a floppy diskette) on any DOS 4.0+ computer with a 80386 compatible CPU.
 
-### Compress (optional)
+# After building
+
+## Compress binary (optional)
 
 On DOS machines disk space is usually at a premium.
 Even though the release builds are stripped of all debugging symbols it is possible to make the binary take
@@ -203,3 +215,59 @@ substantially less disk space with UPX compression so that it fits comfortably o
 |-----------|----------------------------|-------------------|
 | Real Mode | `UPX TH.EXE --best --8086` | 5¼-inch DD (360k) |
 | DOS4GW    | `UPX TH4GW.EXE --best`     | 5¼-inch QD (720k) |
+
+## Create diskette image (optional)
+
+On a real DOS machines it most likely makes the most sense to directly copy the new binaries onto a newly formatted
+diskette. When cross compiling or distributing over the Internet it may make more sense to distribute as a floppy disk
+image so that users can make their own disks locally. This can be achieve with GNU Mtools.
+
+> Note: At the time of writing there doesn't appear to be a DOS port of GNU Mtools. The newly created binaries will need
+> to be transferred to a more modern Linux or Windows machine to use Mtools on them.
+
+With compression the
+binaries will fit much better into diskette image then they otherwise would, in some cases becoming compatible with a
+lower standard of diskette. While there might be a lot of free space after copying the files a real diskette may
+have bad sectors.
+
+With Mtools installed, create a diskette image with `mformat` then copy the binaries to the new image with `mcopy`.
+Below are some example configurations.
+
+#### On Compressed Binaries
+
+##### Real Mode 5¼-inch DD Diskette
+
+```bash
+mformat -C -i th_360.ima -v "TH" -f 360
+mcopy -i diskette/th_360.ima TH.EXE ::
+```
+
+##### DOS4GW 5¼-inch QD Diskette
+
+```bash
+mformat -C -i th4g_720.ima -v "TH4GW" -f 720
+mcopy -i diskette/th4g_720.ima TH4GW.EXE ::
+```
+
+##### Multi-arch 3½-inch HD Diskette
+
+```bash
+mformat -C -i thma_1.4.ima -v "THMULTI" -f 1440
+mcopy -i diskette/thma_1.4.ima TH.EXE TH4GW.EXE ::
+```
+
+#### On Uncompressed Binaries
+
+##### Real Mode 5¼-inch QD Diskette
+
+```bash
+mformat -C -i diskette/th_720.ima -v "TH" -f 720
+mcopy -i diskette/th_720.ima TH.EXE ::
+```
+
+##### DOS4GW 3½-inch HD Diskette
+
+```bash
+mformat -C -i diskette/th4g_1.4.ima -v "TH4GW" -f 1440
+mcopy -i diskette/th4g_1.4.ima TH4GW.EXE ::
+```

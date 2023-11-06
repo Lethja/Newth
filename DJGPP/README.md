@@ -6,10 +6,17 @@
     * [Installing SvarDOS package manager onto another DOS (optional)](#installing-svardos-package-manager-onto-another-dos-optional)
 * [Building Newth](#building-newth)
   * [Setup DJGPP build environment](#setup-djgpp-build-environment)
+    * [DOS-like](#dos-like)
+    * [nix-like](#nix-like)
   * [Configuring Watt32 library for linking with Newth](#configuring-watt32-library-for-linking-with-newth)
-  * [Build Newth](#build-newth)
-    * [Build](#build)
-    * [Compress (optional)](#compress-optional)
+  * [Build](#build)
+* [After building](#after-building)
+  * [Compress (optional)](#compress-optional)
+  * [Create diskette image (optional)](#create-diskette-image-optional)
+    * [On a compressed binary](#on-a-compressed-binary)
+      * [5¼-inch QD Diskette](#5-inch-qd-diskette)
+    * [On a uncompressed binary](#on-a-uncompressed-binary)
+      * [3½-inch HD Diskette](#3-inch-hd-diskette)
 <!-- TOC -->
 
 # What is DJGPP
@@ -26,10 +33,12 @@ To build Newth with DJGPP you will need the following:
 - A i386 machine
 - A i386 compatible DOS operating system
 - [DJGPP v2.05](https://www.delorie.com/djgpp/)
+- [GNU Mtools](https://www.gnu.org/software/mtools/) (optional)
 - [UPX binary compression](https://upx.github.io/) (optional)
 - [Watt32 library](https://github.com/gvanem/Watt-32) compiled with the same version of DJGPP
 
-> Tip: If hardware isn't available it's possible to proceed with a emulator such as [Dosbox-X](https://dosbox-x.com/)
+> Tip: If hardware isn't available it's possible to run the binary with a emulator such as
+> [Dosbox-X](https://dosbox-x.com/)
 
 ## Installing DJGPP
 
@@ -39,7 +48,10 @@ Some common operating systems are listed in the table below:
 | Operating System | Installation Instructions                                                                                                                                                                                                                                                                   |
 |------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | FreeDOS          | Load the bonus CD/ISO then run `FDIMPLES`, navigate to the **Development** group and check **DJGPP**, **DJGPP_BN**, **DJGPP_GC** & **DJGPP_MK** for installation                                                                                                                            |
+| Linux            | Install and configure a [DJGPP cross compiler](https://github.com/andrewwutw/build-djgpp)                                                                                                                                                                                                   |
+| MacOS            | Install and configure a [DJGPP cross compiler](https://github.com/andrewwutw/build-djgpp)                                                                                                                                                                                                   |
 | SvarDOS          | Run `PKGNET pull djgpp`, `PKGNET pull djgpp_bn`, `PKGNET pull djgpp_gc` and `PKGNET pull djgpp_mk` or [download manually](http://www.svardos.org/?p=repo&cat=devel) then run `PKG install djgpp.svp`, `PKG install djgpp_bn.svp`, `PKG install djgpp_gc.svp` and `PKG install djgpp_mk.svp` |
+| Windows          | Install and configure a [DJGPP cross compiler](https://github.com/andrewwutw/build-djgpp)                                                                                                                                                                                                   |
 
 ### Installing SvarDOS package manager onto another DOS (optional)
 
@@ -67,7 +79,10 @@ DEL *.SVP
 
 ## Setup DJGPP build environment
 
-The DJGPP build environment needs to be setup before it can be used. A script is included to do this.
+The DJGPP build environment needs to be setup before it can be used.
+
+### DOS-like
+
 On a typical DOS installation of DJGPP run the following to enable the build environment.
 
 > Note: the following steps will need to be repeated each time DOS boots.
@@ -82,18 +97,23 @@ SET DJGPP=%DOSDIR%\DEVEL\DJGPP\DJGPP.ENV
 > Tip: `gcc` should now be valid commands
 > if this isn't the case check the directories in the script and modify them as necessary.
 
+### nix-like
+
+Assuming the DJGPP cross compiler tarball was extracted to `/opt` run the following to setup DJGPP in your shell
+
+```
+export PATH=/opt/djgpp/i586-pc-msdosdjgpp/bin/:/opt/djgpp/bin/:$PATH
+export GCC_EXEC_PREFIX=/opt/djgpp/lib/gcc/
+export DJDIR=/opt/djgpp/i586-pc-msdosdjgpp
+```
+
 ## Configuring Watt32 library for linking with Newth
 
 Newth depends on BSD-like networking API and compiling for DOS is no exception.
-For Newth to link to Watt32 correctly `USE_BSD_API` must be defined when building Watt32 library.
+For Newth to link to Watt32 correctly the Watt32 project must be symlinked or extracted into the `ext` folder
+and `USE_BSD_API` must be defined when building Watt32 library.
 
-To do this `config.h` has to be manually modified like so.
-
-```
-EDIT C:\NEWTH\EXT\WATT32S\SRC\CONFIG.H
-```
-
-Recommended changes:
+To do this `EXT/WATT32S/SRC/CONFIG.H` has to be manually modified like so:
 
 ```diff
  #undef USE_DEBUG
@@ -118,15 +138,15 @@ Recommended changes:
  #undef USE_FSEXT
 ```
 
-## Build Newth
-
-### Build
+## Build
 
 Run `make` to build the project.
 A self contained 32-bit EXE binary called `TH32.EXE` will be made
 and can be run from any path (including a floppy diskette) on any DOS 4.0+ computer with a 80386 compatible CPU.
 
-### Compress (optional)
+# After building
+
+## Compress (optional)
 
 On DOS machines disk space is usually at a premium.
 Even though the release builds are stripped of all debugging symbols it is possible to make the binary take
@@ -135,3 +155,27 @@ substantially less disk space with UPX compression so that it fits comfortably o
 | Build | UPX command           | Fits on           |
 |-------|-----------------------|-------------------|
 | DJGPP | `UPX TH32.EXE --best` | 5¼-inch QD (720k) |
+
+## Create diskette image (optional)
+
+On a real DOS machines it most likely makes the most sense to directly copy the new binaries onto a newly formatted
+diskette. When cross compiling or distributing over the Internet it may make more sense to distribute as a floppy disk
+image so that users can make their own disks locally. This can be achieve with GNU Mtools.
+
+### On a compressed binary
+
+#### 5¼-inch QD Diskette
+
+```bash
+mformat -C -i diskette/thdj_720.ima -v "THDJ" -f 720
+mcopy -i diskette/thdj_720.ima th.exe ::
+```
+
+### On a uncompressed binary
+
+#### 3½-inch HD Diskette
+
+```bash
+mformat -C -i diskette/thdj_1.4.ima -v "THDJ" -f 1440
+mcopy -i diskette/thdj_1.4.ima th.exe ::
+```
