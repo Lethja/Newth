@@ -183,14 +183,14 @@ Recommended changes:
 
 ### Build for 16-bit (Real Mode)
 
-Run `wmake -f TH16.MAK` to build the project.
-A self contained 16-bit EXE binary called `TH16.EXE` will be made
+Run `wmake -f DOSTH.MAK` to build the project.
+A self contained 16-bit EXE binary called `TH.EXE` will be made
 and can be run from any path (including a floppy diskette) on any DOS 3.0+ computer.
 
 ### Build for 32-bit (DOS4GW)
 
-Run `wmake -f TH32.MAK` to build the project.
-A self contained 32-bit EXE binary called `TH32.EXE` will be made
+Run `wmake -f DOSTH4GW.MAK` to build the project.
+A self contained 32-bit EXE binary called `TH4GW.EXE` will be made
 and can be run from any path (including a floppy diskette) on any DOS 4.0+ computer with a 80386 compatible CPU.
 
 ### Compress (optional)
@@ -199,7 +199,7 @@ On DOS machines disk space is usually at a premium.
 Even though the release builds are stripped of all debugging symbols it is possible to make the binary take
 substantially less disk space with UPX compression so that it fits comfortably on a smaller diskette standard.
 
-| Build     | UPX Command                  | Fits on           |
-|-----------|------------------------------|-------------------|
-| Real Mode | `UPX TH16.EXE --best --8086` | 5¼-inch DD (360k) |
-| DOS4GW    | `UPX TH32.EXE --best`        | 5¼-inch QD (720k) |
+| Build     | UPX Command                | Fits on           |
+|-----------|----------------------------|-------------------|
+| Real Mode | `UPX TH.EXE --best --8086` | 5¼-inch DD (360k) |
+| DOS4GW    | `UPX TH4GW.EXE --best`     | 5¼-inch QD (720k) |

@@ -1,7 +1,7 @@
 CC=wcc386
 
 # Default building process
-th32.exe: release d32/th.o d32/server.o d32/platform.o d32/event.o d32/http.o d32/doswatb.o d32/routine.o d32/sockbufr.o
+th4gw.exe: release d32/th.o d32/server.o d32/platform.o d32/event.o d32/http.o d32/doswatb.o d32/routine.o d32/sockbufr.o
     %write link.lnk NAME $@
     %write link.lnk SYS  dos4g
     %write link.lnk OPT  st=8192
@@ -10,7 +10,7 @@ th32.exe: release d32/th.o d32/server.o d32/platform.o d32/event.o d32/http.o d3
     %write link.lnk LIBF wattcpwf.lib
     wlink @link.lnk
     
-th32dbg.exe: debug d32/th.o d32/server.o d32/platform.o d32/event.o d32/http.o d32/doswatb.o d32/routine.o d32/sockbufr.o
+th4gwdbg.exe: debug d32/th.o d32/server.o d32/platform.o d32/event.o d32/http.o d32/doswatb.o d32/routine.o d32/sockbufr.o
     %write link.lnk NAME $@
     %write link.lnk SYS  dos4g
     %write link.lnk OPT  st=8192
@@ -19,7 +19,7 @@ th32dbg.exe: debug d32/th.o d32/server.o d32/platform.o d32/event.o d32/http.o d
     %write link.lnk LIBF wattcpwf.lib
     wlink @link.lnk
 
-dbg: .SYMBOLIC th32dbg.exe
+dbg: .SYMBOLIC th4gdbg.exe
 
 d32/th.o: objfolder
     $(CC) @flag.lnk -fo="$@" "../src/cli/th.c"

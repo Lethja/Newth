@@ -10,7 +10,7 @@ release:
 		../src/server/http.c \
 		../src/server/routine.c \
 		../src/server/sockbufr.c \
-		../ext/watt32s/lib/libwatt.a -o th32.exe
+		../ext/watt32s/lib/libwatt.a -o thdj.exe
 
 debug:
 	$(CC) -Wall -Wno-unknown-pragmas -O3 -DWATT32=1 -DHTTP_CONNECTION_NEVER_REUSE=1 -I../ext/watt32s/inc \
@@ -22,7 +22,7 @@ debug:
 		../src/server/http.c \
 		../src/server/routine.c \
 		../src/server/sockbufr.c \
-		../ext/watt32s/lib/libwatt.a -o th32dbg.exe
+		../ext/watt32s/lib/libwatt.a -o thdjdbg.exe
 
 clean:
 	del *.o

@@ -1,7 +1,7 @@
 CC=wcc
 
 # Default building process
-th16.exe: release d16/th.o d16/server.o d16/platform.o d16/event.o d16/http.o d16/doswatb.o d16/routine.o d16/sockbufr.o
+th.exe: release d16/th.o d16/server.o d16/platform.o d16/event.o d16/http.o d16/doswatb.o d16/routine.o d16/sockbufr.o
     %write link.lnk NAME $@
     %write link.lnk SYS  dos
     %write link.lnk OPT  st=4608
@@ -10,7 +10,7 @@ th16.exe: release d16/th.o d16/server.o d16/platform.o d16/event.o d16/http.o d1
     %write link.lnk LIBF wattcpwl.lib
     wlink @link.lnk
 
-th16dbg.exe: debug d16/th.o d16/server.o d16/platform.o d16/event.o d16/http.o d16/doswatb.o d16/routine.o d16/sockbufr.o
+thdbg.exe: debug d16/th.o d16/server.o d16/platform.o d16/event.o d16/http.o d16/doswatb.o d16/routine.o d16/sockbufr.o
     %write link.lnk NAME $@
     %write link.lnk SYS  dos
     %write link.lnk OPT  st=4608
@@ -19,7 +19,7 @@ th16dbg.exe: debug d16/th.o d16/server.o d16/platform.o d16/event.o d16/http.o d
     %write link.lnk LIBF wattcpwl.lib
     wlink @link.lnk
 
-dbg: .SYMBOLIC th16dbg.exe
+dbg: .SYMBOLIC thdbg.exe
 
 d16/th.o: objfolder
     $(CC) @flag.lnk -fo="$@" "../src/cli/th.c"
