@@ -34,6 +34,8 @@ Sybase Open Watcom Public License as Open Watcom. Open Watcoms niche over other 
 build targets for legacy hardware and software. Open Watcom builds native code for 16-bit x86 processors and can compile
 code from a modern Linux/Windows host for ancient versions of DOS, OS/2 & Windows.
 
+> Note: Building Newth with Watcom is considered experimental due to the Watt32 library requirement
+
 ## Watcom compiler flags
 
 Open Watcoms compiler flags are quite unique compared to a typical GCC. Here are some of the more common ones:

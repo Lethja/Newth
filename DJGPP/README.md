@@ -23,6 +23,9 @@
 
 [DJGPP](https://www.delorie.com/djgpp/) is a port of GNUs C/C++/Fortran compilers to DOS systems.
 It can be used to build i386 compatible binaries on DOS, for DOS.
+DJGPP cross compilers to build from typical modern systems are also available.
+
+> Note: Building Newth with DJGPP is considered experimental due to the Watt32 library requirement
 
 # Setup DJGPP
 
