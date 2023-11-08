@@ -9,7 +9,6 @@
     * [Installing SvarDOS package manager onto another DOS (optional)](#installing-svardos-package-manager-onto-another-dos-optional)
 * [Building Newth](#building-newth)
   * [Setup Watcom build environment](#setup-watcom-build-environment)
-  * [Adding Watt32 includes](#adding-watt32-includes)
   * [Configuring Watt32 library for linking with Newth](#configuring-watt32-library-for-linking-with-newth)
   * [Build Newth](#build-newth)
     * [Build for 16-bit (Real Mode)](#build-for-16-bit-real-mode)
@@ -146,27 +145,24 @@ On a typical DOS installation of Open Watcom run the following to enable the bui
 > Tip: `wcc`, `wlink` & `wmake` should now be valid commands
 > if this isn't the case check the directories in the script and modify them as necessary.
 
-## Adding Watt32 includes
-
-Watcom needs to see Watt32s headers as if they're from the system path when compiling Newth.
-To achieve this append the full path to Watt32s include directory to the `INCLUDE` environment variable like so
-
-```
-set INCLUDE=%INCLUDE%;C:\NEWTH\EXT\WATT32S\INC
-```
-
 ## Configuring Watt32 library for linking with Newth
+
+Newth on DOS depends on Watt32. The Watt32s folder should be extracted on symlinked
+into the directory containing `th.mak` so that it looks like so.
+
+```
+Watcom\Dos16\th.mak
+Watcom\Dos16\Watt32s\inc
+Watcom\Dos16\Watt32s\lib
+Watcom\Dos16\th.mak
+Watcom\Dos4g\Watt32s\inc
+Watcom\Dos4g\Watt32s\lib
+```
 
 Newth depends on BSD-like networking API and compiling for DOS is no exception.
 For Newth to link to Watt32 correctly `USE_BSD_API` must be defined when building Watt32 library.
 
-To do this `config.h` has to be manually modified like so.
-
-```
-EDIT C:\NEWTH\EXT\WATT32S\SRC\CONFIG.H
-```
-
-Recommended changes:
+To do this Watt32s `src\config.h` has to be manually modified like so:
 
 ```diff
  #undef USE_DEBUG
@@ -195,15 +191,16 @@ Recommended changes:
 
 ### Build for 16-bit (Real Mode)
 
-Run `wmake -f DOSTH.MAK` to build the project.
+From the `Dos16` directory run `wmake -f th.mak` to build the project.
 A self contained 16-bit EXE binary called `TH.EXE` will be made
 and can be run from any path (including a floppy diskette) on any DOS 3.0+ computer.
 
 ### Build for 32-bit (DOS4GW)
 
-Run `wmake -f DOSTH4GW.MAK` to build the project.
-A self contained 32-bit EXE binary called `TH4GW.EXE` will be made
-and can be run from any path (including a floppy diskette) on any DOS 4.0+ computer with a 80386 compatible CPU.
+From the `Dos4g` directory run `wmake -f th.mak` to build the project.
+A 32-bit EXE binary called `TH.EXE` will be made and can be run from any path (including a floppy diskette)
+on any DOS 4.0+ computer with a 80386 compatible CPU. `DOS4GW.EXE` will need to either exist in a `%PATH%` directory
+or the same directory as `TH.EXE` for the program to function.
 
 # After building
 
@@ -216,7 +213,7 @@ substantially less disk space with UPX compression so that it fits comfortably o
 | Build     | UPX Command                | Fits on           |
 |-----------|----------------------------|-------------------|
 | Real Mode | `UPX TH.EXE --best --8086` | 5¼-inch DD (360k) |
-| DOS4GW    | `UPX TH4GW.EXE --best`     | 5¼-inch QD (720k) |
+| DOS4GW    | `UPX TH.EXE --best`        | 5¼-inch QD (720k) |
 
 ## Create diskette image (optional)
 
@@ -227,10 +224,10 @@ image so that users can make their own disks locally. This can be achieve with G
 > Note: At the time of writing there doesn't appear to be a DOS port of GNU Mtools. The newly created binaries will need
 > to be transferred to a more modern Linux or Windows machine to use Mtools on them.
 
-With compression the
-binaries will fit much better into diskette image then they otherwise would, in some cases becoming compatible with a
-lower standard of diskette. While there might be a lot of free space after copying the files a real diskette may
-have bad sectors.
+With compression the binaries will fit much better into diskette image then they otherwise would, 
+in some cases becoming compatible with a lower standard of diskette. 
+While there might be a lot of free space after copying the files to the image users may want to put other files on the
+disk (such as WatTCP configuration and/or a network packet driver) and a real diskette may contain bad sectors.
 
 With Mtools installed, create a diskette image with `mformat` then copy the binaries to the new image with `mcopy`.
 Below are some example configurations.
@@ -241,21 +238,23 @@ Below are some example configurations.
 
 ```bash
 mformat -C -i th_360.ima -v "TH" -f 360
-mcopy -i diskette/th_360.ima TH.EXE ::
+mcopy -i th_360.ima TH.EXE ::
 ```
 
 ##### DOS4GW 5¼-inch QD Diskette
 
 ```bash
 mformat -C -i th4g_720.ima -v "TH4GW" -f 720
-mcopy -i diskette/th4g_720.ima TH4GW.EXE ::
+mcopy -i th4g_720.ima TH.EXE ::
 ```
 
 ##### Multi-arch 3½-inch HD Diskette
 
 ```bash
 mformat -C -i thma_1.4.ima -v "THMULTI" -f 1440
-mcopy -i diskette/thma_1.4.ima TH.EXE TH4GW.EXE ::
+mmd -i thma_1.4.ima ::\16 \4G
+mcopy -i thma_1.4.ima Dos16/TH.EXE ::\16
+mcopy -i thma_1.4.ima Dos4g/TH.EXE ::\4G
 ```
 
 #### On Uncompressed Binaries
@@ -263,13 +262,13 @@ mcopy -i diskette/thma_1.4.ima TH.EXE TH4GW.EXE ::
 ##### Real Mode 5¼-inch QD Diskette
 
 ```bash
-mformat -C -i diskette/th_720.ima -v "TH" -f 720
-mcopy -i diskette/th_720.ima TH.EXE ::
+mformat -C -i th_720.ima -v "TH" -f 720
+mcopy -i th_720.ima TH.EXE ::
 ```
 
 ##### DOS4GW 3½-inch HD Diskette
 
 ```bash
-mformat -C -i diskette/th4g_1.4.ima -v "TH4GW" -f 1440
-mcopy -i diskette/th4g_1.4.ima TH4GW.EXE ::
+mformat -C -i th4g_1.4.ima -v "TH4GW" -f 1440
+mcopy -i th4g_1.4.ima TH.EXE ::
 ```
