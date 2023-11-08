@@ -192,15 +192,18 @@ To do this Watt32s `src\config.h` has to be manually modified like so:
 ### Build for 16-bit (Real Mode)
 
 From the `Dos16` directory run `wmake -f th.mak` to build the project.
-A self contained 16-bit EXE binary called `TH.EXE` will be made
-and can be run from any path (including a floppy diskette) on any DOS 3.0+ computer.
+A self contained 16-bit binary called `TH.EXE` will be made and can be run from any path 
+(including a floppy diskette) on any DOS 3.0+ computer.
 
 ### Build for 32-bit (DOS4GW)
 
 From the `Dos4g` directory run `wmake -f th.mak` to build the project.
-A 32-bit EXE binary called `TH.EXE` will be made and can be run from any path (including a floppy diskette)
-on any DOS 4.0+ computer with a 80386 compatible CPU. `DOS4GW.EXE` will need to either exist in a `%PATH%` directory
-or the same directory as `TH.EXE` for the program to function.
+A 32-bit binary called `TH.EXE` will be made and can be run from any path (including a floppy diskette)
+on any DOS 4.0+ computer with a 80386 compatible CPU. 
+
+`DOS4GW.EXE` will need to either exist in a `%PATH%` directory or the same directory as `TH.EXE` 
+for the program to function. Most programs opt to do the latter. 
+To put a copy of `DOS4GW.EXE` in the same directory as `TH.EXE` run `COPY %WATCOM%\BINW\DOS4GW.EXE .`.
 
 # After building
 
@@ -245,7 +248,7 @@ mcopy -i th_360.ima TH.EXE ::
 
 ```bash
 mformat -C -i th4g_720.ima -v "TH4GW" -f 720
-mcopy -i th4g_720.ima TH.EXE ::
+mcopy -i th4g_720.ima TH.EXE DOS4GW.EXE ::
 ```
 
 ##### Multi-arch 3½-inch HD Diskette
@@ -254,7 +257,7 @@ mcopy -i th4g_720.ima TH.EXE ::
 mformat -C -i thma_1.4.ima -v "THMULTI" -f 1440
 mmd -i thma_1.4.ima ::\16 \4G
 mcopy -i thma_1.4.ima Dos16/TH.EXE ::\16
-mcopy -i thma_1.4.ima Dos4g/TH.EXE ::\4G
+mcopy -i thma_1.4.ima Dos4g/TH.EXE Dos4g/DOS4GW.EXE ::\4G
 ```
 
 #### On Uncompressed Binaries
@@ -270,5 +273,5 @@ mcopy -i th_720.ima TH.EXE ::
 
 ```bash
 mformat -C -i th4g_1.4.ima -v "TH4GW" -f 1440
-mcopy -i th4g_1.4.ima TH.EXE ::
+mcopy -i th4g_1.4.ima TH.EXE DOS4GW.EXE ::
 ```
