@@ -20,7 +20,8 @@ dl_SOURCES = src/common/client.c \
 
 
 th_SOURCES = src/cli/th.c \
-    src/common/server.h src/common/server.c \
+    src/server/server.h src/server/server.c \
+    src/server/mltiplex/select.c \
     src/platform/platform.c src/platform/platform.h \
     src/server/event.c src/server/event.h \
     src/server/http.c src/server/http.h \
@@ -40,7 +41,8 @@ if CMOCKA
 		test/request.h test/sockbufr.h
 
     unittest_SOURCES += src/platform/mockput.c src/platform/mockput.h \
-		src/common/server.h src/common/server.c \
+		src/server/server.h src/server/server.c \
+		src/server/mltiplex/select.c \
 		src/platform/platform.c src/platform/platform.h \
 		src/server/event.c src/server/event.h \
 		src/server/http.c src/server/http.h \

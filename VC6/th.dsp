@@ -107,7 +107,11 @@ SOURCE=..\src\server\routine.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\common\server.c
+SOURCE=..\src\server\server.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\server\mltiplex\select.c
 # End Source File
 # Begin Source File
 
@@ -155,7 +159,7 @@ SOURCE=..\src\server\routine.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\common\server.h
+SOURCE=..\src\server\server.h
 # End Source File
 # Begin Source File
 

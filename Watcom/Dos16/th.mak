@@ -1,7 +1,7 @@
 CC=wcc
 
 # Default building process
-th.exe: release th.o server.o platform.o event.o http.o doswatb.o routine.o sockbufr.o
+th.exe: release th.o select.o server.o platform.o event.o http.o doswatb.o routine.o sockbufr.o
     %write link.lnk NAME $@
     %write link.lnk SYS  dos
     %write link.lnk OPT  st=4608
@@ -10,7 +10,7 @@ th.exe: release th.o server.o platform.o event.o http.o doswatb.o routine.o sock
     %write link.lnk LIBF wattcpwl.lib
     wlink @link.lnk
 
-thdbg.exe: debug th.o server.o platform.o event.o http.o doswatb.o routine.o sockbufr.o
+thdbg.exe: debug th.o select.o server.o platform.o event.o http.o doswatb.o routine.o sockbufr.o
     %write link.lnk NAME $@
     %write link.lnk SYS  dos
     %write link.lnk OPT  st=4608
@@ -19,7 +19,7 @@ thdbg.exe: debug th.o server.o platform.o event.o http.o doswatb.o routine.o soc
     %write link.lnk LIBF wattcpwl.lib
     wlink @link.lnk
 
-thwlk.exe: walk th.o server.o platform.o event.o http.o doswatb.o routine.o sockbufr.o
+thwlk.exe: walk th.o select.o server.o platform.o event.o http.o doswatb.o routine.o sockbufr.o
     %write link.lnk NAME $@
     %write link.lnk SYS  dos
     %write link.lnk OPT  st=4608
@@ -34,8 +34,10 @@ wlk: .SYMBOLIC thwlk.exe
 
 th.o: ../../src/cli/th.c
     $(CC) @flag.lnk -fo="$@" "../../src/cli/th.c"
-server.o: ../../src/common/server.c
-    $(CC) @flag.lnk -fo="$@" "../../src/common/server.c"
+select.o: ../../src/server/mltiplex/select.c
+    $(CC) @flag.lnk -fo="$@" "../../src/server/mltiplex/select.c"
+server.o: ../../src/server/server.c
+    $(CC) @flag.lnk -fo="$@" "../../src/server/server.c"
 doswatb.o: ../../src/platform/doswatb.c
     $(CC) @flag.lnk -fo="$@" "../../src/platform/doswatb.c"
 platform.o: ../../src/platform/platform.c

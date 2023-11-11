@@ -1,9 +1,12 @@
-#include "../common/server.h"
+#include "../server/server.h"
 
 static void shutdownCrash(int signal) {
+    SOCKET *sockets;
     switch (signal) {
         default: /* Close like normal unless something has gone catastrophically wrong */
-            platformCloseBindSockets(&serverReadSockets, serverMaxSocket);
+            sockets = serverGetReadSocketArray();
+            if (sockets)
+                platformCloseBindSockets(sockets), free(sockets);
             serverFreeResources();
             platformIpStackExit();
             printf("Emergency shutdown: %d\n", signal);
@@ -15,9 +18,12 @@ static void shutdownCrash(int signal) {
 }
 
 static void shutdownProgram(int signal) {
+    SOCKET *sockets;
     if (signal == SIGINT)
         printf("\n"); /* Put next message on a different line from ^C */
-    platformCloseBindSockets(&serverReadSockets, serverMaxSocket);
+    sockets = serverGetReadSocketArray();
+    if (sockets)
+        platformCloseBindSockets(sockets), free(sockets);
     serverFreeResources();
     platformIpStackExit();
     exit(0);
@@ -135,8 +141,7 @@ static int setup(int argc, char **argv) {
         return 1;
     }
 
-    serverMaxSocket = 0;
-    sockets = platformServerStartup(family, ports, &serverMaxSocket, &err);
+    sockets = platformServerStartup(family, ports, &err);
     if (!sockets) {
         LINEDBG;
         puts(err);
@@ -146,11 +151,8 @@ static int setup(int argc, char **argv) {
 
     printAdapterInformation("http", family, getPort(&sockets[1]));
 
-    FD_ZERO(&serverReadSockets);
-    FD_ZERO(&serverWriteSockets);
+    serverSetup(sockets);
 
-    socketArrayToFdSet(sockets, &serverListenSockets);
-    socketArrayToFdSet(sockets, &serverReadSockets);
     serverListenSocket = sockets;
 
     globalRoutineArray.size = 0, globalRoutineArray.array = NULL;
@@ -193,7 +195,11 @@ int main(int argc, char **argv) {
     serverTick();
 
     /* Clean up in case serverTick() returns */
-    platformCloseBindSockets(&serverReadSockets, serverMaxSocket);
+    {
+        SOCKET *sockets = serverGetReadSocketArray();
+        if (sockets)
+            platformCloseBindSockets(sockets), free(sockets);
+    }
     serverFreeResources();
     platformIpStackExit();
 

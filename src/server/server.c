@@ -9,11 +9,7 @@ RoutineArray globalRoutineArray;
 AdapterAddressArray adapters;
 */
 
-SOCKET serverMaxSocket;
 SOCKET *serverListenSocket;
-fd_set serverListenSockets;
-fd_set serverReadSockets;
-fd_set serverWriteSockets;
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "UnusedParameter"
@@ -255,73 +251,6 @@ unsigned short getPort(const SOCKET *listenSocket) {
         return ntohs(address->sin6_port);
     }
     return 0;
-}
-
-void serverTick(void) {
-    SOCKET i, deferredSockets;
-    fd_set readyToReadSockets, readyToWriteSockets, errorSockets;
-    struct timeval globalSelectSleep;
-
-    while (serverRun) {
-        RoutineTick(&globalRoutineArray, &serverWriteSockets, &deferredSockets);
-
-        globalSelectSleep.tv_usec = 0;
-        globalSelectSleep.tv_sec = (globalRoutineArray.size - deferredSockets) ? 0 : PLATFORM_SELECT_MAX_TIMEOUT;
-
-        readyToReadSockets = serverReadSockets;
-        readyToWriteSockets = serverWriteSockets;
-
-        if (select((int) serverMaxSocket + 1, &readyToReadSockets, &readyToWriteSockets, &errorSockets, &globalSelectSleep) <
-            0) {
-            LINEDBG;
-            exit(1);
-        }
-
-        for (i = 0; i <= serverMaxSocket; ++i) {
-            /* TODO: Retest all platforms with this code */
-            if (FD_ISSET(i, &errorSockets)) {
-                eventSocketCloseInvoke(&i);
-                RoutineArrayDelSocket(&globalRoutineArray, i);
-                CLOSE_SOCKET(i);
-                FD_CLR(i, &serverReadSockets);
-                FD_CLR(i, &serverWriteSockets);
-                continue;
-            }
-
-            if (FD_ISSET(i, &readyToReadSockets)) {
-                if (FD_ISSET(i, &serverListenSockets)) {
-                    SOCKET clientSocket = platformAcceptConnection(i);
-                    if (clientSocket > serverMaxSocket)
-                        serverMaxSocket = clientSocket;
-
-                    FD_SET(clientSocket, &serverReadSockets);
-                } else {
-                    if (handleConnection(i)) {
-                        eventSocketCloseInvoke(&i);
-                        RoutineArrayDelSocket(&globalRoutineArray, i);
-                        CLOSE_SOCKET(i);
-                        FD_CLR(i, &serverReadSockets);
-                        FD_CLR(i, &serverWriteSockets);
-                    }
-                }
-            }
-
-            if (FD_ISSET(i, &readyToWriteSockets)) {
-                FD_CLR(i, &serverWriteSockets);
-            }
-        }
-#ifdef PLATFORM_SHOULD_EXIT
-        serverRun = PLATFORM_SHOULD_EXIT();
-#endif
-    }
-}
-
-void socketArrayToFdSet(const SOCKET *array, fd_set *fdSet) {
-    if (array && fdSet) {
-        SOCKET i, max = array[0] + 1;
-        for (i = 1; i < max; ++i)
-            FD_SET(array[i], fdSet);
-    }
 }
 
 void serverPoke(void) {

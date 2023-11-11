@@ -1,5 +1,5 @@
 #include "../../platform/platform.h"
-#include "../../common/server.h"
+#include "../../server/server.h"
 
 #include "wrunserv.h"
 #include "res.h"

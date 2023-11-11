@@ -111,18 +111,16 @@ void platformPathCombine(char *output, const char *path1, const char *path2) {
     snprintf(output, FILENAME_MAX, "%s/%s", p1, p2);
 }
 
-void platformCloseBindSockets(fd_set *sockets, SOCKET max) {
-    int i;
+void platformCloseBindSockets(const SOCKET *sockets) {
+    SOCKET i, max = sockets[0];
 
-    for (i = 0; i <= max; ++i) {
-        if (FD_ISSET(i, sockets)) {
-            eventSocketCloseInvoke(&i);
-            close(i);
-        }
+    for (i = 1; i <= max; ++i) {
+        eventSocketCloseInvoke(&i);
+        close(i);
     }
 }
 
-SOCKET *platformServerStartup(sa_family_t family, char *ports, SOCKET *maxSocket, char **err) {
+SOCKET *platformServerStartup(sa_family_t family, char *ports, char **err) {
     SOCKET *r;
 #ifdef MANUAL_IFACE_LISTEN
     r = BindAllPortsManually(family, ports, maxSocket, err);
@@ -176,11 +174,7 @@ SOCKET *platformServerStartup(sa_family_t family, char *ports, SOCKET *maxSocket
 
     r = malloc(sizeof(SOCKET) * 2);
     if (r) {
-        if (listenSocket > *maxSocket)
-            *maxSocket = listenSocket;
-
         r[0] = 1, r[1] = listenSocket;
-
         return r;
     } else
         *err = strerror(errno);

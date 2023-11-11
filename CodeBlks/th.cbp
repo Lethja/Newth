@@ -163,10 +163,13 @@
 			<Option compilerVar="CC" />
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="../src/common/server.c">
+		<Unit filename="../src/server/mltiplex/select.c">
+				<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/server/server.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../src/common/server.h" />
+		<Unit filename="../src/server/server.h" />
 		<Unit filename="../src/platform/mscrtdl.c">
 			<Option compilerVar="CC" />
 			<Option target="MingW32 Debug" />

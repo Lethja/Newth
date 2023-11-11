@@ -28,7 +28,7 @@ target_compile_definitions(dl PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
 
 # Server
 add_executable(th ../src/cli/th.c
-        ../src/common/server.h ../src/common/server.c
+        ../src/server/server.h ../src/server/server.c ../src/server/mltiplex/select.c
         ../src/platform/platform.c ../src/platform/platform.h
         ../src/server/event.c ../src/server/event.h
         ../src/server/http.c ../src/server/http.h
@@ -44,7 +44,7 @@ endif ()
 
 # Unit Test Binary
 add_executable(test ../test/test.c ../test/mock.h ../test/common.h ../test/sockbufr.h ../test/request.h ../test/platform.h
-        ../src/common/server.h ../src/common/server.c
+        ../src/server/server.h ../src/server/server.c
         ../src/platform/platform.c ../src/platform/platform.h
         ../src/server/event.c ../src/server/event.h
         ../src/server/http.c ../src/server/http.h
@@ -63,7 +63,7 @@ if (WIN32)
     endif ()
 
     add_executable(th-gui ../src/gui/win32/main.c ../src/gui/win32/res.h
-            ../src/common/server.c ../src/common/server.h
+            ../src/server/server.c ../src/server/server.h ../src/server/multiplx/select.c
             ../src/gui/win32/iwindows.c ../src/gui/win32/iwindows.h
             ../src/gui/win32/wnewserv.c ../src/gui/win32/wnewserv.h
             ../src/gui/win32/wrunserv.c ../src/gui/win32/wrunserv.h

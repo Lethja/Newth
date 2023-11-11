@@ -1,7 +1,7 @@
 #ifndef NEW_TH_TEST_COMMON_H
 #define NEW_TH_TEST_COMMON_H
 
-#include "../src/common/server.h"
+#include "../src/server/server.h"
 #include "../src/platform/platform.h"
 #include <string.h>
 

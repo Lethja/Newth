@@ -2,7 +2,7 @@
 #define NEW_TH_TEST_REQUEST_H
 
 #include "common.h"
-#include "../src/common/server.h"
+#include "../src/server/server.h"
 #include "../src/platform/platform.h"
 #include <string.h>
 

@@ -53,13 +53,12 @@ void platformPathCombine(char *output, const char *path1, const char *path2) {
     strcpy(output + a + path2Jump, path2);
 }
 
-void platformCloseBindSockets(fd_set *sockets, SOCKET max) {
-    SOCKET i;
-    for (i = 0; i <= max; i++) {
-        if (FD_ISSET(i, sockets)) {
-            eventSocketCloseInvoke(&i);
-            closesocket(i);
-        }
+void platformCloseBindSockets(const SOCKET *sockets) {
+    SOCKET i, max = sockets[0];
+
+    for (i = 1; i <= max; ++i) {
+        eventSocketCloseInvoke(&i);
+        closesocket(i);
     }
     WSACleanup();
 }

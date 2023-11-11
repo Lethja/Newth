@@ -2,24 +2,27 @@
 #define NEW_TH_SERVER_H
 
 #include "../platform/platform.h"
-#include "../server/event.h"
-#include "../server/http.h"
-#include "../server/routine.h"
+#include "event.h"
+#include "http.h"
+#include "routine.h"
 
 #include <stdlib.h>
 
 extern char *globalRootPath;
 
-extern fd_set serverListenSockets;
-extern fd_set serverReadSockets;
-extern fd_set serverWriteSockets;
-
 extern RoutineArray globalRoutineArray;
 
-extern SOCKET serverMaxSocket;
 extern SOCKET *serverListenSocket;
 
 extern volatile int serverRun;
+
+extern void serverSetup(SOCKET *sockets);
+
+extern SOCKET *serverGetListenSocketArray(void);
+
+extern SOCKET *serverGetReadSocketArray(void);
+
+extern SOCKET *serverGetWriteSocketArray(void);
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "UnusedParameter"
@@ -42,8 +45,6 @@ extern unsigned short getPort(const SOCKET *listenSocket);
 extern void serverTick(void);
 
 extern void serverPoke(void);
-
-extern void socketArrayToFdSet(const SOCKET *array, fd_set *fdSet);
 
 /**
  * Free any memory platformServerStartup allocated

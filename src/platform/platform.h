@@ -114,10 +114,9 @@ char *platformRealPath(char *path);
 
 /**
  * Close any open sockets in the file descriptor
- * @param sockets In: the fd_set to close all open sockets on
- * @param max In: the maximum socket number select() has seen in the session
+ * @param sockets In: the array of sockets to close all open sockets on, the first entry should be the number of sockets
  */
-void platformCloseBindSockets(fd_set *sockets, SOCKET max);
+void platformCloseBindSockets(const SOCKET *sockets);
 
 /**
  * Free any memory resources that platformServerProgramInit() allocated
@@ -134,12 +133,11 @@ char *platformIpStackInit(void);
  * Start up the server
  * @param family In: protocol to start the server under
  * @param ports In: A port of comma separated ports to try to bind to from left to right
- * @param maxSocket In-Out: The maximum socket currently assigned to the server
  * @param err Out: The const string to describe an error
  * @return heap allocation of an array of sockets on success, NULL on error
  * @remark value must be freed when server is stopped
  */
-SOCKET *platformServerStartup(sa_family_t family, char *ports, SOCKET *maxSocket, char **err);
+SOCKET *platformServerStartup(sa_family_t family, char *ports, char **err);
 
 /**
  * Attach signals to comment interrupts
