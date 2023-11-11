@@ -1,7 +1,7 @@
 CC=gcc
 
 release:
-	$(CC) -Wall -Wno-unknown-pragmas -O3 -s -DWATT32=1 -DHTTP_CONNECTION_NEVER_REUSE=1 -DNDEBUG=1 -I../ext/watt32s/inc \
+	$(CC) -Wall -Wno-unknown-pragmas -O3 -s -DWATT32=1 -DNDEBUG=1 -Iwatt32s/inc \
 		../src/cli/th.c \
 		../src/common/server.c \
 		../src/platform/doswatb.c \
@@ -10,10 +10,10 @@ release:
 		../src/server/http.c \
 		../src/server/routine.c \
 		../src/server/sockbufr.c \
-		../ext/watt32s/lib/libwatt.a -o thdj.exe
+		../ext/watt32s/lib/libwatt.a -o th.exe
 
 debug:
-	$(CC) -Wall -Wno-unknown-pragmas -O3 -DWATT32=1 -DHTTP_CONNECTION_NEVER_REUSE=1 -I../ext/watt32s/inc \
+	$(CC) -Wall -Wno-unknown-pragmas -O3 -DWATT32=1 -Iwatt32s/inc \
 		../src/cli/th.c \
 		../src/common/server.c \
 		../src/platform/doswatb.c \
@@ -22,8 +22,4 @@ debug:
 		../src/server/http.c \
 		../src/server/routine.c \
 		../src/server/sockbufr.c \
-		../ext/watt32s/lib/libwatt.a -o thdjdbg.exe
-
-clean:
-	del *.o
-	del *.exe
+		../ext/watt32s/lib/libwatt.a -o thdbg.exe

@@ -112,11 +112,19 @@ export DJDIR=/opt/djgpp/i586-pc-msdosdjgpp
 
 ## Configuring Watt32 library for linking with Newth
 
-Newth depends on BSD-like networking API and compiling for DOS is no exception.
-For Newth to link to Watt32 correctly the Watt32 project must be symlinked or extracted into the `ext` folder
-and `USE_BSD_API` must be defined when building Watt32 library.
+Newth on DOS depends on Watt32. The Watt32s folder should be extracted on symlinked
+into the directory containing `makefile` so that it looks like so.
 
-To do this `EXT/WATT32S/SRC/CONFIG.H` has to be manually modified like so:
+```
+DJGPP\makefile
+DJGPP\Watt32s\inc
+DJGPP\Watt32s\lib
+```
+
+Newth depends on BSD-like networking API and compiling for DOS is no exception.
+For Newth to link to Watt32 correctly `USE_BSD_API` must be defined when building Watt32 library.
+
+To do this Watt32s `src\config.h` has to be manually modified like so:
 
 ```diff
  #undef USE_DEBUG
@@ -144,8 +152,8 @@ To do this `EXT/WATT32S/SRC/CONFIG.H` has to be manually modified like so:
 ## Build
 
 Run `make` to build the project.
-A self contained 32-bit EXE binary called `TH32.EXE` will be made
-and can be run from any path (including a floppy diskette) on any DOS 4.0+ computer with a 80386 compatible CPU.
+A self contained 32-bit EXE binary called `thdj.exe` will be made that can be run from any path
+(including a floppy diskette) on any DOS 4.0+ computer with a 80386 compatible CPU.
 
 # After building
 
