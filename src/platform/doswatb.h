@@ -46,6 +46,7 @@ typedef struct dirent PlatformDirEntry;
 typedef struct stat PlatformFileStat;
 typedef long PlatformFileOffset;
 typedef FILE *PlatformFile;
+typedef int nfds_t;
 
 extern char platformShouldExit(void);
 #define PLATFORM_SHOULD_EXIT platformShouldExit

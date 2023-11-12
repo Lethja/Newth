@@ -3,6 +3,24 @@
 
 #include <sys/poll.h>
 
+#ifndef POLL_IN
+#define POLL_IN POLLIN
+#endif
+
+#ifndef POLL_OUT
+#define POLL_OUT POLLOUT
+#endif
+
+#ifdef PLATFORM_SHOULD_EXIT
+
+#define POLL_MAX_TIMEOUT 1000
+
+#else
+
+#define POLL_MAX_TIMEOUT (-1)
+
+#endif
+
 #pragma region Internal variables and functions
 
 static struct pollfd *listenPoll, *servePoll = NULL, *deferredPoll = NULL;
@@ -39,7 +57,11 @@ static inline void PollArrayDel(struct pollfd **poll, nfds_t *count, SOCKET sock
         if (*&poll[i]->fd != socket)
             continue;
 
-        memmove(*&poll[i], *&poll[i + 1], sizeof(struct pollfd) * (*count - (i + 1))), --*count;
+        {
+            struct pollfd *p = *poll;
+            memmove(&p[i], &poll[i + 1], sizeof(struct pollfd) * (*count - (i + 1))), --*count;
+        }
+
         if (*count == 0)
             free(*poll), *poll = NULL;
         else {
@@ -73,14 +95,12 @@ static inline void ProcessListeningPoll(struct pollfd *poll) {
 }
 
 static inline void ProcessServePoll(struct pollfd *poll) {
-    switch (poll->revents) {
-        case POLL_IN: {
-            if (handleConnection(poll->fd) == -1) {
-                eventSocketCloseInvoke(&poll->fd);
-                RoutineArrayDelSocket(&globalRoutineArray, poll->fd);
-                CLOSE_SOCKET(poll->fd);
-                PollArrayDel(&servePoll, &servePollCount, poll->fd);
-            }
+    if (poll->revents & POLL_IN) {
+        if (handleConnection(poll->fd)) {
+            eventSocketCloseInvoke(&poll->fd);
+            RoutineArrayDelSocket(&globalRoutineArray, poll->fd);
+            CLOSE_SOCKET(poll->fd);
+            PollArrayDel(&servePoll, &servePollCount, poll->fd);
         }
     }
 }
@@ -161,7 +181,6 @@ void serverTick(void) {
 #pragma endregion
 
 #pragma region New socket handling
-
         if (servePoll) {
             poll(servePoll, servePollCount, 0);
             for (i = 0; i < servePollCount; ++i)
@@ -172,7 +191,7 @@ void serverTick(void) {
 
 #pragma region Listen sockets
 
-        poll(listenPoll, listenPollCount, globalRoutineArray.size ? 0 : servePollCount ? 1000 : -1);
+        poll(listenPoll, listenPollCount, globalRoutineArray.size ? 0 : servePollCount ? 1000 : POLL_MAX_TIMEOUT);
         for (i = 0; i < listenPollCount; ++i)
             ProcessListeningPoll(&listenPoll[i]);
 

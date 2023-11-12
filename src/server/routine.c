@@ -221,6 +221,7 @@ Routine RoutineNew(SocketBuffer socketBuffer, const char *webPath) {
 void RoutineTick(RoutineArray *routineArray, SOCKET *deferredSockets) {
     SOCKET i;
     Routine *routines = (Routine *) routineArray->array;
+    LINEDBG;
 
     for (i = *deferredSockets = 0; i < routineArray->size; ++i) {
         Routine *routine = &routines[i];
