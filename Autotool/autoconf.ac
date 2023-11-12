@@ -37,9 +37,11 @@ AC_ARG_ENABLE(
 	    [--enable-poll],
 		[Use poll() for multiplexing instead of select()]
     ),
-    [AM_CONDITIONAL([MULTIPLEX_POLL], 1)],
-    [AM_CONDITIONAL([MULTIPLEX_POLL], 0)]
+    [multiplex_poll=yes],
+    [multiplex_poll=no]
 )
+
+AM_CONDITIONAL([MULTIPLEX_POLL], [test "x$multiplex_poll" = "xyes"])
 
 AC_ARG_ENABLE(
     [reuse],

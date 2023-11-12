@@ -10,7 +10,7 @@ static nfds_t listenPollCount = 0, servePollCount = 0, deferredPollCount = 0;
 
 static inline char PollArrayAdd(struct pollfd **poll, nfds_t *count, SOCKET socket) {
     if (*poll) {
-        void *new = realloc(servePoll, sizeof(struct pollfd) * servePollCount + 1);
+        void *new = realloc(servePoll, sizeof(struct pollfd) * (*count + 1));
         if (new)
             *poll = new;
         else
@@ -20,9 +20,11 @@ static inline char PollArrayAdd(struct pollfd **poll, nfds_t *count, SOCKET sock
 
     if (!*poll)
         return 1;
-
-    *&poll[servePollCount]->fd = socket, *&poll[servePollCount]->events = POLL_IN | POLL_OUT;
-    ++*count;
+    else {
+        struct pollfd *p = *poll;
+        p[*count].fd = socket, p[*count].events = POLL_IN | POLL_OUT;
+        ++*count;
+    }
     return 0;
 }
 
@@ -73,10 +75,7 @@ static inline void ProcessListeningPoll(struct pollfd *poll) {
 static inline void ProcessServePoll(struct pollfd *poll) {
     switch (poll->revents) {
         case POLL_IN: {
-            if (serverDeferredSocketExists(poll->fd))
-                return;
-
-            if (handleConnection(poll->fd)) {
+            if (handleConnection(poll->fd) == -1) {
                 eventSocketCloseInvoke(&poll->fd);
                 RoutineArrayDelSocket(&globalRoutineArray, poll->fd);
                 CLOSE_SOCKET(poll->fd);
@@ -95,7 +94,7 @@ static inline void ProcessDeferredPoll(struct pollfd *poll) {
 
 static inline SOCKET *pollFdToSocketArray(struct pollfd *poll, const nfds_t *count) {
     nfds_t i, j;
-    SOCKET *r = malloc(sizeof(struct pollfd) * (*count + 1));
+    SOCKET *r = malloc(sizeof(SOCKET) * (*count + 1));
 
     if (!r)
         return NULL;
@@ -137,9 +136,9 @@ void serverSetup(SOCKET *sockets) {
     SOCKET i, j;
 
     listenPollCount = sockets[0];
-    listenPoll = calloc(sizeof(struct pollfd), sockets[0]);
+    listenPoll = calloc(sizeof(struct pollfd), sockets[0] + 1);
 
-    for (j = 0, i = 1; i < sockets[0]; ++i, ++j)
+    for (j = 0, i = 1; i <= sockets[0]; ++i, ++j)
         listenPoll[j].fd = sockets[i], listenPoll[j].events = POLL_IN;
 }
 
@@ -147,13 +146,21 @@ void serverTick(void) {
     SOCKET deferred = 0;
     while (serverRun) {
         nfds_t i;
-        RoutineTick(&globalRoutineArray, &deferred);
+
+#pragma region Deferred sockets
 
         if (deferredPoll) {
             poll(deferredPoll, deferredPollCount, 0);
-            for (i = 0; i < servePollCount; ++i)
+            for (i = 0; i < deferredPollCount; ++i)
                 ProcessDeferredPoll(&deferredPoll[i]);
         }
+
+        if (globalRoutineArray.size)
+            RoutineTick(&globalRoutineArray, &deferred);
+
+#pragma endregion
+
+#pragma region New socket handling
 
         if (servePoll) {
             poll(servePoll, servePollCount, 0);
@@ -161,9 +168,15 @@ void serverTick(void) {
                 ProcessServePoll(&servePoll[i]);
         }
 
-        poll(listenPoll, listenPollCount, deferred ? 0 : 1000);
+#pragma endregion
+
+#pragma region Listen sockets
+
+        poll(listenPoll, listenPollCount, globalRoutineArray.size ? 0 : servePollCount ? 1000 : -1);
         for (i = 0; i < listenPollCount; ++i)
             ProcessListeningPoll(&listenPoll[i]);
+
+#pragma endregion
 
 #ifdef PLATFORM_SHOULD_EXIT
         serverRun = PLATFORM_SHOULD_EXIT();
