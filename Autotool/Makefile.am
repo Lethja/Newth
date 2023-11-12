@@ -13,6 +13,16 @@ PLATFORM_SRC = src/platform/posix01.c src/platform/posix01.h
 
 endif
 
+if MULTIPLEX_POLL
+
+MULTIPLEX_SRC = src/server/mltiplex/poll.c
+
+else
+
+MULTIPLEX_SRC = src/server/mltiplex/select.c
+
+endif
+
 dl_SOURCES = src/common/client.c \
     src/server/event.c src/server/event.h \
     src/platform/platform.c src/platform/platform.h \
@@ -21,13 +31,12 @@ dl_SOURCES = src/common/client.c \
 
 th_SOURCES = src/cli/th.c \
     src/server/server.h src/server/server.c \
-    src/server/mltiplex/select.c \
     src/platform/platform.c src/platform/platform.h \
     src/server/event.c src/server/event.h \
     src/server/http.c src/server/http.h \
     src/server/routine.c src/server/routine.h \
     src/server/sockbufr.c src/server/sockbufr.h \
-    $(PLATFORM_SRC)
+    $(MULTIPLEX_SRC) $(PLATFORM_SRC)
 
 if CMOCKA
     TESTS = unittest
@@ -42,11 +51,10 @@ if CMOCKA
 
     unittest_SOURCES += src/platform/mockput.c src/platform/mockput.h \
 		src/server/server.h src/server/server.c \
-		src/server/mltiplex/select.c \
 		src/platform/platform.c src/platform/platform.h \
 		src/server/event.c src/server/event.h \
 		src/server/http.c src/server/http.h \
 		src/server/routine.c src/server/routine.h \
 		src/server/sockbufr.c src/server/sockbufr.h \
-		$(PLATFORM_SRC)
+		$(MULTIPLEX_SRC) $(PLATFORM_SRC)
 endif

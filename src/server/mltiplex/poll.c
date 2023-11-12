@@ -93,7 +93,7 @@ static inline SOCKET *pollFdToSocketArray(struct pollfd *poll, const nfds_t *cou
     if (!r)
         return NULL;
 
-    r[0] = *count;
+    r[0] = (SOCKET) *count;
     for (i = 0, j = 1; i < *count; ++i, ++j)
         r[j] = poll[i].fd;
 

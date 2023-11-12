@@ -7,6 +7,7 @@ set(CMAKE_C_FLAGS "-pedantic -Wall -Wno-unknown-pragmas")
 option(ENABLE_HTTP_CONNECTION_REUSE "Allow the server to reuse TCP bindings for multiple HTTP requests" ON)
 option(ENABLE_W32_SOCKET_1 "Enable WinSock 1.1 support for a truly portable Windows 32-bit binary" OFF)
 option(ENABLE_W32_VISUAL_STYLES "Enable native visual styling for Windows XP and later" ON)
+option(ENABLE_POLL "Use poll() instead of select()")
 
 add_compile_definitions(_FILE_OFFSET_BITS=64)
 
@@ -19,6 +20,12 @@ elseif (WIN32)
     endif ()
 endif ()
 
+if (ENABLE_POLL)
+    set(MULTIPLEX_SRC ../src/server/mltiplex/poll.c)
+else ()
+    set(MULTIPLEX_SRC ../src/server/mltiplex/select.c)
+endif ()
+
 # Client
 add_executable(dl ../src/common/client.c ../src/platform/platform.h ../src/platform/platform.c
         ../src/server/event.c ../src/server/event.h
@@ -28,13 +35,13 @@ target_compile_definitions(dl PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
 
 # Server
 add_executable(th ../src/cli/th.c
-        ../src/server/server.h ../src/server/server.c ../src/server/mltiplex/select.c
+        ../src/server/server.h ../src/server/server.c
         ../src/platform/platform.c ../src/platform/platform.h
         ../src/server/event.c ../src/server/event.h
         ../src/server/http.c ../src/server/http.h
         ../src/server/routine.c ../src/server/routine.h
         ../src/server/sockbufr.c ../src/server/sockbufr.h
-        ${PLATFORM_SRC})
+        ${MULTIPLEX_SRC} ${PLATFORM_SRC})
 
 target_compile_definitions(th PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
 
@@ -44,13 +51,13 @@ endif ()
 
 # Unit Test Binary
 add_executable(test ../test/test.c ../test/mock.h ../test/common.h ../test/sockbufr.h ../test/request.h ../test/platform.h
-        ../src/server/server.h ../src/server/server.c
+        ../src/server/server.c ../src/server/server.h
         ../src/platform/platform.c ../src/platform/platform.h
         ../src/server/event.c ../src/server/event.h
         ../src/server/http.c ../src/server/http.h
         ../src/server/routine.c ../src/server/routine.h
         ../src/server/sockbufr.c ../src/server/sockbufr.h
-        ${PLATFORM_SRC} ../src/platform/mockput.c)
+        ${MULTIPLEX_SRC} ${PLATFORM_SRC} ../src/platform/mockput.c)
 
 target_compile_definitions(test PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>" MOCK=1 SB_DATA_SIZE=128 EWOULDBLOCK=41)
 target_link_libraries(test cmocka)
@@ -63,7 +70,7 @@ if (WIN32)
     endif ()
 
     add_executable(th-gui ../src/gui/win32/main.c ../src/gui/win32/res.h
-            ../src/server/server.c ../src/server/server.h ../src/server/multiplx/select.c
+            ../src/server/server.c ../src/server/server.h
             ../src/gui/win32/iwindows.c ../src/gui/win32/iwindows.h
             ../src/gui/win32/wnewserv.c ../src/gui/win32/wnewserv.h
             ../src/gui/win32/wrunserv.c ../src/gui/win32/wrunserv.h
@@ -72,7 +79,7 @@ if (WIN32)
             ../src/server/http.c ../src/server/http.h
             ../src/server/routine.c ../src/server/routine.h
             ../src/server/sockbufr.c ../src/server/sockbufr.h
-            ${PLATFORM_SRC} ${W32_RES})
+            ${MULTIPLEX_SRC} ${PLATFORM_SRC} ${W32_RES})
 
     target_compile_definitions(th-gui PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
     if (ENABLE_W32_SOCKET_1)

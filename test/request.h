@@ -34,8 +34,7 @@ static void RequestSmallFile(void **state) {
 
     do {
         SOCKET deferred;
-        fd_set writeWait;
-        RoutineTick(&globalRoutineArray, &writeWait, &deferred);
+        RoutineTick(&globalRoutineArray, &deferred);
     } while (globalRoutineArray.size);
 
     rewind(read), findHttpBodyStart(mockSendStream);
@@ -61,8 +60,7 @@ static void RequestResumeFile(void **state) {
 
     do {
         SOCKET deferred;
-        fd_set writeWait;
-        RoutineTick(&globalRoutineArray, &writeWait, &deferred);
+        RoutineTick(&globalRoutineArray, &deferred);
     } while (globalRoutineArray.size);
 
     platformFileSeek(read, 50, SEEK_SET), findHttpBodyStart(mockSendStream);
@@ -88,8 +86,7 @@ static void TransferInterruptStart(void **state) {
 
     do {
         SOCKET deferred;
-        fd_set writeWait;
-        RoutineTick(&globalRoutineArray, &writeWait, &deferred);
+        RoutineTick(&globalRoutineArray, &deferred);
     } while (globalRoutineArray.size);
 
     assert_false(platformFileTell(mockSendStream));
@@ -114,8 +111,7 @@ static void TransferInterruptMiddle(void **state) {
 
     do {
         SOCKET deferred;
-        fd_set writeWait;
-        RoutineTick(&globalRoutineArray, &writeWait, &deferred);
+        RoutineTick(&globalRoutineArray, &deferred);
 
         if (i == 3)
             mockSendError = EPIPE;
