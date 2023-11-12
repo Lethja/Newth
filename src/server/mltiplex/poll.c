@@ -86,6 +86,13 @@ static inline void ProcessServePoll(struct pollfd *poll) {
     }
 }
 
+static inline void ProcessDeferredPoll(struct pollfd *poll) {
+    switch (poll->revents) {
+        case POLL_OUT:
+            PollArrayDel(&deferredPoll, &deferredPollCount, poll->fd);
+    }
+}
+
 static inline SOCKET *pollFdToSocketArray(struct pollfd *poll, const nfds_t *count) {
     nfds_t i, j;
     SOCKET *r = malloc(sizeof(struct pollfd) * (*count + 1));
@@ -142,13 +149,19 @@ void serverTick(void) {
         nfds_t i;
         RoutineTick(&globalRoutineArray, &deferred);
 
+        if (deferredPoll) {
+            poll(deferredPoll, deferredPollCount, 0);
+            for (i = 0; i < servePollCount; ++i)
+                ProcessDeferredPoll(&deferredPoll[i]);
+        }
+
         if (servePoll) {
             poll(servePoll, servePollCount, 0);
             for (i = 0; i < servePollCount; ++i)
                 ProcessServePoll(&servePoll[i]);
         }
 
-        poll(listenPoll, listenPollCount, servePoll ? 0 : 1000);
+        poll(listenPoll, listenPollCount, deferred ? 0 : 1000);
         for (i = 0; i < listenPollCount; ++i)
             ProcessListeningPoll(&listenPoll[i]);
 
