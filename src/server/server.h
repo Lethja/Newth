@@ -24,6 +24,12 @@ extern SOCKET *serverGetReadSocketArray(void);
 
 extern SOCKET *serverGetWriteSocketArray(void);
 
+extern char serverDeferredSocketAdd(SOCKET socket);
+
+extern char serverDeferredSocketExists(SOCKET socket);
+
+extern void serverDeferredSocketRemove(SOCKET socket);
+
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "UnusedParameter"
 

@@ -1,8 +1,10 @@
 #include <stdlib.h>
 #include <string.h>
-#include "routine.h"
-#include "http.h"
+
 #include "event.h"
+#include "http.h"
+#include "routine.h"
+#include "server.h"
 
 size_t DirectoryRoutineContinue(Routine *self) {
     const size_t max = 10;
@@ -216,7 +218,7 @@ Routine RoutineNew(SocketBuffer socketBuffer, const char *webPath) {
     return self;
 }
 
-void RoutineTick(RoutineArray *routineArray, fd_set *serverWriteSockets, SOCKET *deferredSockets) {
+void RoutineTick(RoutineArray *routineArray, SOCKET *deferredSockets) {
     SOCKET i;
     Routine *routines = (Routine *) routineArray->array;
 
@@ -228,7 +230,7 @@ void RoutineTick(RoutineArray *routineArray, fd_set *serverWriteSockets, SOCKET 
             case STATE_DEFER | TYPE_ROUTINE:
             case STATE_DEFER | TYPE_ROUTINE_FILE:
             case STATE_DEFER | TYPE_ROUTINE_DIR:
-                if (FD_ISSET(routine->socketBuffer.clientSocket, serverWriteSockets)) {
+                if (serverDeferredSocketExists(routine->socketBuffer.clientSocket)) {
                     ++*deferredSockets;
                     continue;
                 } else {
@@ -266,8 +268,9 @@ void RoutineTick(RoutineArray *routineArray, fd_set *serverWriteSockets, SOCKET 
 
             case STATE_CONTINUE | TYPE_ROUTINE_FILE:
                 if (FileRoutineContinue(routine) || routine->socketBuffer.options & SOC_BUF_ERR_FULL) {
-                    if(routine->socketBuffer.buffer && platformMemoryStreamTell(routine->socketBuffer.buffer) > SB_DATA_SIZE) {
-                        FD_SET(routine->socketBuffer.clientSocket, serverWriteSockets);
+                    if (routine->socketBuffer.buffer &&
+                        platformMemoryStreamTell(routine->socketBuffer.buffer) > SB_DATA_SIZE) {
+                        serverDeferredSocketAdd(routine->socketBuffer.clientSocket);
                         routine->state = STATE_DEFER | TYPE_ROUTINE_FILE;
                     }
 
@@ -277,7 +280,7 @@ void RoutineTick(RoutineArray *routineArray, fd_set *serverWriteSockets, SOCKET 
                 if (routine->socketBuffer.options & SOC_BUF_ERR_FAIL)
                     routine->state = STATE_FAIL | TYPE_ROUTINE_FILE;
                 else if (routine->socketBuffer.buffer) {
-                    FD_SET(routine->socketBuffer.clientSocket, serverWriteSockets);
+                    serverDeferredSocketAdd(routine->socketBuffer.clientSocket);
                     routine->state = STATE_DEFER | TYPE_ROUTINE_FILE;
                 } else
                     routine->state = STATE_FINISH | TYPE_ROUTINE_FILE;
@@ -287,7 +290,7 @@ void RoutineTick(RoutineArray *routineArray, fd_set *serverWriteSockets, SOCKET 
                 LINEDBG;
             case STATE_FINISH | TYPE_ROUTINE_FILE:
             case STATE_FAIL | TYPE_ROUTINE_FILE:
-                FD_CLR(routine->socketBuffer.clientSocket, serverWriteSockets);
+                serverDeferredSocketRemove(routine->socketBuffer.clientSocket);
                 eventHttpFinishInvoke(&routine->socketBuffer.clientSocket, routine->webPath, httpGet,
                                       (short) (routine->state & STATE_FAIL ? 1 : 0));
                 socketBufferFailFree(&routine->socketBuffer);
@@ -301,7 +304,7 @@ void RoutineTick(RoutineArray *routineArray, fd_set *serverWriteSockets, SOCKET 
                 /* Fall through */
             case STATE_FINISH | TYPE_ROUTINE_DIR:
             case STATE_FAIL | TYPE_ROUTINE_DIR:
-                FD_CLR(routine->socketBuffer.clientSocket, serverWriteSockets);
+                serverDeferredSocketRemove(routine->socketBuffer.clientSocket);
                 eventHttpFinishInvoke(&routine->socketBuffer.clientSocket, routine->webPath, httpGet,
                                       (short) (routine->state & STATE_FAIL ? 1 : 0));
                 socketBufferFailFree(&routine->socketBuffer);
@@ -310,7 +313,7 @@ void RoutineTick(RoutineArray *routineArray, fd_set *serverWriteSockets, SOCKET 
 
             case STATE_FINISH | TYPE_ROUTINE:
             case STATE_FAIL | TYPE_ROUTINE:
-                FD_CLR(routine->socketBuffer.clientSocket, serverWriteSockets);
+                serverDeferredSocketRemove(routine->socketBuffer.clientSocket);
                 socketBufferFailFree(&routine->socketBuffer);
                 RoutineArrayDel(routineArray, routine);
                 break;

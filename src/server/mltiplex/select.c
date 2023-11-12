@@ -53,6 +53,19 @@ SOCKET *serverGetWriteSocketArray(void) {
     return GetFdSetAsArray(&serverWriteSockets);
 }
 
+char serverDeferredSocketAdd(SOCKET socket) {
+    FD_SET(socket, &serverWriteSockets);
+    return 0;
+}
+
+void serverDeferredSocketRemove(SOCKET socket) {
+    FD_CLR(socket, &serverWriteSockets);
+}
+
+char serverDeferredSocketExists(SOCKET socket) {
+    return FD_ISSET(socket, &serverWriteSockets);
+}
+
 void serverSetup(SOCKET *sockets) {
     SOCKET i;
     FD_ZERO(&serverReadSockets);
@@ -72,7 +85,7 @@ void serverTick(void) {
     struct timeval globalSelectSleep;
 
     while (serverRun) {
-        RoutineTick(&globalRoutineArray, &serverWriteSockets, &deferredSockets);
+        RoutineTick(&globalRoutineArray, &deferredSockets);
 
         globalSelectSleep.tv_usec = 0;
         globalSelectSleep.tv_sec = (globalRoutineArray.size - deferredSockets) ? 0 : PLATFORM_SELECT_MAX_TIMEOUT;
