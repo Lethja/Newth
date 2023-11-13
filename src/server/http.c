@@ -433,11 +433,14 @@ void htmlBreadCrumbWrite(char **buffer, const char *webPath) {
 
 size_t httpBodyWriteChunk(SocketBuffer *socketBuffer, char **buffer) {
     size_t bufLen = strlen(*buffer);
-    FILE *buf = socketBufferGetBuffer(socketBuffer);
-
-    /* TODO: convert to socketBufferPrintf() */
-    if (buf)
-        return fprintf(buf, "%lx\r\n%s\r\n", (unsigned long) bufLen, *buffer);
+    char hexStr[40] = {0};
+    if (snprintf(hexStr, 40, "%"HEX_OFFSET HTTP_EOL, bufLen)) {
+        size_t r = socketBufferWriteText(socketBuffer, hexStr);
+        r += socketBufferWriteData(socketBuffer, *buffer, bufLen);
+        r += socketBufferWriteText(socketBuffer, HTTP_EOL);
+        return r;
+    }
+    LINEDBG;
     return 0;
 }
 

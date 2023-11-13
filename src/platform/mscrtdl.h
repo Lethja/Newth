@@ -7,6 +7,7 @@
 #define SOCK_BUF_TYPE int
 #define sa_family_t short
 #define PF_OFFSET "I64d"
+#define HEX_OFFSET "lx"
 #define SOCKET_WOULD_BLOCK WSAEWOULDBLOCK
 #define snprintf _snprintf
 

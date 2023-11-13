@@ -58,9 +58,10 @@ extern char platformShouldExit(void);
 #define SOCK_BUF_TYPE size_t
 #define STD_FILE_TYPE size_t
 #define PF_OFFSET "lu"
+#define HEX_OFFSET "x"
 
 #ifndef SB_DATA_SIZE
-#define SB_DATA_SIZE BUFSIZ
+#define SB_DATA_SIZE 64
 #endif
 
 #ifndef SOCKET_TRY_AGAIN

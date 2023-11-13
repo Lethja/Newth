@@ -33,6 +33,7 @@ typedef FILE *PlatformFile;
 #define SOCK_BUF_TYPE size_t
 #define STD_FILE_TYPE size_t
 #define PF_OFFSET "ji"
+#define HEX_OFFSET "lx"
 
 #ifndef SB_DATA_SIZE
 #define SB_DATA_SIZE BUFSIZ

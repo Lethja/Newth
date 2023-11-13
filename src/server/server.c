@@ -43,17 +43,20 @@ char handleDir(SOCKET clientSocket, char *webPath, char *absolutePath, char type
 
     htmlHeaderWrite(&buf, webPath[0] == '\0' ? "/" : webPath);
 
-    if (httpBodyWriteChunk(&socketBuffer, &buf) == 0 || socketBufferFlush(&socketBuffer) == 0)
+    if (httpBodyWriteChunk(&socketBuffer, &buf) == 0)
         goto handleDirAbort;
+
+    socketBufferFlush(&socketBuffer);
     free(buf), buf = NULL;
 
     htmlBreadCrumbWrite(&buf, webPath[0] == '\0' ? "/" : webPath);
 
     htmlListStart(&buf);
 
-    if (httpBodyWriteChunk(&socketBuffer, &buf) == 0 || socketBufferFlush(&socketBuffer) == 0)
+    if (httpBodyWriteChunk(&socketBuffer, &buf) == 0)
         goto handleDirAbort;
 
+    socketBufferFlush(&socketBuffer);
     free(buf);
 
     RoutineArrayAdd(&globalRoutineArray, DirectoryRoutineNew(socketBuffer, dir, webPath, globalRootPath));
