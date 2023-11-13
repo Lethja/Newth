@@ -203,20 +203,14 @@ char httpHeaderReadRange(const char *request, PlatformFileOffset *start, Platfor
 
 void httpHeaderWriteAcceptRanges(SocketBuffer *socketBuffer) {
     const char *str = "Accept-Ranges: bytes" HTTP_EOL;
-    FILE *buf = socketBufferGetBuffer(socketBuffer);
-
-    if (buf)
-        fprintf(buf, "%s", str);
+    socketBufferWriteText(socketBuffer, str);
 }
 
 #pragma GCC diagnostic ignored "-Wformat" /* PF_OFFSET is defined in posix01.h */
 void httpHeaderWriteRange(SocketBuffer *socketBuffer, PlatformFileOffset start, PlatformFileOffset finish,
                           PlatformFileOffset fileLength) {
-    FILE *buf = socketBufferGetBuffer(socketBuffer);
-
-    if (buf)
-        fprintf(buf, "Content-Range: bytes %"PF_OFFSET"-%"PF_OFFSET"/%"PF_OFFSET HTTP_EOL, start,
-                finish == fileLength ? finish - 1 : finish, fileLength);
+    socketBufferPrintf(socketBuffer, SB_DATA_SIZE, "Content-Range: bytes %"PF_OFFSET"-%"PF_OFFSET"/%"PF_OFFSET HTTP_EOL,
+                       start, finish == fileLength ? finish - 1 : finish, fileLength);
 }
 
 void httpHeaderWriteConnectionClose(SocketBuffer *socketBuffer) {
@@ -225,14 +219,9 @@ void httpHeaderWriteConnectionClose(SocketBuffer *socketBuffer) {
 }
 
 void httpHeaderWriteDate(SocketBuffer *socketBuffer) {
-    FILE *buf = socketBufferGetBuffer(socketBuffer);
-
-    if (buf) {
-        char time[30];
-        platformGetCurrentTime(time);
-
-        fprintf(buf, "Date: %s" HTTP_EOL, time);
-    }
+    char time[30];
+    platformGetCurrentTime(time);
+    socketBufferPrintf(socketBuffer, 40, "Date: %s" HTTP_EOL, time);
 }
 
 void httpHeaderWriteChunkedEncoding(SocketBuffer *socketBuffer) {
@@ -241,10 +230,7 @@ void httpHeaderWriteChunkedEncoding(SocketBuffer *socketBuffer) {
 }
 
 void httpHeaderWriteContentLength(SocketBuffer *socketBuffer, PlatformFileOffset length) {
-    FILE *buf = socketBufferGetBuffer(socketBuffer);
-
-    if (buf)
-        fprintf(buf, "Content-Length: %"PF_OFFSET HTTP_EOL, length);
+    socketBufferPrintf(socketBuffer, 80, "Content-Length: %"PF_OFFSET HTTP_EOL, length);
 }
 
 void httpHeaderWriteContentLengthSt(SocketBuffer *socketBuffer, PlatformFileStat *st) {
@@ -252,22 +238,15 @@ void httpHeaderWriteContentLengthSt(SocketBuffer *socketBuffer, PlatformFileStat
 }
 
 void httpHeaderWriteLastModified(SocketBuffer *socketBuffer, PlatformFileStat *st) {
-    FILE *buf = socketBufferGetBuffer(socketBuffer);
-
-    if (buf) {
-        char time[30];
-        platformGetTime(&st->st_mtime, time);
-
-        fprintf(buf, "Last-Modified: %s" HTTP_EOL, time);
-    }
+    char time[30];
+    platformGetTime(&st->st_mtime, time);
+    socketBufferPrintf(socketBuffer, 50, "Last-Modified: %s" HTTP_EOL, time);
 }
 
 void httpHeaderWriteContentType(SocketBuffer *socketBuffer, char *type, char *charSet) {
-    char buffer[BUFSIZ];
     size_t len = strlen(type) + strlen(charSet) + strlen("Content-Type: ;" HTTP_EOL) + 1;
-    if (len < BUFSIZ) {
-        snprintf(buffer, BUFSIZ, "Content-Type: %s; %s" HTTP_EOL, type, charSet);
-        socketBufferWriteText(socketBuffer, buffer);
+    if (len < SB_DATA_SIZE) {
+        socketBufferPrintf(socketBuffer, len, "Content-Type: %s; %s" HTTP_EOL, type, charSet);
     }
 }
 
@@ -301,10 +280,7 @@ char *httpHeaderGetResponse(short response) {
 }
 
 void httpHeaderWriteResponseStr(SocketBuffer *socketBuffer, const char *response) {
-    FILE *buf = socketBufferGetBuffer(socketBuffer);
-
-    if (buf)
-        fprintf(buf, "HTTP/1.1 %s" HTTP_EOL, response);
+    socketBufferPrintf(socketBuffer, 20, "HTTP/1.1 %s" HTTP_EOL, response);
 }
 
 void httpHeaderWriteResponse(SocketBuffer *socketBuffer, short response) {
@@ -459,6 +435,7 @@ size_t httpBodyWriteChunk(SocketBuffer *socketBuffer, char **buffer) {
     size_t bufLen = strlen(*buffer);
     FILE *buf = socketBufferGetBuffer(socketBuffer);
 
+    /* TODO: convert to socketBufferPrintf() */
     if (buf)
         return fprintf(buf, "%lx\r\n%s\r\n", (unsigned long) bufLen, *buffer);
     return 0;
@@ -477,16 +454,13 @@ size_t httpBodyWriteText(SocketBuffer *socketBuffer, const char *text) {
 
 void httpHeaderWriteFileName(SocketBuffer *socketBuffer, char *path) {
     char *name = strrchr(path, '/');
-    FILE *buf = socketBufferGetBuffer(socketBuffer);
 
-    if (buf) {
-        if (!name)
-            name = path;
-        else
-            ++name;
+    if (!name)
+        name = path;
+    else
+        ++name;
 
-        fprintf(buf, "Content-Disposition: filename=\"%s\"" HTTP_EOL, name);
-    }
+    socketBufferPrintf(socketBuffer, strlen(name) + 40, "Content-Disposition: filename=\"%s\"" HTTP_EOL, name);
 }
 
 char httpHeaderHandleError(SocketBuffer *socketBuffer, const char *path, char httpType, short error) {

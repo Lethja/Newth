@@ -1,5 +1,6 @@
 #include "sockbufr.h"
 
+#include <stdarg.h>
 #include <string.h>
 
 void socketBufferFailFree(SocketBuffer *socketBuffer) {
@@ -40,7 +41,7 @@ size_t socketBufferFlush(SocketBuffer *self) {
 #pragma region Handle socket error
                 case SOCKET_TRY_AGAIN:
 #if SOCKET_TRY_AGAIN != SOCKET_WOULD_BLOCK
-                case SOCKET_WOULD_BLOCK:
+                    case SOCKET_WOULD_BLOCK:
 #endif
                     return bytesFlushed;
 #pragma endregion
@@ -75,7 +76,7 @@ size_t socketBufferWriteData(SocketBuffer *self, const char *data, size_t len) {
 #pragma region Handle socket error
                 case SOCKET_TRY_AGAIN:
 #if SOCKET_TRY_AGAIN != SOCKET_WOULD_BLOCK
-                case SOCKET_WOULD_BLOCK:
+                    case SOCKET_WOULD_BLOCK:
 #endif
                     break;
 #pragma endregion
@@ -114,4 +115,22 @@ FILE *socketBufferGetBuffer(SocketBuffer *self) {
         platformMemoryStreamSeek(self->buffer, 0, SEEK_END);
 
     return self->buffer;
+}
+
+int socketBufferPrintf(SocketBuffer *self, size_t max, const char *format, ...) {
+    int e;
+    va_list args;
+    va_start(args, format);
+    if (!self->buffer) {
+        char *msg = malloc(max);
+        e = vsprintf(msg, format, args);
+        socketBufferWriteText(self, msg);
+        free(msg);
+    } else {
+        platformMemoryStreamSeek(self->buffer, 0, SEEK_END);
+        e = vfprintf(self->buffer, format, args);
+    }
+    va_end(args);
+
+    return e;
 }

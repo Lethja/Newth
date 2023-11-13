@@ -67,4 +67,13 @@ size_t socketBufferWriteText(SocketBuffer *self, const char *data);
  */
 FILE *socketBufferGetBuffer(SocketBuffer *self);
 
+/**
+ * Print a message into a socket buffer
+ * @param self The socket buffer to get the create or get the buffer of
+ * @param max The maximum length of the message
+ * @param string A printf-like string
+ * @return The number of characters printed or a negative number on error
+ */
+int socketBufferPrintf(SocketBuffer *self, size_t max, const char *format, ...);
+
 #endif /* OPEN_WEB_SOCKET_BUFFER_H */
