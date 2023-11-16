@@ -106,10 +106,8 @@ static inline void ProcessServePoll(struct pollfd *poll) {
 }
 
 static inline void ProcessDeferredPoll(struct pollfd *poll) {
-    switch (poll->revents) {
-        case POLL_OUT:
-            PollArrayDel(&deferredPoll, &deferredPollCount, poll->fd);
-    }
+    if (poll->revents & POLL_OUT)
+        PollArrayDel(&deferredPoll, &deferredPollCount, poll->fd);
 }
 
 static inline SOCKET *pollFdToSocketArray(struct pollfd *poll, const nfds_t *count) {

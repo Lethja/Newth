@@ -148,13 +148,13 @@ On a typical DOS installation of Open Watcom run the following to enable the bui
 ## Configuring Watt32 library for linking with Newth
 
 Newth on DOS depends on Watt32. The Watt32s folder should be extracted on symlinked
-into the directory containing `th.mak` so that it looks like so.
+into the directory containing `makefile` so that it looks like so.
 
 ```
-Watcom\Dos16\th.mak
+Watcom\Dos16\makefile
 Watcom\Dos16\Watt32s\inc
 Watcom\Dos16\Watt32s\lib
-Watcom\Dos16\th.mak
+Watcom\Dos16\makefile
 Watcom\Dos4g\Watt32s\inc
 Watcom\Dos4g\Watt32s\lib
 ```
@@ -191,15 +191,15 @@ To do this Watt32s `src\config.h` has to be manually modified like so:
 
 ### Build for 16-bit (Real Mode)
 
-From the `Dos16` directory run `wmake -f th.mak` to build the project.
+From the `Dos16` directory run `wmake` to build the project.
 A self contained 16-bit binary called `TH.EXE` will be made and can be run from any path 
-(including a floppy diskette) on any DOS 3.0+ computer.
+(including a floppy diskette) on any DOS 2.0 or later computer.
 
 ### Build for 32-bit (DOS4GW)
 
-From the `Dos4g` directory run `wmake -f th.mak` to build the project.
+From the `Dos4g` directory run `wmake` to build the project.
 A 32-bit binary called `TH.EXE` will be made and can be run from any path (including a floppy diskette)
-on any DOS 4.0+ computer with a 80386 compatible CPU. 
+on any DOS 4.0 or later computer with a 80386 compatible CPU. 
 
 `DOS4GW.EXE` will need to either exist in a `%PATH%` directory or the same directory as `TH.EXE` 
 for the program to function. Most programs opt to do the latter. 

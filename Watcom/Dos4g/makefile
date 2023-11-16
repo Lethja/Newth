@@ -52,10 +52,10 @@ th.o: ../../src/cli/th.c
     $(CC) @flag.lnk -fo="$@" "../../src/cli/th.c"
 
 walk: .SYMBOLIC
-    %write flag.lnk -q -dWATT32=1 -bt=dos -ml -3 -i="watt32s/inc/" -d3 -db -dDBGHALT=1
+    %write flag.lnk -q -dWATT32=1 -bt=dos -mf -3 -i="watt32s/inc/" -d3 -db -dDBGHALT=1
 
 debug: .SYMBOLIC
-    %write flag.lnk -q -dWATT32=1 -bt=dos -ml -3 -i="watt32s/inc/" -d3 -db
+    %write flag.lnk -q -dWATT32=1 -bt=dos -mf -3 -i="watt32s/inc/" -d3 -db
 
 release: .SYMBOLIC
-    %write flag.lnk -q -dWATT32=1 -bt=dos -ml -3 -i="watt32s/inc/" -d0 -osr -zc -dNDEBUG=1
+    %write flag.lnk -q -dWATT32=1 -bt=dos -mf -3 -i="watt32s/inc/" -d0 -osr -zc -dNDEBUG=1
