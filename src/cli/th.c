@@ -35,7 +35,12 @@ static void printSocketAccept(SOCKET *sock) { /* NOLINT(readability-non-const-pa
     sa_family_t family;
     char ip[INET6_ADDRSTRLEN];
     unsigned short port;
-    getpeername(*sock, (struct sockaddr *) &ss, &sockLen);
+
+    if (getpeername(*sock, (struct sockaddr *) &ss, &sockLen)) {
+        printf("TSYN:?(%d)\n", *sock);
+        return;
+    }
+
     platformGetIpString((struct sockaddr *) &ss, ip, &family);
     port = platformGetPort((struct sockaddr *) &ss);
     if (family == AF_INET)
@@ -51,8 +56,10 @@ static void printSocketClose(SOCKET *sock) { /* NOLINT(readability-non-const-par
     char ip[INET6_ADDRSTRLEN];
     unsigned short port;
 
-    if (getpeername(*sock, (struct sockaddr *) &ss, &sockLen))
+    if (getpeername(*sock, (struct sockaddr *) &ss, &sockLen)) {
+        printf("TRST:?(%d)\n", *sock);
         return;
+    }
 
     platformGetIpString((struct sockaddr *) &ss, ip, &family);
     port = platformGetPort((struct sockaddr *) &ss);
@@ -60,6 +67,8 @@ static void printSocketClose(SOCKET *sock) { /* NOLINT(readability-non-const-par
         printf("TRST:%s:%u\n", ip, port);
     else if (family == AF_INET6)
         printf("TRST:[%s]:%u\n", ip, port);
+    else
+        printf("TRST:?(%d)\n", *sock);
 }
 
 static void printHttpEvent(eventHttpRespond *event) {
@@ -85,8 +94,10 @@ static void printHttpEvent(eventHttpRespond *event) {
             break;
     }
 
-    if (getpeername(*event->clientSocket, (struct sockaddr *) &sock, &sockLen))
+    if (getpeername(*event->clientSocket, (struct sockaddr *) &sock, &sockLen)) {
+        printf("%c%03d:?(%d)/%s\n", type, *event->response, *event->clientSocket, event->path);
         return;
+    }
 
     platformGetIpString((struct sockaddr *) &sock, ip, &family);
     port = platformGetPort((struct sockaddr *) &sock);
