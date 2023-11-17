@@ -71,19 +71,15 @@ static char *startServer(HWND hwnd) {
     else
         family = AF_INET;
 
-    err = platformServerStartup(&serverListenSocket, family, str);
+    serverListenSocket = platformServerStartup(family, str, &err);
 
-    if (err) {
-        free(globalRootPath);
-        globalRootPath = NULL;
+    if (!serverListenSocket) {
+        free(globalRootPath), globalRootPath = NULL;
         return err;
     }
 
     /* Set new server memory state */
-    serverMaxSocket = serverListenSocket;
-    FD_ZERO(&serverReadSockets);
-    FD_ZERO(&serverWriteSockets);
-    FD_SET(serverListenSocket, &serverReadSockets);
+    serverSetup(serverListenSocket);
 
     globalRoutineArray.size = 0, globalRoutineArray.array = NULL;
 

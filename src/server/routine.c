@@ -218,12 +218,12 @@ Routine RoutineNew(SocketBuffer socketBuffer, const char *webPath) {
     return self;
 }
 
-void RoutineTick(RoutineArray *routineArray, SOCKET *deferredSockets) {
+void RoutineTick(RoutineArray *routineArray) {
     SOCKET i;
     Routine *routines = (Routine *) routineArray->array;
     LINEDBG;
 
-    for (i = *deferredSockets = 0; i < routineArray->size; ++i) {
+    for (i = 0; i < routineArray->size; ++i) {
         Routine *routine = &routines[i];
 
 #pragma region Routine State Machine
@@ -232,7 +232,6 @@ void RoutineTick(RoutineArray *routineArray, SOCKET *deferredSockets) {
             case STATE_DEFER | TYPE_ROUTINE_FILE:
             case STATE_DEFER | TYPE_ROUTINE_DIR:
                 if (serverDeferredSocketExists(routine->socketBuffer.clientSocket)) {
-                    ++*deferredSockets;
                     continue;
                 } else {
                     if (routine->socketBuffer.options & SOC_BUF_ERR_FAIL) {

@@ -280,7 +280,7 @@ AdapterAddressArray *platformGetAdapterInformation(sa_family_t family) {
     struct AdapterAddressArray *array;
     struct ifaddrs *ifap, *ifa;
     char address[INET6_ADDRSTRLEN];
-    unsigned short port;
+    /* unsigned short port; */
 
     if (getifaddrs(&ifap)) {
         return NULL;
@@ -300,15 +300,15 @@ AdapterAddressArray *platformGetAdapterInformation(sa_family_t family) {
         if (ifa->ifa_addr->sa_family == AF_INET && family != AF_INET6) {
             struct sockaddr_in *sa = (struct sockaddr_in *) ifa->ifa_addr;
             char *ip4 = inet_ntoa(sa->sin_addr);
-            port = sa->sin_port;
+            /* port = sa->sin_port; */
             strcpy(address, ip4);
         } else if (ifa->ifa_addr->sa_family == AF_INET6 && family != AF_INET) {
             struct sockaddr_in6 *sa = (struct sockaddr_in6 *) ifa->ifa_addr;
             inet_ntop(sa->sin6_family, &sa->sin6_addr, address, INET6_ADDRSTRLEN);
-            port = sa->sin6_port;
+            /* port = sa->sin6_port; */
         } else continue;
 
-        platformFindOrCreateAdapterIp(array, ifa->ifa_name, ifa->ifa_addr->sa_family == AF_INET6, address, port);
+        platformFindOrCreateAdapterIp(array, ifa->ifa_name, ifa->ifa_addr->sa_family == AF_INET6, address);
     }
     freeifaddrs(ifap);
 

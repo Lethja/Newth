@@ -1,7 +1,11 @@
 #include "../../platform/platform.h"
 #include "../server.h"
 
-#include <sys/socket.h>
+#ifndef _WIN32
+
+#include <sys/select.h>
+
+#endif
 
 static fd_set serverListenSockets;
 static fd_set serverReadSockets;
@@ -73,43 +77,34 @@ void serverSetup(SOCKET *sockets) {
 
     fdSetToSocketArray(sockets, &serverListenSockets);
     fdSetToSocketArray(sockets, &serverReadSockets);
-    for (i = 1; i < sockets[0]; ++i) {
+    for (i = 1; i <= sockets[0]; ++i) {
         if (sockets[i] > serverMaxSocket)
             serverMaxSocket = sockets[i];
     }
 }
 
 void serverTick(void) {
-    SOCKET i, deferredSockets;
-    fd_set readyToReadSockets, readyToWriteSockets, errorSockets;
+    SOCKET i;
+    fd_set readyToReadSockets, readyToWriteSockets;
     struct timeval globalSelectSleep;
 
     while (serverRun) {
-        RoutineTick(&globalRoutineArray, &deferredSockets);
+        if (globalRoutineArray.size)
+            RoutineTick(&globalRoutineArray);
 
         globalSelectSleep.tv_usec = 0;
-        globalSelectSleep.tv_sec = (globalRoutineArray.size - deferredSockets) ? 0 : PLATFORM_SELECT_MAX_TIMEOUT;
+        globalSelectSleep.tv_sec = globalRoutineArray.size ? 0 : PLATFORM_SELECT_MAX_TIMEOUT;
 
         readyToReadSockets = serverReadSockets;
         readyToWriteSockets = serverWriteSockets;
 
-        if (select((int) serverMaxSocket + 1, &readyToReadSockets, &readyToWriteSockets, &errorSockets,
-                   &globalSelectSleep) < 0) {
+        if (select((int) serverMaxSocket + 1, &readyToReadSockets, &readyToWriteSockets, NULL, &globalSelectSleep) <
+            0) {
             LINEDBG;
             exit(1);
         }
 
         for (i = 0; i <= serverMaxSocket; ++i) {
-            /* TODO: Retest all platforms with this code */
-            if (FD_ISSET(i, &errorSockets)) {
-                eventSocketCloseInvoke(&i);
-                RoutineArrayDelSocket(&globalRoutineArray, i);
-                CLOSE_SOCKET(i);
-                FD_CLR(i, &serverReadSockets);
-                FD_CLR(i, &serverWriteSockets);
-                continue;
-            }
-
             if (FD_ISSET(i, &readyToReadSockets)) {
                 if (FD_ISSET(i, &serverListenSockets)) {
                     SOCKET clientSocket = platformAcceptConnection(i);

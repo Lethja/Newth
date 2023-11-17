@@ -74,13 +74,6 @@
 			<Add library="ole32" />
 			<Add library="wsock32" />
 		</Linker>
-		<Unit filename="../src/server/mltiplex/select.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/server/server.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/server/server.h" />
 		<Unit filename="../src/gui/win32/iwindows.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -116,10 +109,12 @@
 			<Option compilerVar="CC" />
 			<Option target="Debug" />
 			<Option target="Release" />
+			<Option target="MingW32 Debug" />
 		</Unit>
 		<Unit filename="../src/platform/winsock/wsock1.h">
 			<Option target="Debug" />
 			<Option target="Release" />
+			<Option target="MingW32 Debug" />
 		</Unit>
 		<Unit filename="../src/platform/winsock/wsock2.c">
 			<Option compilerVar="CC" />
@@ -133,10 +128,17 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../src/server/http.h" />
+		<Unit filename="../src/server/mltiplex/select.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="../src/server/routine.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../src/server/routine.h" />
+		<Unit filename="../src/server/server.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/server/server.h" />
 		<Unit filename="../src/server/sockbufr.c">
 			<Option compilerVar="CC" />
 		</Unit>

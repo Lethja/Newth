@@ -11,7 +11,7 @@ release:
 		../src/server/server.c \
 		../src/server/sockbufr.c \
 		../src/server/mltiplex/select.c \
-		../ext/watt32s/lib/libwatt.a -o th.exe
+		watt32s/lib/libwatt.a -o th.exe
 
 debug:
 	$(CC) -Wall -Wno-unknown-pragmas -O3 -DWATT32=1 -Iwatt32s/inc \
@@ -24,4 +24,4 @@ debug:
 		../src/server/server.c \
 		../src/server/sockbufr.c \
 		../src/server/mltiplex/select.c \
-		../ext/watt32s/lib/libwatt.a -o thdbg.exe
+		watt32s/lib/libwatt.a -o thdbg.exe

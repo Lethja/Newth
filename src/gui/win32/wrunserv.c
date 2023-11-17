@@ -378,7 +378,11 @@ LRESULT CALLBACK runServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam,
             /* Wait for thread to stop before tear down */
             serverPoke();
             /* WaitForSingleObject(serverThread, INFINITE); */
-            platformCloseBindSockets(&serverReadSockets, serverMaxSocket);
+            {
+                SOCKET *sockets = serverGetReadSocketArray();
+                if (sockets)
+                    platformCloseBindSockets(sockets), free(sockets);
+            }
             platformIpStackExit();
 
             free(globalRootPath);
@@ -465,7 +469,7 @@ void runServerWindowCreate(WNDCLASSEX *class, HINSTANCE inst, int show) {
     EnumChildWindows(window, iWindowSetSystemFontEnumerator, (LPARAM) &g_hfDefault);
 
     setupTreeAdapterInformation("http", (sa_family_t) (platformOfficiallySupportsIpv6() ? AF_UNSPEC : AF_INET),
-                                getPort(&serverListenSocket));
+                                getPort(&serverListenSocket[1]));
 }
 
 #pragma endregion

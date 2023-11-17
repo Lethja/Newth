@@ -145,16 +145,19 @@ int platformOfficiallySupportsIpv6(void) {
     return 0;
 }
 
-char *platformServerStartup(SOCKET *listenSocket, sa_family_t family, char *ports) {
+SOCKET *platformServerStartup(sa_family_t family, char *ports, char **err) {
     struct sockaddr_storage serverAddress;
+    SOCKET listenSocket, *r;
     int iResult;
 
     LINEDBG;
 
     /* Force start in IPV4 mode if IPV6 functions cannot be loaded */
     if (family != AF_INET && (!getAdapterInformationIpv6)) {
-        if (family == AF_INET6)
-            return "This build of Windows does not have sufficient IPv6 support";
+        if (family == AF_INET6) {
+            *err = "This build of Windows does not have sufficient IPv6 support";
+            return NULL;
+        }
 
         family = AF_INET;
     }
@@ -165,8 +168,10 @@ char *platformServerStartup(SOCKET *listenSocket, sa_family_t family, char *port
         default:
         case AF_INET: {
             struct sockaddr_in *sock = (struct sockaddr_in *) &serverAddress;
-            if ((*listenSocket = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-                return "Unable to acquire socket from system";
+            if ((listenSocket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+                *err = "Unable to acquire socket from system";
+                return NULL;
+            }
 
             sock->sin_family = AF_INET;
             sock->sin_addr.s_addr = htonl(INADDR_ANY);
@@ -177,33 +182,42 @@ char *platformServerStartup(SOCKET *listenSocket, sa_family_t family, char *port
         case AF_UNSPEC: {
             struct SOCKIN6 *sock = (struct SOCKIN6 *) &serverAddress;
             size_t v6Only = family == AF_INET6;
-            if ((*listenSocket = socket(AF_INET6, SOCK_STREAM, 0)) < 0)
-                return "Unable to acquire socket from system";
+            if ((listenSocket = socket(AF_INET6, SOCK_STREAM, 0)) < 0) {
+                *err = "Unable to acquire socket from system";
+                return NULL;
+            }
 
             sock->sin6_family = AF_INET6;
-            setsockopt(*listenSocket, IPPROTO_IPV6, IPV6_V6ONLY, (char *) &v6Only, sizeof(v6Only));
+            setsockopt(listenSocket, IPPROTO_IPV6, IPV6_V6ONLY, (char *) &v6Only, sizeof(v6Only));
             LINEDBG;
             break;
         }
     }
 
-    if (*listenSocket == INVALID_SOCKET) {
-        LINEDBG;
-        return "Socket is invalid";
+    if (listenSocket == INVALID_SOCKET) {
+        *err = "Socket is invalid";
+        return NULL;
     }
 
-    if (platformBindPort(listenSocket, (struct sockaddr *) &serverAddress, ports)) {
-        closesocket(*listenSocket);
-        LINEDBG;
-        return "Unable to bind to designated port numbers";
+    if (platformBindPort(&listenSocket, (struct sockaddr *) &serverAddress, ports)) {
+        closesocket(listenSocket);
+        *err = "Unable to bind to designated port numbers";
+        return NULL;
     }
 
-    iResult = listen(*listenSocket, SOMAXCONN);
+    iResult = listen(listenSocket, SOMAXCONN);
     if (iResult == SOCKET_ERROR) {
-        closesocket(*listenSocket);
-        LINEDBG;
-        return "Unable to listen to assigned socket";
+        closesocket(listenSocket);
+        *err = "Unable to listen to assigned socket";
+        return NULL;
     }
+
+    r = malloc(sizeof(SOCKET) * 2);
+    if (r) {
+        r[0] = 1, r[1] = listenSocket;
+        return r;
+    } else
+        *err = strerror(errno);
 
     return NULL;
 }

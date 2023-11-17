@@ -14,7 +14,7 @@ void platformFreeAdapterInformation(AdapterAddressArray *array) {
 }
 
 void platformFindOrCreateAdapterIp(AdapterAddressArray *array, const char *adapter, sa_family_t type,
-                                   char ip[INET6_ADDRSTRLEN], unsigned short port) {
+                                   char ip[INET6_ADDRSTRLEN]) {
     size_t i, j;
     for (i = 0; i < array->size; ++i) {
         if (strcmp(adapter, array->adapter[i].name) == 0)
@@ -44,7 +44,7 @@ void platformFindOrCreateAdapterIp(AdapterAddressArray *array, const char *adapt
     j = array->adapter[i].addresses.size;
     ++array->adapter[i].addresses.size;
 
-    array->adapter[i].addresses.array[j].type = type, array->adapter[i].addresses.array[j].port = port;
+    array->adapter[i].addresses.array[j].type = type;
     strncpy(array->adapter[i].addresses.array[j].address, ip, INET6_ADDRSTRLEN);
 }
 

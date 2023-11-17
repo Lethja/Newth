@@ -1,7 +1,11 @@
 #include "../../platform/platform.h"
 #include "../server.h"
 
+#ifndef _WIN32
+
 #include <sys/poll.h>
+
+#endif
 
 #ifndef POLL_IN
 #define POLL_IN POLLIN
@@ -161,7 +165,6 @@ void serverSetup(SOCKET *sockets) {
 }
 
 void serverTick(void) {
-    SOCKET deferred = 0;
     while (serverRun) {
         nfds_t i;
 
@@ -174,7 +177,7 @@ void serverTick(void) {
         }
 
         if (globalRoutineArray.size)
-            RoutineTick(&globalRoutineArray, &deferred);
+            RoutineTick(&globalRoutineArray);
 
 #pragma endregion
 

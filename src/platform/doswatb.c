@@ -70,7 +70,7 @@ AdapterAddressArray *platformGetAdapterInformation(sa_family_t family) {
 
     array->size = 0;
     address.s_addr = htonl(my_ip_addr);
-    platformFindOrCreateAdapterIp(array, "Loaded Packet Driver", 0, inet_ntoa(address), 0);
+    platformFindOrCreateAdapterIp(array, "Loaded Packet Driver", 0, inet_ntoa(address));
 
     return array;
 }

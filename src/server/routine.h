@@ -63,6 +63,6 @@ char RoutineArrayDelSocket(RoutineArray *self, SOCKET socket);
 
 Routine RoutineNew(SocketBuffer socketBuffer, const char *webPath);
 
-void RoutineTick(RoutineArray *routineArray, SOCKET *deferredSockets);
+void RoutineTick(RoutineArray *routineArray);
 
 #endif /* OPEN_WEB_ROUTINE_H */
