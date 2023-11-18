@@ -251,8 +251,8 @@ short platformPathWebToSystem(const char *rootPath, char *webPath, char *absolut
             internal[i] = '\\';
     }
 
-    if (internal[absolutePathLen - 1] == '\\')
-        internal[absolutePathLen - 1] = '\0';
+    if (internal[i - 1] == '\\')
+        internal[i - 1] = '\0';
 
     LINEDBG;
 
