@@ -3,6 +3,7 @@
 #include "../server/event.h"
 
 #include <bios.h>
+
 #ifdef DJGPP
 #include <limits.h>
 #include <sys/stat.h>
@@ -49,8 +50,7 @@ void platformPathCombine(char *output, const char *path1, const char *path2) {
 char *platformRealPath(char *path) {
 #ifdef DJGPP
     char *abs = malloc(PATH_MAX + 1);
-    if(abs)
-        realpath(path, abs);
+    _fixpath(path, abs);
     return abs;
 #else /* Watcom */
     return _fullpath(NULL, path, _MAX_PATH);
@@ -190,7 +190,15 @@ char platformDirEntryIsHidden(PlatformDirEntry *entry) {
 
 char platformDirEntryIsDirectory(char *rootPath, char *webPath, PlatformDirEntry *entry) {
 #ifdef DJGPP
-    return (entry->d_type & DT_DIR);
+    PlatformFileStat st;
+    char tmp1[PATH_MAX], tmp2[PATH_MAX];
+    platformPathCombine((char *) &tmp1, rootPath, webPath);
+    platformPathCombine((char *) &tmp2, (char *) &tmp1, entry->d_name);
+    _fixpath((char *) &tmp2, (char *) &tmp1);
+    if(!platformFileStat((char *) &tmp1, &st))
+        return platformFileStatIsDirectory(&st);
+
+    return 0;
 #else /* Watcom */
     return (entry->d_attr & _A_SUBDIR);
 #endif
@@ -222,7 +230,7 @@ char *platformGetDiskPath(char *path) {
 
     test = platformRealPath(path);
     if (!test) {
-        printf("No such directory \"%s\"\n", path);
+        printf("No such directory or drive as \"%s\"\n", path);
         exit(1);
     }
 

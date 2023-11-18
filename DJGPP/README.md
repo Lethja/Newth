@@ -11,6 +11,11 @@
   * [Configuring Watt32 library for linking with Newth](#configuring-watt32-library-for-linking-with-newth)
   * [Build](#build)
 * [After building](#after-building)
+  * [DPMI server](#dpmi-server)
+    * [Acquire CWSDPMI](#acquire-cwsdpmi)
+    * [Using CWSDPMI](#using-cwsdpmi)
+      * [Method 1: Copy CWSDPMI.EXE to the same directory as the program](#method-1-copy-cwsdpmiexe-to-the-same-directory-as-the-program)
+      * [Method 2: Include Cwsdpmi inside TH.EXE](#method-2-include-cwsdpmi-inside-thexe)
   * [Compress (optional)](#compress-optional)
   * [Create diskette image (optional)](#create-diskette-image-optional)
     * [On a compressed binary](#on-a-compressed-binary)
@@ -152,10 +157,57 @@ To do this Watt32s `src\config.h` has to be manually modified like so:
 ## Build
 
 Run `make` to build the project.
-A self contained 32-bit EXE binary called `thdj.exe` will be made that can be run from any path
-(including a floppy diskette) on any DOS 4.0+ computer with a 80386 compatible CPU.
+A 32-bit binary called `th.exe` will be made that can be run from any path (including a floppy diskette)
+on any DOS computer with a DPMI server running on a 80386 compatible CPU with a 80387 compatible FPU.
 
 # After building
+
+## DPMI server
+
+A DOS Protected Mode Interface (DPMI) server is a utility that allows real mode DOS to extend itself with protected mode
+features of the 80386 and later processors.
+
+Like all 32-bit DOS executables DJGPP binaries need a DPMI server to run. FreeDOS and Windows 95 setup their own DPMI
+server by default and no further files are needed on these systems. If your system doesn't include it's own DPMI server
+then `CWSDPMI` can be used which is the DJGPP equivalent to Watcoms `DOS4GW.EXE`.
+
+### Acquire CWSDPMI
+
+| Operating System | Installation Instructions                                                                                                 |
+|------------------|---------------------------------------------------------------------------------------------------------------------------|
+| SvarDOS          | Run `PKGNET pull cwsdpmi` or [download manually](http://svardos.org/?p=repo&cat=progs) then run `PKG install cwsdpmi.svp` |
+
+### Using CWSDPMI
+
+There are two ways to use Cwsdpmi. Which way is better depends on the circumstances of the user and system
+
+#### Method 1: Copy CWSDPMI.EXE to the same directory as the program
+
+Similar to `DOS4GW.EXE` for Watcom built applications. 
+`CWSDPMI.EXE` can be placed in the same directory as the an EXE to make it start. 
+Several DJGPP binaries in the same directory can make use of the same `CWSDPMI.EXE` which can save some disk space.
+
+Assuming that you're in the same directory as `TH.EXE` and that `cwsdpmi.svp` has been installed
+in it's default directory you can run the following to copy the executable.
+
+```
+COPY %DOSDIR%\PROGS\CWSDPMI\CWSDPMI.EXE .
+```
+
+#### Method 2: Include Cwsdpmi inside TH.EXE
+
+Cwsdpmi can be baked into TH.EXE so that no external EXE file is needed to start the program.
+This can be a much cleaner alternative especially for executables that are intended for portable use.
+
+Assuming that you're in the same directory as `TH.EXE` and that `cwsdpmi.svp` has been installed
+in it's default directory you can run the following to copy the executable.
+
+```
+MOVE th.exe thnostub.exe
+exe2coff thnostub.exe
+COPY %DOSDIR%\PROGS\CWSDPMI\CWSDSTUB.EXE .
+COPY /B CWSDSTUB.EXE+thnostub th.exe
+```
 
 ## Compress (optional)
 
@@ -163,9 +215,9 @@ On DOS machines disk space is usually at a premium.
 Even though the release builds are stripped of all debugging symbols it is possible to make the binary take
 substantially less disk space with UPX compression so that it fits comfortably on a smaller diskette standard.
 
-| Build | UPX command           | Fits on           |
-|-------|-----------------------|-------------------|
-| DJGPP | `UPX TH32.EXE --best` | 5¼-inch QD (720k) |
+| Build | UPX command         | Fits on           |
+|-------|---------------------|-------------------|
+| DJGPP | `UPX th.exe --best` | 5¼-inch QD (720k) |
 
 ## Create diskette image (optional)
 
@@ -178,8 +230,8 @@ image so that users can make their own disks locally. This can be achieve with G
 #### 5¼-inch QD Diskette
 
 ```bash
-mformat -C -i diskette/thdj_720.ima -v "THDJ" -f 720
-mcopy -i diskette/thdj_720.ima th.exe ::
+mformat -C -i thdj_720.ima -v "THDJ" -f 720
+mcopy -i thdj_720.ima TH.EXE ::
 ```
 
 ### On a uncompressed binary
@@ -187,6 +239,6 @@ mcopy -i diskette/thdj_720.ima th.exe ::
 #### 3½-inch HD Diskette
 
 ```bash
-mformat -C -i diskette/thdj_1.4.ima -v "THDJ" -f 1440
-mcopy -i diskette/thdj_1.4.ima th.exe ::
+mformat -C -i thdj_1.4.ima -v "THDJ" -f 1440
+mcopy -i thdj_1.4.ima TH.EXE ::
 ```

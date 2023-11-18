@@ -37,7 +37,7 @@ static inline void AsciiToHex(char ascii, char out[8]) {
     if (isalnum(ascii))
         out[0] = ascii, out[1] = '\0';
     else
-        snprintf(out, 8, "%%%x", ascii);
+        sprintf(out, "%%%x", ascii);
 }
 
 char convertPathToUrl(char *path, size_t max) {
@@ -313,7 +313,7 @@ void htmlHeaderWrite(char **buffer, char *title) {
     size_t max = strlen(h1) + strlen(h2) + strlen(title);
 
     char *tmp = malloc(max + 1);
-    snprintf(tmp, max + 1, "%s%s%s", h1, title, h2);
+    sprintf(tmp, "%s%s%s", h1, title, h2);
 
     allocStrAppend(buffer, tmp);
     free(tmp);
@@ -358,7 +358,7 @@ void htmlListWritePathLink(char **buffer, char *webPath) {
     total = strlen(linkPath) + strlen(filePath + 1) + strlen(h1) + strlen(h2) + strlen(h3);
     tmp = malloc(total + 1);
 
-    snprintf(tmp, total + 1, "\t\t\t<LI><A HREF=\"%s\">%s</A></LI>\n", linkPath, filePath + 1);
+    sprintf(tmp, "\t\t\t<LI><A HREF=\"%s\">%s</A></LI>\n", linkPath, filePath + 1);
     allocStrAppend(buffer, tmp);
 
     free(tmp);
@@ -424,7 +424,7 @@ void htmlBreadCrumbWrite(char **buffer, const char *webPath) {
         char internalBuffer[20 + FILENAME_MAX * 2], linkPath[FILENAME_MAX], displayPath[FILENAME_MAX];
         getPathName(webPath, i, linkPath, displayPath);
         convertPathToUrl(linkPath, FILENAME_MAX);
-        snprintf(internalBuffer, 20 + FILENAME_MAX * 2, "%s%s%s%s%s", h1, linkPath, h2, displayPath, h3);
+        sprintf(internalBuffer, "%s%s%s%s%s", h1, linkPath, h2, displayPath, h3);
         allocStrAppend(buffer, internalBuffer);
     }
 
@@ -434,7 +434,7 @@ void htmlBreadCrumbWrite(char **buffer, const char *webPath) {
 size_t httpBodyWriteChunk(SocketBuffer *socketBuffer, char **buffer) {
     size_t bufLen = strlen(*buffer);
     char hexStr[40] = {0};
-    if (snprintf(hexStr, 40, "%"HEX_OFFSET HTTP_EOL, bufLen)) {
+    if (sprintf(hexStr, "%"HEX_OFFSET HTTP_EOL, bufLen)) {
         size_t r = socketBufferWriteText(socketBuffer, hexStr);
         r += socketBufferWriteData(socketBuffer, *buffer, bufLen);
         r += socketBufferWriteText(socketBuffer, HTTP_EOL);
