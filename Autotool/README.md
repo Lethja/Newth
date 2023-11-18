@@ -13,6 +13,7 @@
       * [Windows](#windows-1)
   * [Setup the build system](#setup-the-build-system)
   * [Configure build system](#configure-build-system)
+    * [Recommended configurations](#recommended-configurations)
   * [Build Newth](#build-newth)
   * [Running the test (optional)](#running-the-test-optional)
 <!-- TOC -->
@@ -53,7 +54,8 @@ Some common operating systems are listed in the table below:
 > Tip: Windows can technically run Autotools and the generated configuration script with the bash shell included in
 > [Cygwin](https://www.cygwin.com/), [Git for Windows](https://gitforwindows.org/) or [MSYS2](https://www.msys2.org/)
 > however the results are not worth the effort for standalone Windows application development.
-> Windows builders should use [Visual Studio C++ 6](../VC6/README.md) or [Code::Blocks](../CodeBlks/README.md) to build instead
+> Windows builders should use [Visual Studio C++ 6](../VC6/README.md) or [Code::Blocks](../CodeBlks/README.md) to build
+> instead
 
 > Tip: Homebrew is also available for x86_64 Linux as well as ARM and x86_64 macOS support
 
@@ -62,42 +64,57 @@ Some common operating systems are listed in the table below:
 ## Create symbolic links
 
 ### Long names
+
 Autotools depends on some file names having more characters then can be stored on a DOS file system which is limited to
 a maximum of 8 characters and an additional 3 characters for an extension. These files have been given a shorter name
 to be store-able on these older systems but are useless without the correct name.
 To fix this: a symbolic link file with the correct name `configure.ac` can be made pointing to `autoconf.ac`
 
-Open a terminal/command prompt in the directory containing the `autoconf.ac` and `Makefile.am` files and run the following:
+Open a terminal/command prompt in the directory containing the `autoconf.ac` and `Makefile.am` files and run the
+following:
+
 #### Posix
+
 ```
 ln -s autoconf.ac configure.ac
 ```
+
 #### Windows
+
 ```
 MKLINK configure.ac autoconf.ac 
 ```
 
 ### Source Folders
-Autotools expects the source code to be in subdirectories relative to itself but the Newth folder structure is
-setup to support several build systems in different subdirectories away from the source code instead. 
-To fix this: the `src` and `test` directories need to be symbolically linked into the `Autotools` folder.  
 
-Open a terminal/command prompt in the directory containing the `autoconf.ac` and `Makefile.am` files and run the following:
+Autotools expects the source code to be in subdirectories relative to itself but the Newth folder structure is
+setup to support several build systems in different subdirectories away from the source code instead.
+To fix this: the `src` and `test` directories need to be symbolically linked into the `Autotools` folder.
+
+Open a terminal/command prompt in the directory containing the `autoconf.ac` and `Makefile.am` files and run the
+following:
+
 #### Posix
+
 ```
 ln -s ../src & ln -s ../test
 ```
+
 #### Windows
+
 ```
 MKLINK /d src ..\src & MKLINK /d test ..\test 
 ```
 
 ## Setup the build system
 
-Open a terminal/command prompt in the directory containing the `autoconf.ac` and `Makefile.am` files and run the following:
+Open a terminal/command prompt in the directory containing the `autoconf.ac` and `Makefile.am` files and run the
+following:
+
 ```
 autoreconf -fi
 ```
+
 This should generate the `configure` and `makefile` among other files required for the build system
 
 ## Configure build system
@@ -107,11 +124,21 @@ Run the configuration with the `./configure` script. the configuration script ha
 | Parameter         | Comment                                                                                                                                                                                        |
 |-------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `--enable-iiface` | Manually bind a socket to every network adapter at the application level. This option should only be enabled when targeting operating systems that can't do this internally; possible but rare |
+| `--enable-poll`   | Use `poll()` network API instead of `select()`                                                                                                                                                 |
 
 > Tip: Autoconf configurations are persistent (even after shutdowns).
 > You can run `./config.status --config` to see the current setup configuration
 > and `./configure --help` to see all configuration options.
 > To reconfigure, run `./configure` with all the desired parameters and environment variables again
+
+### Recommended configurations
+
+On most POSIX compliant operating systems simply running `./configure` gives the optimum result
+however there are some systems that work better with or outright require certain configuration options to work properly:
+
+| Operating System | Configure Command             |
+|------------------|-------------------------------|
+| Haiku            | `./configure --enable-iiface` |
 
 ## Build Newth
 
@@ -133,7 +160,7 @@ Run `make dist` or `make distcheck` to put the project into a tarball archive re
 
 ## Running the test (optional)
 
-If CMocka was detected in the configure stage `make check` will be able to build and run unit tests. 
+If CMocka was detected in the configure stage `make check` will be able to build and run unit tests.
 The binary will be called `unittest`
 
 The test executable will run a bunch of tests with functions throughout the project
@@ -142,5 +169,5 @@ and compare results to known good values. All tests should pass.
 Example usage: `make check` to build and run or `./unittest` to run after being built
 
 > The tests contain mocking functions that replace system calls.
-This mocking functionality might not work correctly on some systems. If this is the case the mockTest group will not
-pass and no further tests will run.
+> This mocking functionality might not work correctly on some systems. If this is the case the mockTest group will not
+> pass and no further tests will run.

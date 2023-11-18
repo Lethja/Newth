@@ -53,17 +53,22 @@ Some common operating systems are listed in the table below.
 ## Create symbolic links
 
 ### Long names
+
 CMake depends on some file names having more characters then can be stored on a DOS file system which is limited to
 a maximum of 8 characters and an additional 3 characters for an extension. These files have been given a shorter name
 to be store-able on these older systems but are useless without the correct name.
 To fix this: a symbolic link file with the correct name `CMakeLists.txt` can be made pointing to `CML.txt`
 
 Open a terminal/command prompt in the directory containing the `CML.txt` and run the following:
+
 #### Posix
+
 ```
 ln -s CML.txt CMakeLists.txt
 ```
+
 #### Windows
+
 ```
 MKLINK CMakeLists.txt CML.txt 
 ```
@@ -75,10 +80,11 @@ from instructions in the `CMakeLists.txt` file
 
 Configure to build the library: run `cmake .`. You can append the following parameters to change build configuration:
 
-| Parameter           | Default Value | Comment                                                                                                                                                             |
-|---------------------|---------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `-DENABLE_WS1=OFF`  | `ON`          | Windows only - Enable Windows Socket v1 support. Newth will still prefer Windows Socket v2 when its available                                                       |
-| `-DSTYLISH_W32=OFF` | `ON`          | Windows only - Enable visual styling in the graphic user interface version of the program. Disable this if your build environment can't compile/link resource files |
+| Parameter                        | Default Value | Comment                                                                                                                                                              |
+|----------------------------------|---------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `-DENABLE_POLL=ON`               | `OFF`         | Use `poll()` network API instead of `select()`                                                                                                                       |
+| `-DENABLE_WS1=OFF`               | `ON`          | Windows only - Enable Windows Socket v1 support (Windows Socket v2 will always be preferred when available)                                                          |
+| `-DENABLE_W32_VISUAL_STYLES=OFF` | `ON`          | Windows only - Enable visual styling in the graphic user interface version of the program. <br/>Disable this if your build environment doesn't work with `.rc` files |
 
 > Tip: it is possible to force CMake to generate a specific build system using the `-G` flag.
 > For more information run `cmake --help`
@@ -96,7 +102,7 @@ depending on what build system CMake has generated for.
 
 Binaries called `th` and `dl` will be made
 
-> Tip: if in doubt, try run `cmake --build .` to have CMake run the build process for you 
+> Tip: if in doubt, try run `cmake --build .` to have CMake run the build process for you
 
 ## Running the test (optional)
 
@@ -106,5 +112,5 @@ and compare results to known good values. All tests should pass.
 Example usage: `./test`
 
 > The tests contain mocking functions that replace system calls.
-This mocking functionality might not work correctly on some systems. If this is the case the mockTest group will not
-pass and no further tests will run.
+> This mocking functionality might not work correctly on some systems. If this is the case the mockTest group will not
+> pass and no further tests will run.

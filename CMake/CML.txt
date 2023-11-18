@@ -4,7 +4,6 @@ project(Newth C)
 set(CMAKE_C_STANDARD 90)
 set(CMAKE_C_FLAGS "-pedantic -Wall -Wno-unknown-pragmas")
 
-option(ENABLE_HTTP_CONNECTION_REUSE "Allow the server to reuse TCP bindings for multiple HTTP requests" ON)
 option(ENABLE_W32_SOCKET_1 "Enable WinSock 1.1 support for a truly portable Windows 32-bit binary" OFF)
 option(ENABLE_W32_VISUAL_STYLES "Enable native visual styling for Windows XP and later" ON)
 option(ENABLE_POLL "Use poll() instead of select()")
