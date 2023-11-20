@@ -104,10 +104,14 @@ static void TransferInterruptMiddle(void **state) {
     fdStr = strrchr(path, '/'), strncpy(globalRootPath, path, FILENAME_MAX), globalRootPath[fdStr - path] = '\0';
     ++fdStr;
 
-    assert_false(handlePath(0, header, fdStr));
+    assert_int_equal(platformFileTell(mockSendStream), 0);
+
+    assert_false(handlePath(0, header, fdStr)); /* +10 bytes */
+
+    assert_int_equal(platformFileTell(mockSendStream), 10);
 
     do {
-        RoutineTick(&globalRoutineArray);
+        RoutineTick(&globalRoutineArray); /* +10 bytes */
 
         if (i == 3)
             mockSendError = EPIPE;
@@ -116,7 +120,7 @@ static void TransferInterruptMiddle(void **state) {
 
     } while (globalRoutineArray.size);
 
-    assert_int_equal(platformFileTell(mockSendStream), 40);
+    assert_int_equal(platformFileTell(mockSendStream), 50);
 
     fclose(read), free(globalRootPath), globalRootPath = NULL, mockReset(), mockSendError = ENOERR;
 }
