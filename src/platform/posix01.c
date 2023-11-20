@@ -95,20 +95,33 @@ static SOCKET *BindAllPortsManually(sa_family_t family, char *ports, SOCKET *max
 #pragma endregion
 
 void platformPathCombine(char *output, const char *path1, const char *path2) {
-    const char pathDivider = '/';
-    size_t path1Len = strlen(path1);
-    char p1[FILENAME_MAX], *p2;
+    const char *pathDivider = "/";
+    size_t len = strlen(path1), idx = len - 1;
+    const char *p2;
 
-    if (path1Len < FILENAME_MAX) {
-        size_t idx = path1Len - 1;
-        strcpy(p1, path1);
-        if (p1[idx] == pathDivider)
-            p1[idx] = '\0';
-    }
+    /* Copy first path into output buffer for manipulation */
+    strcpy(output, path1);
 
-    p2 = (char *) (path2[0] == pathDivider ? &path2[1] : path2);
+    while (output[idx] == pathDivider[0] && idx)
+        --idx;
 
-    snprintf(output, FILENAME_MAX, "%s/%s", p1, p2);
+    if (idx) {
+        output[idx + 1] = '\0';
+        strcat(output, pathDivider);
+    } else if (output[0] == pathDivider[0] && output[1] == pathDivider[0])
+        output[1] = '\0';
+
+    /* Jump over any leading dividers in the second path then concatenate it */
+    len = strlen(path2), idx = 0;
+
+    while (path2[idx] == pathDivider[0] && idx < len)
+        ++idx;
+
+    if (idx == len)
+        return;
+
+    p2 = &path2[idx];
+    strcat(output, p2);
 }
 
 void platformCloseBindSockets(const SOCKET *sockets) {

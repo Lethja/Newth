@@ -60,6 +60,14 @@ static void PathCombineStringBothDividers(void **state) {
     assert_string_equal(output, "/foo/bar/");
 }
 
+static void PathCombineStringJustDividers(void **state) {
+    const char *path1 = "////", *path2 = "////";
+    char output[FILENAME_MAX];
+
+    platformPathCombine(output, path1, path2);
+    assert_string_equal(output, "/");
+}
+
 static void PathCombineStringDumbInput(void **state) {
     const char *path1, *path2 = path1 = "/";
     char output[FILENAME_MAX];
@@ -73,6 +81,7 @@ static void PathCombineStringDumbInput(void **state) {
 const struct CMUnitTest platformTest[] = {cmocka_unit_test(PathCombineString),
                                           cmocka_unit_test(PathCombineStringBothDividers),
                                           cmocka_unit_test(PathCombineStringDumbInput),
+                                          cmocka_unit_test(PathCombineStringJustDividers),
                                           cmocka_unit_test(PathCombineStringLeadingDivider),
                                           cmocka_unit_test(PathCombineStringNoDivider),
                                           cmocka_unit_test(PathCombineStringTrailingDivider)};

@@ -101,6 +101,8 @@ char platformHeapResize(void **heap, size_t elementSize, size_t elementNumber);
  * @param output Out: A string buffer with at least the combine amount of space for path1 and path 2
  * @param path1 In: The string to combine on the left
  * @param path2 In: The string to combine on the right
+ * @remark It is the callers responsibility to make sure that output is equal or larger
+ * than strlen(path1) + strlen(path2) + 2
  */
 void platformPathCombine(char *output, const char *path1, const char *path2);
 
