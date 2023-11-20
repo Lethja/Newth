@@ -100,7 +100,7 @@
 			<Add option="-Wall" />
 			<Add option="-ansi" />
 		</Compiler>
-		<Unit filename="../src/client.c">
+		<Unit filename="../src/cli/dl.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Extensions>

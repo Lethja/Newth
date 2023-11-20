@@ -26,8 +26,9 @@ else ()
 endif ()
 
 # Client
-add_executable(dl ../src/common/client.c ../src/platform/platform.h ../src/platform/platform.c
+add_executable(dl ../src/cli/dl.c
         ../src/server/event.c ../src/server/event.h
+        ../src/platform/platform.c ../src/platform/platform.h
         ${PLATFORM_SRC})
 
 target_compile_definitions(dl PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")

@@ -23,7 +23,7 @@ MULTIPLEX_SRC = src/server/mltiplex/select.c
 
 endif
 
-dl_SOURCES = src/common/client.c \
+dl_SOURCES = src/cli/dl.c \
     src/server/event.c src/server/event.h \
     src/platform/platform.c src/platform/platform.h \
     $(PLATFORM_SRC)

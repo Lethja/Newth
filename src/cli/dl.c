@@ -4,12 +4,6 @@
 #include <ctype.h>
 #include <stdio.h>
 
-#ifdef WIN32
-
-static WSADATA wsaData;
-
-#endif
-
 long errln = __LINE__;
 
 typedef struct ServerHeaderResponse {
@@ -59,6 +53,41 @@ char headerStructGetEssential(ServerHeaderResponse *self, FILE *headerFile) {
     return 1;
 }
 
+char *findHeader(FILE *headerFile, const char *header, char **variable) {
+    char buf[BUFSIZ] = "";
+    size_t headerLen = strlen(header);
+
+    platformFileSeek(headerFile, 0L, SEEK_SET);
+    while (fgets(buf, BUFSIZ, headerFile)) {
+        char *p;
+        size_t i;
+
+        if (strlen(buf) < headerLen)
+            continue;
+
+        for (i = 0; i < headerLen; ++i) {
+            if (toupper(header[i]) != toupper(buf[i]))
+                continue;
+        }
+
+        /* Match found */
+        i = strlen(buf);
+        p = malloc(i + 1);
+        strcpy(p, buf);
+
+        /* Drop HTTP_EOL */
+        if (i > 2 && p[i - 2] == '\r' && p[i - 1] == '\n')
+            p[i - 2] = '\0';
+
+        if (variable)
+            *variable = &p[headerLen];
+
+        return p;
+    }
+
+    return NULL;
+}
+
 char headerStructGetFileName(ServerHeaderResponse *self, FILE *headerFile) {
     char buf[BUFSIZ] = "";
 
@@ -88,15 +117,46 @@ char headerStructGetFileName(ServerHeaderResponse *self, FILE *headerFile) {
     return 1;
 }
 
+PlatformFileOffset headerStructGetContentLength(ServerHeaderResponse *self, FILE *headerFile) {
+    PlatformFileOffset r;
+    char *variable, *header = findHeader(headerFile, "Content-Length:", &variable);
+    size_t len;
+
+    if (!header)
+        return 0;
+
+    /* Skip whitespace */
+    while (*variable != '\0' && !isdigit(*variable))
+        ++variable;
+
+    if (*variable == '\0')
+        goto headerStructGetContentLength_abort;
+
+    /* Get number */
+    for (len = 0, r = 0; variable[len] != '\0'; ++len) {
+        if (!isdigit(variable[len]))
+            goto headerStructGetContentLength_abort;
+
+        r *= 10, r += (variable[len] - '0');
+    }
+
+    free(header);
+    self->length = r;
+    return r;
+
+    /* Free allocations if something goes wrong */
+    headerStructGetContentLength_abort:
+    free(header);
+    return 0;
+}
+
 ServerHeaderResponse headerStructNew(FILE *headerFile) {
     ServerHeaderResponse self;
     if (headerStructGetEssential(&self, headerFile))
         return self;
 
     headerStructGetFileName(&self, headerFile);
-
-    /* TODO: Implement content-length lookup */
-    self.length = 0;
+    headerStructGetContentLength(&self, headerFile);
 
     return self;
 }
@@ -112,7 +172,7 @@ static inline void *CreateTempFile(void) {
 
 #else
 
-static inline void *CreateTempFile() {
+static inline void *CreateTempFile(void) {
     return tmpfile();
 }
 
@@ -361,18 +421,18 @@ int main(int argc, char **argv) {
     SOCKET socketFd;
     struct sockaddr_storage serverAddress;
     ServerHeaderResponse header;
+    char *err;
 
     if (argc != 2) {
         errln = __LINE__;
         goto errorOut;
     }
 
-#ifdef WIN32
-    if (WSAStartup(MAKEWORD(1, 1), &wsaData)) {
-        errln = __LINE__;
-        goto errorOut;
+    err = platformIpStackInit();
+    if (err) {
+        puts(err);
+        return 1;
     }
-#endif
 
     if ((socketFd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
         errln = __LINE__;
@@ -414,15 +474,13 @@ int main(int argc, char **argv) {
     }
 
     fflush(stdout);
-#ifdef WIN32
-    WSACleanup();
-#endif
+
+    platformIpStackExit();
+
     return 0;
 
     errorOut:
-#ifdef WIN32
-    WSACleanup();
-#endif
+    platformIpStackExit();
     fprintf(stderr, "ERR %ld\n", errln);
     getchar();
     return 1;
