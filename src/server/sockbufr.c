@@ -123,6 +123,10 @@ int socketBufferPrintf(SocketBuffer *self, size_t max, const char *format, ...) 
     va_start(args, format);
     if (!self->buffer) {
         char *msg = malloc(max);
+
+        if(!msg)
+            return -1;
+
         e = vsprintf(msg, format, args);
         socketBufferWriteText(self, msg);
         free(msg);

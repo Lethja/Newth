@@ -280,7 +280,8 @@ char *httpHeaderGetResponse(short response) {
 }
 
 void httpHeaderWriteResponseStr(SocketBuffer *socketBuffer, const char *response) {
-    socketBufferPrintf(socketBuffer, 20, "HTTP/1.1 %s" HTTP_EOL, response);
+    size_t len = strlen(HTTP_RES) + strlen(response) + strlen(HTTP_EOL) + 2;
+    socketBufferPrintf(socketBuffer, len, HTTP_RES " %s" HTTP_EOL, response);
 }
 
 void httpHeaderWriteResponse(SocketBuffer *socketBuffer, short response) {
