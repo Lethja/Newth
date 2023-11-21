@@ -11,6 +11,7 @@
 
 #pragma region Test Group Headers
 
+#include "fetch.h"
 #include "mock.h"
 #include "platform.h"
 #include "sockbufr.h"
@@ -21,6 +22,7 @@
 int main(void) {
     int r;
 
+    if ((r = cmocka_run_group_tests(fetchTest, NULL, NULL))) return r;
     if ((r = cmocka_run_group_tests(mockTest, NULL, NULL))) return r;
     if ((r = cmocka_run_group_tests(platformTest, NULL, NULL))) return r;
     if ((r = cmocka_run_group_tests(socketTest, NULL, NULL))) return r;

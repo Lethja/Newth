@@ -24,8 +24,9 @@ MULTIPLEX_SRC = src/server/mltiplex/select.c
 endif
 
 dl_SOURCES = src/cli/dl.c \
-    src/server/event.c src/server/event.h \
+    src/client/uri.c src/client/uri.h \
     src/platform/platform.c src/platform/platform.h \
+    src/server/event.c src/server/event.h \
     $(PLATFORM_SRC)
 
 
@@ -46,10 +47,11 @@ if CMOCKA
     unittest_LDFLAGS = ${cmocka_LIBS} \
 		-Wl,--wrap=malloc,--wrap=calloc,--wrap=realloc,--wrap=free,--wrap=send,--wrap=fclose
 
-    unittest_SOURCES = test/test.c test/mock.h test/common.h test/platform.h \
+    unittest_SOURCES = test/test.c test/fetch.h test/mock.h test/common.h test/platform.h \
 		test/request.h test/sockbufr.h
 
     unittest_SOURCES += src/platform/mockput.c src/platform/mockput.h \
+        src/client/uri.c src/client/uri.h \
 		src/server/server.h src/server/server.c \
 		src/platform/platform.c src/platform/platform.h \
 		src/server/event.c src/server/event.h \

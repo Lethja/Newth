@@ -194,9 +194,13 @@ static char *getAddressPath(char *uri) {
 }
 
 static char getAddressAndPort(char *uri, char *address, unsigned short *port) {
-    char *it = uri;
+    char *it;
     size_t hold, len = hold = 0, i, j;
     char portStr[6] = "";
+
+    it = strstr(uri, "://");
+    if (it)
+        uri = it = &it[3];
 
     while (*it != '\0') {
         switch (*it) {
