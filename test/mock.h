@@ -5,6 +5,9 @@
 #include "../src/platform/platform.h"
 #include <string.h>
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnusedParameter"
+
 #pragma region CMocka headers
 
 #include <stdarg.h>

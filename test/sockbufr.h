@@ -23,12 +23,17 @@
 static void SocketMemoryFree(void **state) {
     SocketBuffer socketBuffer = socketBufferNew(0, 0);
 
-    mockReset(), socketBuffer.buffer = platformMemoryStreamNew();
+#ifdef MOCK
+    mockReset(),
+#endif
+    socketBuffer.buffer = platformMemoryStreamNew();
 
     assert_true(&socketBuffer.buffer);
     socketBufferFailFree(&socketBuffer);
     assert_ptr_equal(socketBuffer.buffer, mockLastFileClosed);
 }
+
+#ifdef MOCK
 
 static void SocketTextWrite(void **state) {
     const char *text = "Hello Socket Buffer Text";
@@ -101,10 +106,15 @@ static void SocketFlush(void **state) {
     mockReset();
 }
 
+#endif
+
 #pragma clang diagnostic pop
 
-const struct CMUnitTest socketTest[] = {cmocka_unit_test(SocketDataWrite), cmocka_unit_test(SocketMemoryFree),
-                                        cmocka_unit_test(SocketTextWrite), cmocka_unit_test(SocketFlush)};
+const struct CMUnitTest socketTest[] = {cmocka_unit_test(SocketMemoryFree)
+#ifdef MOCK
+        , cmocka_unit_test(SocketDataWrite), cmocka_unit_test(SocketTextWrite), cmocka_unit_test(SocketFlush)
+#endif
+};
 
 
 #endif /* NEW_TH_TEST_SOCKET_BUFFER_H */

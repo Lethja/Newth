@@ -92,7 +92,7 @@ UriDetails uriDetailsNewFrom(const char *uri) {
         if (details.path)
             strcpy(details.path, p);
 
-    } else {
+    } else if (strlen(q)) {
         details.host = malloc(strlen(q) + 1);
 
         if (details.host)

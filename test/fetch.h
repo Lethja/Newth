@@ -3,6 +3,9 @@
 
 #include "../src/client/uri.h"
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnusedParameter"
+
 #pragma region CMocka headers
 
 #include <stdarg.h>
@@ -28,6 +31,16 @@ static void UriNewMinimum(void **state) {
     assert_null(details.host);
     assert_null(details.port);
     assert_null(details.path);
+}
+
+static void UriNewNoString(void **state) {
+    const char *Uri = "";
+    UriDetails details = uriDetailsNewFrom(Uri);
+    assert_null(details.scheme);
+    assert_null(details.host);
+    assert_null(details.port);
+    assert_null(details.path);
+    uriDetailsFree(&details);
 }
 
 static void UriNewPathless(void **state) {
@@ -84,7 +97,10 @@ static void UriGetScheme(void **state) {
     assert_int_equal(uriDetailsGetScheme(&details), PROTOCOL_HTTPS);
 }
 
+#pragma clang diagnostic pop
+
 const struct CMUnitTest fetchTest[] = {cmocka_unit_test(UriGetScheme), cmocka_unit_test(UriNewMinimum),
-                                       cmocka_unit_test(UriNewPathless), cmocka_unit_test(UriNewVerbose)};
+                                       cmocka_unit_test(UriNewNoString), cmocka_unit_test(UriNewPathless),
+                                       cmocka_unit_test(UriNewVerbose)};
 
 #endif /* NEW_DL_TEST_FETCH_H */
