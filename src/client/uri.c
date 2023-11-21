@@ -68,21 +68,21 @@ UriDetails uriDetailsNewFrom(const char *uri) {
             details.host = malloc(len + 1);
 
             if (details.host)
-                strncpy(details.host, q, len), details.host[len + 1] = '\0';
+                strncpy(details.host, q, len), details.host[len] = '\0';
 
             /* Optional Port */
-            len = p - i;
-            details.port = malloc(len);
+            len = p - i - 1;
+            details.port = malloc(len + 1);
 
             if (details.port)
-                strncpy(details.port, i + 1, len - 1), details.port[len] = '\0';
+                strncpy(details.port, i + 1, len), details.port[len] = '\0';
 
         } else {
             len = p - q;
             details.host = malloc(len + 1);
 
             if (details.host)
-                strncpy(details.host, q, len), details.host[len + 1] = '\0';
+                strncpy(details.host, q, len), details.host[len] = '\0';
 
         }
 
