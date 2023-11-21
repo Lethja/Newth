@@ -4,5 +4,6 @@
 		<Project filename="th.cbp" />
 		<Project filename="dl.cbp" />
 		<Project filename="th gui.cbp" />
+		<Project filename="unittest.cbp" />
 	</Workspace>
 </CodeBlocks_workspace_file>

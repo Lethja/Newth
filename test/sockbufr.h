@@ -26,11 +26,14 @@ static void SocketMemoryFree(void **state) {
 #ifdef MOCK
     mockReset(),
 #endif
-    socketBuffer.buffer = platformMemoryStreamNew();
 
-    assert_true(&socketBuffer.buffer);
+    socketBuffer.buffer = platformMemoryStreamNew();
+    assert_non_null(&socketBuffer.buffer);
     socketBufferFailFree(&socketBuffer);
+
+#ifdef MOCK
     assert_ptr_equal(socketBuffer.buffer, mockLastFileClosed);
+#endif
 }
 
 #ifdef MOCK

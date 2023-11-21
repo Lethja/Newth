@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="unittest" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/unittest" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+					<Add option="-Wno-unknown-pragmas -Wno-unused-function -Wno-unused-variable" />
+					<Add option="-DDOS_DIVIDER=1" />
+				</Compiler>
+				<Linker>
+					<Add library="wsock32" />
+				</Linker>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/unittest" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+					<Add option="-Wno-unknown-pragmas -Wno-unused-function -Wno-unused-variable" />
+					<Add option="-DDOS_DIVIDER=1" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+					<Add library="wsock32" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+		</Compiler>
+		<Unit filename="../src/client/uri.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/client/uri.h" />
+		<Unit filename="../src/platform/mscrtdl.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/platform/mscrtdl.h" />
+		<Unit filename="../src/platform/platform.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/platform/platform.h" />
+		<Unit filename="../src/platform/winsock/wsipv6.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/platform/winsock/wsipv6.h" />
+		<Unit filename="../src/platform/winsock/wsock1.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/platform/winsock/wsock1.h" />
+		<Unit filename="../src/platform/winsock/wsock2.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/platform/winsock/wsock2.h" />
+		<Unit filename="../src/server/event.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/server/event.h" />
+		<Unit filename="../src/server/http.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/server/http.h" />
+		<Unit filename="../src/server/mltiplex/select.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/server/routine.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/server/routine.h" />
+		<Unit filename="../src/server/server.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/server/server.h" />
+		<Unit filename="../src/server/sockbufr.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/server/sockbufr.h" />
+		<Unit filename="../test/common.h" />
+		<Unit filename="../test/fetch.h" />
+		<Unit filename="../test/mock.h" />
+		<Unit filename="../test/platform.h" />
+		<Unit filename="../test/request.h" />
+		<Unit filename="../test/sockbufr.h" />
+		<Unit filename="../test/test.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

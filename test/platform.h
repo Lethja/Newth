@@ -6,7 +6,7 @@
 #include <errno.h>
 #include <string.h>
 
-#ifdef BACKSLASH_PATH_DIVIDER
+#ifdef DOS_DIVIDER
 #define DIVIDER "\\"
 #else
 #define DIVIDER "/"
@@ -82,7 +82,7 @@ static void PathCombineStringDumbInput(void **state) {
     assert_string_equal(output, DIVIDER);
 }
 
-#ifdef BACKSLASH_PATH_DIVIDER
+#ifdef DOS_DIVIDER
 
 static void PathCombineStringUnixDividers(void **state) {
     const char *path1 = "/foo/", *path2 = "/bar/";
