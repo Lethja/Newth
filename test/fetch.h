@@ -14,55 +14,77 @@
 
 #pragma endregion
 
-static void ExtractUriMinimum(void **state) {
+static void UriNewMinimum(void **state) {
     const char *Uri = "localhost/foo";
 
-    UriDetails details = UriDetailsNewFrom(Uri);
+    UriDetails details = uriDetailsNewFrom(Uri);
     assert_null(details.scheme);
     assert_string_equal(details.host, "localhost");
     assert_null(details.port);
     assert_string_equal(details.path, "/foo");
 
-    UriDetailsFree(&details);
+    uriDetailsFree(&details);
     assert_null(details.scheme);
     assert_null(details.host);
     assert_null(details.port);
     assert_null(details.path);
 }
 
-static void ExtractUriPathless(void **state) {
+static void UriNewPathless(void **state) {
     const char *Uri = "localhost";
 
-    UriDetails details = UriDetailsNewFrom(Uri);
+    UriDetails details = uriDetailsNewFrom(Uri);
     assert_null(details.scheme);
     assert_string_equal(details.host, "localhost");
     assert_null(details.port);
     assert_null(details.path);
 
-    UriDetailsFree(&details);
+    uriDetailsFree(&details);
     assert_null(details.scheme);
     assert_null(details.host);
     assert_null(details.port);
     assert_null(details.path);
 }
 
-static void ExtractUriVerbose(void **state) {
+static void UriNewVerbose(void **state) {
     const char *Uri = "http://localhost:8080/foo";
 
-    UriDetails details = UriDetailsNewFrom(Uri);
+    UriDetails details = uriDetailsNewFrom(Uri);
     assert_string_equal(details.scheme, "http");
     assert_string_equal(details.host, "localhost");
     assert_string_equal(details.port, "8080");
     assert_string_equal(details.path, "/foo");
 
-    UriDetailsFree(&details);
+    uriDetailsFree(&details);
     assert_null(details.scheme);
     assert_null(details.host);
     assert_null(details.port);
     assert_null(details.path);
 }
 
-const struct CMUnitTest fetchTest[] = {cmocka_unit_test(ExtractUriMinimum), cmocka_unit_test(ExtractUriPathless),
-                                       cmocka_unit_test(ExtractUriVerbose)};
+static void UriGetScheme(void **state) {
+    UriDetails details;
+
+    details.scheme = "a";
+    assert_int_equal(uriDetailsGetScheme(&details), PROTOCOL_UNKNOWN);
+
+    details.scheme = "foo";
+    assert_int_equal(uriDetailsGetScheme(&details), PROTOCOL_UNKNOWN);
+
+    details.scheme = "ftp";
+    assert_int_equal(uriDetailsGetScheme(&details), PROTOCOL_FTP);
+
+    details.scheme = "ftps";
+    assert_int_equal(uriDetailsGetScheme(&details), PROTOCOL_FTPS);
+
+    details.scheme = "http";
+    assert_int_equal(uriDetailsGetScheme(&details), PROTOCOL_HTTP);
+
+    details.scheme = "https";
+    assert_int_equal(uriDetailsGetScheme(&details), PROTOCOL_HTTPS);
+}
+
+const struct CMUnitTest fetchTest[] = {cmocka_unit_test(UriGetScheme), cmocka_unit_test(UriNewMinimum),
+                                       cmocka_unit_test(UriNewPathless), cmocka_unit_test(UriNewVerbose)};
 
 #endif /* NEW_DL_TEST_FETCH_H */

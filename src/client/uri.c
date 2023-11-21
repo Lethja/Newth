@@ -1,6 +1,45 @@
 #include "uri.h"
 
-UriDetails UriDetailsNewFrom(const char *uri) {
+#include <ctype.h>
+
+UriScheme uriDetailsGetScheme(UriDetails *details) {
+    size_t len = strlen(details->scheme);
+
+    switch (len) {
+        default:
+            return PROTOCOL_UNKNOWN;
+        case 3:
+            switch (toupper(details->scheme[0])) {
+                case 'F':
+                    if (toupper(details->scheme[1]) == 'T' && toupper(details->scheme[2]) == 'P')
+                        return PROTOCOL_FTP;
+            }
+            break;
+        case 4:
+            switch (toupper(details->scheme[0])) {
+                case 'F':
+                    if (toupper(details->scheme[1]) == 'T' && toupper(details->scheme[2]) == 'P' &&
+                        toupper(details->scheme[3]) == 'S')
+                        return PROTOCOL_FTPS;
+                case 'H':
+                    if (toupper(details->scheme[1]) == 'T' && toupper(details->scheme[2]) == 'T' &&
+                        toupper(details->scheme[3]) == 'P')
+                        return PROTOCOL_HTTP;
+            }
+            break;
+        case 5:
+            switch (toupper(details->scheme[0])) {
+                case 'H':
+                    if (toupper(details->scheme[1]) == 'T' && toupper(details->scheme[2]) == 'T' &&
+                        toupper(details->scheme[3]) == 'P' && toupper(details->scheme[4]) == 'S')
+                        return PROTOCOL_HTTPS;
+            }
+    }
+
+    return PROTOCOL_UNKNOWN;
+}
+
+UriDetails uriDetailsNewFrom(const char *uri) {
     UriDetails details;
     char *p, *q;
 
@@ -64,7 +103,7 @@ UriDetails UriDetailsNewFrom(const char *uri) {
     return details;
 }
 
-void UriDetailsFree(UriDetails *details) {
+void uriDetailsFree(UriDetails *details) {
     if (details->scheme) free(details->scheme), details->scheme = NULL;
     if (details->host) free(details->host), details->host = NULL;
     if (details->port) free(details->port), details->port = NULL;
