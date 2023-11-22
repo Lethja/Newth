@@ -75,6 +75,40 @@ static void UriNewVerbose(void **state) {
     assert_null(details.path);
 }
 
+static void UriGetAddressFromHost(void **state) {
+    UriDetails details;
+    char *addr;
+
+    details.host = "localhost"; /* Should be set to 127.0.0.1 on any reasonable system */
+    addr = uriDetailsGetHostAddr(&details);
+    assert_non_null(addr);
+    assert_string_equal(addr, "127.0.0.1");
+    free(addr);
+}
+
+static void UriGetAddressFromAddress(void **state) {
+    UriDetails details;
+    char *addr;
+
+    details.host = "127.0.0.1";
+    addr = uriDetailsGetHostAddr(&details);
+    assert_non_null(addr);
+    assert_string_equal(addr, "127.0.0.1");
+    free(addr);
+}
+
+static void UriGetPort(void **state) {
+    UriDetails details;
+    details.port = "80";
+    assert_int_equal(uriDetailsGetPort(&details), 80);
+}
+
+static void UriGetPortInvalid(void **state) {
+    UriDetails details;
+    details.port = "80000";
+    assert_int_equal(uriDetailsGetPort(&details), 0);
+}
+
 static void UriGetScheme(void **state) {
     UriDetails details;
 
@@ -99,8 +133,10 @@ static void UriGetScheme(void **state) {
 
 #pragma clang diagnostic pop
 
-const struct CMUnitTest fetchTest[] = {cmocka_unit_test(UriGetScheme), cmocka_unit_test(UriNewMinimum),
-                                       cmocka_unit_test(UriNewNoString), cmocka_unit_test(UriNewPathless),
-                                       cmocka_unit_test(UriNewVerbose)};
+const struct CMUnitTest fetchTest[] = {cmocka_unit_test(UriGetAddressFromAddress),
+                                       cmocka_unit_test(UriGetAddressFromHost), cmocka_unit_test(UriGetPort),
+                                       cmocka_unit_test(UriGetPortInvalid), cmocka_unit_test(UriGetScheme),
+                                       cmocka_unit_test(UriNewMinimum), cmocka_unit_test(UriNewNoString),
+                                       cmocka_unit_test(UriNewPathless), cmocka_unit_test(UriNewVerbose)};
 
 #endif /* NEW_DL_TEST_FETCH_H */

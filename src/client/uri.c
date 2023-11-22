@@ -3,8 +3,12 @@
 #include <ctype.h>
 
 UriScheme uriDetailsGetScheme(UriDetails *details) {
-    size_t len = strlen(details->scheme);
+    size_t len;
 
+    if (!details->scheme)
+        return PROTOCOL_UNKNOWN;
+
+    len = strlen(details->scheme);
     switch (len) {
         default:
             return PROTOCOL_UNKNOWN;
@@ -37,6 +41,48 @@ UriScheme uriDetailsGetScheme(UriDetails *details) {
     }
 
     return PROTOCOL_UNKNOWN;
+}
+
+char *uriDetailsGetHostAddr(UriDetails *details) {
+    struct hostent *ent;
+
+    if (!details || !(ent = gethostbyname(details->host)))
+        return NULL;
+
+    switch (ent->h_addrtype) {
+        case AF_INET: {
+            char *addr = inet_ntoa(*(struct in_addr *) ent->h_addr);
+            char *r = malloc(strlen(addr) + 1);
+
+            if (r)
+                strcpy(r, addr);
+
+            return r;
+        }
+        case AF_INET6: {
+            char *addr = malloc(INET6_ADDRSTRLEN + 1);
+            inet_ntop(AF_INET6, ent->h_addr, addr, INET6_ADDRSTRLEN);
+            return addr;
+        }
+        default:
+            return NULL;
+    }
+}
+
+unsigned short uriDetailsGetPort(UriDetails *details) {
+    size_t i, r, len;
+
+    if (!details->port)
+        return uriDetailsGetScheme(details);
+
+    len = strlen(details->port);
+    for (r = i = 0; i < len; ++i)
+        r *= 10, r += (details->port[i] - '0');
+
+    if (r > USHRT_MAX)
+        return 0;
+
+    return r;
 }
 
 UriDetails uriDetailsNewFrom(const char *uri) {

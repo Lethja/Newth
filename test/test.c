@@ -37,7 +37,7 @@ int main(void) {
     if ((r = cmocka_run_group_tests(requestTest, NULL, NULL))) return r;
 #endif
 
-#ifdef MOCK
+#ifndef MOCK
     puts("[  NOTICE  ] This executable excludes mocking tests");
 #endif
 
