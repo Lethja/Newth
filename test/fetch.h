@@ -115,36 +115,62 @@ static void UriGetScheme(void **state) {
     UriDetails details;
 
     details.scheme = "a";
-    assert_int_equal(uriDetailsGetScheme(&details), PROTOCOL_UNKNOWN);
+    assert_int_equal(uriDetailsGetScheme(&details), SCHEME_UNKNOWN);
 
     details.scheme = "foo";
-    assert_int_equal(uriDetailsGetScheme(&details), PROTOCOL_UNKNOWN);
+    assert_int_equal(uriDetailsGetScheme(&details), SCHEME_UNKNOWN);
 
     details.scheme = "ftp";
-    assert_int_equal(uriDetailsGetScheme(&details), PROTOCOL_FTP);
+    assert_int_equal(uriDetailsGetScheme(&details), SCHEME_FTP);
 
     details.scheme = "ftps";
-    assert_int_equal(uriDetailsGetScheme(&details), PROTOCOL_FTPS);
+    assert_int_equal(uriDetailsGetScheme(&details), SCHEME_FTPS);
 
     details.scheme = "http";
-    assert_int_equal(uriDetailsGetScheme(&details), PROTOCOL_HTTP);
+    assert_int_equal(uriDetailsGetScheme(&details), SCHEME_HTTP);
 
     details.scheme = "https";
-    assert_int_equal(uriDetailsGetScheme(&details), PROTOCOL_HTTPS);
+    assert_int_equal(uriDetailsGetScheme(&details), SCHEME_HTTPS);
 }
 
 static void UriConvertToSocketAddress(void **state) {
     SocketAddress address;
     UriDetails details = uriDetailsNewFrom("http://localhost");
-    assert_false(uriDetailsCreateSocketAddress(&details, &address));
+    assert_false(uriDetailsCreateSocketAddress(&details, &address, SCHEME_UNKNOWN));
     assert_int_equal(address.sock.sa_family, AF_INET);
-    assert_int_equal(address.ipv4.sin_port, htons(80));
+    assert_int_equal(address.ipv4.sin_port, htons(SCHEME_HTTP));
     assert_string_equal(inet_ntoa(address.ipv4.sin_addr), "127.0.0.1");
+    uriDetailsFree(&details);
+}
+
+static void UriConvertToSocketAddressWithScheme(void **state) {
+    SocketAddress address;
+    UriDetails details = uriDetailsNewFrom("localhost");
+    assert_false(uriDetailsCreateSocketAddress(&details, &address, SCHEME_HTTPS));
+    assert_int_equal(address.sock.sa_family, AF_INET);
+    assert_int_equal(address.ipv4.sin_port, htons(SCHEME_HTTPS));
+    assert_string_equal(inet_ntoa(address.ipv4.sin_addr), "127.0.0.1");
+    uriDetailsFree(&details);
+}
+
+static void UriConvertToSocketAddressWithPort(void **state) {
+    SocketAddress address;
+    UriDetails details = uriDetailsNewFrom("localhost:1");
+    assert_string_equal(details.host, "localhost");
+    assert_string_equal(details.port, "1");
+
+    assert_false(uriDetailsCreateSocketAddress(&details, &address, SCHEME_FTPS));
+    assert_int_equal(address.sock.sa_family, AF_INET);
+    assert_int_equal(address.ipv4.sin_port, htons(1));
+    assert_string_equal(inet_ntoa(address.ipv4.sin_addr), "127.0.0.1");
+    uriDetailsFree(&details);
 }
 
 #pragma clang diagnostic pop
 
 const struct CMUnitTest fetchTest[] = {cmocka_unit_test(UriConvertToSocketAddress),
+                                       cmocka_unit_test(UriConvertToSocketAddressWithPort),
+                                       cmocka_unit_test(UriConvertToSocketAddressWithScheme),
                                        cmocka_unit_test(UriGetAddressFromAddress),
                                        cmocka_unit_test(UriGetAddressFromHost), cmocka_unit_test(UriGetPort),
                                        cmocka_unit_test(UriGetPortInvalid), cmocka_unit_test(UriGetScheme),

@@ -6,17 +6,17 @@ UriScheme uriDetailsGetScheme(UriDetails *details) {
     size_t len;
 
     if (!details->scheme)
-        return PROTOCOL_UNKNOWN;
+        return SCHEME_UNKNOWN;
 
     len = strlen(details->scheme);
     switch (len) {
         default:
-            return PROTOCOL_UNKNOWN;
+            return SCHEME_UNKNOWN;
         case 3:
             switch (toupper(details->scheme[0])) {
                 case 'F':
                     if (toupper(details->scheme[1]) == 'T' && toupper(details->scheme[2]) == 'P')
-                        return PROTOCOL_FTP;
+                        return SCHEME_FTP;
             }
             break;
         case 4:
@@ -24,11 +24,11 @@ UriScheme uriDetailsGetScheme(UriDetails *details) {
                 case 'F':
                     if (toupper(details->scheme[1]) == 'T' && toupper(details->scheme[2]) == 'P' &&
                         toupper(details->scheme[3]) == 'S')
-                        return PROTOCOL_FTPS;
+                        return SCHEME_FTPS;
                 case 'H':
                     if (toupper(details->scheme[1]) == 'T' && toupper(details->scheme[2]) == 'T' &&
                         toupper(details->scheme[3]) == 'P')
-                        return PROTOCOL_HTTP;
+                        return SCHEME_HTTP;
             }
             break;
         case 5:
@@ -36,11 +36,11 @@ UriScheme uriDetailsGetScheme(UriDetails *details) {
                 case 'H':
                     if (toupper(details->scheme[1]) == 'T' && toupper(details->scheme[2]) == 'T' &&
                         toupper(details->scheme[3]) == 'P' && toupper(details->scheme[4]) == 'S')
-                        return PROTOCOL_HTTPS;
+                        return SCHEME_HTTPS;
             }
     }
 
-    return PROTOCOL_UNKNOWN;
+    return SCHEME_UNKNOWN;
 }
 
 char *uriDetailsGetHostAddr(UriDetails *details) {
@@ -110,9 +110,12 @@ static sa_family_t GetAddressFamily(const char *address) {
         return AF_INET;
 }
 
-char uriDetailsCreateSocketAddress(UriDetails *self, SocketAddress *socketAddress) {
+char uriDetailsCreateSocketAddress(UriDetails *self, SocketAddress *socketAddress, unsigned short scheme) {
     char *address = uriDetailsGetHostAddr(self);
-    unsigned short port = uriDetailsGetPort(self);
+    unsigned short port = self->port ? uriDetailsGetPort(self) : scheme ? scheme : uriDetailsGetPort(self);
+
+    if (!port)
+        port = scheme;
 
     if (!address || !port)
         return 1;
@@ -147,14 +150,15 @@ char uriDetailsCreateSocketAddress(UriDetails *self, SocketAddress *socketAddres
 
 UriDetails uriDetailsNewFrom(const char *uri) {
     UriDetails details;
-    char *p, *q;
+    size_t len;
+    char *p, *q, *i;
 
     details.scheme = details.host = details.port = details.path = NULL;
 
     /* Get Scheme */
     p = strstr(uri, "://");
     if (p) {
-        size_t len = p - uri;
+        len = p - uri;
         details.scheme = malloc(len + 1);
 
         if (details.scheme)
@@ -165,11 +169,10 @@ UriDetails uriDetailsNewFrom(const char *uri) {
         q = (char *) uri;
 
     /* Get Host */
-    p = strchr(q, '/');
-    if (p) {
-        size_t len;
-        char *i = strchr(q, ':');
-        if (i && i < p) {
+    p = strchr(q, '/'), i = strchr(q, ':');
+
+    if (p && i) {
+        if (i < p) {
             len = i - q;
             details.host = malloc(len + 1);
 
@@ -198,7 +201,32 @@ UriDetails uriDetailsNewFrom(const char *uri) {
         if (details.path)
             strcpy(details.path, p);
 
-    } else if (strlen(q)) {
+    } else if (p) {
+        len = p - q;
+        details.host = malloc(len + 1);
+
+        if (details.host)
+            strncpy(details.host, q, len), details.host[len] = '\0';
+
+        len = strlen(p);
+        details.path = malloc(len + 1);
+
+        if (details.path)
+            strcpy(details.path, p);
+    } else if (i) {
+        len = i - q;
+        details.host = malloc(len + 1);
+
+        if (details.host)
+            strncpy(details.host, q, len), details.host[len] = '\0';
+
+        len = strlen(i);
+        details.port = malloc(len + 1);
+
+        if (details.port)
+            strcpy(details.port, i + 1);
+    }
+    else if (strlen(q)) {
         details.host = malloc(strlen(q) + 1);
 
         if (details.host)

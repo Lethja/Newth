@@ -4,7 +4,7 @@
 #include "../platform/platform.h"
 
 typedef enum UriScheme {
-    PROTOCOL_HTTP = 80, PROTOCOL_HTTPS = 443, PROTOCOL_FTP = 21, PROTOCOL_FTPS = 990, PROTOCOL_UNKNOWN = 0
+    SCHEME_HTTP = 80, SCHEME_HTTPS = 443, SCHEME_FTP = 21, SCHEME_FTPS = 990, SCHEME_UNKNOWN = 0
 } UriScheme;
 
 typedef struct UriDetails {
@@ -61,8 +61,9 @@ extern UriScheme uriDetailsGetScheme(UriDetails *details);
  * Create a socket address from a Uris details
  * @param self In: The UriDetails to get information from
  * @param socketAddress Out: The socketAddress union to populate
+ * @param scheme In: Force use a scheme or 'SCHEME_UNKNOWN' to autodetect
  * @return 0 on success other on error
  */
-char uriDetailsCreateSocketAddress(UriDetails *self, SocketAddress *socketAddress);
+char uriDetailsCreateSocketAddress(UriDetails *self, SocketAddress *socketAddress, unsigned short scheme);
 
 #endif /* NEW_DL_URI_H */
