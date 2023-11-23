@@ -105,7 +105,9 @@ static void UriGetPort(void **state) {
 
 static void UriGetPortInvalid(void **state) {
     UriDetails details;
-    details.port = "80000";
+    details.port = "65536";
+    assert_int_equal(uriDetailsGetPort(&details), 0);
+    details.port = "foo";
     assert_int_equal(uriDetailsGetPort(&details), 0);
 }
 
@@ -131,9 +133,19 @@ static void UriGetScheme(void **state) {
     assert_int_equal(uriDetailsGetScheme(&details), PROTOCOL_HTTPS);
 }
 
+static void UriConvertToSocketAddress(void **state) {
+    SocketAddress address;
+    UriDetails details = uriDetailsNewFrom("http://localhost");
+    assert_false(uriDetailsCreateSocketAddress(&details, &address));
+    assert_int_equal(address.sock.sa_family, AF_INET);
+    assert_int_equal(address.ipv4.sin_port, htons(80));
+    assert_string_equal(inet_ntoa(address.ipv4.sin_addr), "127.0.0.1");
+}
+
 #pragma clang diagnostic pop
 
-const struct CMUnitTest fetchTest[] = {cmocka_unit_test(UriGetAddressFromAddress),
+const struct CMUnitTest fetchTest[] = {cmocka_unit_test(UriConvertToSocketAddress),
+                                       cmocka_unit_test(UriGetAddressFromAddress),
                                        cmocka_unit_test(UriGetAddressFromHost), cmocka_unit_test(UriGetPort),
                                        cmocka_unit_test(UriGetPortInvalid), cmocka_unit_test(UriGetScheme),
                                        cmocka_unit_test(UriNewMinimum), cmocka_unit_test(UriNewNoString),

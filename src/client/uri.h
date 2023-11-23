@@ -11,6 +11,15 @@ typedef struct UriDetails {
     char *scheme, *host, *path, *port;
 } UriDetails;
 
+typedef union SocketAddress {
+    struct sockaddr sock;
+    struct sockaddr_in ipv4;
+#ifdef ENABLE_IPV6
+    struct sockaddr_in6 ipv6;
+#endif
+    struct sockaddr_storage storage;
+} SocketAddress;
+
 /**
  * Turn a URI into a UriDetails for easier processing
  * @param uri The full URI address to process
@@ -47,5 +56,13 @@ extern unsigned short uriDetailsGetPort(UriDetails *details);
  * @return UriScheme enum value
  */
 extern UriScheme uriDetailsGetScheme(UriDetails *details);
+
+/**
+ * Create a socket address from a Uris details
+ * @param self In: The UriDetails to get information from
+ * @param socketAddress Out: The socketAddress union to populate
+ * @return 0 on success other on error
+ */
+char uriDetailsCreateSocketAddress(UriDetails *self, SocketAddress *socketAddress);
 
 #endif /* NEW_DL_URI_H */

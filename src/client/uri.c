@@ -59,30 +59,90 @@ char *uriDetailsGetHostAddr(UriDetails *details) {
 
             return r;
         }
+#ifdef ENABLE_IPV6
         case AF_INET6: {
             char *addr = malloc(INET6_ADDRSTRLEN + 1);
             inet_ntop(AF_INET6, ent->h_addr, addr, INET6_ADDRSTRLEN);
             return addr;
         }
+#endif
         default:
             return NULL;
     }
 }
 
 unsigned short uriDetailsGetPort(UriDetails *details) {
-    size_t i, r, len;
+    size_t i, len;
+    unsigned int r;
 
     if (!details->port)
         return uriDetailsGetScheme(details);
 
     len = strlen(details->port);
     for (r = i = 0; i < len; ++i)
-        r *= 10, r += (details->port[i] - '0');
+        switch (details->port[i]) {
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+                r *= 10, r += (details->port[i] - '0');
+                break;
+            default:
+                return 0;
+        }
 
     if (r > USHRT_MAX)
         return 0;
 
-    return r;
+    return (unsigned short) r;
+}
+
+static sa_family_t GetAddressFamily(const char *address) {
+    if (strchr(address, ':'))
+        return AF_INET6;
+    else
+        return AF_INET;
+}
+
+char uriDetailsCreateSocketAddress(UriDetails *self, SocketAddress *socketAddress) {
+    char *address = uriDetailsGetHostAddr(self);
+    unsigned short port = uriDetailsGetPort(self);
+
+    if (!address || !port)
+        return 1;
+
+    socketAddress->sock.sa_family = GetAddressFamily(address);
+
+    switch (socketAddress->sock.sa_family) {
+#ifdef ENABLE_IPV6
+        case AF_INET6:
+            if (inet_pton(AF_INET6, address, &socketAddress->ipv6.sin6_addr)) {
+                socketAddress->ipv6.sin6_port = htons(port);
+                break;
+            } else
+                goto uriDetailsCreateSocketAddress_abort;
+#endif
+        case AF_INET:
+            if ((socketAddress->ipv4.sin_addr.s_addr = inet_addr(address))) {
+                socketAddress->ipv4.sin_port = htons(port);
+                break;
+            }
+#ifdef ENABLE_IPV6
+        uriDetailsCreateSocketAddress_abort:
+#endif
+        default:
+            free(address);
+            return 1;
+    }
+
+    free(address);
+    return 0;
 }
 
 UriDetails uriDetailsNewFrom(const char *uri) {
