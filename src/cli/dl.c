@@ -152,6 +152,7 @@ PlatformFileOffset headerStructGetContentLength(ServerHeaderResponse *self, FILE
 
 ServerHeaderResponse headerStructNew(FILE *headerFile) {
     ServerHeaderResponse self;
+    self.length = 0;
     if (headerStructGetEssential(&self, headerFile))
         return self;
 
@@ -198,9 +199,13 @@ static char getAddressAndPort(char *uri, char *address, unsigned short *port) {
     size_t hold, len = hold = 0, i, j;
     char portStr[6] = "";
 
+    /* TODO: Replace with UriDetails */
+
     it = strstr(uri, "://");
     if (it)
         uri = it = &it[3];
+    else
+        it = uri;
 
     while (*it != '\0') {
         switch (*it) {
