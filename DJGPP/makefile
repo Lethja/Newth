@@ -1,6 +1,16 @@
 CC=gcc
 
-release:
+all: dl th
+
+dl:
+	$(CC) -Wall -Wno-unknown-pragmas -O3 -s -DWATT32=1 -DNDEBUG=1 -Iwatt32s/inc \
+		../src/cli/dl.c \
+		../src/platform/doswatb.c \
+		../src/platform/platform.c \
+		../src/server/event.c \
+		watt32s/lib/libwatt.a -o dl.exe
+
+th:
 	$(CC) -Wall -Wno-unknown-pragmas -O3 -s -DWATT32=1 -DNDEBUG=1 -Iwatt32s/inc \
 		../src/cli/th.c \
 		../src/platform/doswatb.c \

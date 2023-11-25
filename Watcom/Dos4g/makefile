@@ -1,6 +1,17 @@
 CC=wcc386
 
 # Default building process
+all: .SYMBOLIC dl.exe th.exe
+
+dl.exe: release doswatb.o event.o platform.o dl.o
+    %write link.lnk NAME $@
+    %write link.lnk SYS  dos4g
+    %write link.lnk OPT  st=8192
+    %write link.lnk FILE doswatb.o,event.o,platform.o,dl.o
+    %write link.lnk LIBP watt32s/lib/
+    %write link.lnk LIBF wattcpwf.lib
+    wlink @link.lnk
+
 th.exe: release doswatb.o event.o http.o platform.o poll.o routine.o server.o sockbufr.o th.o
     %write link.lnk NAME $@
     %write link.lnk SYS  dos4g
@@ -32,6 +43,8 @@ dbg: .SYMBOLIC thdbg.exe
 
 wlk: .SYMBOLIC thwlk.exe
 
+dl.o:
+	$(CC) @flag.lnk -fo="$@" "../../src/cli/dl.c"
 doswatb.o: ../../src/platform/doswatb.c
     $(CC) @flag.lnk -fo="$@" "../../src/platform/doswatb.c"
 event.o: ../../src/server/event.c
@@ -50,6 +63,8 @@ poll.o: ../../src/server/mltiplex/poll.c
     $(CC) @flag.lnk -fo="$@" "../../src/server/mltiplex/poll.c"
 th.o: ../../src/cli/th.c
     $(CC) @flag.lnk -fo="$@" "../../src/cli/th.c"
+uri.o:
+	$(CC) @flag.lnk -fo="$@" "../../src/client/uri.c"
 
 walk: .SYMBOLIC
     %write flag.lnk -q -dWATT32=1 -bt=dos -mf -3 -i="watt32s/inc/" -d3 -db -dDBGHALT=1

@@ -3,6 +3,7 @@
 
 #include <ctype.h>
 #include <stdio.h>
+#include <netdb.h>
 
 long errln = __LINE__;
 
@@ -320,8 +321,7 @@ char clientConnectSocketTo(const SOCKET *socket, char *uri, sa_family_t type) {
 
         /* Not all implementations of gethostbyname() can resolve literal IPV4, check manually */
         if (isValidIpv4Str(address)) {
-            in_addr_t ipv4 = inet_addr(address);
-            serverAddress->sin_addr.s_addr = ipv4;
+            serverAddress->sin_addr.s_addr = inet_addr(address);
 
             if (connect(*socket, (SA *) serverAddress, sizeof(addressStorage)) == 0)
                 return 0;
@@ -340,7 +340,7 @@ char clientConnectSocketTo(const SOCKET *socket, char *uri, sa_family_t type) {
             }
 
             for (i = 0; host->h_addr_list[i] != NULL; ++i) {
-                serverAddress->sin_addr.s_addr = ((in_addr_t) *host->h_addr_list[i]);
+                serverAddress->sin_addr.s_addr = *host->h_addr_list[i];
 
                 if (connect(*socket, (SA *) serverAddress, sizeof(addressStorage)) == 0)
                     return 0;
