@@ -3,11 +3,11 @@ CC=wcc
 # Default building process
 all: .SYMBOLIC dl.exe th.exe
 
-dl.exe: release doswatb.o event.o platform.o dl.o
+dl.exe: release doswatb.o event.o io.o platform.o queue.o uri.o dl.o
     %write link.lnk NAME $@
     %write link.lnk SYS  dos
     %write link.lnk OPT  st=4608
-    %write link.lnk FILE doswatb.o,event.o,platform.o,dl.o
+    %write link.lnk FILE doswatb.o,event.o,io.o,platform.o,queue.o,uri.o,dl.o
     %write link.lnk LIBP watt32s/lib/
     %write link.lnk LIBF wattcpwl.lib
     wlink @link.lnk

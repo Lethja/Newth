@@ -53,7 +53,7 @@ if (NOT ENABLE_HTTP_CONNECTION_REUSE)
 endif ()
 
 # Unit Test Binary
-add_executable(test ../test/test.c ../test/mock.h ../test/common.h ../test/platform.h ../test/queue.h ../test/request.h ../test/sockbufr.h
+add_executable(test ../test/test.c ../test/mock.h ../test/common.h ../test/fetch.h ../test/platform.h ../test/queue.h ../test/request.h ../test/sockbufr.h
         ../src/client/io.c ../src/client/io.h
         ../src/client/queue.c ../src/client/queue.h
         ../src/client/uri.c ../src/client/uri.h
@@ -65,7 +65,7 @@ add_executable(test ../test/test.c ../test/mock.h ../test/common.h ../test/platf
         ../src/server/sockbufr.c ../src/server/sockbufr.h
         ${MULTIPLEX_SRC} ${PLATFORM_SRC} ../src/platform/mockput.c)
 
-target_compile_definitions(test PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>" MOCK=1 SB_DATA_SIZE=128 EWOULDBLOCK=41)
+target_compile_definitions(test PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>" MOCK=1 SB_DATA_SIZE=128 EWOULDBLOCK=41 UNIT_TEST=1)
 target_link_libraries(test cmocka)
 set_property(TARGET test PROPERTY LINK_FLAGS
         "${DEFAULT_LINK_FLAGS} -Wl,--wrap=malloc,--wrap=calloc,--wrap=realloc,--wrap=free,--wrap=send,--wrap=fclose")

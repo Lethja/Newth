@@ -1,6 +1,57 @@
 #include "uri.h"
+#include "../platform/platform.h"
 
 #include <ctype.h>
+
+#pragma region Static Helper Functions
+
+#ifdef GETHOSTBYNAME_CANT_IPV4STR
+
+#ifdef UNIT_TEST
+
+char isValidIpv4Str(const char *str) {
+
+#else
+
+    static inline char isValidIpv4Str(const char *str) {
+
+#endif
+    unsigned int i, j, k;
+
+    for (j = k = i = 0; str[i] != '\0'; ++i) {
+        switch (str[i]) {
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+                j += str[i] - '0';
+                break;
+            case '.':
+                if (j > 12)
+                    return 0;
+
+                j = 0, ++k;
+                break;
+            default:
+                return 0;
+        }
+    }
+
+    if (k != 3)
+        return 0;
+
+    return 1;
+}
+
+#endif /* GETHOSTBYNAME_CANT_IPV4STR */
+
+#pragma endregion
 
 UriScheme uriDetailsGetScheme(UriDetails *details) {
     size_t len;
@@ -46,7 +97,22 @@ UriScheme uriDetailsGetScheme(UriDetails *details) {
 char *uriDetailsGetHostAddr(UriDetails *details) {
     struct hostent *ent;
 
-    if (!details || !(ent = gethostbyname(details->host)))
+    if (!details || !details->host)
+        return NULL;
+
+#ifdef GETHOSTBYNAME_CANT_IPV4STR
+    /* This implementation of gethostbyname() can resolve literal IPV4, check manually */
+    if (isValidIpv4Str(details->host)) {
+        char *r = malloc(strlen(details->host) + 1);
+
+        if (r)
+            strcpy(r, details->host);
+
+        return r;
+    }
+#endif
+
+    if (!(ent = gethostbyname(details->host)))
         return NULL;
 
     switch (ent->h_addrtype) {
@@ -112,17 +178,23 @@ static sa_family_t GetAddressFamily(const char *address) {
 
 char uriDetailsCreateSocketAddress(UriDetails *self, SocketAddress *socketAddress, unsigned short scheme) {
     char *address = uriDetailsGetHostAddr(self);
-    unsigned short port = self->port ? uriDetailsGetPort(self) : scheme ? scheme : uriDetailsGetPort(self);
+    unsigned short port;
 
-    if (!port)
-        port = scheme;
+    if (!scheme)
+        scheme = uriDetailsGetScheme(self);
 
-    if (!address || !port)
+    port = self->port ? uriDetailsGetPort(self) : scheme ? scheme : uriDetailsGetPort(self);
+
+    if (!address || !port) {
+        if (address)
+            free(address);
+
         return 1;
+    }
 
-    socketAddress->sock.sa_family = GetAddressFamily(address);
+    socketAddress->address.sock.sa_family = GetAddressFamily(address);
 
-    switch (socketAddress->sock.sa_family) {
+    switch (socketAddress->address.sock.sa_family) {
 #ifdef ENABLE_IPV6
         case AF_INET6:
             if (inet_pton(AF_INET6, address, &socketAddress->ipv6.sin6_addr)) {
@@ -132,19 +204,19 @@ char uriDetailsCreateSocketAddress(UriDetails *self, SocketAddress *socketAddres
                 goto uriDetailsCreateSocketAddress_abort;
 #endif
         case AF_INET:
-            if ((socketAddress->ipv4.sin_addr.s_addr = inet_addr(address))) {
-                socketAddress->ipv4.sin_port = htons(port);
+            if ((socketAddress->address.ipv4.sin_addr.s_addr = inet_addr(address))) {
+                socketAddress->address.ipv4.sin_port = htons(port);
                 break;
             }
 #ifdef ENABLE_IPV6
             uriDetailsCreateSocketAddress_abort:
 #endif
         default:
-            free(address);
+            socketAddress->state = SA_STATE_FAILED, free(address);
             return 1;
     }
 
-    free(address);
+    socketAddress->scheme = scheme, socketAddress->state = SA_STATE_QUEUED, free(address);
     return 0;
 }
 

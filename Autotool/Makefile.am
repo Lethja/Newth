@@ -24,6 +24,8 @@ MULTIPLEX_SRC = src/server/mltiplex/select.c
 endif
 
 dl_SOURCES = src/cli/dl.c \
+    src/client/io.c src/client/io.h \
+    src/client/queue.c src/client/queue.h \
     src/client/uri.c src/client/uri.h \
     src/platform/platform.c src/platform/platform.h \
     src/server/event.c src/server/event.h \

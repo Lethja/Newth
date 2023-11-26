@@ -138,9 +138,10 @@ static void UriConvertToSocketAddress(void **state) {
     SocketAddress address;
     UriDetails details = uriDetailsNewFrom("http://localhost");
     assert_false(uriDetailsCreateSocketAddress(&details, &address, SCHEME_UNKNOWN));
-    assert_int_equal(address.sock.sa_family, AF_INET);
-    assert_int_equal(address.ipv4.sin_port, htons(SCHEME_HTTP));
-    assert_string_equal(inet_ntoa(address.ipv4.sin_addr), "127.0.0.1");
+    assert_int_equal(address.scheme, SCHEME_HTTP);
+    assert_int_equal(address.address.sock.sa_family, AF_INET);
+    assert_int_equal(address.address.ipv4.sin_port, htons(SCHEME_HTTP));
+    assert_string_equal(inet_ntoa(address.address.ipv4.sin_addr), "127.0.0.1");
     uriDetailsFree(&details);
 }
 
@@ -148,9 +149,10 @@ static void UriConvertToSocketAddressWithScheme(void **state) {
     SocketAddress address;
     UriDetails details = uriDetailsNewFrom("localhost");
     assert_false(uriDetailsCreateSocketAddress(&details, &address, SCHEME_HTTPS));
-    assert_int_equal(address.sock.sa_family, AF_INET);
-    assert_int_equal(address.ipv4.sin_port, htons(SCHEME_HTTPS));
-    assert_string_equal(inet_ntoa(address.ipv4.sin_addr), "127.0.0.1");
+    assert_int_equal(address.scheme, SCHEME_HTTPS);
+    assert_int_equal(address.address.sock.sa_family, AF_INET);
+    assert_int_equal(address.address.ipv4.sin_port, htons(SCHEME_HTTPS));
+    assert_string_equal(inet_ntoa(address.address.ipv4.sin_addr), "127.0.0.1");
     uriDetailsFree(&details);
 }
 
@@ -161,21 +163,41 @@ static void UriConvertToSocketAddressWithPort(void **state) {
     assert_string_equal(details.port, "1");
 
     assert_false(uriDetailsCreateSocketAddress(&details, &address, SCHEME_FTPS));
-    assert_int_equal(address.sock.sa_family, AF_INET);
-    assert_int_equal(address.ipv4.sin_port, htons(1));
-    assert_string_equal(inet_ntoa(address.ipv4.sin_addr), "127.0.0.1");
+    assert_int_equal(address.scheme, SCHEME_FTPS);
+    assert_int_equal(address.address.sock.sa_family, AF_INET);
+    assert_int_equal(address.address.ipv4.sin_port, htons(1));
+    assert_string_equal(inet_ntoa(address.address.ipv4.sin_addr), "127.0.0.1");
     uriDetailsFree(&details);
 }
 
+#ifdef GETHOSTBYNAME_CANT_IPV4STR
+
+static void Ipv4Validate(void **state) {
+    const char *bad1 = "256.255.255.255", *bad2 = "0", *bad3 = "0000", *bad4 = "Connect please", *loop = "127.0.0.1", *max = "255.255.255.255", *min = "0.0.0.0";
+
+    assert_false(isValidIpv4Str(bad1));
+    assert_false(isValidIpv4Str(bad2));
+    assert_false(isValidIpv4Str(bad3));
+    assert_false(isValidIpv4Str(bad4));
+    assert_true(isValidIpv4Str(loop));
+    assert_true(isValidIpv4Str(min));
+    assert_true(isValidIpv4Str(max));
+}
+
+#endif
+
 #pragma clang diagnostic pop
 
-const struct CMUnitTest fetchTest[] = {cmocka_unit_test(UriConvertToSocketAddress),
-                                       cmocka_unit_test(UriConvertToSocketAddressWithPort),
-                                       cmocka_unit_test(UriConvertToSocketAddressWithScheme),
-                                       cmocka_unit_test(UriGetAddressFromAddress),
-                                       cmocka_unit_test(UriGetAddressFromHost), cmocka_unit_test(UriGetPort),
-                                       cmocka_unit_test(UriGetPortInvalid), cmocka_unit_test(UriGetScheme),
-                                       cmocka_unit_test(UriNewMinimum), cmocka_unit_test(UriNewNoString),
-                                       cmocka_unit_test(UriNewPathless), cmocka_unit_test(UriNewVerbose)};
+const struct CMUnitTest fetchTest[] = {
+#ifdef GETHOSTBYNAME_CANT_IPV4STR
+
+        cmocka_unit_test(Ipv4Validate),
+
+#endif
+        cmocka_unit_test(UriConvertToSocketAddress), cmocka_unit_test(UriConvertToSocketAddressWithPort),
+        cmocka_unit_test(UriConvertToSocketAddressWithScheme), cmocka_unit_test(UriGetAddressFromAddress),
+        cmocka_unit_test(UriGetAddressFromHost), cmocka_unit_test(UriGetPort), cmocka_unit_test(UriGetPortInvalid),
+        cmocka_unit_test(UriGetScheme), cmocka_unit_test(UriNewMinimum), cmocka_unit_test(UriNewNoString),
+        cmocka_unit_test(UriNewPathless), cmocka_unit_test(UriNewVerbose)};
 
 #endif /* NEW_DL_TEST_FETCH_H */

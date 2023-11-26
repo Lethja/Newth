@@ -5,25 +5,32 @@
 
 typedef struct PathQueue {
     SocketAddress address;
-    size_t pathsLen;
+    unsigned int pathsLen;
     char **paths;
+    SOCKET ctrlSock, dataSock;
 } PathQueue;
 
 typedef struct AddressQueue {
-    size_t queueLen;
+    unsigned int queueLen;
     PathQueue **queue;
 } AddressQueue;
 
-extern char *downloadQueueAppendOrCreate(SocketAddress *address, const char *path);
+extern char *pathQueueAppendOrCreate(SocketAddress *address, const char *path);
 
-extern void *downloadQueueFind(SocketAddress *address, const char *path, size_t *addressIdx, size_t *pathIdx);
+extern void *pathQueueFind(SocketAddress *address, const char *path, size_t *addressIdx, size_t *pathIdx);
 
-extern char *downloadQueueRemove(SocketAddress *address, const char *path);
+extern char *pathQueueRemove(SocketAddress *address, const char *path);
 
-extern void downloadQueueClear(void);
+extern void addressQueueClear(void);
 
-extern size_t downloadQueueNumberOfAddresses(void);
+extern PathQueue **addressQueueGet(void);
 
-extern size_t downloadQueueAddressNumberOfRequests(SocketAddress *address);
+extern unsigned int addressQueueGetNth(void);
+
+extern unsigned int pathQueueGetNth(SocketAddress *address);
+
+extern unsigned int addressQueueGetTotalPathRequests(void);
+
+extern char *pathQueueConnect(PathQueue *self);
 
 #endif /* NEW_DL_QUEUE_H */

@@ -16,7 +16,9 @@
 #ifdef DJGPP
 #include <dirent.h>
 #else /* Open Watcom assumed */
+
 #include <direct.h>
+
 #endif
 
 #pragma endregion
@@ -24,6 +26,7 @@
 #pragma region ANSI C headers
 
 #include <ctype.h>
+#include <limits.h>
 #include <stdio.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -37,6 +40,8 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+
+#include <netdb.h>
 #include <tcp.h>
 
 #pragma endregion
@@ -49,6 +54,7 @@ typedef FILE *PlatformFile;
 typedef int nfds_t;
 
 extern char platformShouldExit(void);
+
 #define PLATFORM_SHOULD_EXIT platformShouldExit
 #define PLATFORM_SELECT_MAX_TIMEOUT 1
 

@@ -1,12 +1,16 @@
 #include "queue.h"
+#include "../platform/platform.h"
 
 AddressQueue *addressQueue = NULL;
 
 static inline char *PathAppendOrCreate(PathQueue *pathQueue, const char *path) {
     size_t i;
 
+    if (!pathQueue)
+        return "No Queue";
+
     if (pathQueue->paths == NULL) {
-        pathQueue->paths = malloc(sizeof(char **));
+        pathQueue->paths = malloc(sizeof(char *));
         pathQueue->paths[0] = malloc(strlen(path) + 1);
         strcpy(pathQueue->paths[0], path);
         pathQueue->pathsLen = 1;
@@ -36,67 +40,87 @@ static inline char *PathAppendOrCreate(PathQueue *pathQueue, const char *path) {
     return NULL;
 }
 
-char *downloadQueueAppendOrCreate(SocketAddress *address, const char *path) {
+static inline char *newPathQueue(PathQueue **self, SocketAddress *address) {
+    PathQueue *q = malloc(sizeof(PathQueue));
+
+    if (!q) {
+        *self = NULL;
+        return strerror(errno);
+    }
+
+    memcpy(&q->address, address, sizeof(SocketAddress));
+    q->pathsLen = 0, q->paths = NULL;
+    q->ctrlSock = q->dataSock = -1;
+
+    *self = q;
+    return NULL;
+}
+
+char *pathQueueAppendOrCreate(SocketAddress *address, const char *path) {
     if (addressQueue) {
         size_t i;
+
         for (i = 0; i < addressQueue->queueLen; ++i) {
-            if (memcmp(&addressQueue->queue[i]->address.storage, &address->storage, sizeof(SocketAddress)) == 0)
+            if (memcmp(&addressQueue->queue[i]->address.address.storage, &address->address.storage,
+                       sizeof(SocketAddress)) == 0)
                 goto downloadQueueAppendOrCreate_Found;
         }
 
         downloadQueueAppendOrCreate_Found:
 
         if (i == addressQueue->queueLen) {
-            void *tmp = realloc(addressQueue->queue, sizeof(AddressQueue) * addressQueue->queueLen + 1);
-            if (tmp) {
-                addressQueue->queue = tmp;
-                addressQueue->queue[i] = calloc(1, sizeof(PathQueue));
+            PathQueue *q;
 
-                if (!addressQueue->queue || !addressQueue->queue[i]) {
-                    if (addressQueue)
-                        free(addressQueue), addressQueue = NULL;
+            if (!newPathQueue(&q, address)) {
+                void *tmp = realloc(addressQueue->queue, sizeof(AddressQueue) * addressQueue->queueLen + 1);
+
+                if (tmp) {
+                    addressQueue->queue = tmp;
+                    addressQueue->queue[i] = q;
+                    ++addressQueue->queueLen;
+                } else {
+                    if (q)
+                        free(q);
 
                     return strerror(errno);
                 }
+            } else {
+                if (q)
+                    free(q);
 
-                ++addressQueue->queueLen;
-                memcpy(&addressQueue->queue[i]->address, address, sizeof(SocketAddress));
-            } else
                 return strerror(errno);
+            }
         }
-
         return PathAppendOrCreate(addressQueue->queue[i], path);
-
     } else {
-        addressQueue = malloc(sizeof(AddressQueue));
-
-        if (!addressQueue)
+        if (!(addressQueue = malloc(sizeof(AddressQueue))))
             return strerror(errno);
 
-        addressQueue->queue = malloc(sizeof(char *));
-        addressQueue->queue[0] = calloc(1, sizeof(PathQueue));
+        if (!(addressQueue->queue = malloc(sizeof(PathQueue *))))
+            goto downloadQueueAppendOrCreate_AbortNew;
 
-        if (!addressQueue->queue || !addressQueue->queue[0]) {
-            if (addressQueue)
-                free(addressQueue), addressQueue = NULL;
-
-            return strerror(errno);
-        }
+        if (newPathQueue(&addressQueue->queue[0], address))
+            goto downloadQueueAppendOrCreate_AbortNew;
 
         addressQueue->queueLen = 1;
-        memcpy(&addressQueue->queue[0]->address, address, sizeof(SocketAddress));
 
         return PathAppendOrCreate(addressQueue->queue[0], path);
+
+        downloadQueueAppendOrCreate_AbortNew:
+        free(addressQueue), addressQueue = NULL;
+        return strerror(errno);
     }
 }
 
-void *downloadQueueFind(SocketAddress *address, const char *path, size_t *addressIdx, size_t *pathIdx) {
+void *pathQueueFind(SocketAddress *address, const char *path, size_t *addressIdx, size_t *pathIdx) {
     size_t i, j;
+
     if (!addressQueue)
         return NULL;
 
     for (i = 0; i < addressQueue->queueLen; ++i) {
-        if (memcmp(&addressQueue->queue[i]->address.storage, &address->storage, sizeof(SocketAddress)) == 0)
+        if (memcmp(&addressQueue->queue[i]->address.address.storage, &address->address.storage,
+                   sizeof(SocketAddress)) == 0)
             goto downloadQueueFind_AddressFound;
     }
 
@@ -119,9 +143,10 @@ void *downloadQueueFind(SocketAddress *address, const char *path, size_t *addres
     return NULL;
 }
 
-char *downloadQueueRemove(SocketAddress *address, const char *path) {
+char *pathQueueRemove(SocketAddress *address, const char *path) {
     size_t i, j;
-    if (downloadQueueFind(address, path, &i, &j)) {
+
+    if (pathQueueFind(address, path, &i, &j)) {
         free(addressQueue->queue[i]->paths[j]);
 
         if (j + 1 != addressQueue->queue[i]->pathsLen)
@@ -139,37 +164,37 @@ char *downloadQueueRemove(SocketAddress *address, const char *path) {
         }
 
         --addressQueue->queue[i]->pathsLen;
-    }
 
-    if (!addressQueue->queue[i]->pathsLen) {
-        free(addressQueue->queue[i]);
-        if (i + 1 != addressQueue->queueLen)
-            memmove(&addressQueue->queue[i], &addressQueue->queue[i + 1],
-                    (addressQueue->queueLen - (i + 1)) * sizeof(char *));
+        if (!addressQueue->queue[i]->pathsLen) {
+            free(addressQueue->queue[i]);
+            if (i + 1 != addressQueue->queueLen)
+                memmove(&addressQueue->queue[i], &addressQueue->queue[i + 1],
+                        (addressQueue->queueLen - (i + 1)) * sizeof(char *));
 
-        if (addressQueue->queueLen < 2)
-            free(addressQueue->queue), addressQueue->queue = NULL;
-        else {
-            void *tmp = realloc(addressQueue->queue, sizeof(char *) * addressQueue->queueLen - 1);
-            if (tmp)
-                addressQueue->queue = tmp;
-            else
-                return strerror(errno);
+            if (addressQueue->queueLen < 2)
+                free(addressQueue->queue), addressQueue->queue = NULL;
+            else {
+                void *tmp = realloc(addressQueue->queue, sizeof(char *) * addressQueue->queueLen - 1);
+                if (tmp)
+                    addressQueue->queue = tmp;
+                else
+                    return strerror(errno);
+            }
+
+            if (addressQueue)
+                --addressQueue->queueLen;
+
+            if (!addressQueue->queueLen) {
+                free(addressQueue->queue);
+                free(addressQueue), addressQueue = NULL;
+            }
         }
-
-        if (addressQueue)
-            --addressQueue->queueLen;
-    }
-
-    if (!addressQueue->queueLen) {
-        free(addressQueue->queue);
-        free(addressQueue), addressQueue = NULL;
     }
 
     return NULL;
 }
 
-void downloadQueueClear(void) {
+void addressQueueClear(void) {
     size_t i, j;
 
     if (!addressQueue)
@@ -186,15 +211,60 @@ void downloadQueueClear(void) {
     free(addressQueue->queue), free(addressQueue), addressQueue = NULL;
 }
 
-size_t downloadQueueNumberOfAddresses(void) {
-    return addressQueue->queueLen;
+unsigned int addressQueueGetNth(void) {
+    return addressQueue ? addressQueue->queueLen : 0;
 }
 
-size_t downloadQueueAddressNumberOfRequests(SocketAddress *address) {
-    size_t i;
-    for (i = 0; i < addressQueue->queueLen; ++i) {
-        if (memcmp(&addressQueue->queue[i]->address.storage, &address->storage, sizeof(SocketAddress)) == 0)
-            return addressQueue->queue[i]->pathsLen;
+PathQueue **addressQueueGet(void) {
+    if (!addressQueue || !addressQueue->queue)
+        return NULL;
+
+    return addressQueue->queue;
+}
+
+unsigned int pathQueueGetNth(SocketAddress *address) {
+    if (addressQueue) {
+        unsigned int i;
+
+        for (i = 0; i < addressQueue->queueLen; ++i) {
+            if (memcmp(&addressQueue->queue[i]->address.address.storage, &address->address.storage,
+                       sizeof(SocketAddress)) == 0)
+                return addressQueue->queue[i]->pathsLen;
+        }
     }
     return 0;
+}
+
+unsigned int addressQueueGetTotalPathRequests(void) {
+    unsigned int t = 0;
+    if (addressQueue) {
+        unsigned int i, a = addressQueueGetNth();
+
+        for (i = 0; i < a; ++i)
+            t += addressQueue->queue[i]->pathsLen;
+    }
+    return t;
+}
+
+char *pathQueueConnect(PathQueue *self) {
+    char *err;
+    switch (self->address.state) {
+        case SA_STATE_QUEUED:
+        case SA_STATE_TRY_LATER:
+            if (self->ctrlSock == -1) {
+                if ((err = ioCreateSocketFromSocketAddress(&self->address, &self->ctrlSock)))
+                    return err;
+            }
+
+            if (connect(self->ctrlSock, &self->address.address.sock, sizeof(self->address.address.sock)) == -1) {
+                CLOSE_SOCKET(self->ctrlSock), self->ctrlSock = -1;
+                return strerror(platformSocketGetLastError());
+            }
+
+            self->address.state = SA_STATE_CONNECTED;
+        case SA_STATE_CONNECTED:
+            return NULL;
+        default:
+            return "State of socket invalid";
+    }
 }

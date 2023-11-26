@@ -58,4 +58,14 @@ extern UriScheme uriDetailsGetScheme(UriDetails *details);
  */
 extern char uriDetailsCreateSocketAddress(UriDetails *self, SocketAddress *socketAddress, unsigned short scheme);
 
+#ifdef UNIT_TEST
+
+#ifdef GETHOSTBYNAME_CANT_IPV4STR
+
+extern char isValidIpv4Str(const char *str);
+
+#endif /* GETHOSTBYNAME_CANT_IPV4STR */
+
+#endif /* UNIT_TEST */
+
 #endif /* NEW_DL_URI_H */
