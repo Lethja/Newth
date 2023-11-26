@@ -1,6 +1,7 @@
 #ifndef NEW_DL_TEST_FETCH_H
 #define NEW_DL_TEST_FETCH_H
 
+#include "../src/client/io.h"
 #include "../src/client/uri.h"
 
 #pragma clang diagnostic push

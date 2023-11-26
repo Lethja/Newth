@@ -51,6 +51,8 @@ if CMOCKA
 		test/request.h test/sockbufr.h
 
     unittest_SOURCES += src/platform/mockput.c src/platform/mockput.h \
+        src/client/io.c src/client/io.h \
+        src/client/queue.c src/client/queue.h \
         src/client/uri.c src/client/uri.h \
 		src/server/server.h src/server/server.c \
 		src/platform/platform.c src/platform/platform.h \

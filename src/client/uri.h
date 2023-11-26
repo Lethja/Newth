@@ -1,6 +1,7 @@
 #ifndef NEW_DL_URI_H
 #define NEW_DL_URI_H
 
+#include "io.h"
 #include "../platform/platform.h"
 
 typedef enum UriScheme {
@@ -10,15 +11,6 @@ typedef enum UriScheme {
 typedef struct UriDetails {
     char *scheme, *host, *path, *port;
 } UriDetails;
-
-typedef union SocketAddress {
-    struct sockaddr sock;
-    struct sockaddr_in ipv4;
-#ifdef ENABLE_IPV6
-    struct sockaddr_in6 ipv6;
-#endif
-    struct sockaddr_storage storage;
-} SocketAddress;
 
 /**
  * Turn a URI into a UriDetails for easier processing
@@ -61,9 +53,9 @@ extern UriScheme uriDetailsGetScheme(UriDetails *details);
  * Create a socket address from a Uris details
  * @param self In: The UriDetails to get information from
  * @param socketAddress Out: The socketAddress union to populate
- * @param scheme In: Force use a scheme or 'SCHEME_UNKNOWN' to autodetect
+ * @param scheme In: The scheme to assume if that information is absent from 'self' or 'SCHEME_UNKNOWN'
  * @return 0 on success other on error
  */
-char uriDetailsCreateSocketAddress(UriDetails *self, SocketAddress *socketAddress, unsigned short scheme);
+extern char uriDetailsCreateSocketAddress(UriDetails *self, SocketAddress *socketAddress, unsigned short scheme);
 
 #endif /* NEW_DL_URI_H */

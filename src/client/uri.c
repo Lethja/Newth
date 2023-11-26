@@ -60,11 +60,11 @@ char *uriDetailsGetHostAddr(UriDetails *details) {
             return r;
         }
 #ifdef ENABLE_IPV6
-        case AF_INET6: {
-            char *addr = malloc(INET6_ADDRSTRLEN + 1);
-            inet_ntop(AF_INET6, ent->h_addr, addr, INET6_ADDRSTRLEN);
-            return addr;
-        }
+            case AF_INET6: {
+                char *addr = malloc(INET6_ADDRSTRLEN + 1);
+                inet_ntop(AF_INET6, ent->h_addr, addr, INET6_ADDRSTRLEN);
+                return addr;
+            }
 #endif
         default:
             return NULL;
@@ -137,7 +137,7 @@ char uriDetailsCreateSocketAddress(UriDetails *self, SocketAddress *socketAddres
                 break;
             }
 #ifdef ENABLE_IPV6
-        uriDetailsCreateSocketAddress_abort:
+            uriDetailsCreateSocketAddress_abort:
 #endif
         default:
             free(address);
@@ -225,8 +225,7 @@ UriDetails uriDetailsNewFrom(const char *uri) {
 
         if (details.port)
             strcpy(details.port, i + 1);
-    }
-    else if (strlen(q)) {
+    } else if (strlen(q)) {
         details.host = malloc(strlen(q) + 1);
 
         if (details.host)

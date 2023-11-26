@@ -13,6 +13,7 @@
 
 #include "fetch.h"
 #include "platform.h"
+#include "queue.h"
 #include "sockbufr.h"
 
 #ifdef MOCK
@@ -30,6 +31,7 @@ int main(void) {
 
     if ((r = cmocka_run_group_tests(fetchTest, NULL, NULL))) return r;
     if ((r = cmocka_run_group_tests(platformTest, NULL, NULL))) return r;
+    if ((r = cmocka_run_group_tests(queueTest, NULL, NULL))) return r;
     if ((r = cmocka_run_group_tests(socketTest, NULL, NULL))) return r;
 
 #ifdef MOCK

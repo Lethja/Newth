@@ -51,6 +51,10 @@ event.o: ../../src/server/event.c
     $(CC) @flag.lnk -fo="$@" "../../src/server/event.c"
 http.o: ../../src/server/http.c
     $(CC) @flag.lnk -fo="$@" "../../src/server/http.c"
+io.o: ../../src/client/io.c
+    $(CC) @flag.lnk -fo="$@" "../../src/client/io.c"
+queue.o: ../../src/client/queue.c
+    $(CC) @flag.lnk -fo="$@" "../../src/client/queue.c"
 routine.o: ../../src/server/routine.c
     $(CC) @flag.lnk -fo="$@" "../../src/server/routine.c"
 server.o: ../../src/server/server.c
