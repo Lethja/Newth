@@ -8,12 +8,12 @@
 #define HTTP_EOL "\r\n"
 
 typedef struct ServerHeaderResponse {
-    short code;
-    short type;
-    PlatformTimeStruct *modifiedDate;
-    PlatformFileOffset length;
-    char path[FILENAME_MAX];
-    char file[FILENAME_MAX];
+    PlatformTimeStruct *modifiedDate; /* Last modified date (to allow HTTP 304) */
+    PlatformFileOffset length; /* Length of HTTP body */
+    char *filePath, *fileName;
+    short dataType; /* MIME type or is it a webpage with more links */
+    short httpCode; /* HTTP Response */
+    int options; /* User options to change the behaviour of this download */
 } ServerHeaderResponse;
 
 enum SocketAddressState {
@@ -45,5 +45,7 @@ extern char *ioHttpHeadRead(const SOCKET *socket, char **header);
 extern char *ioHttpHeadRequest(const SOCKET *socket, const char *path, const char *extra);
 
 extern char *ioHttpGetRequest(const SOCKET *socket, const char *path, const char *extra);
+
+extern char *HttpGetEssentialResponse(const char *headerFile, char **scheme, char **response);
 
 #endif /* NEW_DL_IO_H */

@@ -19,12 +19,15 @@ static inline char *SendRequest(const SOCKET *socket, const char *type, const ch
 
     do {
         size_t r = send(*socket, &req[i], len - i, 0);
-        if (r == -1)
+        if (r == -1) {
+            free(req);
             return strerror(platformSocketGetLastError());
+        }
 
         i += r;
     } while (i != len);
 
+    free(req);
     return NULL;
 }
 
@@ -50,24 +53,32 @@ static inline char *FindHeader(const char *headerFile, const char *header, char 
     return NULL;
 }
 
-static inline char *HttpGetEssentialResponse(const char *headerFile, char **scheme, char **response, char **path) {
-    char *p = strstr(headerFile, HTTP_EOL), *s;
-    size_t len = p - headerFile;
+char *HttpGetEssentialResponse(const char *headerFile, char **scheme, char **response) {
+    char *p = strstr(headerFile, HTTP_EOL), *s = NULL;
+    size_t len;
 
-    if (!(s = malloc(len)))
-        strerror(errno);
+    if (p)
+        len = p - headerFile;
+    else
+        goto HttpGetEssentialResponse_Invalid;
+
+    *scheme = *response = NULL;
+
+    if (!(s = calloc(len + 1, sizeof(char))))
+        return strerror(errno);
 
     strncpy(s, headerFile, len);
     if ((p = strchr(s, ' '))) {
-        *response = &p[1], p[0] = '\0';
-        if ((p = strchr(&p[1], ' '))) {
-            *path = &p[1], p[0] = '\0', *scheme = s;
-            return NULL;
-        }
+        *response = &p[1], p[0] = '\0', *scheme = s;
+        return NULL;
     }
 
-    free(s), *scheme = *response = *path = NULL;
-    return NULL;
+    HttpGetEssentialResponse_Invalid:
+    if (s)
+        free(s);
+
+    *scheme = *response = NULL;
+    return "Not a valid header line";
 }
 
 char *ioCreateSocketFromSocketAddress(SocketAddress *self, SOCKET *sock) {
@@ -85,8 +96,10 @@ char *ioHttpHeadRead(const SOCKET *socket, char **header) {
         return strerror(errno);
 
     if (!*header) {
-        if (!(*header = malloc(SB_DATA_SIZE)))
+        if (!(*header = malloc(SB_DATA_SIZE))) {
+            free(buf);
             return strerror(errno);
+        }
     }
 
     headEnd = NULL;

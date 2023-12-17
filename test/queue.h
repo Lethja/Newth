@@ -144,7 +144,31 @@ static void QueueRemove(void **state) {
     addressQueueClear();
 }
 
-const struct CMUnitTest queueTest[] = {cmocka_unit_test(QueueClear), cmocka_unit_test(QueueCreate),
-                                       cmocka_unit_test(QueueFind), cmocka_unit_test(QueueRemove)};
+static void headerGetEssential(void **state) {
+    const char *minHeader = "HTTP/1.1 200 OK" HTTP_EOL HTTP_EOL, *invalidHeader1 = "Hello", *invalidHeader2 = "World" HTTP_EOL HTTP_EOL, *emptyHeader = HTTP_EOL HTTP_EOL;
+    char *scheme, *response = scheme = NULL;
+    assert_null(HttpGetEssentialResponse(minHeader, &scheme, &response));
+    assert_non_null(scheme);
+    assert_non_null(response);
+    assert_memory_equal(scheme, "HTTP/1.1", 9);
+    assert_memory_equal(response, "200 OK", 7);
+    free(scheme);
+
+    assert_non_null(HttpGetEssentialResponse(invalidHeader1, &scheme, &response));
+    assert_null(scheme);
+    assert_null(response);
+
+    assert_non_null(HttpGetEssentialResponse(invalidHeader2, &scheme, &response));
+    assert_null(scheme);
+    assert_null(response);
+
+    assert_non_null(HttpGetEssentialResponse(emptyHeader, &scheme, &response));
+    assert_null(scheme);
+    assert_null(response);
+}
+
+const struct CMUnitTest queueTest[] = {cmocka_unit_test(headerGetEssential), cmocka_unit_test(QueueClear),
+                                       cmocka_unit_test(QueueCreate), cmocka_unit_test(QueueFind),
+                                       cmocka_unit_test(QueueRemove)};
 
 #endif /* NEW_DL_TEST_QUEUE_H */
