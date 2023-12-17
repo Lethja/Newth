@@ -15,13 +15,15 @@
     * [Acquire CWSDPMI](#acquire-cwsdpmi)
     * [Using CWSDPMI](#using-cwsdpmi)
       * [Method 1: Copy CWSDPMI.EXE to the same directory as the program](#method-1-copy-cwsdpmiexe-to-the-same-directory-as-the-program)
-      * [Method 2: Include Cwsdpmi inside TH.EXE](#method-2-include-cwsdpmi-inside-thexe)
+      * [Method 2: Include Cwsdpmi inside binaries](#method-2-include-cwsdpmi-inside-binaries)
   * [Compress (optional)](#compress-optional)
   * [Create diskette image (optional)](#create-diskette-image-optional)
     * [On a compressed binary](#on-a-compressed-binary)
-      * [5¼-inch QD Diskette](#5-inch-qd-diskette)
+      * [5¼-inch QD Diskettes](#5-inch-qd-diskettes)
+      * [5¼-inch HD Diskette](#5-inch-hd-diskette)
     * [On a uncompressed binary](#on-a-uncompressed-binary)
-      * [3½-inch HD Diskette](#3-inch-hd-diskette)
+      * [3½-inch HD Diskettes](#3-inch-hd-diskettes)
+      * [3½-inch ED Diskette](#3-inch-ed-diskette)
 <!-- TOC -->
 
 # What is DJGPP
@@ -136,19 +138,16 @@ To do this Watt32s `src\config.h` has to be manually modified like so:
  #undef USE_MULTICAST
  #undef USE_BIND
 -#undef USE_BSD_API
--#undef USE_BSD_FATAL
--#undef USE_BOOTP
--#undef USE_DHCP
 +#define USE_BSD_API
-+#define USE_BSD_FATAL
+ #undef USE_BSD_FATAL
+-#undef USE_BOOTP
 +#define USE_BOOTP
-+#define USE_DHCP
+ #undef USE_DHCP
  #undef USE_RARP
  #undef USE_GEOIP
  #undef USE_IPV6
  #undef USE_LANGUAGE
--#undef USE_FRAGMENTS
-+#define USE_FRAGMENTS
+ #undef USE_FRAGMENTS
  #undef USE_STATISTICS
  #undef USE_STACKWALKER
  #undef USE_FSEXT
@@ -157,7 +156,8 @@ To do this Watt32s `src\config.h` has to be manually modified like so:
 ## Build
 
 Run `make` to build the project.
-A 32-bit binary called `th.exe` will be made that can be run from any path (including a floppy diskette)
+Two 32-bit binaries called `dl.exe` and `th.exe` will be made that can be run from any path (including a floppy
+diskette)
 on any DOS computer with a DPMI server running on a 80386 compatible CPU with a 80387 compatible FPU.
 
 # After building
@@ -183,8 +183,8 @@ There are two ways to use Cwsdpmi. Which way is better depends on the circumstan
 
 #### Method 1: Copy CWSDPMI.EXE to the same directory as the program
 
-Similar to `DOS4GW.EXE` for Watcom built applications. 
-`CWSDPMI.EXE` can be placed in the same directory as the an EXE to make it start. 
+Similar to `DOS4GW.EXE` for Watcom built applications.
+`CWSDPMI.EXE` can be placed in the same directory as the an EXE to make it start.
 Several DJGPP binaries in the same directory can make use of the same `CWSDPMI.EXE` which can save some disk space.
 
 Assuming that you're in the same directory as `TH.EXE` and that `cwsdpmi.svp` has been installed
@@ -194,18 +194,23 @@ in it's default directory you can run the following to copy the executable.
 COPY %DOSDIR%\PROGS\CWSDPMI\CWSDPMI.EXE .
 ```
 
-#### Method 2: Include Cwsdpmi inside TH.EXE
+#### Method 2: Include Cwsdpmi inside binaries
 
 Cwsdpmi can be baked into TH.EXE so that no external EXE file is needed to start the program.
 This can be a much cleaner alternative especially for executables that are intended for portable use.
 
-Assuming that you're in the same directory as `TH.EXE` and that `cwsdpmi.svp` has been installed
+Assuming that you're in the same directory as `DL.EXE` and `TH.EXE` and that `cwsdpmi.svp` has been installed
 in it's default directory you can run the following to copy the executable.
 
 ```
+COPY %DOSDIR%\PROGS\CWSDPMI\CWSDSTUB.EXE .
+
+MOVE dl.exe dlnostub.exe
+exe2coff dlnostub.exe
+COPY /B CWSDSTUB.EXE+dlnostub dl.exe
+
 MOVE th.exe thnostub.exe
 exe2coff thnostub.exe
-COPY %DOSDIR%\PROGS\CWSDPMI\CWSDSTUB.EXE .
 COPY /B CWSDSTUB.EXE+thnostub th.exe
 ```
 
@@ -215,30 +220,70 @@ On DOS machines disk space is usually at a premium.
 Even though the release builds are stripped of all debugging symbols it is possible to make the binary take
 substantially less disk space with UPX compression so that it fits comfortably on a smaller diskette standard.
 
-| Build | UPX command         | Fits on           |
-|-------|---------------------|-------------------|
-| DJGPP | `UPX th.exe --best` | 5¼-inch QD (720k) |
+| Build | UPX command                | Fits on            |
+|-------|----------------------------|--------------------|
+| DJGPP | `UPX dl.exe --best`        | 5¼-inch QD (720k)  |
+| DJGPP | `UPX dl.exe th.exe --best` | 5¼-inch HD (1200k) |
 
 ## Create diskette image (optional)
 
-On a real DOS machines it most likely makes the most sense to directly copy the new binaries onto a newly formatted
-diskette. When cross compiling or distributing over the Internet it may make more sense to distribute as a floppy disk
+On a real DOS machines it makes sense to directly copy the new binaries onto a newly formatted diskette.
+Conversely when cross compiling or distributing over the Internet it may make more sense to distribute as a floppy disk
 image so that users can make their own disks locally. This can be achieve with GNU Mtools.
+
+> Note: At the time of writing there's no DOS port of GNU Mtools. The newly created binaries will need
+> to be transferred to a more modern Linux or Windows machine to use Mtools on them.
+
+With compression the binaries will fit much better into diskette image then they otherwise would,
+in some cases becoming compatible with a lower standard of diskette.
+While there might be a lot of free space after copying the files to the image users may want to put other files on the
+disk (such as WatTCP configuration and/or a network packet driver) and a real diskette may contain bad sectors.
+
+With Mtools installed, create a diskette image with `mformat` then copy the binaries to the new image with `mcopy`.
+Below are some example configurations.
+
+> Tip: If you can only spare one diskette which can't fit both programs on it.
+> You could write `DL.EXE` and a packet driver to the disk
+> then use these to download `TH.EXE` over the network.
 
 ### On a compressed binary
 
-#### 5¼-inch QD Diskette
+#### 5¼-inch QD Diskettes
+
+```bash
+mformat -C -i dldj_720.ima -v "DLDJ" -f 720
+mcopy -i dldj_720.ima DL.EXE ::
+```
 
 ```bash
 mformat -C -i thdj_720.ima -v "THDJ" -f 720
 mcopy -i thdj_720.ima TH.EXE ::
 ```
 
+#### 5¼-inch HD Diskette
+
+```bash
+mformat -C -i newth1.2.ima -v "NEWTH DJ" -f 1200
+mcopy -i newth1.2.ima DL.EXE TH.EXE ::
+```
+
 ### On a uncompressed binary
 
-#### 3½-inch HD Diskette
+#### 3½-inch HD Diskettes
+
+```bash
+mformat -C -i dldj_1.4.ima -v "DLDJ" -f 1440
+mcopy -i dldj_1.4.ima DL.EXE ::
+```
 
 ```bash
 mformat -C -i thdj_1.4.ima -v "THDJ" -f 1440
 mcopy -i thdj_1.4.ima TH.EXE ::
+```
+
+#### 3½-inch ED Diskette
+
+```bash
+mformat -C -i newth2.8.ima -v "NEWTH DJ" -f 2880
+mcopy -i newth2.8.ima DL.EXE TH.EXE ::
 ```

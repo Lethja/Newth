@@ -18,11 +18,13 @@
   * [Create diskette image (optional)](#create-diskette-image-optional)
       * [On Compressed Binaries](#on-compressed-binaries)
         * [Real Mode 5¼-inch DD Diskette](#real-mode-5-inch-dd-diskette)
-        * [DOS4GW 5¼-inch QD Diskette](#dos4gw-5-inch-qd-diskette)
-        * [Multi-arch 3½-inch HD Diskette](#multi-arch-3-inch-hd-diskette)
+        * [DOS4GW 5¼-inch QD Diskettes](#dos4gw-5-inch-qd-diskettes)
+        * [Multi-arch 3½-inch HD Diskettes](#multi-arch-3-inch-hd-diskettes)
+        * [Multi-arch 3½-inch ED Diskette](#multi-arch-3-inch-ed-diskette)
       * [On Uncompressed Binaries](#on-uncompressed-binaries)
-        * [Real Mode 5¼-inch QD Diskette](#real-mode-5-inch-qd-diskette)
-        * [DOS4GW 3½-inch HD Diskette](#dos4gw-3-inch-hd-diskette)
+        * [Real Mode 5¼-inch QD Diskettes](#real-mode-5-inch-qd-diskettes)
+        * [DOS4GW 3½-inch HD Diskettes](#dos4gw-3-inch-hd-diskettes)
+        * [DOS4GW 3½-inch ED Diskette](#dos4gw-3-inch-ed-diskette)
 <!-- TOC -->
 
 # What is Open Watcom
@@ -37,14 +39,19 @@ code from a modern Linux/Windows host for ancient versions of DOS, OS/2 & Window
 
 ## Watcom compiler flags
 
-Open Watcoms compiler flags are quite unique compared to a typical GCC. Here are some of the more common ones:
+Open Watcoms compiler flags (`wcc` & `wcc386`) are quite different compared to a typical modern Clang, or GCC.
+Here are some of the more common ones:
 
 ```
 -bt=      : Set build target...
     com   : ... 16-bit DOS COM file
     dos   : ... 16-bit DOS EXE file
     dos4g : ... 32-bit DOS EXE file
--d0       : No debugging information
+-d        : Debug level/define variable...
+  0       : ... No debugging information (release build)
+  1       : ... Some debugging information (debug build)
+  2       : ... Full debugging information (developer build)
+  FOO=bar : ... Set define 'FOO' to value 'bar'
 -m        : Memory model...
   f       : ... flat  (32-bit only)
   s       : ... small (16-bit only)
@@ -55,7 +62,7 @@ Open Watcoms compiler flags are quite unique compared to a typical GCC. Here are
   r       : ... instructions to make the most effective use of the CPU pipeline
   s       : ... for space over performance
 -q        : Be quiet!
--s        : Ignore stack overflow checks
+-s        : Disable stack overflow checks
 -zc       : Place const data into code segment
 ```
 
@@ -162,26 +169,23 @@ Watcom\Dos4g\Watt32s\lib
 Newth depends on BSD-like networking API and compiling for DOS is no exception.
 For Newth to link to Watt32 correctly `USE_BSD_API` must be defined when building Watt32 library.
 
-To do this Watt32s `src\config.h` has to be manually modified like so:
+To do this `Watt32s\src\config.h` has to be manually modified like so:
 
 ```diff
  #undef USE_DEBUG
  #undef USE_MULTICAST
  #undef USE_BIND
 -#undef USE_BSD_API
--#undef USE_BSD_FATAL
--#undef USE_BOOTP
--#undef USE_DHCP
 +#define USE_BSD_API
-+#define USE_BSD_FATAL
+ #undef USE_BSD_FATAL
+-#undef USE_BOOTP
 +#define USE_BOOTP
-+#define USE_DHCP
+ #undef USE_DHCP
  #undef USE_RARP
  #undef USE_GEOIP
  #undef USE_IPV6
  #undef USE_LANGUAGE
--#undef USE_FRAGMENTS
-+#define USE_FRAGMENTS
+ #undef USE_FRAGMENTS
  #undef USE_STATISTICS
  #undef USE_STACKWALKER
  #undef USE_FSEXT
@@ -192,18 +196,18 @@ To do this Watt32s `src\config.h` has to be manually modified like so:
 ### Build for 16-bit (Real Mode)
 
 From the `Dos16` directory run `wmake` to build the project.
-A self contained 16-bit binary called `TH.EXE` will be made and can be run from any path 
+Two self contained 16-bit binary called `DL.EXE` and `TH.EXE` will be made and can be run from any path
 (including a floppy diskette) on any DOS 2.0 or later computer.
 
 ### Build for 32-bit (DOS4GW)
 
 From the `Dos4g` directory run `wmake` to build the project.
-A 32-bit binary called `TH.EXE` will be made and can be run from any path (including a floppy diskette)
-on any DOS 4.0 or later computer with a 80386 compatible CPU. 
+Two 32-bit binary called `DL.EXE` and `TH.EXE` will be made and can be run from any path (including a floppy diskette)
+on any DOS 4.0 or later computer with a 80386 compatible CPU.
 
-`DOS4GW.EXE` will need to either exist in a `%PATH%` directory or the same directory as `TH.EXE` 
-for the program to function. Most programs opt to do the latter. 
-To put a copy of `DOS4GW.EXE` in the same directory as `TH.EXE` run `COPY %WATCOM%\BINW\DOS4GW.EXE .`.
+`DOS4GW.EXE` will need to either exist in a `%PATH%` directory
+or the same directory as the binaries for the programs to function.
+To put a copy of `DOS4GW.EXE` in the same directory as `DL.EXE` and `TH.EXE` run `COPY %WATCOM%\BINW\DOS4GW.EXE .`.
 
 # After building
 
@@ -213,45 +217,62 @@ On DOS machines disk space is usually at a premium.
 Even though the release builds are stripped of all debugging symbols it is possible to make the binary take
 substantially less disk space with UPX compression so that it fits comfortably on a smaller diskette standard.
 
-| Build     | UPX Command                | Fits on           |
-|-----------|----------------------------|-------------------|
-| Real Mode | `UPX TH.EXE --best --8086` | 5¼-inch DD (360k) |
-| DOS4GW    | `UPX TH.EXE --best`        | 5¼-inch QD (720k) |
+| Build     | UPX Command                       | Fits on            |
+|-----------|-----------------------------------|--------------------|
+| Real Mode | `UPX DL.EXE TH.EXE --best --8086` | 5¼-inch DD (360k)  |
+| DOS4GW    | `UPX DL.EXE --best`               | 5¼-inch QD (720k)  |
+| DOS4GW    | `UPX DL.EXE TH.EXE --best`        | 5¼-inch HD (1200k) |
 
 ## Create diskette image (optional)
 
-On a real DOS machines it most likely makes the most sense to directly copy the new binaries onto a newly formatted
-diskette. When cross compiling or distributing over the Internet it may make more sense to distribute as a floppy disk
+On a real DOS machines it makes sense to directly copy the new binaries onto a newly formatted diskette.
+Conversely when cross compiling or distributing over the Internet it may make more sense to distribute as a floppy disk
 image so that users can make their own disks locally. This can be achieve with GNU Mtools.
 
-> Note: At the time of writing there doesn't appear to be a DOS port of GNU Mtools. The newly created binaries will need
+> Note: At the time of writing there's no DOS port of GNU Mtools. The newly created binaries will need
 > to be transferred to a more modern Linux or Windows machine to use Mtools on them.
 
-With compression the binaries will fit much better into diskette image then they otherwise would, 
-in some cases becoming compatible with a lower standard of diskette. 
+With compression the binaries will fit much better into diskette image then they otherwise would,
+in some cases becoming compatible with a lower standard of diskette.
 While there might be a lot of free space after copying the files to the image users may want to put other files on the
 disk (such as WatTCP configuration and/or a network packet driver) and a real diskette may contain bad sectors.
 
 With Mtools installed, create a diskette image with `mformat` then copy the binaries to the new image with `mcopy`.
 Below are some example configurations.
 
+> Tip: If you can only spare one diskette which can't fit both programs on it.
+> You could write `DL.EXE` and a packet driver to the disk
+> then use these to download `TH.EXE` over the network.
+
 #### On Compressed Binaries
 
 ##### Real Mode 5¼-inch DD Diskette
 
 ```bash
-mformat -C -i th_360.ima -v "TH" -f 360
-mcopy -i th_360.ima TH.EXE ::
+mformat -C -i newth360.ima -v "NEWTH" -f 360
+mcopy -i newth360.ima DL.EXE TH.EXE ::
 ```
 
-##### DOS4GW 5¼-inch QD Diskette
+##### DOS4GW 5¼-inch QD Diskettes
+
+```bash
+mformat -C -i dl4g_720.ima -v "DL4GW" -f 720
+mcopy -i dl4g_720.ima DL.EXE DOS4GW.EXE ::
+```
 
 ```bash
 mformat -C -i th4g_720.ima -v "TH4GW" -f 720
 mcopy -i th4g_720.ima TH.EXE DOS4GW.EXE ::
 ```
 
-##### Multi-arch 3½-inch HD Diskette
+##### Multi-arch 3½-inch HD Diskettes
+
+```bash
+mformat -C -i dlma_1.4.ima -v "DLMULTI" -f 1440
+mmd -i dlma_1.4.ima ::\16 \4G
+mcopy -i dlma_1.4.ima Dos16/DL.EXE ::\16
+mcopy -i dlma_1.4.ima Dos4g/DL.EXE Dos4g/DOS4GW.EXE ::\4G
+```
 
 ```bash
 mformat -C -i thma_1.4.ima -v "THMULTI" -f 1440
@@ -260,18 +281,44 @@ mcopy -i thma_1.4.ima Dos16/TH.EXE ::\16
 mcopy -i thma_1.4.ima Dos4g/TH.EXE Dos4g/DOS4GW.EXE ::\4G
 ```
 
+##### Multi-arch 3½-inch ED Diskette
+
+```bash
+mformat -C -i newth2.8.ima -v "NEWTH MA" -f 2880
+mmd -i newth2.8.ima ::\16 \4G
+mcopy -i newth2.8.ima Dos16/DL.EXE Dos16/TH.EXE ::\16
+mcopy -i newth2.8.ima Dos4g/DL.EXE Dos4g/TH.EXE Dos4g/DOS4GW.EXE ::\4G
+```
+
 #### On Uncompressed Binaries
 
-##### Real Mode 5¼-inch QD Diskette
+##### Real Mode 5¼-inch QD Diskettes
+
+```bash
+mformat -C -i dl_720.ima -v "DL" -f 720
+mcopy -i dl_720.ima DL.EXE ::
+```
 
 ```bash
 mformat -C -i th_720.ima -v "TH" -f 720
 mcopy -i th_720.ima TH.EXE ::
 ```
 
-##### DOS4GW 3½-inch HD Diskette
+##### DOS4GW 3½-inch HD Diskettes
+
+```bash
+mformat -C -i dl4g_1.4.ima -v "DL4GW" -f 1440
+mcopy -i dl4g_1.4.ima DL.EXE DOS4GW.EXE ::
+```
 
 ```bash
 mformat -C -i th4g_1.4.ima -v "TH4GW" -f 1440
 mcopy -i th4g_1.4.ima TH.EXE DOS4GW.EXE ::
+```
+
+##### DOS4GW 3½-inch ED Diskette
+
+```bash
+mformat -C -i new4g2.8.ima -v "NEWTH 4G" -f 2880
+mcopy -i new4g2.8.ima DL.EXE TH.EXE DOS4GW.EXE ::
 ```
