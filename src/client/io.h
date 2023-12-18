@@ -48,4 +48,8 @@ extern char *ioHttpGetRequest(const SOCKET *socket, const char *path, const char
 
 extern char *HttpGetEssentialResponse(const char *headerFile, char **scheme, char **response);
 
+extern char *FindHeader(const char *headerFile, const char *header, char **variable);
+
+extern char *SendRequest(const SOCKET *socket, const char *type, const char *path, const char *extra);
+
 #endif /* NEW_DL_IO_H */

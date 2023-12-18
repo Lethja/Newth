@@ -144,7 +144,7 @@ static void QueueRemove(void **state) {
     addressQueueClear();
 }
 
-static void headerGetEssential(void **state) {
+static void HeaderGetEssential(void **state) {
     const char *minHeader = "HTTP/1.1 200 OK" HTTP_EOL HTTP_EOL, *invalidHeader1 = "Hello", *invalidHeader2 = "World" HTTP_EOL HTTP_EOL, *emptyHeader = HTTP_EOL HTTP_EOL;
     char *scheme, *response = scheme = NULL;
     assert_null(HttpGetEssentialResponse(minHeader, &scheme, &response));
@@ -167,8 +167,28 @@ static void headerGetEssential(void **state) {
     assert_null(response);
 }
 
-const struct CMUnitTest queueTest[] = {cmocka_unit_test(headerGetEssential), cmocka_unit_test(QueueClear),
-                                       cmocka_unit_test(QueueCreate), cmocka_unit_test(QueueFind),
-                                       cmocka_unit_test(QueueRemove)};
+static void HeaderFind(void **state) {
+    const char *header = "HTTP/1.1 200 OK" HTTP_EOL
+                         "Date: Wed, 12 Aug 1981 00:00:00 GMT" HTTP_EOL
+                         "Content-Length: 5150" HTTP_EOL;
+    char *value = NULL;
+
+    assert_null(FindHeader(header, HTTP_EOL "Date", &value));
+    assert_non_null(value);
+    assert_string_equal(value, "Wed, 12 Aug 1981 00:00:00 GMT");
+    free(value), value = NULL;
+
+    assert_null(FindHeader(header, HTTP_EOL "Content-Length", &value));
+    assert_non_null(value);
+    assert_string_equal(value, "5150");
+    free(value), value = NULL;
+
+    assert_non_null(FindHeader(header, HTTP_EOL "Content-Disposition", &value));
+    assert_null(value);
+}
+
+const struct CMUnitTest queueTest[] = {cmocka_unit_test(HeaderFind), cmocka_unit_test(HeaderGetEssential),
+                                       cmocka_unit_test(QueueClear), cmocka_unit_test(QueueCreate),
+                                       cmocka_unit_test(QueueFind), cmocka_unit_test(QueueRemove)};
 
 #endif /* NEW_DL_TEST_QUEUE_H */

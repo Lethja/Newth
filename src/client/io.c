@@ -1,7 +1,7 @@
 #include <ctype.h>
 #include "io.h"
 
-static inline char *SendRequest(const SOCKET *socket, const char *type, const char *path, const char *extra) {
+char *SendRequest(const SOCKET *socket, const char *type, const char *path, const char *extra) {
     const char *http = HTTP_RES HTTP_EOL HTTP_EOL;
     size_t i = 0, len = strlen(type) + strlen(path) + strlen(http) + 2;
     char *req;
@@ -31,18 +31,27 @@ static inline char *SendRequest(const SOCKET *socket, const char *type, const ch
     return NULL;
 }
 
-static inline char *FindHeader(const char *headerFile, const char *header, char **variable) {
+char *FindHeader(const char *headerFile, const char *header, char **variable) {
     char *i, *s, *e;
     if ((i = strstr(headerFile, header))) {
         if ((s = strchr(i, ':'))) {
             if ((e = strchr(s, '\r'))) {
                 if (e[1] == '\n') {
-                    size_t len = e - s - 1;
-                    char *r = malloc(len + 1);
+                    size_t len;
+                    char *r;
+
+                    /* Skip any whitespace between ':' and value */
+                    do
+                        ++s;
+                    while (*s == ' ' || *s == '\0');
+
+                    len = e - s;
+                    r = malloc(len + 1);
                     if (r) {
-                        strncpy(r, &s[1], len);
+                        strncpy(r, s, len);
                         r[len] = '\0';
                         *variable = r;
+                        return NULL;
                     } else
                         return strerror(errno);
                 }
@@ -50,7 +59,7 @@ static inline char *FindHeader(const char *headerFile, const char *header, char 
         }
     }
     *variable = NULL;
-    return NULL;
+    return "Header not found";
 }
 
 char *HttpGetEssentialResponse(const char *headerFile, char **scheme, char **response) {
