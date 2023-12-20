@@ -40,15 +40,14 @@ DJGPP cross compilers to build from typical modern systems are also available.
 
 To build Newth with DJGPP you will need the following:
 
-- A i386 machine
-- A i386 compatible DOS operating system
+- 80386 compatible machine or emulator
+- DOS 4.0+ operating system or emulator
 - [DJGPP v2.05](https://www.delorie.com/djgpp/)
 - [GNU Mtools](https://www.gnu.org/software/mtools/) (optional)
 - [UPX binary compression](https://upx.github.io/) (optional)
 - [Watt32 library](https://github.com/gvanem/Watt-32) compiled with the same version of DJGPP
 
-> Tip: If hardware isn't available it's possible to run the binary with a emulator such as
-> [Dosbox-X](https://dosbox-x.com/)
+> Tip: If hardware isn't available it's possible to proceed with a emulator such as [Dosbox-X](https://dosbox-x.com/)
 
 ## Installing DJGPP
 
@@ -130,8 +129,10 @@ DJGPP\Watt32s\lib
 
 Newth depends on BSD-like networking API and compiling for DOS is no exception.
 For Newth to link to Watt32 correctly `USE_BSD_API` must be defined when building Watt32 library.
+It's optional but a good idea to define `USE_BOOTP` and/or `USE_DHCP` 
+so that Newth can configure its IP address automatically.
 
-To do this Watt32s `src\config.h` has to be manually modified like so:
+To do this `Watt32s\src\config.h` has to be manually modified like so:
 
 ```diff
  #undef USE_DEBUG
@@ -141,8 +142,9 @@ To do this Watt32s `src\config.h` has to be manually modified like so:
 +#define USE_BSD_API
  #undef USE_BSD_FATAL
 -#undef USE_BOOTP
+-#undef USE_DHCP
 +#define USE_BOOTP
- #undef USE_DHCP
++#define USE_DHCP
  #undef USE_RARP
  #undef USE_GEOIP
  #undef USE_IPV6
@@ -152,6 +154,10 @@ To do this Watt32s `src\config.h` has to be manually modified like so:
  #undef USE_STACKWALKER
  #undef USE_FSEXT
 ```
+
+> Caution: some versions of watt-32 have a broken implementation of DHCP that can cause an infinite loop.
+> On a real DOS this means it could very well lock up the computer with no option but to hard reset.
+> If in doubt leave `USE_DHCP` undefined. Most DHCP servers are backwards compatible with BOOTP.
 
 ## Build
 
@@ -179,7 +185,9 @@ then `CWSDPMI` can be used which is the DJGPP equivalent to Watcoms `DOS4GW.EXE`
 
 ### Using CWSDPMI
 
-There are two ways to use Cwsdpmi. Which way is better depends on the circumstances of the user and system
+There are two ways to use Cwsdpmi. Which way is better depends on the circumstances of the user and system.
+Both methods assume that you're in the same directory as `DL.EXE` and `TH.EXE` and that `cwsdpmi.svp` has been
+installed in it's default directory.
 
 #### Method 1: Copy CWSDPMI.EXE to the same directory as the program
 
@@ -187,20 +195,14 @@ Similar to `DOS4GW.EXE` for Watcom built applications.
 `CWSDPMI.EXE` can be placed in the same directory as the an EXE to make it start.
 Several DJGPP binaries in the same directory can make use of the same `CWSDPMI.EXE` which can save some disk space.
 
-Assuming that you're in the same directory as `TH.EXE` and that `cwsdpmi.svp` has been installed
-in it's default directory you can run the following to copy the executable.
-
 ```
 COPY %DOSDIR%\PROGS\CWSDPMI\CWSDPMI.EXE .
 ```
 
 #### Method 2: Include Cwsdpmi inside binaries
 
-Cwsdpmi can be baked into TH.EXE so that no external EXE file is needed to start the program.
-This can be a much cleaner alternative especially for executables that are intended for portable use.
-
-Assuming that you're in the same directory as `DL.EXE` and `TH.EXE` and that `cwsdpmi.svp` has been installed
-in it's default directory you can run the following to copy the executable.
+`CWSDPMI.EXE` can be baked into `DL.EXE` and `TH.EXE` so that no external files are needed to start the program.
+This is much more ideal for executables that are intended for portable use.
 
 ```
 COPY %DOSDIR%\PROGS\CWSDPMI\CWSDSTUB.EXE .

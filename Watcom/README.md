@@ -72,8 +72,8 @@ Here are some of the more common ones:
 
 To build Newth with Watcom you will need the following:
 
-- A i386 machine
-- A i386 compatible DOS operating system
+- 80386 compatible machine or emulator
+- DOS 4.0+ operating system or emulator
 - [GNU Mtools](https://www.gnu.org/software/mtools/) (optional)
 - [Open Watcom 1.9](http://openwatcom.org/)
 - [UPX binary compression](https://upx.github.io/) (optional)
@@ -179,8 +179,9 @@ To do this `Watt32s\src\config.h` has to be manually modified like so:
 +#define USE_BSD_API
  #undef USE_BSD_FATAL
 -#undef USE_BOOTP
+-#undef USE_DHCP
 +#define USE_BOOTP
- #undef USE_DHCP
++#define USE_DHCP
  #undef USE_RARP
  #undef USE_GEOIP
  #undef USE_IPV6
@@ -190,6 +191,10 @@ To do this `Watt32s\src\config.h` has to be manually modified like so:
  #undef USE_STACKWALKER
  #undef USE_FSEXT
 ```
+
+> Caution: some versions of watt-32 have a broken implementation of DHCP that can cause an infinite loop.
+> On a real DOS this means it could very well lock up the computer with no option but to hard reset.
+> If in doubt leave `USE_DHCP` undefined. Most DHCP servers are backwards compatible with BOOTP.
 
 ## Build Newth
 
