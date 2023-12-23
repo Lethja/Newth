@@ -66,15 +66,21 @@ char convertPathToUrl(char *path, size_t max) {
 }
 
 void convertUrlToPath(char *url) {
-    while (*url != '\0') {
-        if (*url == '%') {
-            if (url[1] != '\0' && url[2] != '\0') {
-                *url = HexToAscii(&url[1]);
-                memmove(&url[1], &url[3], strlen(url) - 2);
+    char *i = url;
+
+    while (*i != '\0') {
+        if (*i == '%') {
+            if (i[1] != '\0' && i[2] != '\0') {
+                *i = HexToAscii(&i[1]);
+                memmove(&i[1], &i[3], strlen(i) - 2);
             }
         }
-        ++url;
+        ++i;
     }
+
+    /* Prevent system from being tricked into going up in a path it shouldn't */
+    while ((i = strstr(url, "/..")))
+        memmove(&i[1], &i[3], strlen(i) - 2);
 }
 
 char *httpClientReadUri(const char *request) {
@@ -124,8 +130,10 @@ static inline void httpHeaderDataClamp(char **str, size_t *length) {
     end = strchr(*str, '\r');
     if (!end) {
         end = strchr(*str, '\n');
-        if (!end)
+        if (!end) {
             *length = 0;
+            return;
+        }
     }
 
     *length = end - *str;
