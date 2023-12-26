@@ -1,12 +1,11 @@
 #include "../client/io.h"
 #include "../client/queue.h"
 #include "../client/uri.h"
-#include "../platform/platform.h"
 #include "../server/http.h"
 
 #include <ctype.h>
 
-long Site = 0;
+long CurrentSite = 0;
 
 static inline SocketAddress *parseUri(const char *uri, UriDetails *uriDetails) {
     UriDetails details = uriDetailsNewFrom(uri);
@@ -17,11 +16,7 @@ static inline SocketAddress *parseUri(const char *uri, UriDetails *uriDetails) {
         return NULL;
     }
 
-    if (!uriDetails)
-        uriDetailsFree(&details);
-    else
-        memcpy(uriDetails, &details, sizeof(UriDetails));
-
+    memcpy(uriDetails, &details, sizeof(UriDetails));
     return address;
 }
 
@@ -47,7 +42,7 @@ static inline void parseUris(int argc, char **argv) {
 
 static inline char *handleQueueEntry(void) {
     PathQueue **pathQueue = addressQueueGet(), *q = pathQueue[0];
-    ServerHeaderResponse *headerResponse;
+    /* ServerHeaderResponse *headerResponse; */
     char *err = pathQueueConnect(q);
     char *header = NULL;
 
@@ -111,24 +106,30 @@ static inline void processCommand(char **args) {
             case '9':
                 errno = 0, l = strtol(args[0], NULL, 10);
                 if (!errno)  /* Must be a site switch */
-                    printf("Switching to site %ld not implemented yet\n", l), Site = l;
+                    printf("Switching to site %ld not implemented yet\n", l), CurrentSite = l;
                 break;
         }
     }
 }
 
+# if __STDC_VERSION__ >= 201112L
+_Noreturn
+#endif
+
 static inline void interactiveMode(void) {
     char input[BUFSIZ];
     char *args[5];
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "EndlessLoop"
     while (1) {
-        printf("%ld> ", Site);
-        fgets(input, sizeof(input), stdin);
-
-        processInput(input, (char **) args);
-
-        processCommand(args);
+        printf("%ld> ", CurrentSite);
+        if (fgets(input, sizeof(input), stdin)) {
+            processInput(input, (char **) args);
+            processCommand(args);
+        }
     }
+#pragma clang diagnostic pop
 }
 
 int main(int argc, char **argv) {
