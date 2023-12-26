@@ -346,6 +346,20 @@ short platformPathSystemToWeb(const char *rootPath, char *absolutePath, char *we
 */
 
 /**
+ * Convert a path from a system path to a FILE path.
+ * @param path In: The system path to convert to a FILE scheme
+ * @return NULL on failure, allocated memory containing the file scheme on success
+ */
+char *platformPathSystemToFileScheme(char *path);
+
+/**
+ * Change the working directory
+ * @param path The directory to set as the the new working directory
+ * @returns 0 on success, other on failure
+ */
+int platformPathSystemChangeWorkingDirectory(const char* path);
+
+/**
  * Open a file with the largest bit offset the platform supports
  * @param fileName In: Path to file
  * @param fileMode In: Modes to use on the file

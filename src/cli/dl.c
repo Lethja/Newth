@@ -1,5 +1,6 @@
 #include "../client/io.h"
 #include "../client/queue.h"
+#include "../client/site.h"
 #include "../client/uri.h"
 #include "../server/http.h"
 
@@ -89,10 +90,11 @@ static inline void processCommand(char **args) {
         long l;
         switch (toupper(args[0][0])) {
             case 'E':
+                siteArrayFree();
                 exit(0);
             case 'P':
                 if (toupper(args[0][1]) == 'W' && toupper(args[0][2]) == 'D')
-                    puts("Printing working directory not yet implemented");
+                    puts(siteGetWorkingDirectory(siteArrayGetActive()));
                 break;
             case '0':
             case '1':
@@ -119,6 +121,8 @@ _Noreturn
 static inline void interactiveMode(void) {
     char input[BUFSIZ];
     char *args[5];
+
+    siteArrayInit();
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "EndlessLoop"

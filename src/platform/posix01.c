@@ -539,6 +539,21 @@ short platformPathWebToSystem(const char *rootPath, char *webPath, char *absolut
     return 0;
 }
 
+char *platformPathSystemToFileScheme(char *path) {
+    char *r, *abs = platformRealPath(path);
+    size_t absLen;
+
+    if (!abs || !(absLen = strlen(abs)) || !(r = malloc(absLen + 8)))
+        return NULL;
+
+    strcpy(r, "file://"), strcat(r, abs), free(abs);
+    return r;
+}
+
+int platformPathSystemChangeWorkingDirectory(const char *path) {
+    return chdir(path);
+}
+
 PlatformFile platformFileOpen(const char *fileName, const char *fileMode) {
     return fopen(fileName, fileMode);
 }
