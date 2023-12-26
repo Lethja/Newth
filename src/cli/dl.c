@@ -6,12 +6,7 @@
 
 #include <ctype.h>
 
-enum mode {
-    MODE_THIS,
-    MODE_SITE
-};
-
-static char InteractiveMode = MODE_THIS;
+long Site = 0;
 
 static inline SocketAddress *parseUri(const char *uri, UriDetails *uriDetails) {
     UriDetails details = uriDetailsNewFrom(uri);
@@ -95,35 +90,30 @@ static inline void processCommand(char **args) {
     if (args[0] == NULL)
         return;
 
-    /* TODO: Use mounting logic instead */
-    switch(InteractiveMode) {
-        case MODE_THIS:
-            switch(toupper(args[0][0])) {
-                case 'E':
-                    exit(0);
-                case 'S':
-                    if(!args[1])
-                        puts("Site not implemented yet");
-                    break;
-            }
-            break;
-        default:
-            switch(toupper(args[0][0])) {
-                case 'C':
-                    if(toupper(args[0][1]) == 'D')
-                        puts("This cd not implemented yet");
-                    break;
-                case 'E':
-                    exit(0);
-                case 'P':
-                    if(toupper(args[0][1]) == 'W' && toupper(args[0][1]) == 'D')
-                        puts("This pwd not implemented yet");
-                    break;
-                case 'T':
-                    InteractiveMode = MODE_THIS;
-                    break;
-            }
-            break;
+    if (args[1] == NULL) {
+        long l;
+        switch (toupper(args[0][0])) {
+            case 'E':
+                exit(0);
+            case 'P':
+                if (toupper(args[0][1]) == 'W' && toupper(args[0][2]) == 'D')
+                    puts("Printing working directory not yet implemented");
+                break;
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+                errno = 0, l = strtol(args[0], NULL, 10);
+                if (!errno)  /* Must be a site switch */
+                    printf("Switching to site %ld not implemented yet\n", l), Site = l;
+                break;
+        }
     }
 }
 
@@ -132,7 +122,7 @@ static inline void interactiveMode(void) {
     char *args[5];
 
     while (1) {
-        printf("%d> ", InteractiveMode);
+        printf("%ld> ", Site);
         fgets(input, sizeof(input), stdin);
 
         processInput(input, (char **) args);
@@ -154,7 +144,7 @@ int main(int argc, char **argv) {
 
     switch (addressQueueGetTotalPathRequests()) {
         case 0:
-            if(isatty(fileno(stdout)))
+            if (isatty(fileno(stdout)))
                 interactiveMode();
             else
                 puts("Nothing queued for download");
