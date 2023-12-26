@@ -76,7 +76,7 @@ static inline void processInput(char *input, char **args) {
             ++input;
 
         if (*input != '\0')
-            *++input = '\0';
+            *input = '\0', ++input;
     }
 
     args[i] = NULL;
@@ -86,7 +86,7 @@ static inline void processCommand(char **args) {
     if (args[0] == NULL)
         return;
 
-    if (args[1] == NULL) {
+    if (args[1] == NULL || args[1][0] == '-') {
         long l;
         switch (toupper(args[0][0])) {
             case 'E':
@@ -109,6 +109,13 @@ static inline void processCommand(char **args) {
                 errno = 0, l = strtol(args[0], NULL, 10);
                 if (!errno)  /* Must be a site switch */
                     printf("Switching to site %ld not implemented yet\n", l), CurrentSite = l;
+                break;
+        }
+    } else if (args[2] == NULL || args[2][0] == '-') {
+        switch (toupper(args[0][0])) {
+            case 'C':
+                if (toupper(args[0][1]) == 'D')
+                    siteSetWorkingDirectory(siteArrayGetActive(), args[1]);
                 break;
         }
     }

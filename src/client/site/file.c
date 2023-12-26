@@ -19,6 +19,7 @@ int fileSiteSchemeChangeDirectory(FileSite *self, const char *path) {
         if (platformGetWorkingDirectory(wd, FILENAME_MAX))
             UpdateFileScheme(self, wd);
 
+        free(wd);
         return 0;
     }
 
