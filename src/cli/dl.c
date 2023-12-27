@@ -82,6 +82,26 @@ static inline void processInput(char *input, char **args) {
     args[i] = NULL;
 }
 
+static inline void PrintDirectoryFiles(Site *site) {
+    void *dir;
+    SiteDirectoryEntry *entry;
+
+    /* TODO: Allow parameters to determine path directory */
+    if (!(dir = siteOpenDirectoryListing(site, ".")))
+        return;
+
+    putc(' ', stdout);
+    while ((entry = siteReadDirectoryListing(site, dir))) {
+        if (strchr(entry->name, ' '))
+            printf("'%s'   ", entry->name);
+        else
+            printf("%s   ", entry->name);
+        siteDirectoryEntryFree(entry);
+    }
+
+    siteCloseDirectoryListing(site, dir), putc('\n', stdout);
+}
+
 static inline void processCommand(char **args) {
     if (args[0] == NULL)
         return;
@@ -92,6 +112,10 @@ static inline void processCommand(char **args) {
             case 'E':
                 siteArrayFree();
                 exit(0);
+            case 'L':
+                if (toupper(args[0][1]) == 'S')
+                    PrintDirectoryFiles(siteArrayGetActive());
+                break;
             case 'P':
                 if (toupper(args[0][1]) == 'W' && toupper(args[0][2]) == 'D')
                     puts(siteGetWorkingDirectory(siteArrayGetActive()));

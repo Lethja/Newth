@@ -1,6 +1,5 @@
+#include "../site.h"
 #include "file.h"
-
-#include "../../platform/platform.h"
 
 static void UpdateFileScheme(FileSite *self, char *path) {
     if (self->workingDirectory)
@@ -48,4 +47,44 @@ FileSite fileSiteSchemeNew(void) {
 
     free(wd);
     return self;
+}
+
+void *fileSiteOpenDirectoryListing(char *path) {
+    PlatformFileStat stat;
+
+    if (!platformFileStat(path, &stat)) {
+        if (platformFileStatIsDirectory(&stat))
+            return platformDirOpen(path);
+    }
+
+    return NULL;
+}
+
+void *fileSiteReadDirectoryListing(void *listing) {
+    char *name;
+    size_t nameLen;
+    PlatformDirEntry *entry;
+    SiteDirectoryEntry *siteEntry;
+
+    fileSiteReadDirectoryListing_skip:
+    if (!(entry = platformDirRead(listing)) || !(name = platformDirEntryGetName(entry, &nameLen)) || !nameLen)
+        return NULL;
+
+    if(name[0] == '.')
+        goto fileSiteReadDirectoryListing_skip;
+
+    if(!(siteEntry = malloc(sizeof(SiteDirectoryEntry))))
+        return NULL;
+
+    if (!(siteEntry->name = malloc(nameLen + 1))) {
+        free(siteEntry);
+        return NULL;
+    }
+
+    strcpy(siteEntry->name, name);
+    return siteEntry;
+}
+
+void fileSiteCloseDirectoryListing(void *listing) {
+    platformDirClose(listing);
 }

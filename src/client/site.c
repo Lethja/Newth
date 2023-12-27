@@ -73,3 +73,37 @@ int siteSetWorkingDirectory(Site *self, char *path) {
     }
 }
 
+void *siteOpenDirectoryListing(Site *self, char *path) {
+    switch (self->type) {
+        case SITE_FILE:
+            return fileSiteOpenDirectoryListing(path);
+        default:
+            return NULL;
+    }
+}
+
+SiteDirectoryEntry *siteReadDirectoryListing(Site *self, void *listing) {
+    switch (self->type) {
+        case SITE_FILE:
+            return fileSiteReadDirectoryListing(listing);
+        default:
+            return NULL;
+    }
+}
+
+void siteCloseDirectoryListing(Site *self, void *listing) {
+    switch (self->type) {
+        case SITE_FILE:
+            fileSiteCloseDirectoryListing(listing);
+            break;
+        default:
+            break;
+    }
+}
+
+void siteDirectoryEntryFree(void *entry) {
+    SiteDirectoryEntry *e = (SiteDirectoryEntry*) entry;
+    if (e->name)
+        free(e->name);
+    free(e);
+}

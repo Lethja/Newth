@@ -3,6 +3,7 @@
 
 #include "site/file.h"
 #include "site/http.h"
+#include "../platform/platform.h"
 
 #include <stddef.h>
 
@@ -17,6 +18,10 @@ typedef struct Site {
         HttpSite http;
     } site;
 } Site;
+
+typedef struct SiteDirectoryEntry {
+    char *name;
+} SiteDirectoryEntry;
 
 Site siteNew(enum SiteType type, const char *path);
 
@@ -33,5 +38,13 @@ void siteArrayFree(void);
 char *siteGetWorkingDirectory(Site *self);
 
 int siteSetWorkingDirectory(Site *self, char *path);
+
+void *siteOpenDirectoryListing(Site *self, char *path);
+
+SiteDirectoryEntry *siteReadDirectoryListing(Site *self, void *listing);
+
+void siteCloseDirectoryListing(Site *self, void *listing);
+
+void siteDirectoryEntryFree(void *entry);
 
 #endif /* NEW_DL_SITE_H */
