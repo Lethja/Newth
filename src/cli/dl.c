@@ -6,8 +6,6 @@
 
 #include <ctype.h>
 
-long CurrentSite = 0;
-
 static inline SocketAddress *parseUri(const char *uri, UriDetails *uriDetails) {
     UriDetails details = uriDetailsNewFrom(uri);
     SocketAddress *address = calloc(1, sizeof(SocketAddress));
@@ -108,6 +106,7 @@ static inline void processCommand(char **args) {
 
     if (args[1] == NULL || args[1][0] == '-') {
         long l;
+        char *str;
         switch (toupper(args[0][0])) {
             case 'E':
                 siteArrayFree();
@@ -132,8 +131,11 @@ static inline void processCommand(char **args) {
             case '9':
                 errno = 0, l = strtol(args[0], NULL, 10);
                 if (!errno)  /* Must be a site switch */
-                    printf("Switching to site %ld not implemented yet\n", l), CurrentSite = l;
+                    if ((str = siteArraySetActiveNth(l)))
+                        puts(str);
                 break;
+            default:
+                goto processCommand_notFound;
         }
     } else if (args[2] == NULL || args[2][0] == '-') {
         switch (toupper(args[0][0])) {
@@ -141,8 +143,15 @@ static inline void processCommand(char **args) {
                 if (toupper(args[0][1]) == 'D')
                     siteSetWorkingDirectory(siteArrayGetActive(), args[1]);
                 break;
+            default:
+                goto processCommand_notFound;
         }
+
     }
+    return;
+
+    processCommand_notFound:
+    puts("Command not found");
 }
 
 # if __STDC_VERSION__ >= 201112L
@@ -158,7 +167,7 @@ static inline void interactiveMode(void) {
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "EndlessLoop"
     while (1) {
-        printf("%ld> ", CurrentSite);
+        printf("%ld> ", siteArrayGetActiveNth());
         if (fgets(input, sizeof(input), stdin)) {
             processInput(input, (char **) args);
             processCommand(args);

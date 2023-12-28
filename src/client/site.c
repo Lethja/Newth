@@ -1,8 +1,7 @@
 #include "site.h"
-#include "../platform/platform.h"
 
 typedef struct SiteArray {
-    size_t len, set;
+    long len, set;
     Site *array;
 } SiteArray;
 
@@ -27,6 +26,21 @@ Site *siteArrayGetActive(void) {
         return NULL;
 
     return &Sites.array[Sites.set];
+}
+
+long siteArrayGetActiveNth(void) {
+    if (Sites.set >= Sites.len)
+        return -1;
+
+    return Sites.set;
+}
+
+char *siteArraySetActiveNth(long siteNumber) {
+    if (siteNumber >= Sites.len)
+        return "Invalid site";
+
+    Sites.set = siteNumber;
+    return NULL;
 }
 
 char *siteArrayInit(void) {
@@ -102,7 +116,7 @@ void siteCloseDirectoryListing(Site *self, void *listing) {
 }
 
 void siteDirectoryEntryFree(void *entry) {
-    SiteDirectoryEntry *e = (SiteDirectoryEntry*) entry;
+    SiteDirectoryEntry *e = (SiteDirectoryEntry *) entry;
     if (e->name)
         free(e->name);
     free(e);

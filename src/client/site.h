@@ -27,7 +27,7 @@ Site siteNew(enum SiteType type, const char *path);
 
 Site *siteArrayGetActive(void);
 
-size_t *siteArrayGetActiveNth(void);
+long siteArrayGetActiveNth(void);
 
 char *siteArrayInit(void);
 
@@ -46,5 +46,7 @@ SiteDirectoryEntry *siteReadDirectoryListing(Site *self, void *listing);
 void siteCloseDirectoryListing(Site *self, void *listing);
 
 void siteDirectoryEntryFree(void *entry);
+
+char *siteArraySetActiveNth(long siteNumber);
 
 #endif /* NEW_DL_SITE_H */
