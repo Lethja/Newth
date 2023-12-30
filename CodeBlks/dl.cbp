@@ -51,6 +51,7 @@
 				<Compiler>
 					<Add option="-O2" />
 					<Add option="-DWIN32=1" />
+					<Add option="-DNDEBUG=1" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -99,10 +100,91 @@
 		<Compiler>
 			<Add option="-Wall" />
 			<Add option="-ansi" />
+			<Add option="-Wno-unknown-pragmas" />
 		</Compiler>
 		<Unit filename="../src/cli/dl.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="../src/client/io.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/client/io.h" />
+		<Unit filename="../src/client/queue.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/client/queue.h" />
+		<Unit filename="../src/client/site.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/client/site.h" />
+		<Unit filename="../src/client/site/file.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/client/site/file.h" />
+		<Unit filename="../src/client/site/http.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/client/site/http.h" />
+		<Unit filename="../src/client/uri.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/client/uri.h" />
+		<Unit filename="../src/platform/mscrtdl.c">
+			<Option compilerVar="CC" />
+			<Option target="MingW32 Debug" />
+			<Option target="MingW32 Release" />
+		</Unit>
+		<Unit filename="../src/platform/mscrtdl.h">
+			<Option target="MingW32 Debug" />
+			<Option target="MingW32 Release" />
+		</Unit>
+		<Unit filename="../src/platform/platform.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/platform/platform.h" />
+		<Unit filename="../src/platform/winsock/wsipv6.c">
+			<Option compilerVar="CC" />
+			<Option target="MingW32 Debug" />
+			<Option target="MingW32 Release" />
+			<Option target="Watcom Debug" />
+			<Option target="Watcom Release" />
+		</Unit>
+		<Unit filename="../src/platform/winsock/wsipv6.h">
+			<Option target="MingW32 Debug" />
+			<Option target="MingW32 Release" />
+			<Option target="Watcom Debug" />
+			<Option target="Watcom Release" />
+		</Unit>
+		<Unit filename="../src/platform/winsock/wsock1.c">
+			<Option compilerVar="CC" />
+			<Option target="MingW32 Debug" />
+			<Option target="MingW32 Release" />
+			<Option target="Watcom Debug" />
+			<Option target="Watcom Release" />
+		</Unit>
+		<Unit filename="../src/platform/winsock/wsock1.h">
+			<Option target="MingW32 Debug" />
+			<Option target="MingW32 Release" />
+			<Option target="Watcom Debug" />
+			<Option target="Watcom Release" />
+		</Unit>
+		<Unit filename="../src/platform/winsock/wsock2.c">
+			<Option compilerVar="CC" />
+			<Option target="MingW32 Debug" />
+			<Option target="MingW32 Release" />
+			<Option target="Watcom Debug" />
+			<Option target="Watcom Release" />
+		</Unit>
+		<Unit filename="../src/platform/winsock/wsock2.h">
+			<Option target="MingW32 Debug" />
+			<Option target="MingW32 Release" />
+			<Option target="Watcom Debug" />
+			<Option target="Watcom Release" />
+		</Unit>
+		<Unit filename="../src/server/event.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/server/event.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />
