@@ -96,10 +96,11 @@ static inline void PrintDirectoryFiles(Site *site) {
 
     putc(' ', stdout);
     while ((entry = siteReadDirectoryListing(site, dir))) {
+        char *folder = entry->isDirectory ? "/" : "";
         if (strchr(entry->name, ' '))
-            printf("'%s'   ", entry->name);
+            printf("'%s%s'   ", entry->name, folder);
         else
-            printf("%s   ", entry->name);
+            printf("%s%s   ", entry->name, folder);
         siteDirectoryEntryFree(entry);
     }
 
@@ -115,15 +116,22 @@ static inline void processCommand(char **args) {
         char *str;
         switch (toupper(args[0][0])) {
             case 'E':
-                siteArrayFree();
-                exit(0);
+                if (toupper(args[0][1]) == 'X' && toupper(args[0][2]) == 'I' && toupper(args[0][3]) == 'T') {
+                    siteArrayFree();
+                    exit(0);
+                } else
+                    goto processCommand_notFound;
             case 'L':
                 if (toupper(args[0][1]) == 'S')
                     PrintDirectoryFiles(siteArrayGetActive());
+                else
+                    goto processCommand_notFound;
                 break;
             case 'P':
                 if (toupper(args[0][1]) == 'W' && toupper(args[0][2]) == 'D')
                     puts(siteGetWorkingDirectory(siteArrayGetActive()));
+                else
+                    goto processCommand_notFound;
                 break;
             case '0':
             case '1':
@@ -148,6 +156,8 @@ static inline void processCommand(char **args) {
             case 'C':
                 if (toupper(args[0][1]) == 'D')
                     siteSetWorkingDirectory(siteArrayGetActive(), args[1]);
+                else
+                    goto processCommand_notFound;
                 break;
             default:
                 goto processCommand_notFound;

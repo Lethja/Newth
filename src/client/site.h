@@ -21,6 +21,8 @@ typedef struct Site {
 
 typedef struct SiteDirectoryEntry {
     char *name;
+    char *modifiedDate;
+    char isDirectory;
 } SiteDirectoryEntry;
 
 Site siteNew(enum SiteType type, const char *path);

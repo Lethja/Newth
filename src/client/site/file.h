@@ -17,8 +17,6 @@ void *fileSiteReadDirectoryListing(void *listing);
 
 void fileSiteCloseDirectoryListing(void *listing);
 
-void siteDirectoryEntryFree(void *entry);
-
 FileSite fileSiteSchemeNew(void);
 
 #endif /* NEW_DL_FILE_H */
