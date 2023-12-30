@@ -3,11 +3,11 @@ CC=wcc386
 # Default building process
 all: .SYMBOLIC dl.exe th.exe
 
-dl.exe: release doswatb.o event.o io.o platform.o queue.o uri.o dl.o
+dl.exe: release doswatb.o event.o io.o platform.o queue.o site.o s_file.o s_http.o uri.o dl.o
     %write link.lnk NAME $@
     %write link.lnk SYS  dos4g
     %write link.lnk OPT  st=8192
-    %write link.lnk FILE doswatb.o,event.o,io.o,platform.o,queue.o,uri.o,dl.o
+    %write link.lnk FILE doswatb.o,event.o,io.o,platform.o,queue.o,site.o,s_file.o,s_http.o,uri.o,dl.o
     %write link.lnk LIBP watt32s/lib/
     %write link.lnk LIBF wattcpwf.lib
     wlink @link.lnk
@@ -55,6 +55,12 @@ io.o: ../../src/client/io.c
     $(CC) @flag.lnk -fo="$@" "../../src/client/io.c"
 queue.o: ../../src/client/queue.c
     $(CC) @flag.lnk -fo="$@" "../../src/client/queue.c"
+site.o: ../../src/client/site.c
+    $(CC) @flag.lnk -fo="$@" "../../src/client/site.c"
+s_file.o: ../../src/client/site/file.c
+    $(CC) @flag.lnk -fo="$@" "../../src/client/site/file.c"
+s_http.o: ../../src/client/site/http.c
+    $(CC) @flag.lnk -fo="$@" "../../src/client/site/http.c"
 routine.o: ../../src/server/routine.c
     $(CC) @flag.lnk -fo="$@" "../../src/server/routine.c"
 server.o: ../../src/server/server.c
