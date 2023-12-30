@@ -1,8 +1,6 @@
 #ifndef NEW_DL_FILE_H
 #define NEW_DL_FILE_H
 
-#include "../site.h"
-
 typedef struct FileSite {
     char *workingDirectory;
 } FileSite;

@@ -1,6 +1,8 @@
 #include "../site.h"
 #include "file.h"
 
+#include <sys/stat.h>
+
 static void UpdateFileScheme(FileSite *self, char *path) {
     if (self->workingDirectory)
         free(self->workingDirectory);
