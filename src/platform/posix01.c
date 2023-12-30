@@ -94,6 +94,11 @@ static SOCKET *BindAllPortsManually(sa_family_t family, char *ports, SOCKET *max
 
 #pragma endregion
 
+typedef struct PlatformDir {
+    DIR *dir;
+    char *path;
+} PlatformDir;
+
 void platformPathCombine(char *output, const char *path1, const char *path2) {
     const char *pathDivider = "/";
     size_t len = strlen(path1), idx = len - 1;
@@ -438,15 +443,40 @@ char platformTimeGetFromHttpStr(const char *str, PlatformTimeStruct *time) {
 }
 
 void *platformDirOpen(char *path) {
-    return opendir(path);
+    PlatformDir *self;
+    DIR *d = opendir(path);
+
+    if (!d)
+        return NULL;
+
+    if (!(self = malloc(sizeof(PlatformDir)))) {
+        closedir(d);
+        return NULL;
+    }
+
+    if (!(self->path = malloc(strlen(path) + 1))) {
+        closedir(d);
+        free(self);
+        return NULL;
+    }
+
+    strcpy(self->path, path);
+    self->dir = d;
+    return self;
 }
 
 void platformDirClose(void *dirp) {
-    closedir(dirp);
+    PlatformDir *self = dirp;
+
+    closedir(self->dir);
+    free(self->path);
+    free(self);
 }
 
 void *platformDirRead(void *dirp) {
-    return readdir(dirp);
+    PlatformDir *self = dirp;
+
+    return readdir(self->dir);
 }
 
 char *platformDirEntryGetName(PlatformDirEntry *entry, size_t *length) {
@@ -467,33 +497,35 @@ char platformDirEntryIsHidden(PlatformDirEntry *entry) {
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "UnusedParameter"
 
-char platformDirEntryIsDirectory(char *rootPath, char *webPath, PlatformDirEntry *entry) {
+char platformDirEntryIsDirectory(PlatformDirEntry *entry, void *dirp) {
 #pragma clang diagnostic pop
     struct dirent *d = entry;
+    PlatformDir *dir = dirp;
+    char *entryPath;
+    struct stat st;
 
 #ifdef _DIRENT_HAVE_D_TYPE
 
-    return d->d_type == DT_DIR ? 1 : 0;
-
-#else
-
-    struct stat st;
-    char a[FILENAME_MAX] = "\0", b[FILENAME_MAX] = "\0";
-
-    platformPathCombine(a, rootPath, webPath);
-
-    if (!a[0])
-        return 0;
-
-    platformPathCombine(b, a, platformDirEntryGetName(d, NULL));
-    if (!b[0] || stat(b, &st))
-        return 0;
-
-
-    return S_ISDIR(st.st_mode);
+    if (d->d_type != DT_UNKNOWN)
+        return d->d_type == DT_DIR ? 1 : 0;
 
 #endif /* _DIRENT_HAVE_D_TYPE */
 
+    if (!(entryPath = malloc(strlen(dir->path) + strlen(d->d_name) + 1))) {
+        free(dir);
+        return 0;
+    }
+
+    platformPathCombine(entryPath, dir->path, d->d_name);
+
+    if (stat(entryPath, &st)) {
+        free(entryPath), free(dir);
+        return 0;
+    }
+
+    free(entryPath);
+
+    return S_ISDIR(st.st_mode);
 }
 
 int platformFileStat(const char *path, PlatformFileStat *fileStat) {

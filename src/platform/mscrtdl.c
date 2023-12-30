@@ -419,7 +419,7 @@ char platformDirEntryIsHidden(PlatformDirEntry *entry) {
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "UnusedParameter"
 
-char platformDirEntryIsDirectory(char *rootPath, char *webPath, PlatformDirEntry *entry) {
+char platformDirEntryIsDirectory(PlatformDirEntry *entry, void *dirp) {
 
     if (entry)
         return (char) ((entry->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) > 0);

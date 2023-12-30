@@ -273,12 +273,11 @@ char platformDirEntryIsHidden(PlatformDirEntry *entry);
 
 /**
  * Check if entry is a Directory (aka Folder)
- * @param rootPath In: The root directory
- * @param webPath In: The web relative directory
  * @param entry In: The entry to check if the file/folder is a folder
+ * @param dirp In: A pointer created from platformDirOpen() and used by platformDirRead() to get the entry variable
  * @return Zero if not a directory/folder, other if it is a directory/folder
  */
-char platformDirEntryIsDirectory(char *rootPath, char *webPath, PlatformDirEntry *entry);
+char platformDirEntryIsDirectory(PlatformDirEntry *entry, void *dirp);
 
 /**
  * Get the status structure of a file

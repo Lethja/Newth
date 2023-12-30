@@ -11,6 +11,13 @@
 
 #define MAX_LISTEN 2
 
+typedef struct PlatformDir {
+    DIR *dir;
+#ifdef DJGPP
+    char *path;
+#endif
+} PlatformDir;
+
 char platformShouldExit(void) {
     if (_bios_keybrd(1)) {
         unsigned short key = _bios_keybrd(0);
@@ -164,15 +171,42 @@ char platformTimeGetFromHttpStr(const char *str, PlatformTimeStruct *time) {
 }
 
 void *platformDirOpen(char *path) {
-    return opendir(path);
+    PlatformDir *self;
+    DIR *d = opendir(path);
+
+    if(!d)
+        return NULL;
+
+    if(!(self = malloc(sizeof(PlatformDir)))) {
+        closedir(d);
+        return NULL;
+    }
+#ifdef DJGPP
+    if(!(self->path = malloc(strlen(path) + 1))) {
+        closedir(d);
+        free(self);
+        return NULL;
+    }
+
+    strcpy(self->path, path);
+#endif
+    self->dir = d;
+    return self;
 }
 
 void platformDirClose(void *dirp) {
-    closedir(dirp);
+    PlatformDir *self = dirp;
+
+    closedir(self->dir);
+#ifdef DJGPP
+    free(self->path);
+#endif
 }
 
 void *platformDirRead(void *dirp) {
-    return readdir(dirp);
+    PlatformDir *self = dirp;
+
+    return readdir(self->dir);
 }
 
 char *platformDirEntryGetName(PlatformDirEntry *entry, size_t *length) {
@@ -188,11 +222,12 @@ char platformDirEntryIsHidden(PlatformDirEntry *entry) {
 #endif
 }
 
-char platformDirEntryIsDirectory(char *rootPath, char *webPath, PlatformDirEntry *entry) {
+char platformDirEntryIsDirectory(PlatformDirEntry *entry, void *dirp) {
 #ifdef DJGPP
     PlatformFileStat st;
+    PlatformDir *pd = dirp;
     char tmp1[PATH_MAX], tmp2[PATH_MAX];
-    platformPathCombine((char *) &tmp1, rootPath, webPath);
+    strncpy((char *) &tmp1, pd->path, PATH_MAX);
     platformPathCombine((char *) &tmp2, (char *) &tmp1, entry->d_name);
     _fixpath((char *) &tmp2, (char *) &tmp1);
     if(!platformFileStat((char *) &tmp1, &st))

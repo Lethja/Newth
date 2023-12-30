@@ -34,7 +34,7 @@ size_t DirectoryRoutineContinue(Routine *self) {
                     memcpy(pathBuf + pathLen, entryName, entryLen + 1);
 
                 /* Append '/' on the end of directory entries */
-                if (platformDirEntryIsDirectory(self->type.dir.rootPath, self->webPath, entry)) {
+                if (platformDirEntryIsDirectory(entry, self->type.dir.directory)) {
                     size_t len = strlen(pathBuf);
                     pathBuf[len] = '/', pathBuf[len + 1] = '\0';
                 }
