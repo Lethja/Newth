@@ -174,10 +174,10 @@ void *platformDirOpen(char *path) {
     PlatformDir *self;
     DIR *d = opendir(path);
 
-    if(!d)
+    if (!d)
         return NULL;
 
-    if(!(self = malloc(sizeof(PlatformDir)))) {
+    if (!(self = malloc(sizeof(PlatformDir)))) {
         closedir(d);
         return NULL;
     }
@@ -212,6 +212,31 @@ void *platformDirRead(void *dirp) {
 char *platformDirEntryGetName(PlatformDirEntry *entry, size_t *length) {
     *length = strlen(entry->d_name);
     return entry->d_name;
+}
+
+static inline void ParseDosToFileScheme(char *absolutePath) {
+    if (absolutePath[1] == ':')
+        absolutePath[1] = tolower(absolutePath[0]), absolutePath[0] = '/';
+
+    absolutePath = &absolutePath[2];
+    while (*absolutePath != '\0')
+        *absolutePath = *absolutePath == '\\' ? '/' : tolower(*absolutePath), ++absolutePath;
+}
+
+char *platformPathSystemToFileScheme(char *path) {
+    char *r, *abs = platformRealPath(path);
+    size_t absLen;
+
+    if (!abs || !(absLen = strlen(abs)) || !(r = malloc(absLen + 8)))
+        return NULL;
+
+    ParseDosToFileScheme(abs);
+    strcpy(r, "file://"), strcat(r, abs), free(abs);
+    return r;
+}
+
+int platformPathSystemChangeWorkingDirectory(const char *path) {
+    return chdir(path);
 }
 
 char platformDirEntryIsHidden(PlatformDirEntry *entry) {
