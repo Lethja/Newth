@@ -11,6 +11,7 @@
 #include "winsock/wsipv6.h"
 
 #include <ctype.h>
+#include <direct.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
@@ -812,6 +813,32 @@ char platformTimeGetFromHttpStr(const char *str, PlatformTimeStruct *time) {
 }
 
 #pragma endregion
+
+
+static inline void ParseDosToFileScheme(char *absolutePath) {
+    if (absolutePath[1] == ':')
+        absolutePath[1] = tolower(absolutePath[0]), absolutePath[0] = '/';
+
+    absolutePath = &absolutePath[2];
+    while (*absolutePath != '\0')
+        *absolutePath = *absolutePath == '\\' ? '/' : tolower(*absolutePath), ++absolutePath;
+}
+
+char *platformPathSystemToFileScheme(char *path) {
+    char *r, *abs = platformRealPath(path);
+    size_t absLen;
+
+    if (!abs || !(absLen = strlen(abs)) || !(r = malloc(absLen + 8)))
+        return NULL;
+
+    ParseDosToFileScheme(abs);
+    strcpy(r, "file://"), strcat(r, abs), free(abs);
+    return r;
+}
+
+int platformPathSystemChangeWorkingDirectory(const char *path) {
+    return chdir(path);
+}
 
 int platformSocketSetBlock(SOCKET socket, char blocking) {
     unsigned long mode = (unsigned char) blocking;

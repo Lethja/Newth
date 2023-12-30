@@ -1,4 +1,5 @@
 #include <ctype.h>
+#include <sys/types.h>
 #include "io.h"
 
 char *SendRequest(const SOCKET *socket, const char *type, const char *path, const char *extra) {
@@ -98,7 +99,7 @@ char *ioCreateSocketFromSocketAddress(SocketAddress *self, SOCKET *sock) {
 }
 
 char *ioHttpHeadRead(const SOCKET *socket, char **header) {
-    PlatformFileOffset totalBytes = 0;
+    unsigned int totalBytes = 0;
     ssize_t bytesReceived;
     char *buf = malloc(SB_DATA_SIZE), *headEnd;
     if (!buf)

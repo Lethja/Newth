@@ -61,7 +61,7 @@ void siteFree(Site *self) {
 }
 
 void siteArrayFree(void) {
-    size_t i;
+    int i;
     for (i = 0; i < Sites.len; ++i)
         siteFree(&Sites.array[i]);
     free(Sites.array);

@@ -2,6 +2,7 @@
 #include "../platform/platform.h"
 
 #include <ctype.h>
+#include <limits.h>
 
 #pragma region Static Helper Functions
 

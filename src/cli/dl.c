@@ -26,7 +26,7 @@ static inline SocketAddress *parseUri(const char *uri, UriDetails *uriDetails) {
 }
 
 static inline void parseUris(int argc, char **argv) {
-    size_t i;
+    int i;
     unsigned int e;
     for (e = 0, i = 1; i < argc; ++i) {
         UriDetails details;
@@ -195,10 +195,14 @@ int main(int argc, char **argv) {
 
     switch (addressQueueGetTotalPathRequests()) {
         case 0:
+#ifndef _WIN32
             if (isatty(fileno(stdout)))
+#endif /* _WIN32 */
                 interactiveMode();
+#ifndef _WIN32
             else
                 puts("Nothing queued for download");
+#endif /* _WIN32 */
             return 1;
         case 1:
             if ((err = handleQueueEntry())) {
