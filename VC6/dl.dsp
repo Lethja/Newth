@@ -89,13 +89,77 @@ LINK32=link.exe
 
 SOURCE=..\src\cli\dl.c
 # End Source File
+# Begin Source File
+
+SOURCE=..\src\server\event.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\client\site\file.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\client\site\http.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\client\io.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\platform\mscrtdl.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\platform\platform.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\client\queue.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\client\site.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\client\uri.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\platform\winsock\wsipv6.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\platform\winsock\wsock1.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\platform\winsock\wsock2.c
+# End Source File
 # End Group
 # Begin Group "Header Files"
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
+SOURCE=..\src\server\event.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\client\site\file.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\client\site\http.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\server\http.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\client\io.h
 # End Source File
 # Begin Source File
 
@@ -104,6 +168,30 @@ SOURCE=..\src\platform\mscrtdl.h
 # Begin Source File
 
 SOURCE=..\src\platform\platform.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\client\queue.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\client\site.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\client\uri.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\platform\winsock\wsipv6.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\platform\winsock\wsock1.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\platform\winsock\wsock2.h
 # End Source File
 # End Group
 # Begin Group "Resource Files"
