@@ -6,6 +6,12 @@
 
 #include <ctype.h>
 
+#if defined(WATT32) || defined(WIN32)
+#define SHELL_PS1 "%ld>"
+#else
+#define SHELL_PS1 "%ld # "
+#endif /* defined(WATT32) || defined(WIN32) */
+
 static inline SocketAddress *parseUri(const char *uri, UriDetails *uriDetails) {
     UriDetails details = uriDetailsNewFrom(uri);
     SocketAddress *address = calloc(1, sizeof(SocketAddress));
@@ -167,7 +173,7 @@ static inline void interactiveMode(void) {
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "EndlessLoop"
     while (1) {
-        printf("%ld> ", siteArrayGetActiveNth());
+        printf(SHELL_PS1, siteArrayGetActiveNth());
         if (fgets(input, sizeof(input), stdin)) {
             processInput(input, (char **) args);
             processCommand(args);
