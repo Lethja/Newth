@@ -16,6 +16,9 @@ Site siteNew(enum SiteType type, const char *path) {
         case SITE_FILE:
             self.site.file = fileSiteSchemeNew();
             break;
+        case SITE_HTTP:
+            self.site.http = httpSiteSchemeNew();
+            break;
     }
 
     return self;
@@ -57,6 +60,9 @@ void siteFree(Site *self) {
         case SITE_FILE:
             fileSiteSchemeFree(&self->site.file);
             break;
+        case SITE_HTTP:
+            httpSiteSchemeFree(&self->site.http);
+            break;
     }
 }
 
@@ -72,7 +78,7 @@ char *siteGetWorkingDirectory(Site *self) {
         case SITE_FILE:
             return fileSiteSchemeGetWorkingDirectory(&self->site.file);
         case SITE_HTTP:
-            return "'pwd' for HTTP not implemented yet...";
+            return httpSiteSchemeGetWorkingDirectory(&self->site.http);
         default:
             return NULL;
     }
@@ -82,6 +88,8 @@ int siteSetWorkingDirectory(Site *self, char *path) {
     switch (self->type) {
         case SITE_FILE:
             return fileSiteSchemeChangeDirectory(&self->site.file, path);
+        case SITE_HTTP:
+            return httpSiteSchemeChangeDirectory(&self->site.http, path);
         default:
             return 1;
     }
@@ -91,6 +99,8 @@ void *siteOpenDirectoryListing(Site *self, char *path) {
     switch (self->type) {
         case SITE_FILE:
             return fileSiteOpenDirectoryListing(path);
+        case SITE_HTTP:
+            return httpSiteOpenDirectoryListing(path);
         default:
             return NULL;
     }
@@ -100,6 +110,8 @@ SiteDirectoryEntry *siteReadDirectoryListing(Site *self, void *listing) {
     switch (self->type) {
         case SITE_FILE:
             return fileSiteReadDirectoryListing(listing);
+        case SITE_HTTP:
+            return httpSiteReadDirectoryListing(listing);
         default:
             return NULL;
     }
@@ -109,6 +121,9 @@ void siteCloseDirectoryListing(Site *self, void *listing) {
     switch (self->type) {
         case SITE_FILE:
             fileSiteCloseDirectoryListing(listing);
+            break;
+        case SITE_HTTP:
+            httpSiteCloseDirectoryListing(listing);
             break;
         default:
             break;

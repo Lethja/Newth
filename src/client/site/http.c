@@ -21,3 +21,18 @@ HttpSite httpSiteSchemeNew(void) {
     self.workingPath = NULL;
     return self;
 }
+
+void *httpSiteOpenDirectoryListing(char *path) {
+    /* TODO: Implement */
+    return NULL;
+}
+
+void *httpSiteReadDirectoryListing(void *listing) {
+    /* TODO: Implement */
+    return NULL;
+}
+
+void httpSiteCloseDirectoryListing(void *listing) {
+    /* TODO: Implement */
+}
+
