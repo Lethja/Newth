@@ -65,11 +65,14 @@ if (ENABLE_TEST)
 
     add_executable(test
             ../test/test.c ../test/mock.h ../test/common.h ../test/fetch.h
-            ../test/platform.h ../test/queue.h ../test/request.h ../test/sockbufr.h
+            ../test/platform.h ../test/queue.h ../test/request.h ../test/site.h ../test/sockbufr.h
 
             ../src/client/io.c ../src/client/io.h
             ../src/client/queue.c ../src/client/queue.h
             ../src/client/uri.c ../src/client/uri.h
+            ../src/client/site.c ../src/client/site.h
+            ../src/client/site/file.c ../src/client/site/file.h
+            ../src/client/site/http.c ../src/client/site/http.h
             ../src/platform/platform.c ../src/platform/platform.h
             ../src/server/server.c ../src/server/server.h
             ../src/server/event.c ../src/server/event.h
