@@ -1,28 +1,13 @@
 #include "site.h"
 
+#pragma region Site Array Type & Functions
+
 typedef struct SiteArray {
     long len, set;
     Site *array;
 } SiteArray;
 
 SiteArray Sites;
-
-Site siteNew(enum SiteType type, const char *path) {
-    Site self;
-
-    self.type = type;
-
-    switch (self.type) {
-        case SITE_FILE:
-            self.site.file = fileSiteSchemeNew();
-            break;
-        case SITE_HTTP:
-            self.site.http = httpSiteSchemeNew();
-            break;
-    }
-
-    return self;
-}
 
 Site *siteArrayGetActive(void) {
     if (Sites.set >= Sites.len)
@@ -55,6 +40,44 @@ char *siteArrayInit(void) {
     return NULL;
 }
 
+void siteArrayFree(void) {
+    int i;
+    for (i = 0; i < Sites.len; ++i)
+        siteFree(&Sites.array[i]);
+    free(Sites.array);
+}
+
+#pragma endregion
+
+#pragma region Memory Functions
+
+void siteDirectoryEntryFree(void *entry) {
+    SiteDirectoryEntry *e = (SiteDirectoryEntry *) entry;
+    if (e->name)
+        free(e->name);
+    free(e);
+}
+
+#pragma endregion
+
+#pragma region Site Base Functions
+
+Site siteNew(enum SiteType type, const char *path) {
+    Site self;
+    self.type = type;
+
+    switch (self.type) {
+        case SITE_FILE:
+            self.site.file = fileSiteSchemeNew();
+            break;
+        case SITE_HTTP:
+            self.site.http = httpSiteSchemeNew();
+            break;
+    }
+
+    return self;
+}
+
 void siteFree(Site *self) {
     switch (self->type) {
         case SITE_FILE:
@@ -64,13 +87,6 @@ void siteFree(Site *self) {
             httpSiteSchemeFree(&self->site.http);
             break;
     }
-}
-
-void siteArrayFree(void) {
-    int i;
-    for (i = 0; i < Sites.len; ++i)
-        siteFree(&Sites.array[i]);
-    free(Sites.array);
 }
 
 char *siteGetWorkingDirectory(Site *self) {
@@ -130,9 +146,4 @@ void siteCloseDirectoryListing(Site *self, void *listing) {
     }
 }
 
-void siteDirectoryEntryFree(void *entry) {
-    SiteDirectoryEntry *e = (SiteDirectoryEntry *) entry;
-    if (e->name)
-        free(e->name);
-    free(e);
-}
+#pragma endregion
