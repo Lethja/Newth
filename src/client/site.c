@@ -68,7 +68,7 @@ Site siteNew(enum SiteType type, const char *path) {
 
     switch (self.type) {
         case SITE_FILE:
-            self.site.file = fileSiteSchemeNew();
+            self.site.file = fileSiteSchemeNew(path);
             break;
         case SITE_HTTP:
             self.site.http = httpSiteSchemeNew();

@@ -3,6 +3,9 @@
 
 #include "../src/client/site.h"
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnusedParameter"
+
 #pragma region CMocka headers
 
 #include <stdarg.h>
@@ -14,7 +17,7 @@
 
 #pragma endregion
 
-static void SiteFileNewDefault(void **state) {
+static void SiteFileNew(void **state) {
     Site site = siteNew(SITE_FILE, NULL);
     char *wd = malloc(FILENAME_MAX + 1);
     assert_non_null(platformGetWorkingDirectory(wd, FILENAME_MAX));
@@ -26,8 +29,7 @@ static void SiteFileNewDefault(void **state) {
 }
 
 static void SiteFileNewWithPath(void **state) {
-    /* TODO: Implement */
-    const char *testPath = "/foo/bar";
+    const char *testPath = "/tmp";
     Site site = siteNew(SITE_FILE, testPath);
 
     assert_int_equal(site.type, SITE_FILE);
@@ -63,19 +65,28 @@ static void SiteFileDirEntry(void **state) {
     void *d, *e;
 
     d = platformDirOpen(".");
-    while ((e = platformDirRead(d)))
-        ++i;
+    assert_non_null(d);
 
-    platformDirClose(d);
+    while ((e = platformDirRead(d))) {
+        if (platformDirEntryGetName(e, NULL)[0] != '.') /* Exclude all names starting with '.' */
+            ++i;
+    }
 
-    d = siteOpenDirectoryListing(&site, ".");
+    platformDirClose(d), d = siteOpenDirectoryListing(&site, ".");
+    assert_non_null(d);
+
     while ((e = siteReadDirectoryListing(&site, d)))
         ++j, siteDirectoryEntryFree(e);
+
+    assert_int_equal(i, j);
 
     siteCloseDirectoryListing(&site, d), siteFree(&site);
 }
 
-const struct CMUnitTest siteTest[] = {cmocka_unit_test(SiteFileNewDefault), cmocka_unit_test(SiteFileGetDirectory),
-                                      cmocka_unit_test(SiteFileSetDirectory), cmocka_unit_test(SiteFileDirEntry)};
+#pragma clang diagnostic pop
+
+const struct CMUnitTest siteTest[] = {cmocka_unit_test(SiteFileNew), cmocka_unit_test(SiteFileNewWithPath),
+                                      cmocka_unit_test(SiteFileGetDirectory), cmocka_unit_test(SiteFileSetDirectory),
+                                      cmocka_unit_test(SiteFileDirEntry)};
 
 #endif /* NEW_DL_TEST_SITE_H */

@@ -36,18 +36,30 @@ char *fileSiteSchemeGetWorkingDirectory(FileSite *self) {
     return self->workingDirectory;
 }
 
-FileSite fileSiteSchemeNew(void) {
+FileSite fileSiteSchemeNew(const char *path) {
     FileSite self;
-    char *wd = malloc(FILENAME_MAX);
+    char *wd;
 
     self.workingDirectory = NULL;
-    if (!wd)
-        return self;
+    if (path) {
+        if (!(wd = platformRealPath((char *) path)))
+            return self;
 
-    if (platformGetWorkingDirectory(wd, FILENAME_MAX))
-        UpdateFileScheme(&self, wd);
+        if (strlen(wd) + 1 > FILENAME_MAX) {
+            free(wd);
+            return self;
+        }
+    } else {
+        if (!(wd = malloc(FILENAME_MAX)))
+            return self;
 
-    free(wd);
+        if (!platformGetWorkingDirectory(wd, FILENAME_MAX)) {
+            free(wd);
+            return self;
+        }
+    }
+
+    UpdateFileScheme(&self, wd), free(wd);
     return self;
 }
 
@@ -72,10 +84,10 @@ void *fileSiteReadDirectoryListing(void *listing) {
     if (!(entry = platformDirRead(listing)) || !(name = platformDirEntryGetName(entry, &nameLen)) || !nameLen)
         return NULL;
 
-    if(name[0] == '.')
+    if (name[0] == '.')
         goto fileSiteReadDirectoryListing_skip;
 
-    if(!(siteEntry = malloc(sizeof(SiteDirectoryEntry))))
+    if (!(siteEntry = malloc(sizeof(SiteDirectoryEntry))))
         return NULL;
 
     if (!(siteEntry->name = malloc(nameLen + 1))) {
