@@ -71,7 +71,7 @@ Site siteNew(enum SiteType type, const char *path) {
             self.site.file = fileSiteSchemeNew(path);
             break;
         case SITE_HTTP:
-            self.site.http = httpSiteSchemeNew();
+            self.site.http = httpSiteSchemeNew(path);
             break;
     }
 
