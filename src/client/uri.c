@@ -359,6 +359,17 @@ void uriPathCombine(char *output, const char *path1, const char *path2) {
     strcat(output, p2);
 }
 
+static inline size_t JumpOverDotPaths(const char *path) {
+    size_t r = 0;
+    char skip = '/';
+    while (*path != '\0') {
+        if (*path != skip)
+            break;
+        skip = skip == '.' ? '/' : '.', ++r, ++path;
+    }
+    return r;
+}
+
 char *uriPathAbsoluteAppend(const char *currentPath, const char *append) {
     size_t len = strlen(currentPath) + strlen(append) + 2, i, j;
     char *c, *r;
@@ -386,14 +397,17 @@ char *uriPathAbsoluteAppend(const char *currentPath, const char *append) {
                     case '.':
                         switch (c[i + 2]) {
                             case '/': {
-                                char skip = '/';
                                 r[j] = c[i];
-                                while (c[i] != '\0') {
-                                    if (c[i] != skip)
-                                        break;
-                                    skip = skip == '.' ? '/' : '.', ++i;
+                                i += JumpOverDotPaths(&c[i]);
+                                switch (c[i]) {
+                                    case '\0':
+                                        goto uriPathAbsoluteAppend_finished;
+                                    case '.':
+                                        if (i > 3 && c[i - 1] == '.' && c[i - 2] == '/')
+                                            i -= 2;
+                                    default:
+                                        --i;
                                 }
-                                --i;
                                 break;
                             }
                             case '\0':
@@ -408,10 +422,13 @@ char *uriPathAbsoluteAppend(const char *currentPath, const char *append) {
                                             ++j;
                                             goto uriPathAbsoluteAppend_finished;
                                         }
-                                        if (c[i] == '/' && c[i + 1] == '.')
+                                        if (c[i] == '/' && c[i + 1] == '.') {
+                                            if (c[i + 2] == '/')
+                                                i += JumpOverDotPaths(&c[i]);
                                             --i;
-                                        else if (c[i] == '\0')
+                                        } else if (c[i] == '\0')
                                             goto uriPathAbsoluteAppend_finished;
+                                        break;
                                     default:
                                         r[j] = c[i];
                                         break;

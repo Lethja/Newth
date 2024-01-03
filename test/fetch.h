@@ -250,6 +250,14 @@ static void UriPathAppendGoNowhere(void **state) {
     free(r);
 }
 
+static void UriPathAppendGoNowhereDouble(void **state) {
+    const char *path1 = "/animal/dog", *path2 = "././";
+    char *r;
+    assert_non_null((r = uriPathAbsoluteAppend(path1, path2)));
+    assert_string_equal(r, "/animal/dog");
+    free(r);
+}
+
 static void UriPathAppendGoNowhereYetSomewhere(void **state) {
     const char *path1 = "/animal/dog", *path2 = "./bone";
     char *r;
@@ -263,6 +271,22 @@ static void UriPathAppendGoNowhereYetSomewhereDouble(void **state) {
     char *r;
     assert_non_null((r = uriPathAbsoluteAppend(path1, path2)));
     assert_string_equal(r, "/animal/dog/bone");
+    free(r);
+}
+
+static void UriPathAppendGoNowhereAndUp(void **state) {
+    const char *path1 = "/animal/dog", *path2 = "././../bone";
+    char *r;
+    assert_non_null((r = uriPathAbsoluteAppend(path1, path2)));
+    assert_string_equal(r, "/animal/bone");
+    free(r);
+}
+
+static void UriPathAppendGoUpAndNowhere(void **state) {
+    const char *path1 = "/animal/dog", *path2 = "../././bone";
+    char *r;
+    assert_non_null((r = uriPathAbsoluteAppend(path1, path2)));
+    assert_string_equal(r, "/animal/bone");
     free(r);
 }
 
@@ -336,9 +360,12 @@ const struct CMUnitTest fetchTest[] = {
         cmocka_unit_test(UriGetScheme), cmocka_unit_test(UriNewMinimum), cmocka_unit_test(UriNewNoString),
         cmocka_unit_test(UriNewPathless), cmocka_unit_test(UriNewVerbose), cmocka_unit_test(UriPathCombineString),
         cmocka_unit_test(UriPathAppend), cmocka_unit_test(UriPathAppendAbsolute),
-        cmocka_unit_test(UriPathAppendGoNowhere), cmocka_unit_test(UriPathAppendGoNowhereYetSomewhere),
+        cmocka_unit_test(UriPathAppendGoNowhere), cmocka_unit_test(UriPathAppendGoNowhereAndUp),
+        cmocka_unit_test(UriPathAppendGoNowhereDouble),
+        cmocka_unit_test(UriPathAppendGoNowhereYetSomewhere),
         cmocka_unit_test(UriPathAppendGoNowhereYetSomewhereDouble), cmocka_unit_test(UriPathAppendGoSideways),
         cmocka_unit_test(UriPathAppendGoSidewaysDouble), cmocka_unit_test(UriPathAppendGoUp),
+        cmocka_unit_test(UriPathAppendGoUpAndNowhere),
         cmocka_unit_test(UriPathAppendGoUpDouble), cmocka_unit_test(UriPathAppendGoUpTooFar),
         cmocka_unit_test(UriPathCombineStringBothDividers), cmocka_unit_test(UriPathCombineStringDumbInput),
         cmocka_unit_test(UriPathCombineStringJustDividers), cmocka_unit_test(UriPathCombineStringLeadingDivider),
