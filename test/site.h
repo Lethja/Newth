@@ -23,8 +23,8 @@ static void SiteFileNew(void **state) {
     assert_non_null(platformGetWorkingDirectory(wd, FILENAME_MAX));
 
     assert_int_equal(site.type, SITE_FILE);
-    assert_non_null(site.site.file.workingDirectory);
-    assert_non_null(strstr(site.site.file.workingDirectory, wd));
+    assert_non_null(site.site.file.fullUri);
+    assert_non_null(strstr(site.site.file.fullUri, wd));
     free(wd), siteFree(&site);
 }
 
@@ -33,8 +33,8 @@ static void SiteFileNewWithPath(void **state) {
     Site site = siteNew(SITE_FILE, testPath);
 
     assert_int_equal(site.type, SITE_FILE);
-    assert_non_null(site.site.file.workingDirectory);
-    assert_non_null(strstr(site.site.file.workingDirectory, testPath));
+    assert_non_null(site.site.file.fullUri);
+    assert_non_null(strstr(site.site.file.fullUri, testPath));
     siteFree(&site);
 }
 
@@ -42,9 +42,9 @@ static void SiteFileGetDirectory(void **state) {
     Site site = siteNew(SITE_FILE, NULL);
     char *wd = malloc(FILENAME_MAX + 1);
     assert_non_null(platformGetWorkingDirectory(wd, FILENAME_MAX));
-    assert_non_null(site.site.file.workingDirectory);
+    assert_non_null(site.site.file.fullUri);
 
-    assert_non_null(strstr(siteGetWorkingDirectory(&site), site.site.file.workingDirectory));
+    assert_non_null(strstr(siteGetWorkingDirectory(&site), site.site.file.fullUri));
     free(wd), siteFree(&site);
 }
 
@@ -52,10 +52,10 @@ static void SiteFileSetDirectory(void **state) {
     Site site = siteNew(SITE_FILE, NULL);
     char *wd = malloc(FILENAME_MAX + 1);
     assert_non_null(platformGetWorkingDirectory(wd, FILENAME_MAX));
-    assert_non_null(site.site.file.workingDirectory);
+    assert_non_null(site.site.file.fullUri);
 
     siteSetWorkingDirectory(&site, "..");
-    assert_non_null(strstr(wd, &site.site.file.workingDirectory[7]));
+    assert_non_null(strstr(wd, &site.site.file.fullUri[7]));
     free(wd), siteFree(&site);
 }
 

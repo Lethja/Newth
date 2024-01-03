@@ -5,7 +5,7 @@
 #include "../platform/platform.h"
 
 typedef enum UriScheme {
-    SCHEME_HTTP = 80, SCHEME_HTTPS = 443, SCHEME_FTP = 21, SCHEME_FTPS = 990, SCHEME_UNKNOWN = 0
+    SCHEME_FILE = 1, SCHEME_HTTP = 80, SCHEME_HTTPS = 443, SCHEME_FTP = 21, SCHEME_FTPS = 990, SCHEME_UNKNOWN = 0
 } UriScheme;
 
 typedef struct UriDetails {
@@ -84,6 +84,20 @@ extern void uriPathCombine(char *output, const char *path1, const char *path2);
  * @remark Return value must be freed before leaving scope
  */
 char *uriPathAbsoluteAppend(const char *currentPath, const char *append);
+
+/**
+ * Set UriDetails to this scheme
+ * @param self The UriDetails to set the scheme of
+ * @param scheme The scheme to set UriDetails to
+ */
+void uriDetailsSetScheme(UriDetails *self, enum UriScheme scheme);
+
+/**
+ * Set UriDetails to the ip address and port of this socket address
+ * @param self The UriDetails to set the address and port of
+ * @param socketAddress The socket address to set address and port from
+ */
+void uriDetailsSetAddress(UriDetails *self, struct sockaddr *socketAddress);
 
 #ifdef UNIT_TEST
 

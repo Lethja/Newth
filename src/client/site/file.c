@@ -3,22 +3,22 @@
 
 #include <sys/stat.h>
 
-static void UpdateFileScheme(FileSite *self, char *path) {
-    if (self->workingDirectory)
-        free(self->workingDirectory);
-    self->workingDirectory = platformPathSystemToFileScheme(path);
+static void UpdateFileUri(FileSite *self, char *path) {
+    if (self->fullUri)
+        free(self->fullUri);
+    self->fullUri = platformPathSystemToFileScheme(path);
 }
 
 int fileSiteSchemeChangeDirectory(FileSite *self, const char *path) {
     if (!platformPathSystemChangeWorkingDirectory(path)) {
         char *wd = malloc(FILENAME_MAX);
         if (!wd) {
-            free(self->workingDirectory), self->workingDirectory = NULL;
+            free(self->fullUri), self->fullUri = NULL;
             return -1;
         }
 
         if (platformGetWorkingDirectory(wd, FILENAME_MAX))
-            UpdateFileScheme(self, wd);
+            UpdateFileUri(self, wd);
 
         free(wd);
         return 0;
@@ -28,19 +28,19 @@ int fileSiteSchemeChangeDirectory(FileSite *self, const char *path) {
 }
 
 void fileSiteSchemeFree(FileSite *self) {
-    if (self->workingDirectory)
-        free(self->workingDirectory);
+    if (self->fullUri)
+        free(self->fullUri);
 }
 
 char *fileSiteSchemeGetWorkingDirectory(FileSite *self) {
-    return self->workingDirectory;
+    return self->fullUri;
 }
 
 FileSite fileSiteSchemeNew(const char *path) {
     FileSite self;
     char *wd;
 
-    self.workingDirectory = NULL;
+    self.fullUri = NULL;
     if (path) {
         if (!(wd = platformRealPath((char *) path)))
             return self;
@@ -59,7 +59,7 @@ FileSite fileSiteSchemeNew(const char *path) {
         }
     }
 
-    UpdateFileScheme(&self, wd), free(wd);
+    UpdateFileUri(&self, wd), free(wd);
     return self;
 }
 

@@ -458,3 +458,70 @@ char *uriPathAbsoluteAppend(const char *currentPath, const char *append) {
 
     return c;
 }
+
+void uriDetailsSetScheme(UriDetails *self, enum UriScheme scheme) {
+    const char *str;
+    switch (scheme) {
+        default:
+        case SCHEME_UNKNOWN:
+            if (self->scheme)
+                free(self->scheme), self->scheme = NULL;
+            return;
+        case SCHEME_HTTP:
+            str = "http";
+            break;
+        case SCHEME_HTTPS:
+            str = "https";
+            break;
+        case SCHEME_FTP:
+            str = "ftp";
+            break;
+        case SCHEME_FTPS:
+            str = "ftps";
+            break;
+        case SCHEME_FILE:
+            str = "file";
+            break;
+    }
+
+    if (self->scheme)
+        free(self->scheme);
+
+    if (!(self->scheme = malloc(strlen(str) + 1)))
+        return;
+
+    strcpy(self->scheme, str);
+}
+
+void uriDetailsSetAddress(UriDetails *self, struct sockaddr *socketAddress) {
+    char *address, port[6], *p;
+    switch (socketAddress->sa_family) {
+        /* TODO: IPV6 */
+        default:
+            return;
+        case AF_INET: {
+            struct sockaddr_in *ipv4 = (struct sockaddr_in *) socketAddress;
+            char *addr = inet_ntoa(ipv4->sin_addr);
+            unsigned short prt;
+            if (!(address = malloc(strlen(addr) + 1)))
+                return;
+            strcpy(address, addr);
+            prt = htons(ipv4->sin_port);
+            sprintf((char *) port, "%d", prt);
+            break;
+        }
+    }
+
+    if (!(p = malloc(strlen(port) + 1))) {
+        free(address);
+        return;
+    }
+    strcpy(p, port);
+
+    if (self->host)
+        free(self->host);
+    if (self->port)
+        free(self->port);
+
+    self->host = address, self->port = p;
+}

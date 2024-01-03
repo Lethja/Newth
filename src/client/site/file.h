@@ -2,7 +2,7 @@
 #define NEW_DL_FILE_H
 
 typedef struct FileSite {
-    char *workingDirectory;
+    char *fullUri;
 } FileSite;
 
 int fileSiteSchemeChangeDirectory(FileSite *self, const char *path);
