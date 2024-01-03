@@ -16,10 +16,18 @@ typedef struct UriDetails {
  * Turn a URI into a UriDetails for easier processing
  * @param uri The full URI address to process
  * @return UriDetails with all applicable data set
- * @remark The return UriDetails should be passed to uriDetailsFree()
+ * @remark The returned UriDetails should be passed to uriDetailsFree()
  * before leaving scope to free memory
  */
 extern UriDetails uriDetailsNewFrom(const char *uri);
+
+/**
+ * Convert a UriDetails back into a string representation
+ * @param details The details to convert back into a string
+ * @return A string with the URI address on success, NULL on failure
+ * @remark Returned string should be freed before leaving scope
+ */
+extern char *uriDetailsCreateString(UriDetails *details);
 
 /**
  * Free memory in a UriDetails structure
@@ -57,6 +65,25 @@ extern UriScheme uriDetailsGetScheme(UriDetails *details);
  * @return 0 on success other on error
  */
 extern char uriDetailsCreateSocketAddress(UriDetails *self, SocketAddress *socketAddress, unsigned short scheme);
+
+/**
+ * Combine two path strings together
+ * @param output Out: A string buffer with at least the combine amount of space for path1 and path 2
+ * @param path1 In: The string to combine on the left
+ * @param path2 In: The string to combine on the right
+ * @remark It is the callers responsibility to make sure that output is equal or larger
+ * than strlen(path1) + strlen(path2) + 2
+ */
+extern void uriPathCombine(char *output, const char *path1, const char *path2);
+
+/**
+ * Resolve the absolute path given a current path and a path to append
+ * @param currentPath The current absolute path
+ * @param append The relative (or absolute) path
+ * @return String of the absolute path result or NULL on error
+ * @remark Return value must be freed before leaving scope
+ */
+char *uriPathAbsoluteAppend(const char *currentPath, const char *append);
 
 #ifdef UNIT_TEST
 

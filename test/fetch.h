@@ -170,6 +170,142 @@ static void UriConvertToSocketAddressWithPort(void **state) {
     uriDetailsFree(&details);
 }
 
+static void UriPathCombineString(void **state) {
+    const char *path1 = "foo", *path2 = "bar";
+    char output[FILENAME_MAX];
+
+    platformPathCombine(output, path1, path2);
+    assert_string_equal(output, "foo/bar");
+}
+
+static void UriPathCombineStringNoDivider(void **state) {
+    const char *path1 = "/foo", *path2 = "bar/";
+    char output[FILENAME_MAX];
+
+    platformPathCombine(output, path1, path2);
+    assert_string_equal(output, "/foo/bar/");
+}
+
+static void UriPathCombineStringTrailingDivider(void **state) {
+    const char *path1 = "/foo/", *path2 = "bar/";
+    char output[FILENAME_MAX];
+
+    platformPathCombine(output, path1, path2);
+    assert_string_equal(output, "/foo/bar/");
+}
+
+static void UriPathCombineStringLeadingDivider(void **state) {
+    const char *path1 = "/foo", *path2 = "/bar/";
+    char output[FILENAME_MAX];
+
+    platformPathCombine(output, path1, path2);
+    assert_string_equal(output, "/foo/bar/");
+}
+
+static void UriPathCombineStringBothDividers(void **state) {
+    const char *path1 = "/foo/", *path2 = "/bar/";
+    char output[FILENAME_MAX];
+
+    platformPathCombine(output, path1, path2);
+    assert_string_equal(output, "/foo/bar/");
+}
+
+static void UriPathCombineStringJustDividers(void **state) {
+    const char *path1 = "////", *path2 = path1;
+    char output[FILENAME_MAX];
+
+    platformPathCombine(output, path1, path2);
+    assert_string_equal(output, "/");
+}
+
+static void UriPathCombineStringDumbInput(void **state) {
+    const char *path1, *path2 = path1 = "/";
+    char output[FILENAME_MAX];
+
+    platformPathCombine(output, path1, path2);
+    assert_string_equal(output, "/");
+}
+
+static void UriPathAppend(void **state) {
+    const char *path1 = "/animal/dog", *path2 = "bone";
+    char *r;
+    assert_non_null((r = uriPathAbsoluteAppend(path1, path2)));
+    assert_string_equal(r, "/animal/dog/bone");
+    free(r);
+}
+
+static void UriPathAppendAbsolute(void **state) {
+    const char *path1 = "/animal/dog", *path2 = "/bone";
+    char *r;
+    assert_non_null((r = uriPathAbsoluteAppend(path1, path2)));
+    assert_string_equal(r, path2);
+    free(r);
+}
+
+static void UriPathAppendGoNowhere(void **state) {
+    const char *path1 = "/animal/dog", *path2 = ".";
+    char *r;
+    assert_non_null((r = uriPathAbsoluteAppend(path1, path2)));
+    assert_string_equal(r, "/animal/dog");
+    free(r);
+}
+
+static void UriPathAppendGoNowhereYetSomewhere(void **state) {
+    const char *path1 = "/animal/dog", *path2 = "./bone";
+    char *r;
+    assert_non_null((r = uriPathAbsoluteAppend(path1, path2)));
+    assert_string_equal(r, "/animal/dog/bone");
+    free(r);
+}
+
+static void UriPathAppendGoNowhereYetSomewhereDouble(void **state) {
+    const char *path1 = "/animal/dog", *path2 = "././bone";
+    char *r;
+    assert_non_null((r = uriPathAbsoluteAppend(path1, path2)));
+    assert_string_equal(r, "/animal/dog/bone");
+    free(r);
+}
+
+static void UriPathAppendGoUp(void **state) {
+    const char *path1 = "/animal/dog", *path2 = "..";
+    char *r;
+    assert_non_null((r = uriPathAbsoluteAppend(path1, path2)));
+    assert_string_equal(r, "/animal");
+    free(r);
+}
+
+static void UriPathAppendGoUpDouble(void **state) {
+    const char *path1 = "/animal/dog", *path2 = "../..";
+    char *r;
+    assert_non_null((r = uriPathAbsoluteAppend(path1, path2)));
+    assert_string_equal(r, "/");
+    free(r);
+}
+
+static void UriPathAppendGoUpTooFar(void **state) {
+    const char *path1 = "/animal/dog", *path2 = "../../..";
+    char *r;
+    assert_non_null((r = uriPathAbsoluteAppend(path1, path2)));
+    assert_string_equal(r, "/");
+    free(r);
+}
+
+static void UriPathAppendGoSideways(void **state) {
+    const char *path1 = "/animal/dog", *path2 = "../cat";
+    char *r;
+    assert_non_null((r = uriPathAbsoluteAppend(path1, path2)));
+    assert_string_equal(r, "/animal/cat");
+    free(r);
+}
+
+static void UriPathAppendGoSidewaysDouble(void **state) {
+    const char *path1 = "/animal/dog/bone", *path2 = "../../cat/fish";
+    char *r;
+    assert_non_null((r = uriPathAbsoluteAppend(path1, path2)));
+    assert_string_equal(r, "/animal/cat/fish");
+    free(r);
+}
+
 #ifdef GETHOSTBYNAME_CANT_IPV4STR
 
 static void Ipv4Validate(void **state) {
@@ -198,6 +334,14 @@ const struct CMUnitTest fetchTest[] = {
         cmocka_unit_test(UriConvertToSocketAddressWithScheme), cmocka_unit_test(UriGetAddressFromAddress),
         cmocka_unit_test(UriGetAddressFromHost), cmocka_unit_test(UriGetPort), cmocka_unit_test(UriGetPortInvalid),
         cmocka_unit_test(UriGetScheme), cmocka_unit_test(UriNewMinimum), cmocka_unit_test(UriNewNoString),
-        cmocka_unit_test(UriNewPathless), cmocka_unit_test(UriNewVerbose)};
+        cmocka_unit_test(UriNewPathless), cmocka_unit_test(UriNewVerbose), cmocka_unit_test(UriPathCombineString),
+        cmocka_unit_test(UriPathAppend), cmocka_unit_test(UriPathAppendAbsolute),
+        cmocka_unit_test(UriPathAppendGoNowhere), cmocka_unit_test(UriPathAppendGoNowhereYetSomewhere),
+        cmocka_unit_test(UriPathAppendGoNowhereYetSomewhereDouble), cmocka_unit_test(UriPathAppendGoSideways),
+        cmocka_unit_test(UriPathAppendGoSidewaysDouble), cmocka_unit_test(UriPathAppendGoUp),
+        cmocka_unit_test(UriPathAppendGoUpDouble), cmocka_unit_test(UriPathAppendGoUpTooFar),
+        cmocka_unit_test(UriPathCombineStringBothDividers), cmocka_unit_test(UriPathCombineStringDumbInput),
+        cmocka_unit_test(UriPathCombineStringJustDividers), cmocka_unit_test(UriPathCombineStringLeadingDivider),
+        cmocka_unit_test(UriPathCombineStringNoDivider), cmocka_unit_test(UriPathCombineStringTrailingDivider)};
 
 #endif /* NEW_DL_TEST_FETCH_H */

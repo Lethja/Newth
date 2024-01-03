@@ -309,9 +309,126 @@ UriDetails uriDetailsNewFrom(const char *uri) {
     return details;
 }
 
+char *uriDetailsCreateString(UriDetails *details) {
+    char *r;
+    size_t len;
+    if (!details->scheme || !details->host || !details->port || !details->path)
+        return NULL;
+
+    len = strlen(details->scheme) + strlen(details->host) + strlen(details->port) + strlen(details->path);
+    if ((r = malloc(len + 1)))
+        sprintf(r, "%s%s%s%s", details->scheme, details->host, details->port, details->path);
+
+    return r;
+}
+
 void uriDetailsFree(UriDetails *details) {
     if (details->scheme) free(details->scheme), details->scheme = NULL;
     if (details->host) free(details->host), details->host = NULL;
     if (details->port) free(details->port), details->port = NULL;
     if (details->path) free(details->path), details->path = NULL;
+}
+
+void uriPathCombine(char *output, const char *path1, const char *path2) {
+    const char *pathDivider = "/";
+    size_t len = strlen(path1), idx = len - 1;
+    const char *p2;
+
+    /* Copy first path into output buffer for manipulation */
+    strcpy(output, path1);
+
+    while (output[idx] == pathDivider[0] && idx)
+        --idx;
+
+    if (idx) {
+        output[idx + 1] = '\0';
+        strcat(output, pathDivider);
+    } else if (output[0] == pathDivider[0] && output[1] == pathDivider[0])
+        output[1] = '\0';
+
+    /* Jump over any leading dividers in the second path then concatenate it */
+    len = strlen(path2), idx = 0;
+
+    while (path2[idx] == pathDivider[0] && idx < len)
+        ++idx;
+
+    if (idx == len)
+        return;
+
+    p2 = &path2[idx];
+    strcat(output, p2);
+}
+
+char *uriPathAbsoluteAppend(const char *currentPath, const char *append) {
+    size_t len = strlen(currentPath) + strlen(append) + 2, i, j;
+    char *c, *r;
+
+    if (append[0] == '/') {
+        if (!(r = malloc(strlen(append) + 1)))
+            return NULL;
+
+        strcpy(r, append);
+        return r;
+    }
+
+    if (currentPath[0] != '/' || !(c = calloc(len, sizeof(char))))
+        return NULL;
+
+    uriPathCombine(c, currentPath, append);
+
+    if (!(r = malloc(len)))
+        return NULL;
+
+    for (i = j = 0; c[i] != '\0'; ++i, ++j) {
+        switch (c[i]) {
+            case '/':
+                switch (c[i + 1]) {
+                    case '.':
+                        switch (c[i + 2]) {
+                            case '/': {
+                                char skip = '/';
+                                r[j] = c[i];
+                                while (c[i] != '\0') {
+                                    if (c[i] != skip)
+                                        break;
+                                    skip = skip == '.' ? '/' : '.', ++i;
+                                }
+                                --i;
+                                break;
+                            }
+                            case '\0':
+                                goto uriPathAbsoluteAppend_finished;
+                            case '.':
+                                switch (c[i + 3]) {
+                                    case '/':
+                                    case '\0':
+                                        i += 3;
+                                        do --j; while (r[j] != '/');
+                                        if (!j) {
+                                            ++j;
+                                            goto uriPathAbsoluteAppend_finished;
+                                        }
+                                        if (c[i] == '/' && c[i + 1] == '.')
+                                            --i;
+                                        else if (c[i] == '\0')
+                                            goto uriPathAbsoluteAppend_finished;
+                                    default:
+                                        r[j] = c[i];
+                                        break;
+                                }
+                            default:
+                                r[j] = c[i];
+                        }
+                }
+            default:
+                r[j] = c[i];
+        }
+    }
+
+    uriPathAbsoluteAppend_finished:
+    r[j] = '\0', free(c);
+    if (!(c = realloc(r, j + 1)))
+        return NULL;
+
+    return c;
 }
