@@ -221,7 +221,6 @@ Routine RoutineNew(SocketBuffer socketBuffer, const char *webPath) {
 void RoutineTick(RoutineArray *routineArray) {
     SOCKET i;
     Routine *routines = (Routine *) routineArray->array;
-    LINEDBG;
 
     for (i = 0; i < routineArray->size; ++i) {
         Routine *routine = &routines[i];
@@ -287,7 +286,7 @@ void RoutineTick(RoutineArray *routineArray) {
 
                 if (!(routine->state & STATE_FAIL))
                     break;
-                LINEDBG;
+
             case STATE_FINISH | TYPE_ROUTINE_FILE:
             case STATE_FAIL | TYPE_ROUTINE_FILE:
                 serverDeferredSocketRemove(routine->socketBuffer.clientSocket);
