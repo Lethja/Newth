@@ -312,12 +312,18 @@ UriDetails uriDetailsNewFrom(const char *uri) {
 char *uriDetailsCreateString(UriDetails *details) {
     char *r;
     size_t len;
-    if (!details->scheme || !details->host || !details->port || !details->path)
+
+    if (!details->scheme || !details->host || !details->path)
         return NULL;
 
-    len = strlen(details->scheme) + strlen(details->host) + strlen(details->port) + strlen(details->path);
-    if ((r = malloc(len + 1)))
-        sprintf(r, "%s%s%s%s", details->scheme, details->host, details->port, details->path);
+    len = strlen(details->scheme) + strlen(details->host) + strlen(details->path) + 3;
+
+    if (details->port && details->port != details->scheme) {
+        len += strlen(details->port) + 1;
+        if ((r = malloc(len + 1)))
+            sprintf(r, "%s://%s:%s%s", details->scheme, details->host, details->port, details->path);
+    } else if ((r = malloc(len + 1)))
+        sprintf(r, "%s://%s%s", details->scheme, details->host, details->path);
 
     return r;
 }

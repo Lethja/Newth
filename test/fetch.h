@@ -76,6 +76,26 @@ static void UriNewVerbose(void **state) {
     assert_null(details.path);
 }
 
+static void UriDetailsToString(void **state) {
+    const char *Uri = "http://localhost/foo";
+    char *res;
+
+    UriDetails details = uriDetailsNewFrom(Uri);
+    assert_non_null((res = uriDetailsCreateString(&details)));
+    assert_string_equal(Uri, res);
+    free(res), uriDetailsFree(&details);
+}
+
+static void UriDetailsToStringWithPort(void **state) {
+    const char *Uri = "http://localhost:8080/foo";
+    char *res;
+
+    UriDetails details = uriDetailsNewFrom(Uri);
+    assert_non_null((res = uriDetailsCreateString(&details)));
+    assert_string_equal(Uri, res);
+    free(res), uriDetailsFree(&details);
+}
+
 static void UriGetAddressFromHost(void **state) {
     UriDetails details;
     char *addr;
@@ -356,19 +376,19 @@ const struct CMUnitTest fetchTest[] = {
 #endif
         cmocka_unit_test(UriConvertToSocketAddress), cmocka_unit_test(UriConvertToSocketAddressWithPort),
         cmocka_unit_test(UriConvertToSocketAddressWithScheme), cmocka_unit_test(UriGetAddressFromAddress),
+        cmocka_unit_test(UriDetailsToString), cmocka_unit_test(UriDetailsToStringWithPort),
         cmocka_unit_test(UriGetAddressFromHost), cmocka_unit_test(UriGetPort), cmocka_unit_test(UriGetPortInvalid),
         cmocka_unit_test(UriGetScheme), cmocka_unit_test(UriNewMinimum), cmocka_unit_test(UriNewNoString),
         cmocka_unit_test(UriNewPathless), cmocka_unit_test(UriNewVerbose), cmocka_unit_test(UriPathCombineString),
         cmocka_unit_test(UriPathAppend), cmocka_unit_test(UriPathAppendAbsolute),
         cmocka_unit_test(UriPathAppendGoNowhere), cmocka_unit_test(UriPathAppendGoNowhereAndUp),
-        cmocka_unit_test(UriPathAppendGoNowhereDouble),
-        cmocka_unit_test(UriPathAppendGoNowhereYetSomewhere),
+        cmocka_unit_test(UriPathAppendGoNowhereDouble), cmocka_unit_test(UriPathAppendGoNowhereYetSomewhere),
         cmocka_unit_test(UriPathAppendGoNowhereYetSomewhereDouble), cmocka_unit_test(UriPathAppendGoSideways),
         cmocka_unit_test(UriPathAppendGoSidewaysDouble), cmocka_unit_test(UriPathAppendGoUp),
-        cmocka_unit_test(UriPathAppendGoUpAndNowhere),
-        cmocka_unit_test(UriPathAppendGoUpDouble), cmocka_unit_test(UriPathAppendGoUpTooFar),
-        cmocka_unit_test(UriPathCombineStringBothDividers), cmocka_unit_test(UriPathCombineStringDumbInput),
-        cmocka_unit_test(UriPathCombineStringJustDividers), cmocka_unit_test(UriPathCombineStringLeadingDivider),
-        cmocka_unit_test(UriPathCombineStringNoDivider), cmocka_unit_test(UriPathCombineStringTrailingDivider)};
+        cmocka_unit_test(UriPathAppendGoUpAndNowhere), cmocka_unit_test(UriPathAppendGoUpDouble),
+        cmocka_unit_test(UriPathAppendGoUpTooFar), cmocka_unit_test(UriPathCombineStringBothDividers),
+        cmocka_unit_test(UriPathCombineStringDumbInput), cmocka_unit_test(UriPathCombineStringJustDividers),
+        cmocka_unit_test(UriPathCombineStringLeadingDivider), cmocka_unit_test(UriPathCombineStringNoDivider),
+        cmocka_unit_test(UriPathCombineStringTrailingDivider)};
 
 #endif /* NEW_DL_TEST_FETCH_H */
