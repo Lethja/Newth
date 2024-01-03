@@ -228,6 +228,9 @@ UriDetails uriDetailsNewFrom(const char *uri) {
 
     details.scheme = details.host = details.port = details.path = NULL;
 
+    if (!uri)
+        return details;
+
     /* Get Scheme */
     p = strstr(uri, "://");
     if (p) {

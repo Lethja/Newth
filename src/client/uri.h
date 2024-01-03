@@ -14,7 +14,7 @@ typedef struct UriDetails {
 
 /**
  * Turn a URI into a UriDetails for easier processing
- * @param uri The full URI address to process
+ * @param uri The full URI address to process or NULL
  * @return UriDetails with all applicable data set
  * @remark The returned UriDetails should be passed to uriDetailsFree()
  * before leaving scope to free memory
