@@ -32,12 +32,9 @@ char *siteArraySetActiveNth(long siteNumber) {
 }
 
 char *siteArrayInit(void) {
-    Sites.array = malloc(sizeof(Site)), Sites.len = 1, Sites.set = 0;
-    if (!Sites.array)
-        return strerror(errno);
-
-    Sites.array[0] = siteNew(SITE_FILE, NULL);
-    return NULL;
+    Site file = siteNew(SITE_FILE, NULL);
+    memset(&Sites, 0, sizeof(SiteArray));
+    return siteArrayAdd(&file);
 }
 
 void siteArrayFree(void) {
@@ -45,6 +42,55 @@ void siteArrayFree(void) {
     for (i = 0; i < Sites.len; ++i)
         siteFree(&Sites.array[i]);
     free(Sites.array);
+}
+
+char *siteArrayAdd(Site *site) {
+    void *p;
+
+    if (!(p = Sites.array ? realloc(Sites.array, sizeof(Site) * (Sites.len + 1)) : malloc(sizeof(Site))))
+        return strerror(errno);
+
+    Sites.array = p, ++Sites.len, memcpy(&Sites.array[Sites.len - 1], site, sizeof(Site));
+    return NULL;
+}
+
+void siteArrayRemoveNth(size_t n) {
+    if (Sites.len - 1 >= n) {
+        void *p;
+
+        memmove(&Sites.array[n], &Sites.array[n + 1], sizeof(Site) * (Sites.len - n - 1)), --Sites.len;
+        if (!(p = realloc(Sites.array, sizeof(Site) * (Sites.len + 1))))
+            return;
+
+        Sites.array = p;
+    }
+}
+
+void siteArrayRemove(Site *site) {
+    size_t i;
+
+    for (i = 0; i < Sites.len; ++i) {
+        if (Sites.array[i].type == site->type) {
+            size_t s;
+            void *p, *q;
+
+            switch (site->type) {
+                default:
+                    return;
+                case SITE_FILE:
+                    p = &Sites.array[i].site.file, q = &site->site.file, s = sizeof(FileSite);
+                    break;
+                case SITE_HTTP:
+                    p = &Sites.array[i].site.http, q = &site->site.http, s = sizeof(HttpSite);
+                    break;
+            }
+
+            if (!memcmp(p, q, s)) {
+                siteArrayRemoveNth(i);
+                return;
+            }
+        }
+    }
 }
 
 #pragma endregion
@@ -63,10 +109,9 @@ void siteDirectoryEntryFree(void *entry) {
 #pragma region Site Base Functions
 
 Site siteNew(enum SiteType type, const char *path) {
-    Site self;
-    self.type = type;
+    Site self = {0};
 
-    switch (self.type) {
+    switch ((self.type = type)) {
         case SITE_FILE:
             self.site.file = fileSiteSchemeNew(path);
             break;

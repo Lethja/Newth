@@ -25,6 +25,8 @@ typedef struct SiteDirectoryEntry {
     char isDirectory;
 } SiteDirectoryEntry;
 
+#pragma region Site Array
+
 /**
  * Return the active site structure
  * @return Pointer to the currently active site
@@ -57,6 +59,39 @@ char *siteArrayInit(void);
 void siteArrayFree(void);
 
 /**
+ * Add a site to the list of mounted devices
+ * @param site The site to be added
+ * @return NULL on success or user friendly error message on failure
+ */
+char *siteArrayAdd(Site *site);
+
+/**
+ * Remove index n from mounted devices
+ * @param n the mounted device to be removed
+ */
+void siteArrayRemoveNth(size_t n);
+
+/**
+ * Remove this site from mounted devices if found
+ * @param site The site to be removed
+ */
+void siteArrayRemove(Site *site);
+
+#pragma endregion
+
+#pragma region Memory Functions
+
+/**
+ * Free internal memory of a SiteDirectoryEntry
+ * @param entry The SiteDirectoryEntry to be freed
+ */
+void siteDirectoryEntryFree(void *entry);
+
+#pragma endregion
+
+#pragma region Site Base Functions
+
+/**
  * Create a new site mount
  * @param type In: The type of site to create
  * @param path In: The current site to mount or NULL for default
@@ -69,12 +104,6 @@ Site siteNew(enum SiteType type, const char *path);
  * @param self The site pointer to free internal members of
  */
 void siteFree(Site *self);
-
-/**
- * Free internal memory of a SiteDirectoryEntry
- * @param entry The SiteDirectoryEntry to be freed
- */
-void siteDirectoryEntryFree(void *entry);
 
 /**
  * Get the current working directory of site
@@ -115,5 +144,7 @@ SiteDirectoryEntry *siteReadDirectoryListing(Site *self, void *listing);
  * @param listing In: The listing returned from siteOpenDirectoryListing() to free internal memory from
  */
 void siteCloseDirectoryListing(Site *self, void *listing);
+
+#pragma endregion
 
 #endif /* NEW_DL_SITE_H */

@@ -17,6 +17,40 @@
 
 #pragma endregion
 
+static void SiteArrayFunctions(void **state) {
+    Site site1, site2;
+    memset(&site1, 0, sizeof(Site)), memset(&site2, 0, sizeof(Site));
+    site1 = siteNew(SITE_HTTP, "foo"), site2 = siteNew(SITE_HTTP, "bar");
+    siteArrayInit();
+    assert_null(siteArraySetActiveNth(0));
+    assert_non_null(siteArraySetActiveNth(1));
+    assert_null(siteArrayAdd(&site1));
+    assert_null(siteArraySetActiveNth(1));
+    assert_non_null(siteArraySetActiveNth(2));
+    assert_null(siteArrayAdd(&site2));
+    assert_null(siteArraySetActiveNth(2));
+    assert_non_null(siteArraySetActiveNth(3));
+    assert_null(siteArraySetActiveNth(2));
+    assert_memory_equal(siteArrayGetActive(), &site2, sizeof(Site));
+    assert_null(siteArraySetActiveNth(0));
+    assert_null(siteArraySetActiveNth(1));
+    assert_memory_equal(siteArrayGetActive(), &site1, sizeof(Site));
+    assert_null(siteArraySetActiveNth(2));
+    siteArrayRemove(&site1);
+    assert_null(siteArrayGetActive());
+    assert_int_equal(siteArrayGetActiveNth(), -1);
+    assert_null(siteArraySetActiveNth(1));
+    assert_memory_equal(siteArrayGetActive(), &site2, sizeof(Site));
+    assert_null(siteArrayAdd(&site1));
+    assert_null(siteArraySetActiveNth(2));
+    assert_non_null(siteArrayGetActive());
+    assert_int_equal(siteArrayGetActiveNth(), 2);
+    siteArrayRemoveNth(2);
+    assert_null(siteArrayGetActive());
+    assert_int_equal(siteArrayGetActiveNth(), -1);
+    siteArrayFree();
+}
+
 static void SiteFileNew(void **state) {
     Site site = siteNew(SITE_FILE, NULL);
     char *wd = malloc(FILENAME_MAX + 1);
@@ -85,8 +119,8 @@ static void SiteFileDirEntry(void **state) {
 
 #pragma clang diagnostic pop
 
-const struct CMUnitTest siteTest[] = {cmocka_unit_test(SiteFileNew), cmocka_unit_test(SiteFileNewWithPath),
-                                      cmocka_unit_test(SiteFileGetDirectory), cmocka_unit_test(SiteFileSetDirectory),
-                                      cmocka_unit_test(SiteFileDirEntry)};
+const struct CMUnitTest siteTest[] = {cmocka_unit_test(SiteArrayFunctions), cmocka_unit_test(SiteFileNew),
+                                      cmocka_unit_test(SiteFileNewWithPath), cmocka_unit_test(SiteFileGetDirectory),
+                                      cmocka_unit_test(SiteFileSetDirectory), cmocka_unit_test(SiteFileDirEntry)};
 
 #endif /* NEW_DL_TEST_SITE_H */
