@@ -4,49 +4,65 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-static void UpdateHttpUri(HttpSite *self) {
-    UriDetails details;
-    uriDetailsSetScheme(&details, SCHEME_HTTP);
-    uriDetailsSetAddress(&details, &self->address.address.sock);
-    details.path = self->sitePath;
-    if (self->fullUri)
-        free(self->fullUri);
-    self->fullUri = uriDetailsCreateString(&details);
-    free(details.scheme), free(details.host), free(details.port);
-}
-
 int httpSiteSchemeChangeDirectory(HttpSite *self, const char *path) {
-    char *newPath;
+    char *newPath, *newUri;
+    UriDetails details = uriDetailsNewFrom(self->fullUri);
 
-    if (!(newPath = uriPathAbsoluteAppend(self->sitePath, path)))
+    if (!(newPath = uriPathAbsoluteAppend(details.path ? details.path : "/", path)))
         return -1;
 
     /* TODO: HTTP GET, check if file, process html links */
 
-    free(self->sitePath), self->sitePath = newPath;
-    UpdateHttpUri(self);
+    if (details.path)
+        free(details.path);
+
+    details.path = newPath;
+
+    if (!(newUri = uriDetailsCreateString(&details))) {
+        uriDetailsFree(&details);
+        return -1;
+    }
+
+    free(self->fullUri), self->fullUri = newUri;
+
     return 0;
 }
 
 void httpSiteSchemeFree(HttpSite *self) {
-    if (self->sitePath)
-        free(self->sitePath);
+    if (self->fullUri)
+        free(self->fullUri);
 }
 
 char *httpSiteSchemeGetWorkingDirectory(HttpSite *self) {
-    return self->sitePath;
+    return self->fullUri;
 }
 
 HttpSite httpSiteSchemeNew(const char *path) {
     HttpSite self;
-    if (!path)
-        path = "/";
+    UriDetails details = uriDetailsNewFrom(path);
+    char *header, *scheme, *response;
 
-    /* TODO: TCP CONNECT HERE */
-    /* TODO: HTTP GET HERE */
+    if (uriDetailsCreateSocketAddress(&details, &self.address, SCHEME_HTTP) ||
+        ioCreateSocketFromSocketAddress(&self.address, &self.socket) ||
+        connect(self.socket, &self.address.address.sock, sizeof(self.address.address.sock)) == -1)
+        goto httpSiteSchemeNew_abort;
 
-    self.sitePath = malloc(strlen(path) + 1);
-    strcpy(self.sitePath, path);
+    if (ioHttpHeadRequest(&self.socket, details.path, NULL) || ioHttpHeadRead(&self.socket, &header) ||
+        HttpGetEssentialResponse(header, &scheme, &response))
+        goto httpSiteSchemeNew_closeSocketAndAbort;
+
+    if (!strcmp(response, "200")) {
+        self.fullUri = uriDetailsCreateString(&details);
+        uriDetailsFree(&details);
+        return self;
+    }
+
+    httpSiteSchemeNew_closeSocketAndAbort:
+    CLOSE_SOCKET(self.socket);
+
+    httpSiteSchemeNew_abort:
+    uriDetailsFree(&details);
+    memset(&self, 0, sizeof(HttpSite));
     return self;
 }
 

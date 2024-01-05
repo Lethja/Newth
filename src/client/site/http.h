@@ -5,7 +5,8 @@
 
 typedef struct HttpSite {
     SocketAddress address;
-    char *fullUri, *sitePath;
+    SOCKET socket;
+    char *fullUri;
 } HttpSite;
 
 int httpSiteSchemeChangeDirectory(HttpSite *self, const char *path);
