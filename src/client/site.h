@@ -40,6 +40,12 @@ Site *siteArrayGetActive(void);
 long siteArrayGetActiveNth(void);
 
 /**
+ * Set the active site by pointer
+ * @param site The site to set to active
+ */
+void siteArraySetActive(Site *site);
+
+/**
  * Set the active site by number
  * @param siteNumber The site number to set to active
  * @return NULL on success or a user friendly error message as to why the site couldn't be changed-
@@ -77,6 +83,13 @@ void siteArrayRemoveNth(size_t n);
  */
 void siteArrayRemove(Site *site);
 
+/**
+ * Array pointer to iterate over, use with caution
+ * @param length Out/Null: The size of the array
+ * @return A pointer to the site array
+ */
+Site *siteArrayPtr(long *length);
+
 #pragma endregion
 
 #pragma region Memory Functions
@@ -92,12 +105,14 @@ void siteDirectoryEntryFree(void *entry);
 #pragma region Site Base Functions
 
 /**
- * Create a new site mount
+ * Create a new site that's ready to mount
+ * @param site Out: Pointer to the site to populate
  * @param type In: The type of site to create
  * @param path In: The current site to mount or NULL for default
- * @return A new site ready to be added to the array
+ * @return NULL on success, user friendly error message otherwise
  */
-Site siteNew(enum SiteType type, const char *path);
+char *siteNew(Site *site, enum SiteType type, const char *path);
+
 
 /**
  * Free internal members of a site

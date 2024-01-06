@@ -21,6 +21,6 @@ void *httpSiteReadDirectoryListing(void *listing);
 
 void httpSiteCloseDirectoryListing(void *listing);
 
-HttpSite httpSiteSchemeNew(const char *path);
+char *httpSiteSchemeNew(HttpSite *self, const char *path);
 
 #endif /* NEW_DL_HTTP_H */

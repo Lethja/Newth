@@ -9,6 +9,30 @@ typedef struct SiteArray {
 
 SiteArray Sites;
 
+static inline char SiteCompare(Site *site1, Site *site2) {
+    size_t s;
+    void *p, *q;
+
+    if (site1->type != site2->type)
+        return 0;
+
+    switch (site1->type) {
+        default:
+            return 0;
+        case SITE_FILE:
+            p = &site1->site.file, q = &site2->site.file, s = sizeof(FileSite);
+            break;
+        case SITE_HTTP:
+            p = &site1->site.http, q = &site2->site.http, s = sizeof(HttpSite);
+            break;
+    }
+
+    if (!memcmp(p, q, s))
+        return 1;
+
+    return 0;
+}
+
 Site *siteArrayGetActive(void) {
     if (Sites.set >= Sites.len)
         return NULL;
@@ -23,6 +47,17 @@ long siteArrayGetActiveNth(void) {
     return Sites.set;
 }
 
+void siteArraySetActive(Site *site) {
+    long i;
+
+    for (i = 0; i < Sites.len; ++i) {
+        if (SiteCompare(&Sites.array[i], site)) {
+            siteArraySetActiveNth(i);
+            return;
+        }
+    }
+}
+
 char *siteArraySetActiveNth(long siteNumber) {
     if (siteNumber >= Sites.len)
         return "Invalid site";
@@ -32,7 +67,8 @@ char *siteArraySetActiveNth(long siteNumber) {
 }
 
 char *siteArrayInit(void) {
-    Site file = siteNew(SITE_FILE, NULL);
+    Site file;
+    siteNew(&file, SITE_FILE, NULL);
     memset(&Sites, 0, sizeof(SiteArray));
     return siteArrayAdd(&file);
 }
@@ -70,27 +106,18 @@ void siteArrayRemove(Site *site) {
     size_t i;
 
     for (i = 0; i < Sites.len; ++i) {
-        if (Sites.array[i].type == site->type) {
-            size_t s;
-            void *p, *q;
-
-            switch (site->type) {
-                default:
-                    return;
-                case SITE_FILE:
-                    p = &Sites.array[i].site.file, q = &site->site.file, s = sizeof(FileSite);
-                    break;
-                case SITE_HTTP:
-                    p = &Sites.array[i].site.http, q = &site->site.http, s = sizeof(HttpSite);
-                    break;
-            }
-
-            if (!memcmp(p, q, s)) {
-                siteArrayRemoveNth(i);
-                return;
-            }
+        if (SiteCompare(&Sites.array[i], site)) {
+            siteArrayRemoveNth(i);
+            return;
         }
     }
+}
+
+Site *siteArrayPtr(long *length) {
+    if (length)
+        *length = Sites.len;
+
+    return Sites.array;
 }
 
 #pragma endregion
@@ -108,19 +135,18 @@ void siteDirectoryEntryFree(void *entry) {
 
 #pragma region Site Base Functions
 
-Site siteNew(enum SiteType type, const char *path) {
-    Site self = {0};
+char *siteNew(Site *site, enum SiteType type, const char *path) {
 
-    switch ((self.type = type)) {
+    switch ((site->type = type)) {
         case SITE_FILE:
-            self.site.file = fileSiteSchemeNew(path);
-            break;
+            return fileSiteSchemeNew(&site->site.file, path);
         case SITE_HTTP:
-            self.site.http = httpSiteSchemeNew(path);
-            break;
+            return httpSiteSchemeNew(&site->site.http, path);
+        default:
+            return "Unknown mount type";
     }
 
-    return self;
+    return NULL;
 }
 
 void siteFree(Site *self) {

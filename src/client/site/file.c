@@ -36,31 +36,30 @@ char *fileSiteSchemeGetWorkingDirectory(FileSite *self) {
     return self->fullUri;
 }
 
-FileSite fileSiteSchemeNew(const char *path) {
-    FileSite self;
+char *fileSiteSchemeNew(FileSite *self, const char *path) {
     char *wd;
 
-    self.fullUri = NULL;
+    self->fullUri = NULL;
     if (path) {
         if (!(wd = platformRealPath((char *) path)))
-            return self;
+            return "Unable to resolve absolute path";
 
         if (strlen(wd) + 1 > FILENAME_MAX) {
             free(wd);
-            return self;
+            return "Absolute path is beyond maximum path limit";
         }
     } else {
         if (!(wd = malloc(FILENAME_MAX)))
-            return self;
+            return strerror(errno);
 
         if (!platformGetWorkingDirectory(wd, FILENAME_MAX)) {
             free(wd);
-            return self;
+            return "Unable to get systems working directory";
         }
     }
 
-    UpdateFileUri(&self, wd), free(wd);
-    return self;
+    UpdateFileUri(self, wd), free(wd);
+    return NULL;
 }
 
 void *fileSiteOpenDirectoryListing(char *path) {

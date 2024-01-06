@@ -107,6 +107,45 @@ static inline void PrintDirectoryFiles(Site *site) {
     siteCloseDirectoryListing(site, dir), putc('\n', stdout);
 }
 
+static inline char *mountSite(const char *parameter) {
+    UriDetails details = uriDetailsNewFrom(parameter);
+    enum SiteType type;
+    Site site;
+    char *err;
+
+    if (!details.host)
+        return "Address not understood";
+
+    switch (uriDetailsGetScheme(&details)) {
+        case SCHEME_HTTP:
+        case SCHEME_HTTPS:
+            type = SITE_HTTP;
+            break;
+        default:
+        case SCHEME_UNKNOWN:
+            return "Scheme not recognized";
+    }
+
+    uriDetailsFree(&details);
+
+    if ((err = siteNew(&site, type, parameter)) || (err = siteArrayAdd(&site)))
+        return err;
+
+    siteArraySetActive(&site);
+    return NULL;
+}
+
+static inline void mountList(void) {
+    long a, i, len;
+    Site *sites = siteArrayPtr(&len);
+    a = siteArrayGetActiveNth();
+    for (i = 0; i < len; ++i) {
+        printf("%c%ld:\t%s\n", i == a ? '>' : ' ', i,
+               sites[i].type == SITE_HTTP ? sites[i].site.http.fullUri : sites[i].site.file.fullUri);
+
+    }
+}
+
 static inline void processCommand(char **args) {
     if (args[0] == NULL)
         return;
@@ -127,10 +166,23 @@ static inline void processCommand(char **args) {
                 else
                     goto processCommand_notFound;
                 break;
+            case 'M':
+                if (toupper(args[0][1]) == 'O' && toupper(args[0][2]) == 'U' && toupper(args[0][3]) == 'N' &&
+                    toupper(args[0][4]) == 'T')
+                    mountList();
+                break;
             case 'P':
                 if (toupper(args[0][1]) == 'W' && toupper(args[0][2]) == 'D')
                     puts(siteGetWorkingDirectory(siteArrayGetActive()));
                 else
+                    goto processCommand_notFound;
+                break;
+            case 'U':
+                if (toupper(args[0][1]) == 'M' && toupper(args[0][2]) == 'O' && toupper(args[0][3]) == 'U' &&
+                    toupper(args[0][4]) == 'N' && toupper(args[0][5]) == 'T') {
+                    siteArrayRemove(siteArrayGetActive());
+                    siteArraySetActiveNth(0);
+                } else
                     goto processCommand_notFound;
                 break;
             case '0':
@@ -157,6 +209,17 @@ static inline void processCommand(char **args) {
                 if (toupper(args[0][1]) == 'D')
                     siteSetWorkingDirectory(siteArrayGetActive(), args[1]);
                 else
+                    goto processCommand_notFound;
+                break;
+            case 'M':
+                if (toupper(args[0][1]) == 'O' && toupper(args[0][2]) == 'U' && toupper(args[0][3]) == 'N' &&
+                    toupper(args[0][4]) == 'T') {
+                    char *err;
+                    if ((err = mountSite(args[1]))) {
+                        puts(err);
+                        return;
+                    }
+                } else
                     goto processCommand_notFound;
                 break;
             default:

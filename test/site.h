@@ -20,7 +20,8 @@
 static void SiteArrayFunctions(void **state) {
     Site site1, site2;
     memset(&site1, 0, sizeof(Site)), memset(&site2, 0, sizeof(Site));
-    site1 = siteNew(SITE_HTTP, "foo"), site2 = siteNew(SITE_HTTP, "bar");
+    assert_null(siteNew(&site1, SITE_HTTP, "foo"));
+    assert_null(siteNew(&site2, SITE_HTTP, "bar"));
     siteArrayInit();
     assert_null(siteArraySetActiveNth(0));
     assert_non_null(siteArraySetActiveNth(1));
@@ -52,8 +53,9 @@ static void SiteArrayFunctions(void **state) {
 }
 
 static void SiteFileNew(void **state) {
-    Site site = siteNew(SITE_FILE, NULL);
+    Site site;
     char *wd = malloc(FILENAME_MAX + 1);
+    assert_null(siteNew(&site, SITE_FILE, NULL));
     assert_non_null(platformGetWorkingDirectory(wd, FILENAME_MAX));
 
     assert_int_equal(site.type, SITE_FILE);
@@ -64,8 +66,8 @@ static void SiteFileNew(void **state) {
 
 static void SiteFileNewWithPath(void **state) {
     const char *testPath = "/tmp";
-    Site site = siteNew(SITE_FILE, testPath);
-
+    Site site;
+    assert_null(siteNew(&site, SITE_FILE, testPath));
     assert_int_equal(site.type, SITE_FILE);
     assert_non_null(site.site.file.fullUri);
     assert_non_null(strstr(site.site.file.fullUri, testPath));
@@ -73,8 +75,10 @@ static void SiteFileNewWithPath(void **state) {
 }
 
 static void SiteFileGetDirectory(void **state) {
-    Site site = siteNew(SITE_FILE, NULL);
+    Site site;
     char *wd = malloc(FILENAME_MAX + 1);
+
+    assert_null(siteNew(&site, SITE_FILE, NULL));
     assert_non_null(platformGetWorkingDirectory(wd, FILENAME_MAX));
     assert_non_null(site.site.file.fullUri);
 
@@ -83,8 +87,10 @@ static void SiteFileGetDirectory(void **state) {
 }
 
 static void SiteFileSetDirectory(void **state) {
-    Site site = siteNew(SITE_FILE, NULL);
+    Site site;
     char *wd = malloc(FILENAME_MAX + 1);
+
+    assert_null(siteNew(&site, SITE_FILE, NULL));
     assert_non_null(platformGetWorkingDirectory(wd, FILENAME_MAX));
     assert_non_null(site.site.file.fullUri);
 
@@ -94,10 +100,11 @@ static void SiteFileSetDirectory(void **state) {
 }
 
 static void SiteFileDirEntry(void **state) {
-    Site site = siteNew(SITE_FILE, NULL);
+    Site site;
     size_t i, j = i = 0;
     void *d, *e;
 
+    assert_null(siteNew(&site, SITE_FILE, NULL));
     d = platformDirOpen(".");
     assert_non_null(d);
 

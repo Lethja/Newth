@@ -37,33 +37,31 @@ char *httpSiteSchemeGetWorkingDirectory(HttpSite *self) {
     return self->fullUri;
 }
 
-HttpSite httpSiteSchemeNew(const char *path) {
-    HttpSite self;
+char *httpSiteSchemeNew(HttpSite *self, const char *path) {
     UriDetails details = uriDetailsNewFrom(path);
     char *header, *scheme, *response;
 
-    if (uriDetailsCreateSocketAddress(&details, &self.address, SCHEME_HTTP) ||
-        ioCreateSocketFromSocketAddress(&self.address, &self.socket) ||
-        connect(self.socket, &self.address.address.sock, sizeof(self.address.address.sock)) == -1)
+    if (uriDetailsCreateSocketAddress(&details, &self->address, SCHEME_HTTP) ||
+        ioCreateSocketFromSocketAddress(&self->address, &self->socket) ||
+        connect(self->socket, &self->address.address.sock, sizeof(self->address.address.sock)) == -1)
         goto httpSiteSchemeNew_abort;
 
-    if (ioHttpHeadRequest(&self.socket, details.path, NULL) || ioHttpHeadRead(&self.socket, &header) ||
+    if (ioHttpHeadRequest(&self->socket, details.path, NULL) || ioHttpHeadRead(&self->socket, &header) ||
         HttpGetEssentialResponse(header, &scheme, &response))
         goto httpSiteSchemeNew_closeSocketAndAbort;
 
     if (!strcmp(response, "200")) {
-        self.fullUri = uriDetailsCreateString(&details);
+        self->fullUri = uriDetailsCreateString(&details);
         uriDetailsFree(&details);
-        return self;
+        return "Remote response not compatible";
     }
 
     httpSiteSchemeNew_closeSocketAndAbort:
-    CLOSE_SOCKET(self.socket);
+    CLOSE_SOCKET(self->socket);
 
     httpSiteSchemeNew_abort:
     uriDetailsFree(&details);
-    memset(&self, 0, sizeof(HttpSite));
-    return self;
+    return "Error connecting to HTTP server";
 }
 
 void *httpSiteOpenDirectoryListing(char *path) {

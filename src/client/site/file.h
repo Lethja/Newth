@@ -17,6 +17,6 @@ void *fileSiteReadDirectoryListing(void *listing);
 
 void fileSiteCloseDirectoryListing(void *listing);
 
-FileSite fileSiteSchemeNew(const char *path);
+char *fileSiteSchemeNew(FileSite *self, const char *path);
 
 #endif /* NEW_DL_FILE_H */
