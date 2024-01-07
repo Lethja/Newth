@@ -136,6 +136,7 @@ void siteDirectoryEntryFree(void *entry) {
 #pragma region Site Base Functions
 
 char *siteNew(Site *site, enum SiteType type, const char *path) {
+    memset(site, 0, sizeof(Site));
 
     switch ((site->type = type)) {
         case SITE_FILE:
@@ -145,8 +146,6 @@ char *siteNew(Site *site, enum SiteType type, const char *path) {
         default:
             return "Unknown mount type";
     }
-
-    return NULL;
 }
 
 void siteFree(Site *self) {

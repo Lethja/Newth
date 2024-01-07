@@ -180,7 +180,12 @@ static inline void processCommand(char **args) {
             case 'U':
                 if (toupper(args[0][1]) == 'M' && toupper(args[0][2]) == 'O' && toupper(args[0][3]) == 'U' &&
                     toupper(args[0][4]) == 'N' && toupper(args[0][5]) == 'T') {
-                    siteArrayRemove(siteArrayGetActive());
+                    Site *site;
+
+                    if (!(site = siteArrayGetActive()))
+                        return;
+
+                    siteFree(site), siteArrayRemove(site);
                     siteArraySetActiveNth(0);
                 } else
                     goto processCommand_notFound;

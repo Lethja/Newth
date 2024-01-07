@@ -106,7 +106,7 @@ char *ioHttpHeadRead(const SOCKET *socket, char **header) {
         return strerror(errno);
 
     if (!*header) {
-        if (!(*header = malloc(SB_DATA_SIZE))) {
+        if (!(*header = calloc(SB_DATA_SIZE, sizeof(char)))) {
             free(buf);
             return strerror(errno);
         }
@@ -137,7 +137,7 @@ char *ioHttpHeadRead(const SOCKET *socket, char **header) {
             }
         }
 
-        strncat(*header, buf, totalBytes + 1);
+        strncat(*header, buf, totalBytes);
 
         /* Non-peek to move buffer along */
         recv(*socket, buf, bytesReceived, 0);
@@ -146,6 +146,8 @@ char *ioHttpHeadRead(const SOCKET *socket, char **header) {
     /* If the buffer has a body after the head then jump over it so the next function is ready to read the body */
     if (headEnd)
         recv(*socket, buf, 4, 0);
+
+    free(buf);
 
     return NULL;
 }
