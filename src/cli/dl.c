@@ -45,27 +45,6 @@ static inline void parseUris(int argc, char **argv) {
         printf("WARN: %u addresses couldn't be parsed", e);
 }
 
-static inline char *handleQueueEntry(void) {
-    PathQueue **pathQueue = addressQueueGet(), *q = pathQueue[0];
-    /* ServerHeaderResponse *headerResponse; */
-    char *err = pathQueueConnect(q);
-    char *header = NULL;
-
-    if (err)
-        return err;
-
-    if ((err = pathQueueConnect(q)))
-        return err;
-
-    if ((err = ioHttpHeadRequest(&q->ctrlSock, q->paths[0], NULL)))
-        return err;
-
-    if ((err = ioHttpHeadRead(&q->ctrlSock, &header)))
-        return err;
-
-    return NULL;
-}
-
 static inline void processInput(char *input, char **args) {
     const char *delimiters = " \t\n";
     int i = 0;
@@ -283,11 +262,6 @@ int main(int argc, char **argv) {
 #endif /* _WIN32 */
             return 1;
         case 1:
-            if ((err = handleQueueEntry())) {
-                puts(err);
-                return 1;
-            }
-            break;
         default:
             puts("Not yet implemented");
             break;

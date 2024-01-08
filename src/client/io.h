@@ -42,14 +42,14 @@ extern char *ioCreateSocketFromSocketAddress(SocketAddress *self, SOCKET *sock);
 
 extern char *ioHttpHeadRead(const SOCKET *socket, char **header);
 
-extern char *ioHttpHeadRequest(const SOCKET *socket, const char *path, const char *extra);
+extern char *ioGenerateHttpHeadRequest(const char *path, const char *extra);
 
-extern char *ioHttpGetRequest(const SOCKET *socket, const char *path, const char *extra);
+extern char *ioGenerateHttpGetRequest(const char *path, const char *extra);
 
 extern char *HttpGetEssentialResponse(const char *headerFile, char **scheme, char **response);
 
 extern char *FindHeader(const char *headerFile, const char *header, char **variable);
 
-extern char *SendRequest(const SOCKET *socket, const char *type, const char *path, const char *extra);
+extern char *generateSendRequest(const char *type, const char *path, const char *extra);
 
 #endif /* NEW_DL_IO_H */

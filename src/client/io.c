@@ -2,34 +2,23 @@
 #include <sys/types.h>
 #include "io.h"
 
-char *SendRequest(const SOCKET *socket, const char *type, const char *path, const char *extra) {
+char *generateSendRequest(const char *type, const char *path, const char *extra) {
     const char *http = HTTP_RES HTTP_EOL HTTP_EOL;
-    size_t i = 0, len = strlen(type) + strlen(path) + strlen(http) + 2;
+    size_t len = strlen(type) + strlen(path) + strlen(http) + 2;
     char *req;
 
     if (extra)
         len += strlen(extra);
 
     if (!(req = malloc(len + 1)))
-        return strerror(errno);
+        return NULL;
 
     if (extra)
         sprintf(req, "%s %s %s%s", type, path, http, extra);
     else
         sprintf(req, "%s %s %s", type, path, http);
 
-    do {
-        size_t r = send(*socket, &req[i], len - i, 0);
-        if (r == -1) {
-            free(req);
-            return strerror(platformSocketGetLastError());
-        }
-
-        i += r;
-    } while (i != len);
-
-    free(req);
-    return NULL;
+    return req;
 }
 
 char *FindHeader(const char *headerFile, const char *header, char **variable) {
@@ -152,10 +141,10 @@ char *ioHttpHeadRead(const SOCKET *socket, char **header) {
     return NULL;
 }
 
-char *ioHttpHeadRequest(const SOCKET *socket, const char *path, const char *extra) {
-    return SendRequest(socket, "HEAD", path, extra);
+char *ioGenerateHttpHeadRequest(const char *path, const char *extra) {
+    return generateSendRequest("HEAD", path, extra);
 }
 
-char *ioHttpGetRequest(const SOCKET *socket, const char *path, const char *extra) {
-    return SendRequest(socket, "GET", path, extra);
+char *ioGenerateHttpGetRequest(const char *path, const char *extra) {
+    return generateSendRequest("GET", path, extra);
 }

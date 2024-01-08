@@ -20,8 +20,8 @@
 static void SiteArrayFunctions(void **state) {
     Site site1, site2;
     memset(&site1, 0, sizeof(Site)), memset(&site2, 0, sizeof(Site));
-    assert_null(siteNew(&site1, SITE_HTTP, "foo"));
-    assert_null(siteNew(&site2, SITE_HTTP, "bar"));
+    assert_null(siteNew(&site1, SITE_FILE, "/"));
+    assert_null(siteNew(&site2, SITE_FILE, "/"));
     siteArrayInit();
     assert_null(siteArraySetActiveNth(0));
     assert_non_null(siteArraySetActiveNth(1));
@@ -49,7 +49,7 @@ static void SiteArrayFunctions(void **state) {
     siteArrayRemoveNth(2);
     assert_null(siteArrayGetActive());
     assert_int_equal(siteArrayGetActiveNth(), -1);
-    siteArrayFree();
+    siteArrayFree(), siteFree(&site1);
 }
 
 static void SiteFileNew(void **state) {

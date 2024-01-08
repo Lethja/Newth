@@ -37,7 +37,7 @@ static inline const char *WakeUpAndSend(HttpSite *self, const void *data, size_t
 }
 
 int httpSiteSchemeChangeDirectory(HttpSite *self, const char *path) {
-    char *newPath, *newUri, *header, *scheme, *response;
+    char *newPath, *newUri, *header, *scheme, *response, *send;
     UriDetails details = uriDetailsNewFrom(self->fullUri);
 
     if (!details.path)
@@ -48,11 +48,18 @@ int httpSiteSchemeChangeDirectory(HttpSite *self, const char *path) {
         return -1;
     }
 
-    if (ioHttpHeadRequest(&self->socket, details.path, NULL) || ioHttpHeadRead(&self->socket, &header) ||
+    if (!(send = ioGenerateHttpHeadRequest(details.path, NULL))) {
+        uriDetailsFree(&details), free(newPath);
+        return -1;
+    }
+
+    if (WakeUpAndSend(self, send, strlen(send)) || ioHttpHeadRead(&self->socket, &header) ||
         HttpGetEssentialResponse(header, &scheme, &response)) {
         uriDetailsFree(&details), free(newPath);
         return -1;
     }
+
+    free(send);
 
     if (!(response[0] == '2' && response[1] == '0' && response[2] == '0')) {
         uriDetailsFree(&details), free(newPath);
@@ -87,7 +94,7 @@ char *httpSiteSchemeGetWorkingDirectory(HttpSite *self) {
 
 char *httpSiteSchemeNew(HttpSite *self, const char *path) {
     UriDetails details = uriDetailsNewFrom(path);
-    char *header, *scheme, *response;
+    char *header, *scheme, *response, *send;
 
     if (!details.path)
         details.path = malloc(2), details.path[0] = '/', details.path[1] = '\0';
@@ -95,10 +102,12 @@ char *httpSiteSchemeNew(HttpSite *self, const char *path) {
     if (ConnectTo(self, &details))
         goto httpSiteSchemeNew_abort;
 
-    header = scheme = response = NULL;
-    if (ioHttpHeadRequest(&self->socket, details.path, NULL) || ioHttpHeadRead(&self->socket, &header) ||
+    header = scheme = response = NULL, send = ioGenerateHttpHeadRequest(details.path, NULL);
+    if (!send || WakeUpAndSend(self, send, strlen(send)) || ioHttpHeadRead(&self->socket, &header) ||
         HttpGetEssentialResponse(header, &scheme, &response))
         goto httpSiteSchemeNew_closeSocketAndAbort;
+
+    free(send);
 
     if (!(response[0] == '2' && response[1] == '0' && response[2] == '0'))
         goto httpSiteSchemeNew_closeSocketAndAbort;
