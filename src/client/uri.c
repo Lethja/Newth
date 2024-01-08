@@ -396,8 +396,10 @@ char *uriPathAbsoluteAppend(const char *currentPath, const char *append) {
 
     uriPathCombine(c, currentPath, append);
 
-    if (!(r = malloc(len)))
+    if (!(r = malloc(len))) {
+        free(c);
         return NULL;
+    }
 
     for (i = j = 0; c[i] != '\0'; ++i, ++j) {
         switch (c[i]) {
@@ -426,17 +428,21 @@ char *uriPathAbsoluteAppend(const char *currentPath, const char *append) {
                                     case '/':
                                     case '\0':
                                         i += 3;
-                                        do --j; while (r[j] != '/');
+                                        if (j)
+                                            do --j; while (j && r[j] != '/');
+
                                         if (!j) {
                                             ++j;
                                             goto uriPathAbsoluteAppend_finished;
                                         }
+
                                         if (c[i] == '/' && c[i + 1] == '.') {
                                             if (c[i + 2] == '/')
                                                 i += JumpOverDotPaths(&c[i]);
                                             --i;
                                         } else if (c[i] == '\0')
                                             goto uriPathAbsoluteAppend_finished;
+
                                         break;
                                     default:
                                         r[j] = c[i];
@@ -453,8 +459,10 @@ char *uriPathAbsoluteAppend(const char *currentPath, const char *append) {
 
     uriPathAbsoluteAppend_finished:
     r[j] = '\0', free(c);
-    if (!(c = realloc(r, j + 1)))
+    if (!(c = realloc(r, j + 1))) {
+        free(r);
         return NULL;
+    }
 
     return c;
 }
