@@ -36,6 +36,15 @@ static inline const char *WakeUpAndSend(HttpSite *self, const void *data, size_t
     return NULL;
 }
 
+static inline char HttpResponseOk(const char *response) {
+    switch (response[0]) {
+        case '2':
+            return 1;
+        default:
+            return 0;
+    }
+}
+
 int httpSiteSchemeChangeDirectory(HttpSite *self, const char *path) {
     char *newPath, *newUri, *header, *scheme, *response, *send;
     UriDetails details = uriDetailsNewFrom(self->fullUri);
@@ -61,7 +70,7 @@ int httpSiteSchemeChangeDirectory(HttpSite *self, const char *path) {
 
     free(send);
 
-    if (!(response[0] == '2' && response[1] == '0' && response[2] == '0')) {
+    if (!HttpResponseOk(response)) {
         uriDetailsFree(&details), free(newPath);
         return 1;
     }
@@ -109,7 +118,7 @@ char *httpSiteSchemeNew(HttpSite *self, const char *path) {
 
     free(send);
 
-    if (!(response[0] == '2' && response[1] == '0' && response[2] == '0'))
+    if (!(HttpResponseOk(response)))
         goto httpSiteSchemeNew_closeSocketAndAbort;
 
     self->fullUri = uriDetailsCreateString(&details);
