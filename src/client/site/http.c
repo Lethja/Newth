@@ -4,6 +4,38 @@
 #include <stddef.h>
 #include <stdlib.h>
 
+static inline char *ConnectTo(HttpSite *self, UriDetails *details) {
+    if (uriDetailsCreateSocketAddress(details, &self->address, SCHEME_HTTP) ||
+        ioCreateSocketFromSocketAddress(&self->address, &self->socket) ||
+        connect(self->socket, &self->address.address.sock, sizeof(self->address.address.sock)) == -1)
+        return strerror(platformSocketGetLastError());
+
+    return NULL;
+}
+
+static inline const char *WakeUpAndSend(HttpSite *self, const void *data, size_t len) {
+    const char *err, maxAttempt = 3;
+    char attempt = 0;
+    ssize_t s = send(self->socket, data, len, 0);
+    WakeUpAndSend_TryAgain:
+    ++attempt;
+
+    if (s == -1) {
+        UriDetails details = uriDetailsNewFrom(self->fullUri);
+        CLOSE_SOCKET(self->socket);
+        err = ConnectTo(self, &details);
+        uriDetailsFree(&details);
+        if (err)
+            return err;
+        else if (attempt < maxAttempt)
+            goto WakeUpAndSend_TryAgain;
+
+        return strerror(platformSocketGetLastError());
+    }
+
+    return NULL;
+}
+
 int httpSiteSchemeChangeDirectory(HttpSite *self, const char *path) {
     char *newPath, *newUri, *header, *scheme, *response;
     UriDetails details = uriDetailsNewFrom(self->fullUri);
@@ -60,9 +92,7 @@ char *httpSiteSchemeNew(HttpSite *self, const char *path) {
     if (!details.path)
         details.path = malloc(2), details.path[0] = '/', details.path[1] = '\0';
 
-    if (uriDetailsCreateSocketAddress(&details, &self->address, SCHEME_HTTP) ||
-        ioCreateSocketFromSocketAddress(&self->address, &self->socket) ||
-        connect(self->socket, &self->address.address.sock, sizeof(self->address.address.sock)) == -1)
+    if (ConnectTo(self, &details))
         goto httpSiteSchemeNew_abort;
 
     header = scheme = response = NULL;
