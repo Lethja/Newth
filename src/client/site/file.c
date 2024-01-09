@@ -3,11 +3,15 @@
 
 #include <sys/stat.h>
 
+#pragma region Static Helper Functions
+
 static void UpdateFileUri(FileSite *self, char *path) {
     if (self->fullUri)
         free(self->fullUri);
     self->fullUri = platformPathSystemToFileScheme(path);
 }
+
+#pragma endregion
 
 int fileSiteSchemeChangeDirectory(FileSite *self, const char *path) {
     if (!platformPathSystemChangeWorkingDirectory(path)) {

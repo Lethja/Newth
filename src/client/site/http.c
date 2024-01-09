@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdlib.h>
 
+#pragma region Static Helper Functions
+
 static inline char *ConnectTo(HttpSite *self, UriDetails *details) {
     if (uriDetailsCreateSocketAddress(details, &self->address, SCHEME_HTTP) ||
         ioCreateSocketFromSocketAddress(&self->address, &self->socket) ||
@@ -45,6 +47,30 @@ static inline char HttpResponseOk(const char *response) {
     }
 }
 
+static inline char HttpResponseIsDir(const char *header) {
+    char *ptr;
+    FindHeader(header, "Content-Disposition", &ptr);
+    if (ptr) {
+        char *p = strstr(ptr, "filename");
+        free(ptr);
+        if (p)
+            return 0;
+    }
+
+    FindHeader(header, "Content-Type", &ptr);
+
+    if (ptr) {
+        char *p = strstr(ptr, "text/html");
+        free(ptr);
+        if (p)
+            return 1;
+    }
+
+    return -1;
+}
+
+#pragma endregion
+
 int httpSiteSchemeChangeDirectory(HttpSite *self, const char *path) {
     char *newPath, *newUri, *header, *scheme, *response, *send;
     UriDetails details = uriDetailsNewFrom(self->fullUri);
@@ -62,16 +88,20 @@ int httpSiteSchemeChangeDirectory(HttpSite *self, const char *path) {
         return -1;
     }
 
-    if (WakeUpAndSend(self, send, strlen(send)) || ioHttpHeadRead(&self->socket, &header) ||
-        HttpGetEssentialResponse(header, &scheme, &response)) {
+    if (WakeUpAndSend(self, send, strlen(send)) || ioHttpHeadRead(&self->socket, &header)) {
         uriDetailsFree(&details), free(newPath);
         return -1;
     }
 
     free(send);
 
-    if (!HttpResponseOk(response)) {
-        uriDetailsFree(&details), free(newPath);
+    if (HttpGetEssentialResponse(header, &scheme, &response)) {
+        uriDetailsFree(&details), free(newPath), free(header);
+        return -1;
+    }
+
+    if (!HttpResponseOk(response) || !HttpResponseIsDir(header)) {
+        uriDetailsFree(&details), free(newPath), free(header), free(scheme);
         return 1;
     }
 
