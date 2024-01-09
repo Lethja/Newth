@@ -111,7 +111,7 @@ void siteDirectoryEntryFree(void *entry);
  * @param path In: The current site to mount or NULL for default
  * @return NULL on success, user friendly error message otherwise
  */
-char *siteNew(Site *site, enum SiteType type, const char *path);
+const char *siteNew(Site *site, enum SiteType type, const char *path);
 
 
 /**

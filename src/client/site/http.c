@@ -6,7 +6,13 @@
 
 #pragma region Static Helper Functions
 
-static inline char *ConnectTo(HttpSite *self, UriDetails *details) {
+/**
+ * Initialize a TCP socket ready for HTTP communication
+ * @param self The site the socket is related to
+ * @param details The address details
+ * @return NULL on success, user friendly error message otherwise
+ */
+static inline const char *ConnectTo(HttpSite *self, UriDetails *details) {
     if (uriDetailsCreateSocketAddress(details, &self->address, SCHEME_HTTP) ||
         ioCreateSocketFromSocketAddress(&self->address, &self->socket) ||
         connect(self->socket, &self->address.address.sock, sizeof(self->address.address.sock)) == -1)
@@ -15,6 +21,14 @@ static inline char *ConnectTo(HttpSite *self, UriDetails *details) {
     return NULL;
 }
 
+/**
+ * Prepare the already connected TCP socket for sending data
+ * @param self The site to send HTTP requests over
+ * @param data The data to be sent
+ * @param len The total length of the data to be sent
+ * @return NULL on success, user friendly error message otherwise
+ * @remark If the TCP connection was reset then this function will attempt to reestablish the connection internally
+ */
 static inline const char *WakeUpAndSend(HttpSite *self, const void *data, size_t len) {
     const char *err, maxAttempt = 3;
     char attempt = 0;
@@ -38,6 +52,11 @@ static inline const char *WakeUpAndSend(HttpSite *self, const void *data, size_t
     return NULL;
 }
 
+/**
+ * Check if the HTTP response is generally considered a good one that can proceed
+ * @param response The response string created by HttpGetEssentialResponse()
+ * @return Non-zero on good responses (200 OK), zero on bad responses (404 NOT FOUND or 500 INTERNAL SERVER ERROR)
+ */
 static inline char HttpResponseOk(const char *response) {
     switch (response[0]) {
         case '2':
@@ -47,6 +66,11 @@ static inline char HttpResponseOk(const char *response) {
     }
 }
 
+/**
+ * Attempt to detect if this page can be considered a file directory page from information in the header
+ * @param header The header to use to determine if this page is a directory listing
+ * @return Zero if not a directory listing, positive number for a directory listing, negative number if unsure
+ */
 static inline char HttpResponseIsDir(const char *header) {
     char *ptr;
     FindHeader(header, "Content-Disposition", &ptr);
@@ -131,19 +155,25 @@ char *httpSiteSchemeGetWorkingDirectory(HttpSite *self) {
     return self->fullUri;
 }
 
-char *httpSiteSchemeNew(HttpSite *self, const char *path) {
+const char *httpSiteNew(HttpSite *self, const char *path) {
     UriDetails details = uriDetailsNewFrom(path);
+    const char *err;
     char *header, *scheme, *response, *send;
 
     if (!details.path)
         details.path = malloc(2), details.path[0] = '/', details.path[1] = '\0';
 
-    if (ConnectTo(self, &details))
+    if ((err = ConnectTo(self, &details)))
         goto httpSiteSchemeNew_abort;
 
     header = scheme = response = NULL, send = ioGenerateHttpHeadRequest(details.path, NULL);
-    if (!send || WakeUpAndSend(self, send, strlen(send)) || ioHttpHeadRead(&self->socket, &header) ||
-        HttpGetEssentialResponse(header, &scheme, &response))
+    if (!send) {
+        err = strerror(errno);
+        goto httpSiteSchemeNew_abort;
+    }
+
+    if ((err = WakeUpAndSend(self, send, strlen(send))) || (err = ioHttpHeadRead(&self->socket, &header)) ||
+        (err = HttpGetEssentialResponse(header, &scheme, &response)))
         goto httpSiteSchemeNew_closeSocketAndAbort;
 
     free(send);
@@ -151,7 +181,9 @@ char *httpSiteSchemeNew(HttpSite *self, const char *path) {
     if (!(HttpResponseOk(response)))
         goto httpSiteSchemeNew_closeSocketAndAbort;
 
-    self->fullUri = uriDetailsCreateString(&details);
+    if (HttpResponseIsDir(header))
+        self->fullUri = uriDetailsCreateString(&details);
+
     uriDetailsFree(&details);
 
     if (header) free(header);
@@ -166,7 +198,7 @@ char *httpSiteSchemeNew(HttpSite *self, const char *path) {
 
     httpSiteSchemeNew_abort:
     uriDetailsFree(&details);
-    return "Error connecting to HTTP server";
+    return err;
 }
 
 void *httpSiteOpenDirectoryListing(char *path) {

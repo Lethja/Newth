@@ -86,11 +86,11 @@ static inline void PrintDirectoryFiles(Site *site) {
     siteCloseDirectoryListing(site, dir), putc('\n', stdout);
 }
 
-static inline char *mountSite(const char *parameter) {
+static inline const char *mountSite(const char *parameter) {
     UriDetails details = uriDetailsNewFrom(parameter);
     enum SiteType type;
     Site site;
-    char *err;
+    const char *err;
 
     if (!details.host)
         return "Address not understood";
@@ -198,7 +198,7 @@ static inline void processCommand(char **args) {
             case 'M':
                 if (toupper(args[0][1]) == 'O' && toupper(args[0][2]) == 'U' && toupper(args[0][3]) == 'N' &&
                     toupper(args[0][4]) == 'T') {
-                    char *err;
+                    const char *err;
                     if ((err = mountSite(args[1]))) {
                         puts(err);
                         return;
