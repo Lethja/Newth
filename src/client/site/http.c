@@ -93,6 +93,44 @@ static inline char HttpResponseIsDir(const char *header) {
     return -1;
 }
 
+/**
+ * Get an element in a XML document
+ * @param xml The xml document to scan
+ * @param element The element name to retrieve
+ * @return Pointer within xml to the first instance of element found or NULL
+ */
+static inline const char *XmlFindElement(const char *xml, char *element) {
+    const char *p = xml;
+    while ((p = strchr(p, '<'))) {
+        char *next = strchr(p, '<'), *end = strchr(p, '>'), *t;
+        if (end && end < next) {
+            *end = '\0', t = strstr(p, element), *end = '>';
+            if (t)
+                return p;
+        }
+    }
+    return NULL;
+}
+
+/**
+ * Get an attribute in element
+ * @param element Element pointer returned by XmlFindElement
+ * @param attribute The tag name to retrieve
+ * @return Pointer within xml to the first attribute found or NULL
+ */
+static inline const char *XmlFindAttribute(const char *element, const char *attribute) {
+    const char *p = element;
+    while ((p = strchr(p, '<'))) {
+        char *next = strchr(p, '<'), *end = strchr(p, '>'), *t;
+        if (end && end < next) {
+            *end = '\0', t = strstr(p, attribute), *end = '>';
+            if (t)
+                return p;
+        }
+    }
+    return NULL;
+}
+
 #pragma endregion
 
 int httpSiteSchemeChangeDirectory(HttpSite *self, const char *path) {
