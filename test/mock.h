@@ -80,6 +80,48 @@ static void MockReceive(void **state) {
     assert_int_equal(platformSocketGetLastError(), EAGAIN);
 }
 
+static void MockReceiveStream(void **state) {
+    size_t i, received;
+    char junkData[SB_DATA_SIZE] = "";
+    const char *SampleData = "Lorem ipsum dolor sit amet, consectetur adipiscing elit,"
+                             " sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+                             " Urna porttitor rhoncus dolor purus non enim praesent elementum facilisis."
+                             " Cras sed felis eget velit aliquet sagittis id consectetur.";
+
+    mockReset(), mockOptions = MOCK_RECEIVE, mockReceiveMaxBuf = SB_DATA_SIZE, i = strlen(
+            SampleData), mockReceiveStream = tmpfile();
+
+    assert_non_null(mockReceiveStream);
+    assert_int_equal(fwrite(SampleData, 1, i, mockReceiveStream), i);
+    rewind(mockReceiveStream);
+
+    /* Receive should return the amount of data we ask of it */
+    received = recv(0, junkData, 11, 0);
+    assert_int_equal(received, 11);
+    assert_memory_equal(junkData, "Lorem ipsum", sizeof(char) * 11);
+
+    /* Receive should continue from current stream position */
+    received = recv(0, junkData, 15, 0);
+    assert_int_equal(received, 15);
+    assert_memory_equal(junkData, " dolor sit amet", sizeof(char) * 15);
+
+    /* Receive the maximum */
+    received = recv(0, junkData, SB_DATA_SIZE, 0);
+    assert_int_equal(received, SB_DATA_SIZE);
+    assert_memory_equal(junkData, &SampleData[i - (i - 15 - 11)], SB_DATA_SIZE);
+
+    /* Receive less than requested */
+    received = recv(0, junkData, SB_DATA_SIZE, 0);
+    assert_int_equal(received, i - 15 - 11 - SB_DATA_SIZE);
+    assert_memory_equal(junkData, &SampleData[i - (i - 15 - 11 - SB_DATA_SIZE)], received);
+
+    /* No more */
+    received = recv(0, junkData, SB_DATA_SIZE, 0);
+    assert_int_equal(received, 0);
+
+    fflush(mockReceiveStream), fclose(mockReceiveStream), mockReceiveStream = NULL;
+}
+
 static void MockSend(void **state) {
     size_t i, bufferMax = ((SB_DATA_SIZE * 2) / 32) - 1, sent;
     char junkData[SB_DATA_SIZE * 2] = "";
@@ -141,6 +183,6 @@ static void MockHttpBodyFindStart(void **state) {
 
 const struct CMUnitTest mockTest[] = {cmocka_unit_test(MockHttpBodyFindStart), cmocka_unit_test(MockMalloc),
                                       cmocka_unit_test(MockRealloc), cmocka_unit_test(MockReceive),
-                                      cmocka_unit_test(MockSend)};
+                                      cmocka_unit_test(MockReceiveStream), cmocka_unit_test(MockSend)};
 
 #endif /* NEW_TH_TEST_MOCK_H */
