@@ -4,15 +4,20 @@
 
 #pragma region Mockup global variables
 
-int mockOptions = 0, mockSendError = 0;
-size_t mockSendMaxBuf = 0, mockSendCountBuf = 0;
-FILE *mockSendStream = NULL, *mockLastFileClosed = NULL;
+int mockOptions = 0, mockReceiveError = 0, mockSendError = 0;
+size_t mockSendMaxBuf = 0, mockSendCountBuf = 0, mockReceiveMaxBuf = 0, mockReceiveCountBuf = 0;
+FILE *mockSendStream = NULL, *mockLastFileClosed = NULL, *mockReceiveStream = NULL;
 void *mockLastFree = NULL;
 
 #pragma endregion
 
 void mockReset(void) {
-    mockSendCountBuf = mockSendMaxBuf = mockOptions = mockSendError = 0, mockLastFree = mockLastFileClosed = NULL;
+    mockReceiveError = mockSendError = mockOptions = 0;
+    mockReceiveCountBuf = mockReceiveMaxBuf = mockSendCountBuf = mockSendMaxBuf = mockOptions;
+    mockLastFree = mockLastFileClosed = NULL;
+
+    if (mockReceiveStream)
+        fflush(mockReceiveStream), fclose(mockReceiveStream), mockReceiveStream = NULL;
 
     if (mockSendStream)
         fflush(mockSendStream), fclose(mockSendStream), mockSendStream = NULL;
@@ -33,6 +38,8 @@ extern void *__real_calloc(size_t nmemb, size_t size);
 extern void *__real_malloc(size_t size);
 
 extern void *__real_realloc(void *ptr, size_t size);
+
+extern ssize_t *__real_recv(int fd, void *buf[], size_t len, int flags);
 
 extern ssize_t *__real_send(int fd, const void *buf, size_t n, int flags);
 
@@ -74,6 +81,47 @@ void __wrap_free(void *ptr) {
 int __wrap_fclose(FILE *file) {
     mockLastFileClosed = file;
     return __real_fclose(file);
+}
+
+ssize_t __wrap_recv(int fd, void *buf, size_t len, int flags) {
+    if (mockOptions & MOCK_RECEIVE) {
+        size_t r;
+
+        if (mockReceiveError) {
+            errno = mockReceiveError;
+            return -1;
+        }
+
+        if (!mockReceiveMaxBuf) {
+            errno = EAGAIN;
+            return -1;
+        }
+
+        if (mockOptions & MOCK_RECEIVE_COUNT) {
+            if (mockReceiveCountBuf >= mockReceiveMaxBuf) {
+                errno = EAGAIN;
+                return -1;
+            }
+
+            r = len < mockReceiveMaxBuf - mockReceiveCountBuf ? len : mockReceiveMaxBuf - mockReceiveCountBuf;
+            mockReceiveCountBuf += mockReceiveMaxBuf;
+        } else
+            r = len < mockReceiveMaxBuf ? len : mockReceiveMaxBuf;
+
+        if (mockReceiveStream)
+            return (ssize_t) fread(buf, 1, len, mockReceiveStream);
+        else {
+            char j, *b = (char *) buf;
+            size_t i;
+
+            for (i = 0, j = '1'; i < r; ++i, ++j)
+                j = (char) (j + 1 > '9' ? '0' : j), b[i] = j;
+        }
+
+        return (ssize_t) r;
+    }
+
+    return (ssize_t) __real_recv(fd, buf, len, flags);
 }
 
 ssize_t __wrap_send(int fd, const void *buf, size_t n, int flags) {

@@ -50,7 +50,7 @@ if CMOCKA
 
     unittest_CFLAGS = ${cmocka_CFLAGS} -DMOCK=1 -DSB_DATA_SIZE=128 -DEWOULDBLOCK=41
     unittest_LDFLAGS = ${cmocka_LIBS} \
-		-Wl,--wrap=malloc,--wrap=calloc,--wrap=realloc,--wrap=free,--wrap=send,--wrap=fclose
+		-Wl,--wrap=malloc,--wrap=calloc,--wrap=realloc,--wrap=free,--wrap=recv,--wrap=send,--wrap=fclose
 
     unittest_SOURCES = test/test.c test/fetch.h test/mock.h test/common.h test/platform.h \
 		test/request.h test/site.h test/sockbufr.h

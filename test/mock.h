@@ -52,6 +52,34 @@ static void MockRealloc(void **state) {
         free(test);
 }
 
+static void MockReceive(void **state) {
+    size_t i = SB_DATA_SIZE * 2, received;
+    char junkData[SB_DATA_SIZE * 2] = "";
+
+    mockReset(), mockOptions = MOCK_RECEIVE, mockReceiveMaxBuf = i;
+
+    /* Receive should return the amount of data we ask of it */
+    received = recv(0, junkData, 5, 0);
+    assert_int_equal(received, 5);
+    assert_memory_equal(junkData, "12345", sizeof(char) * 5);
+
+    /* The amount of data should be how much was sent this call and not accumulate */
+    received = recv(0, junkData, 5, 0);
+    assert_int_equal(received, 5);
+    assert_memory_equal(junkData, "12345", sizeof(char) * 5);
+
+    /* When the maximum is reached it should return as much as it can fit */
+    mockReceiveMaxBuf -= 10;
+    received = recv(0, junkData, i, 0);
+    assert_int_equal(received, mockReceiveMaxBuf);
+
+    /* If there's no room left a non-blocking socket should return -1 and set EAGAIN/EWOULDBLOCK */
+    mockReceiveMaxBuf = 0;
+    received = recv(0, junkData, i, 0);
+    assert_int_equal(received, -1);
+    assert_int_equal(platformSocketGetLastError(), EAGAIN);
+}
+
 static void MockSend(void **state) {
     size_t i, bufferMax = ((SB_DATA_SIZE * 2) / 32) - 1, sent;
     char junkData[SB_DATA_SIZE * 2] = "";
@@ -112,6 +140,7 @@ static void MockHttpBodyFindStart(void **state) {
 #pragma clang diagnostic pop
 
 const struct CMUnitTest mockTest[] = {cmocka_unit_test(MockHttpBodyFindStart), cmocka_unit_test(MockMalloc),
-                                      cmocka_unit_test(MockRealloc), cmocka_unit_test(MockSend)};
+                                      cmocka_unit_test(MockRealloc), cmocka_unit_test(MockReceive),
+                                      cmocka_unit_test(MockSend)};
 
 #endif /* NEW_TH_TEST_MOCK_H */

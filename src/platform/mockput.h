@@ -12,6 +12,8 @@ void *__wrap_malloc(size_t size);
 
 void *__wrap_realloc(void *ptr, size_t size);
 
+ssize_t __wrap_recv(int fd, void *buf, size_t len, int flags);
+
 ssize_t __wrap_send(int fd, const void *buf, size_t n, int flags);
 
 #pragma clang diagnostic pop
@@ -20,7 +22,9 @@ ssize_t __wrap_send(int fd, const void *buf, size_t n, int flags);
 #include "mscrtdl.h"
 #else
 #define SOCKET_WOULD_BLOCK 41
+
 #include "posix01.h"
+
 #endif
 
 #ifndef INET_ADDRSTRLEN
@@ -36,12 +40,12 @@ ssize_t __wrap_send(int fd, const void *buf, size_t n, int flags);
 #define    ENOMEM      12  /* Out of memory */
 
 enum mockOptions {
-    MOCK_ALLOC_NO_MEMORY = 1, MOCK_SEND = 2, MOCK_SEND_COUNT = 4
+    MOCK_ALLOC_NO_MEMORY = 1, MOCK_RECEIVE = 2, MOCK_SEND = 4, MOCK_RECEIVE_COUNT = 8, MOCK_SEND_COUNT = 16
 };
 
 extern int mockOptions, mockSendError;
-extern size_t mockSendMaxBuf;
-extern FILE *mockSendStream, *mockLastFileClosed;
+extern size_t mockReceiveMaxBuf, mockSendMaxBuf;
+extern FILE *mockSendStream, *mockLastFileClosed, *mockReceiveStream;
 extern void *mockLastFree;
 
 void mockDumpFile(FILE *file);
