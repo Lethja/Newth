@@ -33,6 +33,8 @@ void mockResetError(void) {
 #pragma ide diagnostic ignored "bugprone-reserved-identifier"
 #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 
+extern int __real_connect(int sockfd, const struct sockaddr *addr, __socklen_t addrlen);
+
 extern void *__real_calloc(size_t nmemb, size_t size);
 
 extern void *__real_malloc(size_t size);
@@ -46,6 +48,14 @@ extern ssize_t *__real_send(int fd, const void *buf, size_t n, int flags);
 extern void __real_free(void *ptr);
 
 extern int __real_fclose(FILE *ptr);
+
+int __wrap_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
+    if (mockOptions & MOCK_CONNECT) {
+        return 4;
+    }
+
+    return __real_connect(sockfd, addr, addrlen);
+}
 
 void *__wrap_calloc(size_t nmemb, size_t size) {
     if (mockOptions & MOCK_ALLOC_NO_MEMORY) {

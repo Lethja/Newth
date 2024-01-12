@@ -86,7 +86,7 @@ if (ENABLE_TEST)
 
     if (ENABLE_MOCK)
         set_property(TARGET test PROPERTY LINK_FLAGS
-                "${DEFAULT_LINK_FLAGS} -Wl,--wrap=malloc,--wrap=calloc,--wrap=realloc,--wrap=free,--wrap=recv,--wrap=send,--wrap=fclose")
+                "${DEFAULT_LINK_FLAGS} -Wl,--wrap=malloc,--wrap=calloc,--wrap=realloc,--wrap=free,--wrap=connect,--wrap=recv,--wrap=send,--wrap=fclose")
         target_compile_definitions(test PUBLIC MOCK=1 UNIT_TEST=1)
     endif ()
 

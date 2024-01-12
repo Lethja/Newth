@@ -4,18 +4,6 @@
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "bugprone-reserved-identifier"
 
-#include <stdio.h>
-
-void *__wrap_calloc(size_t nmemb, size_t size);
-
-void *__wrap_malloc(size_t size);
-
-void *__wrap_realloc(void *ptr, size_t size);
-
-ssize_t __wrap_recv(int fd, void *buf, size_t len, int flags);
-
-ssize_t __wrap_send(int fd, const void *buf, size_t n, int flags);
-
 #pragma clang diagnostic pop
 
 #ifdef _WIN32
@@ -26,6 +14,18 @@ ssize_t __wrap_send(int fd, const void *buf, size_t n, int flags);
 #include "posix01.h"
 
 #endif
+
+void *__wrap_calloc(size_t nmemb, size_t size);
+
+void *__wrap_malloc(size_t size);
+
+void *__wrap_realloc(void *ptr, size_t size);
+
+int __wrap_connect(int sockfd, const struct sockaddr *addr, __socklen_t addrlen);
+
+ssize_t __wrap_recv(int fd, void *buf, size_t len, int flags);
+
+ssize_t __wrap_send(int fd, const void *buf, size_t n, int flags);
 
 #ifndef INET_ADDRSTRLEN
 #define INET_ADDRSTRLEN 22
@@ -40,7 +40,7 @@ ssize_t __wrap_send(int fd, const void *buf, size_t n, int flags);
 #define    ENOMEM      12  /* Out of memory */
 
 enum mockOptions {
-    MOCK_ALLOC_NO_MEMORY = 1, MOCK_RECEIVE = 2, MOCK_SEND = 4, MOCK_RECEIVE_COUNT = 8, MOCK_SEND_COUNT = 16
+    MOCK_ALLOC_NO_MEMORY = 1, MOCK_CONNECT = 2, MOCK_RECEIVE = 4, MOCK_SEND = 8, MOCK_RECEIVE_COUNT = 16, MOCK_SEND_COUNT = 32
 };
 
 extern int mockOptions, mockSendError;
