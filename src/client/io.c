@@ -88,6 +88,7 @@ char *ioCreateSocketFromSocketAddress(SocketAddress *self, SOCKET *sock) {
 }
 
 char *ioHttpHeadRead(const SOCKET *socket, char **header) {
+    const size_t headerMax = 4096;
     unsigned int totalBytes = 0;
     ssize_t bytesReceived;
     char *buf = malloc(SB_DATA_SIZE), *headEnd;
@@ -130,6 +131,11 @@ char *ioHttpHeadRead(const SOCKET *socket, char **header) {
 
         /* Non-peek to move buffer along */
         recv(*socket, buf, bytesReceived, 0);
+
+        if (totalBytes >= headerMax) {
+            free(buf), free(*header), *header = NULL;
+            return "Header too large";
+        }
     }
 
     /* If the buffer has a body after the head then jump over it so the next function is ready to read the body */
