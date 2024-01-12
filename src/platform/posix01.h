@@ -39,6 +39,10 @@ typedef FILE *PlatformFile;
 #define SB_DATA_SIZE BUFSIZ
 #endif
 
+#ifndef INVALID_SOCKET
+#define INVALID_SOCKET (-1)
+#endif
+
 #ifndef SOCKET_TRY_AGAIN
 #define SOCKET_TRY_AGAIN EAGAIN
 #endif

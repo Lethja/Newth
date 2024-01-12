@@ -15,8 +15,12 @@
 static inline const char *ConnectTo(HttpSite *self, UriDetails *details) {
     if (uriDetailsCreateSocketAddress(details, &self->address, SCHEME_HTTP) ||
         ioCreateSocketFromSocketAddress(&self->address, &self->socket) ||
-        connect(self->socket, &self->address.address.sock, sizeof(self->address.address.sock)) == -1)
+        connect(self->socket, &self->address.address.sock, sizeof(self->address.address.sock)) == -1) {
+        if (self->socket != INVALID_SOCKET)
+            CLOSE_SOCKET(self->socket);
+
         return strerror(platformSocketGetLastError());
+    }
 
     return NULL;
 }
@@ -38,7 +42,9 @@ static inline const char *WakeUpAndSend(HttpSite *self, const void *data, size_t
 
     if (s == -1) {
         UriDetails details = uriDetailsNewFrom(self->fullUri);
-        CLOSE_SOCKET(self->socket);
+        if (self->socket != INVALID_SOCKET)
+            CLOSE_SOCKET(self->socket);
+
         err = ConnectTo(self, &details);
         uriDetailsFree(&details);
         if (err)
@@ -150,12 +156,17 @@ int httpSiteSchemeChangeDirectory(HttpSite *self, const char *path) {
         return -1;
     }
 
-    if (WakeUpAndSend(self, send, strlen(send)) || ioHttpHeadRead(&self->socket, &header)) {
-        uriDetailsFree(&details), free(newPath);
+    if (WakeUpAndSend(self, send, strlen(send))) {
+        uriDetailsFree(&details), free(send), free(newPath);
         return -1;
     }
 
-    free(send);
+    free(send), header = NULL;
+
+    if (ioHttpHeadRead(&self->socket, &header)) {
+        uriDetailsFree(&details), free(newPath);
+        return -1;
+    }
 
     if (HttpGetEssentialResponse(header, &scheme, &response)) {
         uriDetailsFree(&details), free(newPath), free(header);
@@ -167,6 +178,8 @@ int httpSiteSchemeChangeDirectory(HttpSite *self, const char *path) {
         return 1;
     }
 
+    free(header), free(scheme);
+
     if (details.path)
         free(details.path);
 
@@ -177,6 +190,8 @@ int httpSiteSchemeChangeDirectory(HttpSite *self, const char *path) {
         return -1;
     }
 
+    uriDetailsFree(&details);
+
     free(self->fullUri), self->fullUri = newUri;
 
     return 0;
@@ -186,7 +201,8 @@ void httpSiteSchemeFree(HttpSite *self) {
     if (self->fullUri)
         free(self->fullUri);
 
-    CLOSE_SOCKET(self->socket);
+    if (self->socket != INVALID_SOCKET)
+        CLOSE_SOCKET(self->socket);
 }
 
 char *httpSiteSchemeGetWorkingDirectory(HttpSite *self) {
@@ -194,9 +210,16 @@ char *httpSiteSchemeGetWorkingDirectory(HttpSite *self) {
 }
 
 const char *httpSiteNew(HttpSite *self, const char *path) {
-    UriDetails details = uriDetailsNewFrom(path);
+    UriDetails details;
     const char *err;
     char *header, *scheme, *response, *send;
+
+    if (!path) {
+        self->socket = -1, self->fullUri = NULL, memset(&self->address, 0, sizeof(SocketAddress));
+        return "No uri specified";
+    }
+
+    details = uriDetailsNewFrom(path);
 
     if (!details.path)
         details.path = malloc(2), details.path[0] = '/', details.path[1] = '\0';
@@ -230,7 +253,7 @@ const char *httpSiteNew(HttpSite *self, const char *path) {
     return NULL;
 
     httpSiteSchemeNew_closeSocketAndAbort:
-    CLOSE_SOCKET(self->socket);
+    if (self->socket == INVALID_SOCKET) CLOSE_SOCKET(self->socket);
     if (header) free(header);
     if (scheme) free(scheme);
 
