@@ -113,7 +113,6 @@ void siteDirectoryEntryFree(void *entry);
  */
 const char *siteNew(Site *site, enum SiteType type, const char *path);
 
-
 /**
  * Free internal members of a site
  * @param self The site pointer to free internal members of
@@ -124,6 +123,7 @@ void siteFree(Site *self);
  * Get the current working directory of site
  * @param self In: The site to get the directory of
  * @return The full uri of the sites working directory
+ * @remark Do not free returned value
  */
 char *siteGetWorkingDirectory(Site *self);
 
