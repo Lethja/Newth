@@ -443,4 +443,12 @@ int platformSocketSetBlock(SOCKET socket, char blocking);
  */
 int platformSocketGetLastError(void);
 
+/**
+ * Like strstr() but case-insensitive
+ * @param haystack The string to look in
+ * @param needle The search term to look for
+ * @return Pointer within haystack to the first instance found, otherwise NULL
+ */
+char *platformStringFindNeedle(const char *haystack, const char *needle);
+
 #endif /* OPEN_WEB_PLATFORM_H */

@@ -193,3 +193,21 @@ long platformMemoryStreamTell(FILE *stream) {
     return ftell(stream);
 }
 
+char *platformStringFindNeedle(const char *haystack, const char *needle) {
+    size_t i, j, k = strlen(haystack), l = strlen(needle);
+
+    for (i = 0; i < k; ++i) {
+        if (toupper(haystack[i]) == toupper(needle[0])) {
+            size_t h;
+            for (h = i, j = 0; needle[j] != '\0'; ++h, ++j) {
+                if (toupper(haystack[h]) != toupper(needle[j]))
+                    break;
+            }
+
+            if (h - i == l)
+                return (char *) &haystack[i];
+        }
+    }
+
+    return NULL;
+}
