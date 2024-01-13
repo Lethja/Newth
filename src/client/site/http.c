@@ -110,7 +110,7 @@ static inline const char *XmlFindElement(const char *xml, char *element) {
     while ((p = strchr(p, '<'))) {
         char *next = strchr(p, '<'), *end = strchr(p, '>'), *t;
         if (end && end < next) {
-            *end = '\0', t = strstr(p, element), *end = '>';
+            *end = '\0', t = platformStringFindNeedle(p, element), *end = '>';
             if (t)
                 return p;
         }
@@ -129,7 +129,7 @@ static inline const char *XmlFindAttribute(const char *element, const char *attr
     while ((p = strchr(p, '<'))) {
         char *next = strchr(p, '<'), *end = strchr(p, '>'), *t;
         if (end && end < next) {
-            *end = '\0', t = strstr(p, attribute), *end = '>';
+            *end = '\0', t = platformStringFindNeedle(p, attribute), *end = '>';
             if (t)
                 return p;
         }
