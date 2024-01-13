@@ -154,7 +154,6 @@ static int setup(int argc, char **argv) {
 
     sockets = platformServerStartup(family, ports, &err);
     if (!sockets) {
-        LINEDBG;
         puts(err);
         platformIpStackExit();
         return 1;
@@ -172,8 +171,6 @@ static int setup(int argc, char **argv) {
 }
 
 int main(int argc, char **argv) {
-    LINEDBG;
-
     platformConnectSignals(noAction, shutdownCrash, shutdownProgram);
 
     if (argc > 1) {

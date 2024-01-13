@@ -608,10 +608,9 @@ size_t platformFileRead(void *buffer, size_t size, size_t n, PlatformFile stream
 
 int platformSocketSetBlock(SOCKET socket, char blocking) {
     int flags = fcntl(socket, F_GETFL, 0);
-    if (flags == -1) {
-        LINEDBG; /* Should never be here */
+
+    if (flags == -1)
         return 0;
-    }
 
     flags = blocking ? (flags & ~O_NONBLOCK) : (flags | O_NONBLOCK);
     return fcntl(socket, F_SETFL, flags);

@@ -98,11 +98,9 @@ void serverTick(void) {
         readyToReadSockets = serverReadSockets;
         readyToWriteSockets = serverWriteSockets;
 
-        if (select((int) serverMaxSocket + 1, &readyToReadSockets, &readyToWriteSockets, NULL, &globalSelectSleep) <
-            0) {
-            LINEDBG;
+        if (select((int) serverMaxSocket + 1, &readyToReadSockets, &readyToWriteSockets, NULL, &globalSelectSleep) < 0)
             exit(1);
-        }
+
 
         for (i = 0; i <= serverMaxSocket; ++i) {
             if (FD_ISSET(i, &readyToReadSockets)) {

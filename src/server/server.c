@@ -80,10 +80,8 @@ char handleFile(SOCKET clientSocket, const char *header, char *webPath, char *ab
     PlatformFileOffset start, finish;
     char e;
 
-    if (fp == NULL) {
-        LINEDBG;
+    if (fp == NULL)
         return 1;
-    }
 
     start = finish = 0;
     e = httpHeaderReadRange(header, &start, &finish, (const PlatformFileOffset *) &st->st_size);
@@ -123,10 +121,8 @@ char handlePath(SOCKET clientSocket, const char *header, char *webPath) {
     PlatformTimeStruct tm;
     char absolutePath[FILENAME_MAX], e = 0;
 
-    if (platformPathWebToSystem(globalRootPath, webPath, absolutePath) || platformFileStat(absolutePath, &st)) {
-        LINEDBG;
+    if (platformPathWebToSystem(globalRootPath, webPath, absolutePath) || platformFileStat(absolutePath, &st))
         goto handlePathNotFound;
-    }
 
     e = httpClientReadType(header);
 
@@ -167,8 +163,6 @@ char handleConnection(SOCKET clientSocket) {
     char r = 0, buffer[BUFSIZ], *uriPath;
     int err;
     size_t bytesRead, messageSize = errno = 0;
-
-    LINEDBG;
 
     do {
         bytesRead = recv(clientSocket, buffer + messageSize, (int) (sizeof(buffer) - messageSize - 1), 0);
@@ -241,10 +235,8 @@ char handleConnection(SOCKET clientSocket) {
 unsigned short getPort(const SOCKET *listenSocket) {
     struct sockaddr_storage sock;
     socklen_t sockLen = sizeof(sock);
-    if (getsockname(*listenSocket, (struct sockaddr *) &sock, &sockLen) == -1) {
-        LINEDBG;
+    if (getsockname(*listenSocket, (struct sockaddr *) &sock, &sockLen) == -1)
         return 0;
-    }
 
     if (sock.ss_family == AF_INET) {
         struct sockaddr_in *address = (struct sockaddr_in *) &sock;
@@ -260,10 +252,8 @@ void serverPoke(void) {
     SOCKET sock;
     struct sockaddr_in ipv4;
 
-    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-        LINEDBG;
+    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
         return;
-    }
 
     ipv4.sin_addr.s_addr = inet_addr("127.0.0.1"), ipv4.sin_family = AF_INET, ipv4.sin_port = htons(
             getPort(&serverListenSocket[1]));

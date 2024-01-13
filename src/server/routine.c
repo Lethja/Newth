@@ -299,7 +299,6 @@ void RoutineTick(RoutineArray *routineArray) {
             case STATE_CONTINUE | TYPE_ROUTINE_DIR:
                 if (DirectoryRoutineContinue(routine))
                     break;
-                LINEDBG;
                 /* Fall through */
             case STATE_FINISH | TYPE_ROUTINE_DIR:
             case STATE_FAIL | TYPE_ROUTINE_DIR:

@@ -87,8 +87,6 @@ char *httpClientReadUri(const char *request) {
     char *start, *end, *path;
     size_t len;
 
-    LINEDBG;
-
     start = strchr(request, ' ');
     if (!start)
         return NULL;
@@ -449,7 +447,7 @@ size_t httpBodyWriteChunk(SocketBuffer *socketBuffer, char **buffer) {
         r += socketBufferWriteText(socketBuffer, HTTP_EOL);
         return r;
     }
-    LINEDBG;
+
     return 0;
 }
 
