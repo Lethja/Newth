@@ -145,6 +145,25 @@ const char *HttpHeaderResponseFile = "HTTP/1.1 200 OK" HTTP_EOL
                                      "Content-Disposition: attachment" HTTP_EOL
                                      "Date: Thu, 1 Jan 1970 00:00:00 GMT" HTTP_EOL HTTP_EOL;
 
+const char *HtmlBody = "<!DOCTYPE html>\n"
+                       "<html>\n"
+                       "<head>\n"
+                       "\t<title>Directory Listing</title>\n"
+                       "</head>\n"
+                       "<body>\n"
+                       "\t<h1>Directory Listing</h1>\n"
+                       "\t<img href=\"Logo.png\" alt=\"Logo\">\n"
+                       "\t<ul>\n"
+                       "\t\t<li><a href=\"file1.txt\">file1.txt</a></li>\n"
+                       "\t\t<li><a href=\"file2%2Etxt\">file2.txt</a></li>\n"
+                       "\t\t<li><a href=\"/file3.txt\">file3.txt</a></li>\n"
+                       "\t\t<li><a href=\"../file4.txt\">file4.txt</a></li>\n"
+                       "\t\t<li><a href=\"/foo/file5.txt\">file5.txt</a></li>\n"
+                       "\t\t<li><a href=\"http://example.com\">file6.txt</a></li>\n"
+                       "\t</ul>\n"
+                       "</body>\n"
+                       "</html>";
+
 static void SiteHttpNew(void **state) {
     Site site;
     assert_string_equal(siteNew(&site, SITE_HTTP, NULL), "No uri specified");
@@ -238,29 +257,53 @@ static void SiteHttpSetDirectoryFailFile(void **state) {
 
 static void SiteHttpDirEntry(void **state) {
     Site site;
-    size_t i, j = i = 0;
-    void *d, *e;
+    SiteDirectoryEntry *e;
+    char length[255] = "";
+    void *d;
 
     mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
+    mockReceiveStream = tmpfile();
 
-    assert_null(siteNew(&site, SITE_HTTP, "http://127.0.0.1"));
-    d = platformDirOpen(".");
-    assert_non_null(d);
+    /* Setup mocked response */
+    sprintf(length, "content-length: %lu" HTTP_EOL HTTP_EOL, strlen(HtmlBody)); /* Deliberately lowercase */
+    fwrite(HttpHeaderResponseDir, 1, strlen(HttpHeaderResponseDir) - 2, mockReceiveStream);
+    fwrite(length, 1, strlen(length), mockReceiveStream);
+    fwrite(HtmlBody, 1, strlen(HtmlBody), mockReceiveStream);
+    rewind(mockReceiveStream);
 
-    while ((e = platformDirRead(d))) {
-        if (platformDirEntryGetName(e, NULL)[0] != '.') /* Exclude all names starting with '.' */
-            ++i;
-    }
+    assert_null(siteNew(&site, SITE_HTTP, "http://127.0.0.1/foo"));
 
-    platformDirClose(d), d = siteOpenDirectoryListing(&site, ".");
-    assert_non_null(d);
+    /* Listing of http://127.0.0.1/foo */
+    assert_non_null(d = siteOpenDirectoryListing(&site, "."));
+    assert_non_null(e = siteReadDirectoryListing(&site, d));
+    assert_string_equal(e->name, "file1.txt"), siteDirectoryEntryFree(e);
+    assert_non_null(e = siteReadDirectoryListing(&site, d));
+    assert_string_equal(e->name, "file2.txt"), siteDirectoryEntryFree(e);
+    assert_non_null(e = siteReadDirectoryListing(&site, d));
+    assert_string_equal(e->name, "file5.txt"), siteDirectoryEntryFree(e);
+    siteCloseDirectoryListing(&site, d);
 
-    while ((e = siteReadDirectoryListing(&site, d)))
-        ++j, siteDirectoryEntryFree(e);
+    /* Listing of http://127.0.0.1/ (absolute) */
+    assert_non_null(d = siteOpenDirectoryListing(&site, "/"));
+    assert_non_null(e = siteReadDirectoryListing(&site, d));
+    assert_string_equal(e->name, "file1.txt"), siteDirectoryEntryFree(e);
+    assert_non_null(e = siteReadDirectoryListing(&site, d));
+    assert_string_equal(e->name, "file2.txt"), siteDirectoryEntryFree(e);
+    assert_non_null(e = siteReadDirectoryListing(&site, d));
+    assert_string_equal(e->name, "file3.txt"), siteDirectoryEntryFree(e);
+    siteCloseDirectoryListing(&site, d);
 
-    assert_int_equal(i, j);
+    /* Listing of http://127.0.0.1/ (up) */
+    assert_non_null(d = siteOpenDirectoryListing(&site, ".."));
+    assert_non_null(e = siteReadDirectoryListing(&site, d));
+    assert_string_equal(e->name, "file1.txt"), siteDirectoryEntryFree(e);
+    assert_non_null(e = siteReadDirectoryListing(&site, d));
+    assert_string_equal(e->name, "file2.txt"), siteDirectoryEntryFree(e);
+    assert_non_null(e = siteReadDirectoryListing(&site, d));
+    assert_string_equal(e->name, "file3.txt"), siteDirectoryEntryFree(e);
+    siteCloseDirectoryListing(&site, d);
 
-    siteCloseDirectoryListing(&site, d), siteFree(&site);
+    siteFree(&site);
 }
 
 #endif /* MOCK */
@@ -274,8 +317,8 @@ const struct CMUnitTest siteTest[] = {cmocka_unit_test(SiteArrayFunctions), cmoc
                                       cmocka_unit_test(SiteFileSetDirectory), cmocka_unit_test(SiteFileDirEntry)
 #ifdef MOCK
         , cmocka_unit_test(SiteHttpNew), cmocka_unit_test(SiteHttpNewWithPath), cmocka_unit_test(SiteHttpGetDirectory),
-                                      cmocka_unit_test(SiteHttpSetDirectory), cmocka_unit_test(
-                                              SiteHttpSetDirectoryFailFile), /*cmocka_unit_test(SiteHttpDirEntry)*/
+                                      cmocka_unit_test(SiteHttpSetDirectory),
+                                      cmocka_unit_test(SiteHttpSetDirectoryFailFile), cmocka_unit_test(SiteHttpDirEntry)
 #endif
 };
 
