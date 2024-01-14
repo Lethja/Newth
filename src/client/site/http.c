@@ -81,7 +81,7 @@ static inline char HttpResponseIsDir(const char *header) {
     char *ptr;
     FindHeader(header, "Content-Disposition", &ptr);
     if (ptr) {
-        char *p = strstr(ptr, "filename");
+        char *p = platformStringFindNeedle(ptr, "attachment");
         free(ptr);
         if (p)
             return 0;
@@ -90,7 +90,7 @@ static inline char HttpResponseIsDir(const char *header) {
     FindHeader(header, "Content-Type", &ptr);
 
     if (ptr) {
-        char *p = strstr(ptr, "text/html");
+        char *p = platformStringFindNeedle(ptr, "text/html");
         free(ptr);
         if (p)
             return 1;

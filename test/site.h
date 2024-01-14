@@ -142,7 +142,7 @@ const char *HttpHeaderResponseDir = "HTTP/1.1 200 OK" HTTP_EOL
 
 const char *HttpHeaderResponseFile = "HTTP/1.1 200 OK" HTTP_EOL
                                      "Content-Type: text/html; charset=ISO-8859-1" HTTP_EOL
-                                     "Content-Disposition: attachment"
+                                     "Content-Disposition: attachment" HTTP_EOL
                                      "Date: Thu, 1 Jan 1970 00:00:00 GMT" HTTP_EOL HTTP_EOL;
 
 static void SiteHttpNew(void **state) {
@@ -217,6 +217,25 @@ static void SiteHttpSetDirectory(void **state) {
     siteFree(&site);
 }
 
+static void SiteHttpSetDirectoryFailFile(void **state) {
+    Site site;
+    char *wd = "http://127.0.0.1/foo";
+
+    mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
+    mockReceiveStream = tmpfile(), fwrite(HttpHeaderResponseDir, 1, strlen(HttpHeaderResponseDir),
+                                          mockReceiveStream), rewind(mockReceiveStream);
+
+    assert_null(siteNew(&site, SITE_HTTP, wd)), rewind(mockReceiveStream);
+    assert_non_null(site.site.file.fullUri);
+    assert_string_equal(siteGetWorkingDirectory(&site), wd);
+    fwrite(HttpHeaderResponseFile, 1, strlen(HttpHeaderResponseFile), mockReceiveStream), rewind(mockReceiveStream);
+
+    assert_int_equal(siteSetWorkingDirectory(&site, "bar"), 1);
+    assert_string_equal(siteGetWorkingDirectory(&site), wd);
+
+    siteFree(&site);
+}
+
 static void SiteHttpDirEntry(void **state) {
     Site site;
     size_t i, j = i = 0;
@@ -255,7 +274,8 @@ const struct CMUnitTest siteTest[] = {cmocka_unit_test(SiteArrayFunctions), cmoc
                                       cmocka_unit_test(SiteFileSetDirectory), cmocka_unit_test(SiteFileDirEntry)
 #ifdef MOCK
         , cmocka_unit_test(SiteHttpNew), cmocka_unit_test(SiteHttpNewWithPath), cmocka_unit_test(SiteHttpGetDirectory),
-                                      cmocka_unit_test(SiteHttpSetDirectory), /*cmocka_unit_test(SiteHttpDirEntry)*/
+                                      cmocka_unit_test(SiteHttpSetDirectory), cmocka_unit_test(
+                                              SiteHttpSetDirectoryFailFile), /*cmocka_unit_test(SiteHttpDirEntry)*/
 #endif
 };
 
