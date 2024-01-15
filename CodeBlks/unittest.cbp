@@ -6,7 +6,8 @@
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Build>
-			<Target title="Debug">
+			<Target title="GCC Debug">
+				<Option platforms="Unix;Mac;" />
 				<Option output="bin/Debug/unittest" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
@@ -20,9 +21,40 @@
 					<Add library="wsock32" />
 				</Linker>
 			</Target>
-			<Target title="Release">
+			<Target title="GCC Release">
+				<Option platforms="Unix;Mac;" />
 				<Option output="bin/Release/unittest" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+					<Add option="-Wno-unknown-pragmas -Wno-unused-function -Wno-unused-variable" />
+					<Add option="-DDOS_DIVIDER=1" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+			<Target title="MingW32 Debug">
+				<Option platforms="Windows;" />
+				<Option output="bin/mingw32/Debug/unittest" prefix_auto="0" extension_auto="1" />
+				<Option object_output="obj/mingw32/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+					<Add option="-Wno-unknown-pragmas -Wno-unused-function -Wno-unused-variable" />
+					<Add option="-DDOS_DIVIDER=1" />
+				</Compiler>
+				<Linker>
+					<Add library="wsock32" />
+				</Linker>
+			</Target>
+			<Target title="MingW32 Release">
+				<Option platforms="Windows;" />
+				<Option output="bin/mingw32/Release/unittest" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/mingw32/Release/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
@@ -39,6 +71,26 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
+		<Unit filename="../src/client/io.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/client/io.h" />
+		<Unit filename="../src/client/queue.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/client/queue.h" />
+		<Unit filename="../src/client/site.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/client/site.h" />
+		<Unit filename="../src/client/site/file.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/client/site/file.h" />
+		<Unit filename="../src/client/site/http.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/client/site/http.h" />
 		<Unit filename="../src/client/uri.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -91,6 +143,7 @@
 		<Unit filename="../test/mock.h" />
 		<Unit filename="../test/platform.h" />
 		<Unit filename="../test/request.h" />
+		<Unit filename="../test/site.h" />
 		<Unit filename="../test/sockbufr.h" />
 		<Unit filename="../test/test.c">
 			<Option compilerVar="CC" />

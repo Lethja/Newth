@@ -163,13 +163,6 @@
 			<Option compilerVar="CC" />
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="../src/server/mltiplex/select.c">
-				<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/server/server.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/server/server.h" />
 		<Unit filename="../src/platform/mscrtdl.c">
 			<Option compilerVar="CC" />
 			<Option target="MingW32 Debug" />
@@ -255,10 +248,17 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../src/server/http.h" />
+		<Unit filename="../src/server/mltiplex/select.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="../src/server/routine.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../src/server/routine.h" />
+		<Unit filename="../src/server/server.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/server/server.h" />
 		<Unit filename="../src/server/sockbufr.c">
 			<Option compilerVar="CC" />
 		</Unit>

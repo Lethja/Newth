@@ -22,6 +22,7 @@
 				<Option use_console_runner="0" />
 				<Compiler>
 					<Add option="-O2" />
+					<Add option="-DNDEBUG=1" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -91,6 +92,7 @@
 					<Add option="-3r" />
 					<Add option="-cc" />
 					<Add option="-dWIN32=1" />
+					<Add option="-dNDEBUG=1" />
 				</Compiler>
 				<Linker>
 					<Add library="wsock32" />
