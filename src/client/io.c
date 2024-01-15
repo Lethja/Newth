@@ -110,9 +110,8 @@ char *ioHttpHeadRead(const SOCKET *socket, char **header) {
 
         /* Check if the end of header was part of this buffer and truncate anything after if so */
         buf[bytesReceived] = '\0';
-        if ((headEnd = strstr(buf, HTTP_EOL HTTP_EOL)) != NULL) {
-            bytesReceived = (headEnd - buf);
-        }
+        if ((headEnd = strstr(buf, HTTP_EOL HTTP_EOL)) != NULL)
+            headEnd[0] = '\0', bytesReceived = (ssize_t) strlen(buf);
 
         /* Write header buffer into return buffer */
         totalBytes += bytesReceived;
