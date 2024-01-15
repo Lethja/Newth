@@ -11,7 +11,7 @@ char *fileSiteSchemeGetWorkingDirectory(FileSite *self);
 
 void fileSiteSchemeFree(FileSite *self);
 
-void *fileSiteOpenDirectoryListing(char *path);
+void *fileSiteOpenDirectoryListing(FileSite *self, char *path);
 
 void *fileSiteReadDirectoryListing(void *listing);
 

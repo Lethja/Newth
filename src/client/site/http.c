@@ -247,23 +247,60 @@ const char *httpSiteNew(HttpSite *self, const char *path) {
 
     uriDetailsFree(&details);
 
-    if (header) free(header);
-    if (scheme) free(scheme);
+    if (header)
+        free(header);
+
+    if (scheme)
+        free(scheme);
 
     return NULL;
 
     httpSiteSchemeNew_closeSocketAndAbort:
-    if (self->socket == INVALID_SOCKET) CLOSE_SOCKET(self->socket);
-    if (header) free(header);
-    if (scheme) free(scheme);
+    if (self->socket == INVALID_SOCKET)
+        CLOSE_SOCKET(self->socket);
+
+    if (header)
+        free(header);
+
+    if (scheme)
+        free(scheme);
 
     httpSiteSchemeNew_abort:
     uriDetailsFree(&details);
+
     return err;
 }
 
-void *httpSiteOpenDirectoryListing(char *path) {
-    /* TODO: Implement */
+void *httpSiteOpenDirectoryListing(HttpSite *self, char *path) {
+    char *absPath, *header, *r, *scheme;
+    UriDetails details = uriDetailsNewFrom(self->fullUri);
+
+    if (!(absPath = uriPathAbsoluteAppend(details.path, path)))
+        goto httpSiteOpenDirectoryListing_abort1;
+
+    if (!(r = ioGenerateHttpGetRequest(absPath, NULL)) || WakeUpAndSend(self, r, strlen(r)) ||
+        ioHttpHeadRead(&self->socket, &header))
+        goto httpSiteOpenDirectoryListing_abort2;
+
+    free(r), r = NULL;
+
+    if (HttpGetEssentialResponse(header, &scheme, &r) || !(HttpResponseOk(r) || HttpResponseIsDir(header)))
+        goto httpSiteOpenDirectoryListing_abort3;
+
+    /* TODO: Extract 'a href' links from http body and filter by only immediate subdirectories */
+
+    httpSiteOpenDirectoryListing_abort3:
+    free(header);
+
+    httpSiteOpenDirectoryListing_abort2:
+    if (r)
+        free(r);
+
+    free(absPath);
+
+    httpSiteOpenDirectoryListing_abort1:
+    uriDetailsFree(&details);
+
     return NULL;
 }
 

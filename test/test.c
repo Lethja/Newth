@@ -29,6 +29,9 @@
 int main(void) {
     int r;
 
+#ifdef MOCK
+    if ((r = cmocka_run_group_tests(mockTest, NULL, NULL))) return r;
+#endif
 
     if ((r = cmocka_run_group_tests(fetchTest, NULL, NULL))) return r;
     if ((r = cmocka_run_group_tests(platformTest, NULL, NULL))) return r;
@@ -37,7 +40,6 @@ int main(void) {
     if ((r = cmocka_run_group_tests(socketTest, NULL, NULL))) return r;
 
 #ifdef MOCK
-    if ((r = cmocka_run_group_tests(mockTest, NULL, NULL))) return r;
     if ((r = cmocka_run_group_tests(requestTest, NULL, NULL))) return r;
 #endif
 

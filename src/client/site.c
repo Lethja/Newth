@@ -184,9 +184,9 @@ int siteSetWorkingDirectory(Site *self, char *path) {
 void *siteOpenDirectoryListing(Site *self, char *path) {
     switch (self->type) {
         case SITE_FILE:
-            return fileSiteOpenDirectoryListing(path);
+            return fileSiteOpenDirectoryListing(&self->site.file, path);
         case SITE_HTTP:
-            return httpSiteOpenDirectoryListing(path);
+            return httpSiteOpenDirectoryListing(&self->site.http, path);
         default:
             return NULL;
     }

@@ -66,7 +66,7 @@ char *fileSiteSchemeNew(FileSite *self, const char *path) {
     return NULL;
 }
 
-void *fileSiteOpenDirectoryListing(char *path) {
+void *fileSiteOpenDirectoryListing(FileSite *self, char *path) {
     PlatformFileStat stat;
 
     if (!platformFileStat(path, &stat)) {

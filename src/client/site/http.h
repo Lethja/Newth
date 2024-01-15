@@ -15,7 +15,7 @@ char *httpSiteSchemeGetWorkingDirectory(HttpSite *self);
 
 void httpSiteSchemeFree(HttpSite *self);
 
-void *httpSiteOpenDirectoryListing(char *path);
+void *httpSiteOpenDirectoryListing(HttpSite *self, char *path);
 
 void *httpSiteReadDirectoryListing(void *listing);
 
