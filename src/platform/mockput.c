@@ -118,9 +118,13 @@ ssize_t __wrap_recv(int fd, void *buf, size_t len, int flags) {
         } else
             r = len < mockReceiveMaxBuf ? len : mockReceiveMaxBuf;
 
-        if (mockReceiveStream)
-            return (ssize_t) fread(buf, 1, len, mockReceiveStream);
-        else {
+        if (mockReceiveStream) {
+            size_t s = fread(buf, 1, len, mockReceiveStream);
+            if (flags & MSG_PEEK)
+                fseek(mockReceiveStream, (long) -s, SEEK_CUR);
+
+            return (ssize_t) s;
+        } else {
             char j, *b = (char *) buf;
             size_t i;
 
