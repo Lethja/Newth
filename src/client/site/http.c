@@ -36,7 +36,7 @@ static inline const char *ConnectTo(HttpSite *self, UriDetails *details) {
 static inline const char *WakeUpAndSend(HttpSite *self, const void *data, size_t len) {
     const char *err, maxAttempt = 3;
     char attempt = 0;
-    ssize_t s = send(self->socket, data, len, 0);
+    SOCK_BUF_TYPE s = send(self->socket, data, len, 0);
     WakeUpAndSend_TryAgain:
     ++attempt;
 

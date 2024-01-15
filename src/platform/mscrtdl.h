@@ -15,6 +15,7 @@
 #define SB_DATA_SIZE 8192
 #endif
 
+#include <ctype.h>
 #include <stdio.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>

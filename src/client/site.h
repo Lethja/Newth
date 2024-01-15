@@ -75,7 +75,7 @@ char *siteArrayAdd(Site *site);
  * Remove index n from mounted devices
  * @param n the mounted device to be removed
  */
-void siteArrayRemoveNth(size_t n);
+void siteArrayRemoveNth(long n);
 
 /**
  * Remove this site from mounted devices if found

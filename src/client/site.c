@@ -90,7 +90,7 @@ char *siteArrayAdd(Site *site) {
     return NULL;
 }
 
-void siteArrayRemoveNth(size_t n) {
+void siteArrayRemoveNth(long n) {
     if (Sites.len - 1 >= n) {
         void *p;
 
@@ -103,7 +103,7 @@ void siteArrayRemoveNth(size_t n) {
 }
 
 void siteArrayRemove(Site *site) {
-    size_t i;
+    long i;
 
     for (i = 0; i < Sites.len; ++i) {
         if (SiteCompare(&Sites.array[i], site)) {
