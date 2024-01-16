@@ -145,6 +145,106 @@ static inline char *XmlFindAttribute(const char *element, const char *attribute)
     return NULL;
 }
 
+/**
+ * Get the value of an attribute if it has one
+ * @param attribute Attribute pointer return by XmlFindAttribute
+ * @return String with the value or NULL
+ */
+static inline char *XmlExtractAttributeValue(const char *attribute) {
+    size_t len = 0;
+    char *eq = strchr(attribute, '='), *qp, qc;
+
+    if (!eq)
+        return NULL;
+
+    {
+        char *singleQuote = strchr(eq, '\''), *doubleQuote = strchr(eq, '"');
+        if (singleQuote && doubleQuote) {
+            if (singleQuote < doubleQuote)
+                qp = singleQuote, qc = '\'';
+            else
+                qp = doubleQuote, qc = '"';
+        } else if (singleQuote)
+            qp = singleQuote, qc = '\'';
+        else if (doubleQuote)
+            qp = doubleQuote, qc = '"';
+        else
+            qp = NULL;
+    }
+
+    if (qp) {
+        char *i = &qp[1];
+
+        while (*i != '\0') {
+            if (*i == qc)
+                break;
+            ++len, ++i;
+        }
+
+        if ((i = malloc(len + 1)))
+            strncpy(i, &qp[1], len), i[len] = '\0';
+
+        return i;
+    } else {
+        char *i = &eq[1];
+
+        while (*i != '\0' || *i == qc)
+            ++len, ++i;
+
+        if ((i = malloc(len + 1)))
+            strncpy(i, &qp[1], len), i[len] = '\0';
+
+        return i;
+    }
+}
+
+static inline char *HttpGetContentLength(const char *header, size_t *length) {
+    char *cd, *e = FindHeader(header, "content-length", &cd);
+    if (e)
+        return e;
+
+    if (cd) {
+        size_t tmp = 0;
+        char *i = strchr(cd, '\r');
+        if (i)
+            i[0] = '\0';
+
+        i = cd, *length = 0;
+
+        while (*i != '\0' && !isdigit(*i))
+            ++i;
+
+        while (*i != '\0') {
+            switch (*i) {
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                    tmp *= 10, tmp += (*i - '0');
+                    if (tmp > *length)
+                        *length = tmp, ++i;
+                    else {
+                        free(cd);
+                        return "Content-Length value caused buffer overflow";
+                    }
+                    break;
+                default:
+                    free(cd);
+                    return "Content-Length value contains non-digit character(s)";
+            }
+        }
+        free(cd);
+    }
+
+    return NULL;
+}
+
 #pragma endregion
 
 int httpSiteSchemeChangeDirectory(HttpSite *self, const char *path) {
