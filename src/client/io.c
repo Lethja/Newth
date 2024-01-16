@@ -111,7 +111,7 @@ char *ioHttpHeadRead(const SOCKET *socket, char **header) {
         /* Check if the end of header was part of this buffer and truncate anything after if so */
         buf[bytesReceived] = '\0';
         if ((headEnd = strstr(buf, HTTP_EOL HTTP_EOL)) != NULL)
-            headEnd[0] = '\0', bytesReceived = (ssize_t) strlen(buf);
+            headEnd[2] = '\0', bytesReceived = (ssize_t) strlen(buf);
 
         /* Write header buffer into return buffer */
         totalBytes += bytesReceived;
@@ -139,7 +139,7 @@ char *ioHttpHeadRead(const SOCKET *socket, char **header) {
 
     /* If the buffer has a body after the head then jump over it so the next function is ready to read the body */
     if (headEnd)
-        recv(*socket, buf, 4, 0);
+        recv(*socket, buf, 2, 0);
 
     free(buf);
 
