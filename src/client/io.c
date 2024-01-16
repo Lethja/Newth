@@ -23,7 +23,7 @@ char *generateSendRequest(const char *type, const char *path, const char *extra)
 
 char *FindHeader(const char *headerFile, const char *header, char **variable) {
     char *i, *s, *e;
-    if ((i = strstr(headerFile, header))) {
+    if ((i = platformStringFindNeedle(headerFile, header))) {
         if ((s = strchr(i, ':'))) {
             if ((e = strchr(s, '\r'))) {
                 if (e[1] == '\n') {
