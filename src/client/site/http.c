@@ -105,16 +105,23 @@ static inline char HttpResponseIsDir(const char *header) {
  * @param element The element name to retrieve
  * @return Pointer within xml to the first instance of element found or NULL
  */
-static inline const char *XmlFindElement(const char *xml, char *element) {
+static inline char *XmlFindElement(const char *xml, char *element) {
     const char *p = xml;
-    while ((p = strchr(p, '<'))) {
-        char *next = strchr(p, '<'), *end = strchr(p, '>'), *t;
+
+    while (p && (p = strchr(p, '<'))) {
+        char *next = strchr(&p[1], '<'), *end = strchr(&p[1], '>'), *t;
         if (end && end < next) {
-            *end = '\0', t = platformStringFindNeedle(p, element), *end = '>';
-            if (t)
-                return p;
+            const char *sw = p;
+            while ((*sw == ' ' || *sw == '<') && *sw != '\0')
+                ++sw;
+
+            *end = '\0', t = platformStringFindWord(sw, element), *end = '>';
+            if (sw == t)
+                return (char *) p;
         }
+        p = next;
     }
+
     return NULL;
 }
 
@@ -124,15 +131,16 @@ static inline const char *XmlFindElement(const char *xml, char *element) {
  * @param attribute The tag name to retrieve
  * @return Pointer within xml to the first attribute found or NULL
  */
-static inline const char *XmlFindAttribute(const char *element, const char *attribute) {
+static inline char *XmlFindAttribute(const char *element, const char *attribute) {
     const char *p = element;
-    while ((p = strchr(p, '<'))) {
-        char *next = strchr(p, '<'), *end = strchr(p, '>'), *t;
+    while (p && (p = strchr(p, '<'))) {
+        char *next = strchr(&p[1], '<'), *end = strchr(&p[1], '>'), *t;
         if (end && end < next) {
             *end = '\0', t = platformStringFindNeedle(p, attribute), *end = '>';
             if (t)
-                return p;
-        }
+                return (char *) p;
+        } else
+            return NULL;
     }
     return NULL;
 }
