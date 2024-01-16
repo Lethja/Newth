@@ -451,4 +451,12 @@ int platformSocketGetLastError(void);
  */
 char *platformStringFindNeedle(const char *haystack, const char *needle);
 
+/**
+ * Like strstr() but case-insensitive and checks that the needle is a word
+ * @param haystack The string to look in
+ * @param word The word to look for
+ * @return Pointer within haystack to the first instance found, otherwise NULL
+ */
+char *platformStringFindWord(const char *haystack, const char *word);
+
 #endif /* OPEN_WEB_PLATFORM_H */
