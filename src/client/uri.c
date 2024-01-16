@@ -139,8 +139,12 @@ char *uriDetailsGetHostAddr(UriDetails *details) {
 }
 
 unsigned short uriDetailsGetPort(UriDetails *details) {
-    size_t i, len;
+#if UINT_MAX > USHRT_MAX
     unsigned int r;
+#else
+    unsigned long r;
+#endif
+    size_t i, len;
 
     if (!details->port)
         return uriDetailsGetScheme(details);
@@ -159,13 +163,11 @@ unsigned short uriDetailsGetPort(UriDetails *details) {
             case '8':
             case '9':
                 r *= 10, r += (details->port[i] - '0');
-                break;
+                if (r <= USHRT_MAX)
+                    break;
             default:
                 return 0;
         }
-
-    if (r > USHRT_MAX)
-        return 0;
 
     return (unsigned short) r;
 }
