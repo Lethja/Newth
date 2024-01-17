@@ -101,14 +101,20 @@ static inline char HttpResponseIsDir(const char *header) {
     return -1;
 }
 
+/**
+ * Verify that a link is a direct subdirectory of a particular site path
+ * @param path The site path details to check again
+ * @param link The link to verify
+ * @return Non-zero if link is a direct subdirectory of path, otherwise zero
+ */
 static inline char LinkPathIsDirectSub(const UriDetails *path, const char *link) {
     char *p = strstr(link, "://");
 
     if (p) {
         UriDetails linkUri = uriDetailsNewFrom(link);
         if ((linkUri.scheme && path->scheme && !strcmp(linkUri.scheme, path->scheme)) &&
-                (linkUri.host && path->host && !strcmp(linkUri.host, path->host)) &&
-                uriDetailsGetPort(&linkUri) == uriDetailsGetPort(path)) { /* Is the same site */
+            (linkUri.host && path->host && !strcmp(linkUri.host, path->host)) &&
+            uriDetailsGetPort(&linkUri) == uriDetailsGetPort(path)) { /* Is the same site */
             if (strstr(linkUri.path, path->path) == linkUri.path) {
                 char c = strchr(&linkUri.path[strlen(path->path) + 1], '/') ? 0 : 1; /* 0 if multiple levels down */
                 uriDetailsFree(&linkUri);
@@ -213,7 +219,8 @@ static inline SOCK_BUF_TYPE FastForwardOverElement(HttpSite *self, const char *e
  * Extract the links from an 'a' element containing a 'href' attribute
  * @param socket A network socket positioned at the beginning of the html body
  * @param length The length of the html body if known
- * @return
+ * @return The value of the next <a href> in the scope if there is one, otherwise NULL
+ * @remark Returned string should be freed before leaving scope
  */
 static inline char *HtmlExtractNextLink(HttpSite *self, size_t *written) {
     char *a, *e, *v, buf[2048] = {0};
@@ -232,6 +239,12 @@ static inline char *HtmlExtractNextLink(HttpSite *self, size_t *written) {
     return NULL;
 }
 
+/**
+ * Get the content length header if applicable
+ * @param header The header to search for content length of
+ * @param length Out: The length of the http body of getting content length was successful
+ * @return NULL on success, otherwise user friendly error message
+ */
 static inline char *HttpGetContentLength(const char *header, size_t *length) {
     char *cd, *e = FindHeader(header, "content-length", &cd);
     if (e)
