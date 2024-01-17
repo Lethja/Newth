@@ -100,6 +100,78 @@ static inline char HttpResponseIsDir(const char *header) {
     return -1;
 }
 
+/**
+ * Fast forward socket stream to the next instance of element or the end of stream
+ * @param self HttpSite to forward the socket of
+ * @param element Element to find
+ * @remark Use with care, TCP sockets cannot be rewound, everything before the element will be lost
+ * if there's no element then everything will be lost.
+ */
+static inline SOCK_BUF_TYPE FastForwardToElement(HttpSite *self, const char *element) {
+    char buf[2048] = {0}, *match;
+    SOCK_BUF_TYPE bytesGot, totalBytes = bytesGot = 0;
+
+    while ((bytesGot = recv(self->socket, buf, 2047, MSG_PEEK)) > 0) {
+        if ((match = XmlFindElement(buf, element))) {
+            size_t len = 0;
+            char *i = buf;
+
+            while (i < match)
+                ++i, ++len;
+
+            totalBytes += recv(self->socket, buf, len, 0);
+            break;
+        } else
+            totalBytes += recv(self->socket, buf, bytesGot, 0);
+    }
+
+    return totalBytes;
+}
+
+/**
+ * Fast forward socket stream to after the next instance of element or the end of stream
+ * @param self HttpSite to forward the socket of
+ * @param element Element to find and jump over
+ * @remark Use with care, TCP sockets cannot be rewound, everything before the element will be lost
+ * if there's no element or the nothing after the element then everything will be lost.
+ */
+static inline SOCK_BUF_TYPE FastForwardOverElement(HttpSite *self, const char *element) {
+    SOCK_BUF_TYPE r = 0;
+    char buf[2048] = {0}, *found;
+
+    FastForwardToElement(self, element);
+    recv(self->socket, buf, 2047, MSG_PEEK);
+
+    if ((found = XmlExtractElement(buf, element))) {
+        size_t len = strlen(found);
+        free(found), r = recv(self->socket, buf, len, 0);
+    }
+
+    return r;
+}
+
+/**
+ * Extract the links from an 'a' element containing a 'href' attribute
+ * @param socket A network socket positioned at the beginning of the html body
+ * @param length The length of the html body if known
+ * @return
+ */
+static inline char *HtmlExtractNextLink(HttpSite *self, size_t *written) {
+    char *a, *e, *v, buf[2048] = {0};
+    size_t got;
+
+    *written += FastForwardToElement(self, "a");
+    got = recv(self->socket, buf, 2047, MSG_PEEK);
+
+    if (got && (e = XmlFindElement(buf, "a")) && (a = XmlFindAttribute(e, "href"))) {
+        if ((v = XmlExtractAttributeValue(a))) {
+            *written += FastForwardOverElement(self, "a");
+            return v;
+        }
+    }
+
+    return NULL;
+}
 
 static inline char *HttpGetContentLength(const char *header, size_t *length) {
     char *cd, *e = FindHeader(header, "content-length", &cd);
@@ -283,29 +355,45 @@ const char *httpSiteNew(HttpSite *self, const char *path) {
 }
 
 void *httpSiteOpenDirectoryListing(HttpSite *self, char *path) {
-    char *absPath, *header, *r, *scheme;
+    size_t len, write = len = 0;
+    char *absPath, *header = NULL, *request, *response, *scheme, *file;
     UriDetails details = uriDetailsNewFrom(self->fullUri);
 
     if (!(absPath = uriPathAbsoluteAppend(details.path, path)))
         goto httpSiteOpenDirectoryListing_abort1;
 
-    if (!(r = ioGenerateHttpGetRequest(absPath, NULL)) || WakeUpAndSend(self, r, strlen(r)) ||
-        ioHttpHeadRead(&self->socket, &header))
+    if (!(request = ioGenerateHttpGetRequest(absPath, NULL)))
         goto httpSiteOpenDirectoryListing_abort2;
 
-    free(r), r = NULL;
+    if (WakeUpAndSend(self, request, strlen(request)))
+        goto httpSiteOpenDirectoryListing_abort2;
 
-    if (HttpGetEssentialResponse(header, &scheme, &r) || !(HttpResponseOk(r) || HttpResponseIsDir(header)))
+    free(request), request = NULL, scheme = NULL;
+
+    if (ioHttpHeadRead(&self->socket, &header))
         goto httpSiteOpenDirectoryListing_abort3;
 
-    /* TODO: Extract 'a href' links from http body and filter by only immediate subdirectories */
+    if (HttpGetEssentialResponse(header, &scheme, &response) ||
+        !(HttpResponseOk(response) || !HttpResponseIsDir(header)))
+        goto httpSiteOpenDirectoryListing_abort3;
+
+    HttpGetContentLength(header, &len);
+
+    write += FastForwardToElement(self, "body");
+    write += FastForwardOverElement(self, "body");
+
+    /* TODO: Filter and store only immediate subdirectories */
+    while ((file = HtmlExtractNextLink(self, &write)))
+        puts(file), free(file);
 
     httpSiteOpenDirectoryListing_abort3:
-    free(header);
+    if (scheme)
+        free(scheme);
 
+    free(header);
     httpSiteOpenDirectoryListing_abort2:
-    if (r)
-        free(r);
+    if (request)
+        free(request);
 
     free(absPath);
 

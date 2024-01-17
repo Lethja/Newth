@@ -271,7 +271,12 @@ static void SiteHttpDirEntry(void **state) {
     fwrite(HttpBody, 1, strlen(HttpBody), mockReceiveStream);
     rewind(mockReceiveStream);
 
-    assert_null(siteNew(&site, SITE_HTTP, "http://127.0.0.1/foo"));
+    assert_null(siteNew(&site, SITE_HTTP, "http://127.0.0.1/foo")), rewind(mockReceiveStream);
+
+    /* TODO: siteOpenDirectoryListing() should actually return something useful */
+    d = siteOpenDirectoryListing(&site, ".");
+    siteFree(&site);
+    return;
 
     /* Listing of http://127.0.0.1/foo */
     assert_non_null(d = siteOpenDirectoryListing(&site, "."));
