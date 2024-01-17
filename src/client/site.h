@@ -1,11 +1,16 @@
 #ifndef NEW_DL_SITE_H
 #define NEW_DL_SITE_H
 
-#include "site/file.h"
-#include "site/http.h"
 #include "../platform/platform.h"
 
-#include <stddef.h>
+typedef struct SiteDirectoryEntry {
+    char *name;
+    char *modifiedDate;
+    char isDirectory;
+} SiteDirectoryEntry;
+
+#include "site/file.h"
+#include "site/http.h"
 
 enum SiteType {
     SITE_FILE, SITE_HTTP
@@ -18,12 +23,6 @@ typedef struct Site {
         HttpSite http;
     } site;
 } Site;
-
-typedef struct SiteDirectoryEntry {
-    char *name;
-    char *modifiedDate;
-    char isDirectory;
-} SiteDirectoryEntry;
 
 #pragma region Site Array
 

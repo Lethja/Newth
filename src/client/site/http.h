@@ -2,11 +2,20 @@
 #define NEW_DL_HTTP_H
 
 #include "../io.h"
+#include "../site.h"
+
+typedef struct HttpSiteDirectoryListing {
+    time_t asOf; /* Date & Time of last reload */
+    size_t len; /* Length of 'entry' array */
+    SiteDirectoryEntry *entry; /* Array of entries */
+    char *fullUri; /* uri of current listing in the 'entry' array */
+} HttpSiteDirectoryListing;
 
 typedef struct HttpSite {
     SocketAddress address;
-    SOCKET socket;
+    HttpSiteDirectoryListing directory;
     char *fullUri;
+    SOCKET socket;
 } HttpSite;
 
 int httpSiteSchemeChangeDirectory(HttpSite *self, const char *path);

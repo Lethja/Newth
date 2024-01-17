@@ -1,3 +1,4 @@
+#include "../site.h"
 #include "http.h"
 #include "../uri.h"
 #include "../xml.h"
@@ -98,6 +99,43 @@ static inline char HttpResponseIsDir(const char *header) {
     }
 
     return -1;
+}
+
+static inline char LinkPathIsDirectSub(const UriDetails *path, const char *link) {
+    char *p = strstr(link, "://");
+
+    if (p) {
+        UriDetails linkUri = uriDetailsNewFrom(link);
+        if ((linkUri.scheme && path->scheme && !strcmp(linkUri.scheme, path->scheme)) &&
+                (linkUri.host && path->host && !strcmp(linkUri.host, path->host)) &&
+                uriDetailsGetPort(&linkUri) == uriDetailsGetPort(path)) { /* Is the same site */
+            if (strstr(linkUri.path, path->path) == linkUri.path) {
+                char c = strchr(&linkUri.path[strlen(path->path) + 1], '/') ? 0 : 1; /* 0 if multiple levels down */
+                uriDetailsFree(&linkUri);
+                return c;
+            }
+        }
+
+        uriDetailsFree(&linkUri);
+        return 0;
+    } else if (link[0] == '.') /* No hidden or parent directories allowed */
+        return 0;
+    else if (link[0] == '/') {
+        if (strstr(link, path->path) == link) {
+            size_t len = strlen(path->path);
+            if (strlen(link) <= len) /* The same directory */
+                return 0;
+
+            if (strchr(&link[len + 1], '/')) /* Multiple levels down */
+                return 0;
+
+            return 1;
+        }
+        return 0;
+    }
+
+    /* Not choice to but trust this is a relative path */
+    return 1;
 }
 
 /**
