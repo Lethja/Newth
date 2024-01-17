@@ -54,7 +54,7 @@ char isValidIpv4Str(const char *str) {
 
 #pragma endregion
 
-UriScheme uriDetailsGetScheme(UriDetails *details) {
+UriScheme uriDetailsGetScheme(const UriDetails *details) {
     size_t len;
 
     if (!details->scheme)
@@ -138,7 +138,7 @@ char *uriDetailsGetHostAddr(UriDetails *details) {
     }
 }
 
-unsigned short uriDetailsGetPort(UriDetails *details) {
+unsigned short uriDetailsGetPort(const UriDetails *details) {
 #if UINT_MAX > USHRT_MAX
     unsigned int r;
 #else

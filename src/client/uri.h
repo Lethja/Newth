@@ -48,14 +48,14 @@ extern char *uriDetailsGetHostAddr(UriDetails *details);
  * @param details The UriDetails to convert the port from
  * @return The port number or 0 on error
  */
-extern unsigned short uriDetailsGetPort(UriDetails *details);
+extern unsigned short uriDetailsGetPort(const UriDetails *details);
 
 /**
  * Get the protocol scheme in a URI
  * @param details The UriDetails to get the scheme from
  * @return UriScheme enum value
  */
-extern UriScheme uriDetailsGetScheme(UriDetails *details);
+extern UriScheme uriDetailsGetScheme(const UriDetails *details);
 
 /**
  * Create a socket address from a Uris details

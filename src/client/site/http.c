@@ -147,7 +147,7 @@ static inline char LinkPathIsDirectSub(const UriDetails *path, const char *link)
  */
 static inline SOCK_BUF_TYPE FastForwardToElement(HttpSite *self, const char *element) {
     char buf[2048] = {0}, *match;
-    SOCK_BUF_TYPE bytesGot, totalBytes = bytesGot = 0;
+    SOCK_BUF_TYPE bytesGot, totalBytes = 0;
 
     while ((bytesGot = recv(self->socket, buf, 2047, MSG_PEEK)) > 0) {
         if ((match = XmlFindElement(buf, element))) {
@@ -420,9 +420,13 @@ void *httpSiteOpenDirectoryListing(HttpSite *self, char *path) {
     write += FastForwardToElement(self, "body");
     write += FastForwardOverElement(self, "body");
 
-    /* TODO: Filter and store only immediate subdirectories */
-    while ((file = HtmlExtractNextLink(self, &write)))
-        puts(file), free(file);
+    /* TODO: Format and store valid subdirectories */
+    while ((file = HtmlExtractNextLink(self, &write))) {
+        if (LinkPathIsDirectSub(&details, file))
+            puts(file);
+
+        free(file);
+    }
 
     httpSiteOpenDirectoryListing_abort3:
     if (scheme)
