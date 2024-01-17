@@ -16,6 +16,7 @@
 #include "queue.h"
 #include "site.h"
 #include "sockbufr.h"
+#include "xml.h"
 
 #ifdef MOCK
 
@@ -38,6 +39,7 @@ int main(void) {
     if ((r = cmocka_run_group_tests(queueTest, NULL, NULL))) return r;
     if ((r = cmocka_run_group_tests(siteTest, NULL, NULL))) return r;
     if ((r = cmocka_run_group_tests(socketTest, NULL, NULL))) return r;
+    if ((r = cmocka_run_group_tests(xmlTest, NULL, NULL))) return r;
 
 #ifdef MOCK
     if ((r = cmocka_run_group_tests(requestTest, NULL, NULL))) return r;

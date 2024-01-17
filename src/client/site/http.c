@@ -1,5 +1,6 @@
 #include "http.h"
 #include "../uri.h"
+#include "../xml.h"
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -99,104 +100,6 @@ static inline char HttpResponseIsDir(const char *header) {
     return -1;
 }
 
-/**
- * Get an element in a XML document
- * @param xml The xml document to scan
- * @param element The element name to retrieve
- * @return Pointer within xml to the first instance of element found or NULL
- */
-static inline char *XmlFindElement(const char *xml, char *element) {
-    const char *p = xml;
-
-    while (p && (p = strchr(p, '<'))) {
-        char *next = strchr(&p[1], '<'), *end = strchr(&p[1], '>'), *t;
-        if (end && end < next) {
-            const char *sw = p;
-            while ((*sw == ' ' || *sw == '<') && *sw != '\0')
-                ++sw;
-
-            *end = '\0', t = platformStringFindWord(sw, element), *end = '>';
-            if (sw == t)
-                return (char *) p;
-        }
-        p = next;
-    }
-
-    return NULL;
-}
-
-/**
- * Get an attribute in element
- * @param element Element pointer returned by XmlFindElement
- * @param attribute The tag name to retrieve
- * @return Pointer within xml to the first attribute found or NULL
- */
-static inline char *XmlFindAttribute(const char *element, const char *attribute) {
-    const char *p = element;
-    while (p && (p = strchr(p, '<'))) {
-        char *next = strchr(&p[1], '<'), *end = strchr(&p[1], '>'), *t;
-        if (end && end < next) {
-            *end = '\0', t = platformStringFindNeedle(p, attribute), *end = '>';
-            if (t)
-                return (char *) p;
-        } else
-            return NULL;
-    }
-    return NULL;
-}
-
-/**
- * Get the value of an attribute if it has one
- * @param attribute Attribute pointer return by XmlFindAttribute
- * @return String with the value or NULL
- */
-static inline char *XmlExtractAttributeValue(const char *attribute) {
-    size_t len = 0;
-    char *eq = strchr(attribute, '='), *qp, qc;
-
-    if (!eq)
-        return NULL;
-
-    {
-        char *singleQuote = strchr(eq, '\''), *doubleQuote = strchr(eq, '"');
-        if (singleQuote && doubleQuote) {
-            if (singleQuote < doubleQuote)
-                qp = singleQuote, qc = '\'';
-            else
-                qp = doubleQuote, qc = '"';
-        } else if (singleQuote)
-            qp = singleQuote, qc = '\'';
-        else if (doubleQuote)
-            qp = doubleQuote, qc = '"';
-        else
-            qp = NULL;
-    }
-
-    if (qp) {
-        char *i = &qp[1];
-
-        while (*i != '\0') {
-            if (*i == qc)
-                break;
-            ++len, ++i;
-        }
-
-        if ((i = malloc(len + 1)))
-            strncpy(i, &qp[1], len), i[len] = '\0';
-
-        return i;
-    } else {
-        char *i = &eq[1];
-
-        while (*i != '\0' || *i == qc)
-            ++len, ++i;
-
-        if ((i = malloc(len + 1)))
-            strncpy(i, &qp[1], len), i[len] = '\0';
-
-        return i;
-    }
-}
 
 static inline char *HttpGetContentLength(const char *header, size_t *length) {
     char *cd, *e = FindHeader(header, "content-length", &cd);

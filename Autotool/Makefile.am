@@ -30,6 +30,7 @@ dl_SOURCES = src/cli/dl.c \
     src/client/site/file.c src/client/site/file.h \
     src/client/site/http.c src/client/site/http.h \
     src/client/uri.c src/client/uri.h \
+    src/client/xml.c src/client/xml.h \
     src/platform/platform.c src/platform/platform.h \
     src/server/event.c src/server/event.h \
     $(PLATFORM_SRC)
@@ -59,9 +60,10 @@ if CMOCKA
         src/client/io.c src/client/io.h \
         src/client/queue.c src/client/queue.h \
         src/client/site.c src/client/site.h \
+        src/client/uri.c src/client/uri.h \
+        src/client/xml.c src/client/xml.h \
         src/client/site/file.c src/client/site/file.h \
         src/client/site/http.c src/client/site/http.h \
-        src/client/uri.c src/client/uri.h \
 		src/server/server.h src/server/server.c \
 		src/platform/platform.c src/platform/platform.h \
 		src/server/event.c src/server/event.h \

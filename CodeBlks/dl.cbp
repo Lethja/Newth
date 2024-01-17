@@ -131,6 +131,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../src/client/uri.h" />
+		<Unit filename="../src/client/xml.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/client/xml.h" />
 		<Unit filename="../src/platform/mscrtdl.c">
 			<Option compilerVar="CC" />
 			<Option target="MingW32 Debug" />

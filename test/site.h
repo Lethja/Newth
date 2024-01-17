@@ -145,7 +145,7 @@ const char *HttpHeaderResponseFile = "HTTP/1.1 200 OK" HTTP_EOL
                                      "Content-Disposition: attachment" HTTP_EOL
                                      "Date: Thu, 1 Jan 1970 00:00:00 GMT" HTTP_EOL HTTP_EOL;
 
-const char *HtmlBody = "<!DOCTYPE html>\n"
+const char *HttpBody = "<!DOCTYPE html>\n"
                        "<html>\n"
                        "<head>\n"
                        "\t<title>Directory Listing</title>\n"
@@ -265,10 +265,10 @@ static void SiteHttpDirEntry(void **state) {
     mockReceiveStream = tmpfile();
 
     /* Setup mocked response */
-    sprintf(length, "content-length: %lu" HTTP_EOL HTTP_EOL, strlen(HtmlBody)); /* Deliberately lowercase */
+    sprintf(length, "content-length: %lu" HTTP_EOL HTTP_EOL, strlen(HttpBody)); /* Deliberately lowercase */
     fwrite(HttpHeaderResponseDir, 1, strlen(HttpHeaderResponseDir) - 2, mockReceiveStream);
     fwrite(length, 1, strlen(length), mockReceiveStream);
-    fwrite(HtmlBody, 1, strlen(HtmlBody), mockReceiveStream);
+    fwrite(HttpBody, 1, strlen(HttpBody), mockReceiveStream);
     rewind(mockReceiveStream);
 
     assert_null(siteNew(&site, SITE_HTTP, "http://127.0.0.1/foo"));
