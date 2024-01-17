@@ -1,5 +1,5 @@
-#ifndef OPEN_WEB_SOCKET_BUFFER_H
-#define OPEN_WEB_SOCKET_BUFFER_H
+#ifndef NEW_TH_SOCKET_BUFFER_H
+#define NEW_TH_SOCKET_BUFFER_H
 
 #include "../platform/platform.h"
 
@@ -76,4 +76,4 @@ FILE *socketBufferGetBuffer(SocketBuffer *self);
  */
 int socketBufferPrintf(SocketBuffer *self, size_t max, const char *format, ...);
 
-#endif /* OPEN_WEB_SOCKET_BUFFER_H */
+#endif /* NEW_TH_SOCKET_BUFFER_H */
