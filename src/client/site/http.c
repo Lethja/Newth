@@ -139,6 +139,27 @@ static inline char LinkPathIsDirectSub(const UriDetails *path, const char *link)
 }
 
 /**
+ * Return a new string that contains and omits the last '/' found in the uri link path
+ * @param link The link used on that instance of LinkPathIsDirectSub
+ * @return Formatted subdirectory string on success, otherwise NULL
+ * @remark Check that 'link' is compatible with LinkPathIsDirectSub() before calling this function
+ * @remark Returned string should be freed before leaving scope
+ */
+static inline char *LinkPathConvertToRelativeSubdirectory(const char *link) {
+    char *r, *p;
+
+    if ((p = strrchr(link, '/')))
+        ++p;
+    else
+        p = (char *) link;
+
+    if ((r = malloc(strlen(p) + 1)))
+        strcpy(r, p);
+
+    return r;
+}
+
+/**
  * Fast forward socket stream to the next instance of element or the end of stream
  * @param self HttpSite to forward the socket of
  * @param element Element to find
@@ -420,10 +441,13 @@ void *httpSiteOpenDirectoryListing(HttpSite *self, char *path) {
     write += FastForwardToElement(self, "body");
     write += FastForwardOverElement(self, "body");
 
-    /* TODO: Format and store valid subdirectories */
+    /* TODO: Store valid subdirectories */
     while ((file = HtmlExtractNextLink(self, &write))) {
-        if (LinkPathIsDirectSub(&details, file))
-            puts(file);
+        if (LinkPathIsDirectSub(&details, file)) {
+            char *n = LinkPathConvertToRelativeSubdirectory(file);
+            if (n)
+                puts(n), free(n);
+        }
 
         free(file);
     }
