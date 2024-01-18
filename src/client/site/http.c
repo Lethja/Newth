@@ -196,10 +196,19 @@ static char *DirectoryListingAdd(HttpSiteDirectoryListing *self, const char *nam
     return NULL;
 }
 
+/**
+ * Set the time that the directory listing was made. This can be used later to prevent needlessly requesting information over the network
+ * @param self The DirectoryListing to update the time of
+ */
 static void DirectoryListingSetReloadDate(HttpSiteDirectoryListing *self) {
     self->asOf = time(NULL);
 }
 
+/**
+ * Free all allocations inside of a Http Sites directory listing
+ * @param self The directory listing to free all elements inside of
+ * @remark If the directory listing is allocated on the heap then always run this function before freeing the directory listing itself
+ */
 static void DirectoryListingClear(HttpSiteDirectoryListing *self) {
     if (self->entry) {
         size_t i;
