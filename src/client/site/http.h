@@ -6,14 +6,14 @@
 
 typedef struct HttpSiteDirectoryListing {
     time_t asOf; /* Date & Time of last reload */
-    size_t len; /* Length of 'entry' array */
+    size_t idx, len; /* Position and Length of 'entry' array */
     SiteDirectoryEntry *entry; /* Array of entries */
     char *fullUri; /* uri of current listing in the 'entry' array */
 } HttpSiteDirectoryListing;
 
 typedef struct HttpSite {
     SocketAddress address;
-    HttpSiteDirectoryListing directory;
+    HttpSiteDirectoryListing *directory;
     char *fullUri;
     SOCKET socket;
 } HttpSite;

@@ -5,6 +5,7 @@
 
 #include <stddef.h>
 #include <stdlib.h>
+#include <time.h>
 
 #pragma region Static Helper Functions
 
@@ -145,6 +146,78 @@ static inline char LinkPathIsDirectSub(const UriDetails *path, const char *link)
 }
 
 /**
+ * Create a new directory listing
+ * @param uriPath The full uri path this directory listing is representing
+ * @return New directory listing on success, otherwise NULL
+ */
+static HttpSiteDirectoryListing *DirectoryListingCreate(const char *uriPath) {
+    HttpSiteDirectoryListing *self = calloc(1, sizeof(HttpSiteDirectoryListing));
+    if (self) {
+        if (uriPath) {
+            if ((self->fullUri = malloc(strlen(uriPath) + 1)))
+                strcpy(self->fullUri, uriPath);
+            else {
+                free(self);
+                return NULL;
+            }
+        }
+    }
+    return self;
+}
+
+/**
+ * Add new DirectoryEntry to the the directory listing
+ * @param self The directory listing to add to
+ * @param name The name of the directory listing
+ * @return NULL on success, user friendly error message otherwise
+ */
+static char *DirectoryListingAdd(HttpSiteDirectoryListing *self, const char *name) {
+    char *n = malloc(strlen(name) + 1);
+    if (!n)
+        return strerror(errno);
+
+    strcpy(n, name);
+    if (!self->entry) {
+        if (!(self->entry = malloc(sizeof(SiteDirectoryEntry)))) {
+            free(n);
+            return strerror(errno);
+        }
+    } else {
+        void *tmp = realloc(self->entry, sizeof(SiteDirectoryEntry) * (self->len + 1));
+        if (tmp)
+            self->entry = tmp;
+        else {
+            free(n);
+            return strerror(errno);
+        }
+    }
+
+    self->entry[self->len].name = n, ++self->len;
+    return NULL;
+}
+
+static void DirectoryListingSetReloadDate(HttpSiteDirectoryListing *self) {
+    self->asOf = time(NULL);
+}
+
+static void DirectoryListingClear(HttpSiteDirectoryListing *self) {
+    if (self->entry) {
+        size_t i;
+        for (i = 0; i < self->len; ++i) {
+            if (self->entry[i].name)
+                free(self->entry[i].name);
+        }
+
+        free(self->entry), self->entry = NULL;
+    }
+
+    if (self->fullUri)
+        free(self->fullUri), self->fullUri = NULL;
+
+    self->len = self->idx = self->asOf = 0;
+}
+
+/**
  * Return a new string that contains and omits the last '/' found in the uri link path
  * @param link The link used on that instance of LinkPathIsDirectSub
  * @return Formatted subdirectory string on success, otherwise NULL
@@ -243,7 +316,7 @@ static inline char *HtmlExtractNextLink(HttpSite *self, size_t *written) {
  * Get the content length header if applicable
  * @param header The header to search for content length of
  * @param length Out: The length of the http body of getting content length was successful
- * @return NULL on success, otherwise user friendly error message
+ * @return NULL on success, user friendly error message otherwise
  */
 static inline char *HttpGetContentLength(const char *header, size_t *length) {
     char *cd, *e = FindHeader(header, "content-length", &cd);
@@ -290,6 +363,38 @@ static inline char *HttpGetContentLength(const char *header, size_t *length) {
     }
 
     return NULL;
+}
+
+/* TODO: Make convertUrlToPath shared code between th and dl */
+static inline char HexToAscii(const char *hex) {
+    char value = 0;
+    unsigned char i;
+    for (i = 0; i < 2; i++) {
+        unsigned char ch = hex[i];
+        if (ch >= '0' && ch <= '9') ch = ch - '0';
+        else if (ch >= 'a' && ch <= 'f') ch = ch - 'a' + 10;
+        else if (ch >= 'A' && ch <= 'F') ch = ch - 'A' + 10;
+        value = (char) (value << 4 | (ch & 0xF));
+    }
+    return value;
+}
+
+static void convertUrlToPath(char *url) {
+    char *i = url;
+
+    while (*i != '\0') {
+        if (*i == '%') {
+            if (i[1] != '\0' && i[2] != '\0') {
+                *i = HexToAscii(&i[1]);
+                memmove(&i[1], &i[3], strlen(i) - 2);
+            }
+        }
+        ++i;
+    }
+
+    /* Prevent system from being tricked into going up in a path it shouldn't */
+    while ((i = strstr(url, "/..")))
+        memmove(&i[1], &i[3], strlen(i) - 2);
 }
 
 #pragma endregion
@@ -356,6 +461,9 @@ void httpSiteSchemeFree(HttpSite *self) {
     if (self->fullUri)
         free(self->fullUri);
 
+    if (self->directory)
+        DirectoryListingClear(self->directory), free(self->directory);
+
     if (self->socket != INVALID_SOCKET)
         CLOSE_SOCKET(self->socket);
 }
@@ -374,7 +482,7 @@ const char *httpSiteNew(HttpSite *self, const char *path) {
         return "No uri specified";
     }
 
-    details = uriDetailsNewFrom(path);
+    self->directory = NULL, details = uriDetailsNewFrom(path);
 
     if (!details.path)
         details.path = malloc(2), details.path[0] = '/', details.path[1] = '\0';
@@ -449,21 +557,49 @@ void *httpSiteOpenDirectoryListing(HttpSite *self, char *path) {
         !(HttpResponseOk(response) || !HttpResponseIsDir(header)))
         goto httpSiteOpenDirectoryListing_abort3;
 
+    /* TODO: Handle chunked transfer encoding */
     HttpGetContentLength(header, &len);
+    free(header), free(scheme);
 
     write += FastForwardToElement(self, "body");
     write += FastForwardOverElement(self, "body");
 
-    /* TODO: Store valid subdirectories */
+    if (self->directory)
+        DirectoryListingClear(self->directory), free(self->directory);
+
+    if (!(self->directory = DirectoryListingCreate(absPath))) {
+        free(absPath), uriDetailsFree(&details);
+        return NULL;
+    }
+
+    if (details.path)
+        free(details.path);
+
+    details.path = absPath;
+
     while ((file = HtmlExtractNextLink(self, &write))) {
         if (LinkPathIsDirectSub(&details, file)) {
             char *n = LinkPathConvertToRelativeSubdirectory(file);
-            if (n)
-                puts(n), free(n);
-        }
+            free(file);
+            if (n) {
+                size_t pLen = strlen(n);
 
-        free(file);
+                convertUrlToPath(n);
+                if (strlen(n) < pLen) {
+                    char *tmp = realloc(n, strlen(n) + 1);
+                    if (tmp)
+                        n = tmp;
+                }
+
+                DirectoryListingAdd(self->directory, n), free(n);
+            }
+        } else
+            free(file);
     }
+
+    uriDetailsFree(&details);
+    DirectoryListingSetReloadDate(self->directory);
+    return self->directory;
 
     httpSiteOpenDirectoryListing_abort3:
     if (scheme)
@@ -483,11 +619,27 @@ void *httpSiteOpenDirectoryListing(HttpSite *self, char *path) {
 }
 
 void *httpSiteReadDirectoryListing(void *listing) {
-    /* TODO: Implement */
+    HttpSiteDirectoryListing *l = listing;
+    SiteDirectoryEntry *e;
+
+    if (l->idx < l->len) {
+        if ((e = malloc(sizeof(SiteDirectoryEntry)))) {
+            char *n = malloc(strlen(l->entry[l->idx].name) + 1);
+            if (!n) {
+                free(e);
+                return NULL;
+            }
+
+            strcpy(n, l->entry[l->idx].name);
+            memcpy(e, &l->entry[l->idx], sizeof(SiteDirectoryEntry)), ++l->idx, e->name = n;
+            return e;
+        }
+    }
+
     return NULL;
 }
 
 void httpSiteCloseDirectoryListing(void *listing) {
-    /* TODO: Implement */
+    DirectoryListingClear(listing);
 }
 

@@ -66,6 +66,8 @@ char *fileSiteSchemeNew(FileSite *self, const char *path) {
     return NULL;
 }
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnusedParameter"
 void *fileSiteOpenDirectoryListing(FileSite *self, char *path) {
     PlatformFileStat stat;
 
@@ -76,6 +78,7 @@ void *fileSiteOpenDirectoryListing(FileSite *self, char *path) {
 
     return NULL;
 }
+#pragma clang diagnostic pop
 
 void *fileSiteReadDirectoryListing(void *listing) {
     char *name;
@@ -99,7 +102,7 @@ void *fileSiteReadDirectoryListing(void *listing) {
     }
 
     strcpy(siteEntry->name, name);
-    siteEntry->modifiedDate = NULL, siteEntry->isDirectory = platformDirEntryIsDirectory(entry, listing);
+    siteEntry->modifiedDate = 0, siteEntry->isDirectory = platformDirEntryIsDirectory(entry, listing);
     return siteEntry;
 }
 

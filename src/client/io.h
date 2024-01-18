@@ -46,6 +46,15 @@ extern char *ioGenerateHttpHeadRequest(const char *path, const char *extra);
 
 extern char *ioGenerateHttpGetRequest(const char *path, const char *extra);
 
+/**
+ * Get essential HTTP/1.1 head response from the server
+ * @param headerFile In: The header response to read from
+ * @param scheme Out: The scheme of the response (usually HTTP 1.1)
+ * @param response Out: The response number to the request in string format (200 OK)
+ * @return NULL on success, user friendly error message otherwise
+ * @remark 'scheme' should be freed before leaving scope
+ * @remark 'scheme' and 'response' are part of the same memory allocation, 'response' isn't available if 'scheme' is freed
+ */
 extern char *HttpGetEssentialResponse(const char *headerFile, char **scheme, char **response);
 
 extern char *FindHeader(const char *headerFile, const char *header, char **variable);

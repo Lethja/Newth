@@ -5,7 +5,7 @@
 
 typedef struct SiteDirectoryEntry {
     char *name;
-    char *modifiedDate;
+    time_t modifiedDate;
     char isDirectory;
 } SiteDirectoryEntry;
 
@@ -47,7 +47,7 @@ void siteArraySetActive(Site *site);
 /**
  * Set the active site by number
  * @param siteNumber The site number to set to active
- * @return NULL on success or a user friendly error message as to why the site couldn't be changed-
+ * @return NULL on success, user friendly error message as to why the site couldn't be changed otherwise
  */
 char *siteArraySetActiveNth(long siteNumber);
 
@@ -66,7 +66,7 @@ void siteArrayFree(void);
 /**
  * Add a site to the list of mounted devices
  * @param site The site to be added
- * @return NULL on success or user friendly error message on failure
+ * @return NULL on success, user friendly error message on failure
  */
 char *siteArrayAdd(Site *site);
 

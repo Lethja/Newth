@@ -273,11 +273,6 @@ static void SiteHttpDirEntry(void **state) {
 
     assert_null(siteNew(&site, SITE_HTTP, "http://127.0.0.1/foo")), rewind(mockReceiveStream);
 
-    /* TODO: siteOpenDirectoryListing() should actually return something useful */
-    d = siteOpenDirectoryListing(&site, ".");
-    siteFree(&site);
-    return;
-
     /* Listing of http://127.0.0.1/foo */
     assert_non_null(d = siteOpenDirectoryListing(&site, "."));
     assert_non_null(e = siteReadDirectoryListing(&site, d));
@@ -286,7 +281,7 @@ static void SiteHttpDirEntry(void **state) {
     assert_string_equal(e->name, "file2.txt"), siteDirectoryEntryFree(e);
     assert_non_null(e = siteReadDirectoryListing(&site, d));
     assert_string_equal(e->name, "file5.txt"), siteDirectoryEntryFree(e);
-    siteCloseDirectoryListing(&site, d);
+    siteCloseDirectoryListing(&site, d), rewind(mockReceiveStream);
 
     /* Listing of http://127.0.0.1/ (absolute) */
     assert_non_null(d = siteOpenDirectoryListing(&site, "/"));
@@ -296,7 +291,7 @@ static void SiteHttpDirEntry(void **state) {
     assert_string_equal(e->name, "file2.txt"), siteDirectoryEntryFree(e);
     assert_non_null(e = siteReadDirectoryListing(&site, d));
     assert_string_equal(e->name, "file3.txt"), siteDirectoryEntryFree(e);
-    siteCloseDirectoryListing(&site, d);
+    siteCloseDirectoryListing(&site, d), rewind(mockReceiveStream);
 
     /* Listing of http://127.0.0.1/ (up) */
     assert_non_null(d = siteOpenDirectoryListing(&site, ".."));
@@ -306,7 +301,7 @@ static void SiteHttpDirEntry(void **state) {
     assert_string_equal(e->name, "file2.txt"), siteDirectoryEntryFree(e);
     assert_non_null(e = siteReadDirectoryListing(&site, d));
     assert_string_equal(e->name, "file3.txt"), siteDirectoryEntryFree(e);
-    siteCloseDirectoryListing(&site, d);
+    siteCloseDirectoryListing(&site, d), rewind(mockReceiveStream);
 
     siteFree(&site);
 }
