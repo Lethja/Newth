@@ -16,8 +16,6 @@
 #define LINEDBG printf("%s:%d\n", __FILE__, __LINE__)
 #endif
 
-#define SA struct sockaddr
-
 #ifndef __STDC_VERSION__
 #define inline
 #endif
@@ -114,12 +112,12 @@ SOCKET platformAcceptConnection(SOCKET fromSocket);
 /**
  * Bind one of any ports mentioned in a string
  * @param listenSocket In: The socket to attempt to bind a listen port to
- * @param sockAddr In: The socket address structure get use as binding information
+ * @param socketAddress In: The socket address structure get use as binding information
  * @param socketSize In: The size of sockAddr
  * @param port In: A string with all the potential ports in it
  * @return 0 on successful bind, otherwise error
  */
-char platformBindPort(const SOCKET *listenSocket, SA *sockAddr, char *port);
+char platformBindPort(const SOCKET *listenSocket, struct sockaddr *socketAddress, char *port);
 
 /**
  * Close any open sockets in the file descriptor

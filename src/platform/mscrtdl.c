@@ -252,7 +252,7 @@ SOCKET platformAcceptConnection(SOCKET fromSocket) {
 
     LINEDBG;
 
-    clientSocket = accept(fromSocket, (SA *) &clientAddress, &addrSize);
+    clientSocket = accept(fromSocket, (struct sockaddr *) &clientAddress, &addrSize);
     platformSocketSetBlock(clientSocket, blocking);
 
     eventSocketAcceptInvoke(&clientSocket);

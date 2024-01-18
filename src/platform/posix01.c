@@ -139,7 +139,7 @@ int platformAcceptConnection(int fromSocket) {
     int clientSocket;
     struct sockaddr_in clientAddress;
 
-    clientSocket = accept(fromSocket, (SA *) &clientAddress, &addressSize);
+    clientSocket = accept(fromSocket, (struct sockaddr *) &clientAddress, &addressSize);
     platformSocketSetBlock(clientSocket, blocking);
 
     eventSocketAcceptInvoke(&clientSocket);
