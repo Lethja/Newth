@@ -129,6 +129,24 @@ void platformPathCombine(char *output, const char *path1, const char *path2) {
     strcat(output, p2);
 }
 
+#pragma region Network Bind & Listen
+
+#ifdef PLATFORM_NET_LISTEN
+
+int platformAcceptConnection(int fromSocket) {
+    const char blocking = 0;
+    socklen_t addressSize = sizeof(struct sockaddr_in);
+    int clientSocket;
+    struct sockaddr_in clientAddress;
+
+    clientSocket = accept(fromSocket, (SA *) &clientAddress, &addressSize);
+    platformSocketSetBlock(clientSocket, blocking);
+
+    eventSocketAcceptInvoke(&clientSocket);
+
+    return clientSocket;
+}
+
 void platformCloseBindSockets(const SOCKET *sockets) {
     SOCKET i, max = sockets[0];
 
@@ -201,19 +219,9 @@ SOCKET *platformServerStartup(sa_family_t family, char *ports, char **err) {
 #endif
 }
 
-int platformAcceptConnection(int fromSocket) {
-    const char blocking = 0;
-    socklen_t addressSize = sizeof(struct sockaddr_in);
-    int clientSocket;
-    struct sockaddr_in clientAddress;
+#endif /* PLATFORM_NET_LISTEN */
 
-    clientSocket = accept(fromSocket, (SA *) &clientAddress, &addressSize);
-    platformSocketSetBlock(clientSocket, blocking);
-
-    eventSocketAcceptInvoke(&clientSocket);
-
-    return clientSocket;
-}
+#pragma endregion
 
 void platformConnectSignals(void(*noAction)(int), void(*shutdownCrash)(int), void(*shutdownProgram)(int)) {
     signal(SIGPIPE, noAction);
@@ -294,6 +302,10 @@ platformSetAdapterInformationWithSocket(AdapterAddressArray *self, struct ifaddr
 }
 */
 
+#pragma region Network Adapter Discovery
+
+#ifdef PLATFORM_NET_ADAPTER
+
 AdapterAddressArray *platformGetAdapterInformation(sa_family_t family) {
     struct AdapterAddressArray *array;
     struct ifaddrs *ifap, *ifa;
@@ -332,6 +344,10 @@ AdapterAddressArray *platformGetAdapterInformation(sa_family_t family) {
 
     return array;
 }
+
+#endif
+
+#pragma endregion
 
 char *platformRealPath(char *path) {
     return realpath(path, NULL);

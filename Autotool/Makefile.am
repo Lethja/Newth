@@ -33,7 +33,6 @@ dl_SOURCES = src/cli/dl.c \
     src/client/xml.c src/client/xml.h \
     src/common/hex.c src/common/hex.h \
     src/platform/platform.c src/platform/platform.h \
-    src/server/event.c src/server/event.h \
     $(PLATFORM_SRC)
 
 
@@ -47,11 +46,13 @@ th_SOURCES = src/cli/th.c \
     src/server/sockbufr.c src/server/sockbufr.h \
     $(MULTIPLEX_SRC) $(PLATFORM_SRC)
 
+th_CFLAGS = -DPLATFORM_NET_ADAPTER=1 -DPLATFORM_NET_LISTEN=1
+
 if CMOCKA
     TESTS = unittest
     check_PROGRAMS = unittest
 
-    unittest_CFLAGS = ${cmocka_CFLAGS} -DMOCK=1 -DSB_DATA_SIZE=128 -DEWOULDBLOCK=41
+    unittest_CFLAGS = ${cmocka_CFLAGS} -DMOCK=1 -DSB_DATA_SIZE=128 -DEWOULDBLOCK=41 -DPLATFORM_NET_LISTEN=1
     unittest_LDFLAGS = ${cmocka_LIBS} \
 		-Wl,--wrap=malloc,--wrap=calloc,--wrap=realloc,--wrap=free,--wrap=connect,--wrap=recv,--wrap=send,--wrap=fclose
 

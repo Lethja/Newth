@@ -23,7 +23,9 @@
 #endif
 
 #ifdef MOCK
+
 #include "mockput.h"
+
 #endif
 
 #ifdef _WIN32
@@ -42,6 +44,10 @@
 #include "posix01.h"
 
 #endif
+
+#pragma region Network Adapter Discovery
+
+#ifdef PLATFORM_NET_ADAPTER
 
 #define ADAPTER_NAME_LENGTH 512
 
@@ -66,15 +72,44 @@ typedef struct AdapterAddressArray {
 } AdapterAddressArray;
 
 /**
- * Get the argv position of the flag parameter (and optionally the argument)
- * @param argc In: argc from main()
- * @param argv In: argv from main()
- * @param shortFlag Optional In: The short flag to look for, pass '\0' to omit
- * @param longFlag Optional In: The long flag to look for, pass NULL to omit
- * @param optArg Optional Out: The argument of the flag or NULL if there wasn't one, pass NULL to omit
- * @return The position of the flag in argv or 0 if the flag couldn't be found
+ * Build an adapter address array structure containing all the network adapters and addresses of the system
+ * @param family In: IP address versions to include choose between AF_INET, AF_INET6 or AF_UNSPEC for both
+ * @return The adapter address array for your application to parse through
+ * @remark Return result must be freed with platformFreeAdapterInformation()
  */
-int platformArgvGetFlag(int argc, char **argv, char shortFlag, char *longFlag, char **optArg);
+AdapterAddressArray *platformGetAdapterInformation(sa_family_t family);
+
+/**
+ * Free an adapter address array created with platformGetAdapterInformation()
+ * @param array In: The adapter address array to be freed
+ */
+void platformFreeAdapterInformation(AdapterAddressArray *array);
+
+/**
+ * Add a entry to the adapter address array
+ * @param array In: The array to add the new entry to
+ * @param adapter In: The string name that represents this adapter (differs depending on underlying system)
+ * @param type In: Family type of the ip string, choose between AF_INET or AF_INET6
+ * @param ip In: A human readable representation of the ip address (and only the ip address)
+ * @param port In: The port number this adapter should be assigned
+ */
+void platformFindOrCreateAdapterIp(AdapterAddressArray *array, const char *adapter, sa_family_t type,
+                                   char ip[INET6_ADDRSTRLEN]);
+
+#endif
+
+#pragma endregion
+
+#pragma region Network Bind & Listen
+
+#ifdef PLATFORM_NET_LISTEN
+
+/**
+ * Accept a connection from a listen socket
+ * @param fromSocket In: the listen socket to accept the new socket from
+ * @return A new established socket from the client
+ */
+SOCKET platformAcceptConnection(SOCKET fromSocket);
 
 /**
  * Bind one of any ports mentioned in a string
@@ -85,6 +120,37 @@ int platformArgvGetFlag(int argc, char **argv, char shortFlag, char *longFlag, c
  * @return 0 on successful bind, otherwise error
  */
 char platformBindPort(const SOCKET *listenSocket, SA *sockAddr, char *port);
+
+/**
+ * Close any open sockets in the file descriptor
+ * @param sockets In: the array of sockets to close all open sockets on, the first entry should be the number of sockets
+ */
+void platformCloseBindSockets(const SOCKET *sockets);
+
+/**
+ * Start up the server
+ * @param family In: protocol to start the server under
+ * @param ports In: A port of comma separated ports to try to bind to from left to right
+ * @param err Out: The const string to describe an error
+ * @return heap allocation of an array of sockets on success, NULL on error
+ * @remark value must be freed when server is stopped
+ */
+SOCKET *platformServerStartup(sa_family_t family, char *ports, char **err);
+
+#endif
+
+#pragma endregion
+
+/**
+ * Get the argv position of the flag parameter (and optionally the argument)
+ * @param argc In: argc from main()
+ * @param argv In: argv from main()
+ * @param shortFlag Optional In: The short flag to look for, pass '\0' to omit
+ * @param longFlag Optional In: The long flag to look for, pass NULL to omit
+ * @param optArg Optional Out: The argument of the flag or NULL if there wasn't one, pass NULL to omit
+ * @return The position of the flag in argv or 0 if the flag couldn't be found
+ */
+int platformArgvGetFlag(int argc, char **argv, char shortFlag, char *longFlag, char **optArg);
 
 /**
  * Wrapper around reallocation that gracefully hands control back to the caller in the event of a failure
@@ -114,12 +180,6 @@ void platformPathCombine(char *output, const char *path1, const char *path2);
 char *platformRealPath(char *path);
 
 /**
- * Close any open sockets in the file descriptor
- * @param sockets In: the array of sockets to close all open sockets on, the first entry should be the number of sockets
- */
-void platformCloseBindSockets(const SOCKET *sockets);
-
-/**
  * Free any memory resources that platformServerProgramInit() allocated
  */
 void platformIpStackExit(void);
@@ -129,16 +189,6 @@ void platformIpStackExit(void);
  * @return NULL on success, human readable string to print error
  */
 char *platformIpStackInit(void);
-
-/**
- * Start up the server
- * @param family In: protocol to start the server under
- * @param ports In: A port of comma separated ports to try to bind to from left to right
- * @param err Out: The const string to describe an error
- * @return heap allocation of an array of sockets on success, NULL on error
- * @remark value must be freed when server is stopped
- */
-SOCKET *platformServerStartup(sa_family_t family, char *ports, char **err);
 
 /**
  * Attach signals to comment interrupts
@@ -164,31 +214,6 @@ void platformGetIpString(struct sockaddr *addr, char ipStr[INET6_ADDRSTRLEN], sa
  * @return The port number of this socket
  */
 unsigned short platformGetPort(struct sockaddr *addr);
-
-/**
- * Build an adapter address array structure containing all the network adapters and addresses of the system
- * @param family In: IP address versions to include choose between AF_INET, AF_INET6 or AF_UNSPEC for both
- * @return The adapter address array for your application to parse through
- * @remark Return result must be freed with platformFreeAdapterInformation()
- */
-AdapterAddressArray *platformGetAdapterInformation(sa_family_t family);
-
-/**
- * Free an adapter address array created with platformGetAdapterInformation()
- * @param array In: The adapter address array to be freed
- */
-void platformFreeAdapterInformation(AdapterAddressArray *array);
-
-/**
- * Add a entry to the adapter address array
- * @param array In: The array to add the new entry to
- * @param adapter In: The string name that represents this adapter (differs depending on underlying system)
- * @param type In: Family type of the ip string, choose between AF_INET or AF_INET6
- * @param ip In: A human readable representation of the ip address (and only the ip address)
- * @param port In: The port number this adapter should be assigned
- */
-void platformFindOrCreateAdapterIp(AdapterAddressArray *array, const char *adapter, sa_family_t type,
-                                   char ip[INET6_ADDRSTRLEN]);
 
 /**
  * Check if the platform is know to have a stable IPv6 stack
@@ -288,13 +313,6 @@ char platformDirEntryIsDirectory(PlatformDirEntry *entry, void *dirp);
 int platformFileStat(const char *path, PlatformFileStat *fileStat);
 
 /**
- * Accept a connection from a listen socket
- * @param fromSocket In: the listen socket to accept the new socket from
- * @return A new established socket from the client
- */
-SOCKET platformAcceptConnection(SOCKET fromSocket);
-
-/**
  * Get if the file/folder in this stat structure is a directory
  * @param stat In: the stat file structure
  * @return zero if not a directory, other if it is a directory
@@ -356,7 +374,7 @@ char *platformPathSystemToFileScheme(char *path);
  * @param path The directory to set as the the new working directory
  * @returns 0 on success, other on failure
  */
-int platformPathSystemChangeWorkingDirectory(const char* path);
+int platformPathSystemChangeWorkingDirectory(const char *path);
 
 /**
  * Open a file with the largest bit offset the platform supports

@@ -2,6 +2,10 @@
 #include <limits.h>
 #include "platform.h"
 
+#pragma region Network Adapter Discovery
+
+#ifdef PLATFORM_NET_ADAPTER
+
 void platformFreeAdapterInformation(AdapterAddressArray *array) {
     if (array->size) {
         size_t i;
@@ -47,6 +51,14 @@ void platformFindOrCreateAdapterIp(AdapterAddressArray *array, const char *adapt
     array->adapter[i].addresses.array[j].type = type;
     strncpy(array->adapter[i].addresses.array[j].address, ip, INET6_ADDRSTRLEN);
 }
+
+#endif
+
+#pragma endregion
+
+#pragma region Network Bind & Listen
+
+#ifdef PLATFORM_NET_LISTEN
 
 char platformBindPort(const SOCKET *listenSocket, SA *sockAddr, char *port) {
 #define PORT_SIZE_MAX 2048
@@ -121,6 +133,10 @@ char platformBindPort(const SOCKET *listenSocket, SA *sockAddr, char *port) {
     }
     return -1;
 }
+
+#endif
+
+#pragma endregion
 
 int platformArgvGetFlag(int argc, char **argv, char shortFlag, char *longFlag, char **optArg) {
     int i;
