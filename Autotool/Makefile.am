@@ -31,17 +31,19 @@ dl_SOURCES = src/cli/dl.c \
     src/client/site/http.c src/client/site/http.h \
     src/client/uri.c src/client/uri.h \
     src/client/xml.c src/client/xml.h \
+    src/common/hex.c src/common/hex.h \
     src/platform/platform.c src/platform/platform.h \
     src/server/event.c src/server/event.h \
     $(PLATFORM_SRC)
 
 
 th_SOURCES = src/cli/th.c \
-    src/server/server.h src/server/server.c \
+    src/common/hex.c src/common/hex.h \
     src/platform/platform.c src/platform/platform.h \
     src/server/event.c src/server/event.h \
     src/server/http.c src/server/http.h \
     src/server/routine.c src/server/routine.h \
+    src/server/server.h src/server/server.c \
     src/server/sockbufr.c src/server/sockbufr.h \
     $(MULTIPLEX_SRC) $(PLATFORM_SRC)
 
@@ -64,11 +66,12 @@ if CMOCKA
         src/client/xml.c src/client/xml.h \
         src/client/site/file.c src/client/site/file.h \
         src/client/site/http.c src/client/site/http.h \
-		src/server/server.h src/server/server.c \
+        src/common/hex.c src/common/hex.h \
 		src/platform/platform.c src/platform/platform.h \
 		src/server/event.c src/server/event.h \
 		src/server/http.c src/server/http.h \
 		src/server/routine.c src/server/routine.h \
+        src/server/server.h src/server/server.c \
 		src/server/sockbufr.c src/server/sockbufr.h \
 		$(MULTIPLEX_SRC) $(PLATFORM_SRC)
 endif

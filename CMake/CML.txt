@@ -36,6 +36,7 @@ add_executable(dl ../src/cli/dl.c
         ../src/client/site/http.c ../src/client/site/http.h
         ../src/client/uri.c ../src/client/uri.h
         ../src/client/xml.c ../src/client/xml.h
+        ../src/common/hex.c ../src/common/hex.h
         ../src/platform/platform.c ../src/platform/platform.h
         ../src/server/event.c ../src/server/event.h
         ${PLATFORM_SRC})
@@ -44,11 +45,12 @@ target_compile_definitions(dl PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
 
 # Server
 add_executable(th ../src/cli/th.c
-        ../src/server/server.h ../src/server/server.c
+        ../src/common/hex.c ../src/common/hex.h
         ../src/platform/platform.c ../src/platform/platform.h
         ../src/server/event.c ../src/server/event.h
         ../src/server/http.c ../src/server/http.h
         ../src/server/routine.c ../src/server/routine.h
+        ../src/server/server.h ../src/server/server.c
         ../src/server/sockbufr.c ../src/server/sockbufr.h
         ${MULTIPLEX_SRC} ${PLATFORM_SRC})
 
@@ -65,8 +67,8 @@ if (ENABLE_TEST)
     endif ()
 
     add_executable(test
-            ../test/test.c ../test/mock.h ../test/common.h ../test/fetch.h
-            ../test/platform.h ../test/queue.h ../test/request.h ../test/site.h ../test/sockbufr.h
+            ../test/test.c ../test/mock.h ../test/common.h ../test/fetch.h ../test/platform.h ../test/queue.h
+            ../test/request.h ../test/site.h ../test/sockbufr.h ../test/xml.h
 
             ../src/client/io.c ../src/client/io.h
             ../src/client/queue.c ../src/client/queue.h
@@ -75,14 +77,14 @@ if (ENABLE_TEST)
             ../src/client/xml.c ../src/client/xml.h
             ../src/client/site/file.c ../src/client/site/file.h
             ../src/client/site/http.c ../src/client/site/http.h
+            ../src/common/hex.c ../src/common/hex.h
             ../src/platform/platform.c ../src/platform/platform.h
             ../src/server/server.c ../src/server/server.h
             ../src/server/event.c ../src/server/event.h
             ../src/server/http.c ../src/server/http.h
             ../src/server/routine.c ../src/server/routine.h
             ../src/server/sockbufr.c ../src/server/sockbufr.h
-            ${MULTIPLEX_SRC} ${PLATFORM_SRC} ${MOCK_SRC}
-            ../test/xml.h)
+            ${MULTIPLEX_SRC} ${PLATFORM_SRC} ${MOCK_SRC})
 
     target_compile_definitions(test PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>" SB_DATA_SIZE=128 EWOULDBLOCK=41)
     target_link_libraries(test cmocka)
