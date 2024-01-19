@@ -68,6 +68,10 @@ void platformConnectSignals(void(*noAction)(int), void(*shutdownCrash)(int), voi
     /* See platformShouldExit() */
 }
 
+#pragma region Network Adapter Discovery
+
+#ifdef PLATFORM_NET_ADAPTER
+
 AdapterAddressArray *platformGetAdapterInformation(sa_family_t family) {
     struct AdapterAddressArray *array = malloc(sizeof(AdapterAddressArray));
     struct in_addr address;
@@ -81,6 +85,10 @@ AdapterAddressArray *platformGetAdapterInformation(sa_family_t family) {
 
     return array;
 }
+
+#endif
+
+#pragma endregion
 
 void platformGetTime(void *clock, char *time) {
     struct tm *timeInfo = gmtime(clock);
@@ -361,6 +369,10 @@ size_t platformFileRead(void *buffer, size_t size, size_t n, PlatformFile stream
 
 #pragma region Watt32 Networking
 
+#pragma region Network Bind & Listen
+
+#ifdef PLATFORM_NET_LISTEN
+
 int platformAcceptConnection(int fromSocket) {
     const char blocking = 0;
     socklen_t addressSize = sizeof(struct sockaddr_in);
@@ -377,17 +389,6 @@ int platformAcceptConnection(int fromSocket) {
     return clientSocket;
 }
 
-int platformSocketSetBlock(SOCKET socket, char blocking) {
-    /* TODO: Get non-blocking sockets setup */
-    LINEDBG;
-    return 0;
-}
-
-int platformSocketGetLastError(void) {
-    LINEDBG;
-    return errno;
-}
-
 void platformCloseBindSockets(const SOCKET *sockets) {
     SOCKET i, max = sockets[0];
 
@@ -395,15 +396,6 @@ void platformCloseBindSockets(const SOCKET *sockets) {
         eventSocketCloseInvoke(&i);
         close(i);
     }
-}
-
-void platformIpStackExit(void) {
-    LINEDBG;
-}
-
-char *platformIpStackInit(void) {
-    LINEDBG;
-    return NULL;
 }
 
 SOCKET *platformServerStartup(sa_family_t family, char *ports, char **err) {
@@ -451,6 +443,30 @@ SOCKET *platformServerStartup(sa_family_t family, char *ports, char **err) {
     } else
         *err = strerror(errno);
 
+    return NULL;
+}
+
+#endif /* PLATFORM_NET_LISTEN */
+
+#pragma endregion
+
+int platformSocketSetBlock(SOCKET socket, char blocking) {
+    /* TODO: Get non-blocking sockets setup */
+    LINEDBG;
+    return 0;
+}
+
+int platformSocketGetLastError(void) {
+    LINEDBG;
+    return errno;
+}
+
+void platformIpStackExit(void) {
+    LINEDBG;
+}
+
+char *platformIpStackInit(void) {
+    LINEDBG;
     return NULL;
 }
 

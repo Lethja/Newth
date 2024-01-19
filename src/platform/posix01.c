@@ -262,6 +262,10 @@ unsigned short platformGetPort(struct sockaddr *addr) {
     return 0;
 }
 
+#pragma region Network Adapter Discovery
+
+#ifdef PLATFORM_NET_ADAPTER
+
 /* TODO: Store all adapters with correct port numbers (for Haiku) */
 /*
 AdapterAddressArray *
@@ -301,10 +305,6 @@ platformSetAdapterInformationWithSocket(AdapterAddressArray *self, struct ifaddr
     return self;
 }
 */
-
-#pragma region Network Adapter Discovery
-
-#ifdef PLATFORM_NET_ADAPTER
 
 AdapterAddressArray *platformGetAdapterInformation(sa_family_t family) {
     struct AdapterAddressArray *array;

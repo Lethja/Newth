@@ -32,6 +32,117 @@ void (*wsIpv4)(void) = NULL;
 
 void (*wsIpv6)(void) = NULL;
 
+#pragma region Network Bind & Listen
+
+#ifdef PLATFORM_NET_LISTEN
+
+SOCKET platformAcceptConnection(SOCKET fromSocket) {
+    const char blocking = 1;
+    socklen_t addrSize = sizeof(struct sockaddr_storage);
+    SOCKET clientSocket;
+    struct sockaddr_storage clientAddress;
+
+    LINEDBG;
+
+    clientSocket = accept(fromSocket, (struct sockaddr *) &clientAddress, &addrSize);
+    platformSocketSetBlock(clientSocket, blocking);
+
+    eventSocketAcceptInvoke(&clientSocket);
+
+    return clientSocket;
+}
+
+void platformCloseBindSockets(const SOCKET *sockets) {
+    SOCKET i, max = sockets[0];
+
+    for (i = 1; i <= max; ++i) {
+        eventSocketCloseInvoke(&i);
+        closesocket(i);
+    }
+    WSACleanup();
+}
+
+SOCKET *platformServerStartup(sa_family_t family, char *ports, char **err) {
+    struct sockaddr_storage serverAddress;
+    SOCKET listenSocket, *r;
+    int iResult;
+
+    LINEDBG;
+
+    /* Force start in IPV4 mode if IPV6 functions cannot be loaded */
+    if (family != AF_INET && (!getAdapterInformationIpv6)) {
+        if (family == AF_INET6) {
+            *err = "This build of Windows does not have sufficient IPv6 support";
+            return NULL;
+        }
+
+        family = AF_INET;
+    }
+
+    ZeroMemory(&serverAddress, sizeof(serverAddress));
+
+    switch (family) {
+        default:
+        case AF_INET: {
+            struct sockaddr_in *sock = (struct sockaddr_in *) &serverAddress;
+            if ((listenSocket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+                *err = "Unable to acquire socket from system";
+                return NULL;
+            }
+
+            sock->sin_family = AF_INET;
+            sock->sin_addr.s_addr = htonl(INADDR_ANY);
+            LINEDBG;
+            break;
+        }
+        case AF_INET6:
+        case AF_UNSPEC: {
+            struct SOCKIN6 *sock = (struct SOCKIN6 *) &serverAddress;
+            size_t v6Only = family == AF_INET6;
+            if ((listenSocket = socket(AF_INET6, SOCK_STREAM, 0)) < 0) {
+                *err = "Unable to acquire socket from system";
+                return NULL;
+            }
+
+            sock->sin6_family = AF_INET6;
+            setsockopt(listenSocket, IPPROTO_IPV6, IPV6_V6ONLY, (char *) &v6Only, sizeof(v6Only));
+            LINEDBG;
+            break;
+        }
+    }
+
+    if (listenSocket == INVALID_SOCKET) {
+        *err = "Socket is invalid";
+        return NULL;
+    }
+
+    if (platformBindPort(&listenSocket, (struct sockaddr *) &serverAddress, ports)) {
+        closesocket(listenSocket);
+        *err = "Unable to bind to designated port numbers";
+        return NULL;
+    }
+
+    iResult = listen(listenSocket, SOMAXCONN);
+    if (iResult == SOCKET_ERROR) {
+        closesocket(listenSocket);
+        *err = "Unable to listen to assigned socket";
+        return NULL;
+    }
+
+    r = malloc(sizeof(SOCKET) * 2);
+    if (r) {
+        r[0] = 1, r[1] = listenSocket;
+        return r;
+    } else
+        *err = strerror(errno);
+
+    return NULL;
+}
+
+#endif /* PLATFORM_NET_LISTEN */
+
+#pragma endregion
+
 WSADATA wsaData;
 
 void platformPathCombine(char *output, const char *path1, const char *path2) {
@@ -62,16 +173,6 @@ void platformPathCombine(char *output, const char *path1, const char *path2) {
 
     p2 = &path2[idx];
     strcat(output, p2);
-}
-
-void platformCloseBindSockets(const SOCKET *sockets) {
-    SOCKET i, max = sockets[0];
-
-    for (i = 1; i <= max; ++i) {
-        eventSocketCloseInvoke(&i);
-        closesocket(i);
-    }
-    WSACleanup();
 }
 
 #pragma clang diagnostic push
@@ -156,83 +257,6 @@ int platformOfficiallySupportsIpv6(void) {
     return 0;
 }
 
-SOCKET *platformServerStartup(sa_family_t family, char *ports, char **err) {
-    struct sockaddr_storage serverAddress;
-    SOCKET listenSocket, *r;
-    int iResult;
-
-    LINEDBG;
-
-    /* Force start in IPV4 mode if IPV6 functions cannot be loaded */
-    if (family != AF_INET && (!getAdapterInformationIpv6)) {
-        if (family == AF_INET6) {
-            *err = "This build of Windows does not have sufficient IPv6 support";
-            return NULL;
-        }
-
-        family = AF_INET;
-    }
-
-    ZeroMemory(&serverAddress, sizeof(serverAddress));
-
-    switch (family) {
-        default:
-        case AF_INET: {
-            struct sockaddr_in *sock = (struct sockaddr_in *) &serverAddress;
-            if ((listenSocket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-                *err = "Unable to acquire socket from system";
-                return NULL;
-            }
-
-            sock->sin_family = AF_INET;
-            sock->sin_addr.s_addr = htonl(INADDR_ANY);
-            LINEDBG;
-            break;
-        }
-        case AF_INET6:
-        case AF_UNSPEC: {
-            struct SOCKIN6 *sock = (struct SOCKIN6 *) &serverAddress;
-            size_t v6Only = family == AF_INET6;
-            if ((listenSocket = socket(AF_INET6, SOCK_STREAM, 0)) < 0) {
-                *err = "Unable to acquire socket from system";
-                return NULL;
-            }
-
-            sock->sin6_family = AF_INET6;
-            setsockopt(listenSocket, IPPROTO_IPV6, IPV6_V6ONLY, (char *) &v6Only, sizeof(v6Only));
-            LINEDBG;
-            break;
-        }
-    }
-
-    if (listenSocket == INVALID_SOCKET) {
-        *err = "Socket is invalid";
-        return NULL;
-    }
-
-    if (platformBindPort(&listenSocket, (struct sockaddr *) &serverAddress, ports)) {
-        closesocket(listenSocket);
-        *err = "Unable to bind to designated port numbers";
-        return NULL;
-    }
-
-    iResult = listen(listenSocket, SOMAXCONN);
-    if (iResult == SOCKET_ERROR) {
-        closesocket(listenSocket);
-        *err = "Unable to listen to assigned socket";
-        return NULL;
-    }
-
-    r = malloc(sizeof(SOCKET) * 2);
-    if (r) {
-        r[0] = 1, r[1] = listenSocket;
-        return r;
-    } else
-        *err = strerror(errno);
-
-    return NULL;
-}
-
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "UnusedParameter"
 
@@ -242,22 +266,6 @@ void platformConnectSignals(void(*noAction)(int), void(*shutdownCrash)(int), voi
     signal(SIGBREAK, shutdownProgram);
     signal(SIGINT, shutdownProgram);
     signal(SIGTERM, shutdownProgram);
-}
-
-SOCKET platformAcceptConnection(SOCKET fromSocket) {
-    const char blocking = 1;
-    socklen_t addrSize = sizeof(struct sockaddr_storage);
-    SOCKET clientSocket;
-    struct sockaddr_storage clientAddress;
-
-    LINEDBG;
-
-    clientSocket = accept(fromSocket, (struct sockaddr *) &clientAddress, &addrSize);
-    platformSocketSetBlock(clientSocket, blocking);
-
-    eventSocketAcceptInvoke(&clientSocket);
-
-    return clientSocket;
 }
 
 void ipv6NTop(const void *inAddr6, char *ipStr) {
@@ -321,6 +329,10 @@ unsigned short platformGetPort(struct sockaddr *addr) {
     return 0;
 }
 
+#pragma region Network Adapter Discovery
+
+#ifdef PLATFORM_NET_ADAPTER
+
 AdapterAddressArray *platformGetAdapterInformation(sa_family_t family) {
     switch (family) {
         case AF_UNSPEC:
@@ -332,6 +344,10 @@ AdapterAddressArray *platformGetAdapterInformation(sa_family_t family) {
             return getAdapterInformationIpv4(platformFindOrCreateAdapterIp);
     }
 }
+
+#endif
+
+#pragma endregion
 
 #pragma region Directory Functions
 
@@ -813,7 +829,6 @@ char platformTimeGetFromHttpStr(const char *str, PlatformTimeStruct *time) {
 }
 
 #pragma endregion
-
 
 static inline void ParseDosToFileScheme(char *absolutePath) {
     if (absolutePath[1] == ':')
