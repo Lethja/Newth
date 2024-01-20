@@ -77,7 +77,8 @@ char *XmlExtractAttribute(const char *element, const char *attribute) {
             ++len;
             if (qc != '\0')
                 len += 2;
-        }
+        } else
+            qc = '\0';
 
         if ((r = malloc(len + 1))) {
             size_t alen = strlen(attribute);
