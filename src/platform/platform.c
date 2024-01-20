@@ -224,12 +224,12 @@ char *platformStringFindNeedle(const char *haystack, const char *needle) {
     return NULL;
 }
 
-char *platformStringFindWord(const char *haystack, const char *word) {
-    char *r = platformStringFindNeedle(haystack, word), t[2];
+char *platformStringFindWord(const char *haystack, const char *needle) {
+    char *r = platformStringFindNeedle(haystack, needle), t[2];
 
     if (r) {
         unsigned char i;
-        t[0] = (char) (r == haystack ? '\0' : r[-1]), t[1] = r[strlen(word)];
+        t[0] = (char) (r == haystack ? '\0' : r[-1]), t[1] = r[strlen(needle)];
 
         for (i = 0; i < 2; ++i) {
             switch (t[i]) {
