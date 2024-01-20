@@ -77,6 +77,8 @@ SOCKET *platformServerStartup(sa_family_t family, char *ports, char **err) {
 
     LINEDBG;
 
+#ifdef PLATFORM_NET_ADAPTER
+
     /* Force start in IPV4 mode if IPV6 functions cannot be loaded */
     if (family != AF_INET && (!getAdapterInformationIpv6)) {
         if (family == AF_INET6) {
@@ -86,6 +88,8 @@ SOCKET *platformServerStartup(sa_family_t family, char *ports, char **err) {
 
         family = AF_INET;
     }
+
+#endif /* PLATFORM_NET_ADAPTER */
 
     ZeroMemory(&serverAddress, sizeof(serverAddress));
 

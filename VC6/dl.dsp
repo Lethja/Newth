@@ -42,7 +42,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
-# ADD CPP /nologo /G3 /W3 /GX /O2 /D "NDEBUG" /D "WIN32" /D "_CONSOLE" /D "_MBCS" /D MSVC89=1 /D PLATFORM_NET_ADAPTER=1 /FR /YX /FD /c
+# ADD CPP /nologo /G3 /W3 /GX /O2 /D "NDEBUG" /D "WIN32" /D "_CONSOLE" /D "_MBCS" /D MSVC89=1 /FR /YX /FD /c
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
 # ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
@@ -66,7 +66,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
-# ADD CPP /nologo /G3 /W3 /Gm /GX /ZI /Od /D "_DEBUG" /D "WIN32" /D "_CONSOLE" /D "_MBCS" /D MSVC89=1 /D PLATFORM_NET_ADAPTER=1 /YX /FD /GZ /c
+# ADD CPP /nologo /G3 /W3 /Gm /GX /ZI /Od /D "_DEBUG" /D "WIN32" /D "_CONSOLE" /D "_MBCS" /D MSVC89=1 /YX /FD /GZ /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -127,18 +127,6 @@ SOURCE=..\src\client\uri.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\platform\winsock\wsipv6.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\platform\winsock\wsock1.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\platform\winsock\wsock2.c
-# End Source File
-# Begin Source File
-
 SOURCE=..\src\client\xml.c
 # End Source File
 # End Group
@@ -184,18 +172,6 @@ SOURCE=..\src\client\site.h
 # Begin Source File
 
 SOURCE=..\src\client\uri.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\platform\winsock\wsipv6.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\platform\winsock\wsock1.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\platform\winsock\wsock2.h
 # End Source File
 # Begin Source File
 
