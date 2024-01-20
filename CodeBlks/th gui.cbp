@@ -65,6 +65,8 @@
 			<Add option="-Wall" />
 			<Add option="-ansi" />
 			<Add option="-Wno-unknown-pragmas" />
+			<Add option="-DPLATFORM_NET_ADAPTER=1" />
+			<Add option="-DPLATFORM_NET_LISTEN=1" />
 		</Compiler>
 		<Linker>
 			<Add library="gdi32" />
@@ -74,6 +76,10 @@
 			<Add library="ole32" />
 			<Add library="wsock32" />
 		</Linker>
+		<Unit filename="../src/common/hex.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/common/hex.h" />
 		<Unit filename="../src/gui/win32/iwindows.c">
 			<Option compilerVar="CC" />
 		</Unit>

@@ -155,6 +155,8 @@
 			<Add option="-Wall" />
 			<Add option="-ansi" />
 			<Add option="-Wno-unknown-pragmas" />
+			<Add option="-DPLATFORM_NET_ADAPTER=1" />
+			<Add option="-DPLATFORM_NET_LISTEN=1" />
 		</Compiler>
 		<Unit filename="../src/cli/th.c">
 			<Option compilerVar="CC" />
@@ -163,6 +165,10 @@
 			<Option compilerVar="CC" />
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
+		<Unit filename="../src/common/hex.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/common/hex.h" />
 		<Unit filename="../src/platform/mscrtdl.c">
 			<Option compilerVar="CC" />
 			<Option target="MingW32 Debug" />

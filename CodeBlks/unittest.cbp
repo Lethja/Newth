@@ -70,6 +70,8 @@
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
+			<Add option="-DPLATFORM_NET_ADAPTER=1" />
+			<Add option="-DPLATFORM_NET_LISTEN=1" />
 		</Compiler>
 		<Unit filename="../src/client/io.c">
 			<Option compilerVar="CC" />
@@ -99,6 +101,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../src/client/xml.h" />
+		<Unit filename="../src/common/hex.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/common/hex.h" />
 		<Unit filename="../src/platform/mscrtdl.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -149,10 +155,10 @@
 		<Unit filename="../test/request.h" />
 		<Unit filename="../test/site.h" />
 		<Unit filename="../test/sockbufr.h" />
-		<Unit filename="../test/xml.h" />
 		<Unit filename="../test/test.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="../test/xml.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />
