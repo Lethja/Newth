@@ -113,7 +113,7 @@ if (WIN32)
             ../src/server/sockbufr.c ../src/server/sockbufr.h
             ${MULTIPLEX_SRC} ${PLATFORM_SRC} ${W32_RES})
 
-    target_compile_definitions(th-gui PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
+    target_compile_definitions(th-gui PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>" PLATFORM_NET_ADAPTER=1 PLATFORM_NET_LISTEN=1)
     if (ENABLE_W32_SOCKET_1)
         target_compile_definitions(th PUBLIC ENABLE_WS1=1)
     endif ()
