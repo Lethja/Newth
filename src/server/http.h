@@ -2,6 +2,7 @@
 #define OPEN_WEB_HTTP_H
 
 #include "sockbufr.h"
+#include "../common/defines.h"
 
 #include <stdio.h>
 #include <stddef.h>
@@ -11,9 +12,6 @@
 typedef enum httpType {
     httpGet, httpHead, httpPost, httpUnknown
 } httpType;
-
-#define HTTP_RES "HTTP/1.1"
-#define HTTP_EOL "\r\n"
 
 /* Hint to the client that this server should have it's TCP connection closed each request */
 #ifdef HTTP_CONNECTION_NEVER_REUSE

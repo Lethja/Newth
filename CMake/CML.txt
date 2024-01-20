@@ -39,7 +39,8 @@ add_executable(dl ../src/cli/dl.c
         ../src/client/xml.c ../src/client/xml.h
         ../src/common/hex.c ../src/common/hex.h
         ../src/platform/platform.c ../src/platform/platform.h
-        ${PLATFORM_SRC})
+        ${PLATFORM_SRC}
+        ../src/common/defines.h)
 
 target_compile_definitions(dl PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
 
@@ -52,7 +53,8 @@ add_executable(th ../src/cli/th.c
         ../src/server/routine.c ../src/server/routine.h
         ../src/server/server.h ../src/server/server.c
         ../src/server/sockbufr.c ../src/server/sockbufr.h
-        ${MULTIPLEX_SRC} ${PLATFORM_SRC} ${WSOCK_SRC})
+        ${MULTIPLEX_SRC} ${PLATFORM_SRC} ${WSOCK_SRC}
+        ../src/common/defines.h)
 
 target_compile_definitions(th PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>" PLATFORM_NET_ADAPTER=1 PLATFORM_NET_LISTEN=1)
 
@@ -84,7 +86,8 @@ if (ENABLE_TEST)
             ../src/server/http.c ../src/server/http.h
             ../src/server/routine.c ../src/server/routine.h
             ../src/server/sockbufr.c ../src/server/sockbufr.h
-            ${MULTIPLEX_SRC} ${PLATFORM_SRC}  ${WSOCK_SRC} ${MOCK_SRC})
+            ${MULTIPLEX_SRC} ${PLATFORM_SRC}  ${WSOCK_SRC} ${MOCK_SRC}
+            ../src/common/defines.h)
 
     target_compile_definitions(test PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>" SB_DATA_SIZE=128 EWOULDBLOCK=41 PLATFORM_NET_LISTEN=1)
     target_link_libraries(test cmocka)

@@ -2,10 +2,7 @@
 #define NEW_DL_IO_H
 
 #include "../platform/platform.h"
-
-/* TODO: Put in a head shared with TH and DL */
-#define HTTP_RES "HTTP/1.1"
-#define HTTP_EOL "\r\n"
+#include "../common/defines.h"
 
 typedef struct ServerHeaderResponse {
     PlatformTimeStruct *modifiedDate; /* Last modified date (to allow HTTP 304) */

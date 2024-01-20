@@ -23,7 +23,7 @@ MULTIPLEX_SRC = src/server/mltiplex/select.c
 
 endif
 
-dl_SOURCES = src/cli/dl.c \
+dl_SOURCES = src/cli/dl.c src/common/defines.h \
     src/client/io.c src/client/io.h \
     src/client/queue.c src/client/queue.h \
     src/client/site.c src/client/site.h \
@@ -36,7 +36,7 @@ dl_SOURCES = src/cli/dl.c \
     $(PLATFORM_SRC)
 
 
-th_SOURCES = src/cli/th.c \
+th_SOURCES = src/cli/th.c src/common/defines.h \
     src/common/hex.c src/common/hex.h \
     src/platform/platform.c src/platform/platform.h \
     src/server/event.c src/server/event.h \
