@@ -1,6 +1,8 @@
 #include "mscrtdl.h"
 #include "../server/event.h"
 
+#ifdef PLATFORM_NET_ADAPTER
+
 #ifdef ENABLE_WS1
 
 #include "winsock/wsock1.h"
@@ -10,12 +12,16 @@
 #include "winsock/wsock2.h"
 #include "winsock/wsipv6.h"
 
+#endif /* PLATFORM_NET_ADAPTER */
+
 #include <ctype.h>
 #include <direct.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#ifdef PLATFORM_NET_ADAPTER
 
 typedef AdapterAddressArray *(*adapterInformationIpv6)(sa_family_t family,
                                                        void (*arrayAdd)(AdapterAddressArray *, const char *,
@@ -31,6 +37,8 @@ adapterInformationIpv6 getAdapterInformationIpv6 = NULL;
 void (*wsIpv4)(void) = NULL;
 
 void (*wsIpv6)(void) = NULL;
+
+#endif /* PLATFORM_NET_ADAPTER */
 
 #pragma region Network Bind & Listen
 
@@ -208,6 +216,8 @@ char *platformIpStackInit(void) {
 
     LINEDBG;
 
+#ifdef PLATFORM_NET_ADAPTER
+
     wsIpv6 = wSockIpv6Available();
     if (wsIpv6) {
         getAdapterInformationIpv6 = (adapterInformationIpv6) wSockIpv6GetAdapterInformation;
@@ -240,6 +250,8 @@ char *platformIpStackInit(void) {
 
         return "Unable to retrieve TCP/IP adapter information";
     }
+
+#endif /* PLATFORM_NET_ADAPTER */
 
     LINEDBG;
 
