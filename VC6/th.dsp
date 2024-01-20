@@ -42,7 +42,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
-# ADD CPP /nologo /G3 /MT /W3 /GX /O2 /D "NDEBUG" /D "WIN32" /D "_CONSOLE" /D "_MBCS" /D MSVC89=1 /D ENABLE_WS1=1 /FR /YX /FD /c
+# ADD CPP /nologo /G3 /MT /W3 /GX /O2 /D "NDEBUG" /D "WIN32" /D "_CONSOLE" /D "_MBCS" /D MSVC89=1 /D ENABLE_WS1=1 /D PLATFORM_NET_ADAPTER=1 /D PLATFORM_NET_LISTEN=1 /FR /YX /FD /c
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
 # ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
@@ -66,7 +66,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
-# ADD CPP /nologo /G3 /MTd /W3 /Gm /GX /ZI /Od /I "GNORE" /D "_DEBUG" /D "WIN32" /D "_CONSOLE" /D "_MBCS" /D MSVC89=1 /D ENABLE_WS1=1 /FR /YX /FD /GZ /c
+# ADD CPP /nologo /G3 /MTd /W3 /Gm /GX /ZI /Od /I "GNORE" /D "_DEBUG" /D "WIN32" /D "_CONSOLE" /D "_MBCS" /D MSVC89=1 /D ENABLE_WS1=1 /D PLATFORM_NET_ADAPTER=1 /D PLATFORM_NET_LISTEN=1 /FR /YX /FD /GZ /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -91,6 +91,10 @@ SOURCE=..\src\server\event.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\src\common\hex.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\server\http.c
 # End Source File
 # Begin Source File
@@ -107,11 +111,11 @@ SOURCE=..\src\server\routine.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\server\server.c
+SOURCE=..\src\server\mltiplex\select.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\server\mltiplex\select.c
+SOURCE=..\src\server\server.c
 # End Source File
 # Begin Source File
 
@@ -140,6 +144,10 @@ SOURCE=..\src\platform\winsock\wsock2.c
 # Begin Source File
 
 SOURCE=..\src\server\event.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\common\hex.h
 # End Source File
 # Begin Source File
 

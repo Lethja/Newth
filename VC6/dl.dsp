@@ -42,7 +42,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
-# ADD CPP /nologo /G3 /W3 /GX /O2 /D "NDEBUG" /D "WIN32" /D "_CONSOLE" /D "_MBCS" /D MSVC89=1 /FR /YX /FD /c
+# ADD CPP /nologo /G3 /W3 /GX /O2 /D "NDEBUG" /D "WIN32" /D "_CONSOLE" /D "_MBCS" /D MSVC89=1 /D PLATFORM_NET_ADAPTER=1 /FR /YX /FD /c
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
 # ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
@@ -66,7 +66,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
-# ADD CPP /nologo /G3 /W3 /Gm /GX /ZI /Od /D "_DEBUG" /D "WIN32" /D "_CONSOLE" /D "_MBCS" /D MSVC89=1 /YX /FD /GZ /c
+# ADD CPP /nologo /G3 /W3 /Gm /GX /ZI /Od /D "_DEBUG" /D "WIN32" /D "_CONSOLE" /D "_MBCS" /D MSVC89=1 /D PLATFORM_NET_ADAPTER=1 /YX /FD /GZ /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -91,11 +91,11 @@ SOURCE=..\src\cli\dl.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\server\event.c
+SOURCE=..\src\client\site\file.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\client\site\file.c
+SOURCE=..\src\common\hex.c
 # End Source File
 # Begin Source File
 
@@ -137,17 +137,21 @@ SOURCE=..\src\platform\winsock\wsock1.c
 
 SOURCE=..\src\platform\winsock\wsock2.c
 # End Source File
+# Begin Source File
+
+SOURCE=..\src\client\xml.c
+# End Source File
 # End Group
 # Begin Group "Header Files"
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
-SOURCE=..\src\server\event.h
+SOURCE=..\src\client\site\file.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\client\site\file.h
+SOURCE=..\src\common\hex.h
 # End Source File
 # Begin Source File
 
@@ -192,6 +196,10 @@ SOURCE=..\src\platform\winsock\wsock1.h
 # Begin Source File
 
 SOURCE=..\src\platform\winsock\wsock2.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\client\xml.h
 # End Source File
 # End Group
 # Begin Group "Resource Files"
