@@ -633,6 +633,16 @@ void *httpSiteOpenDirectoryListing(HttpSite *self, char *path) {
     details.path = absPath;
 
     while ((file = HtmlExtractNextLink(self, &write))) {
+        char *q = strchr(file, '?');
+        if (q) {
+            *q = '\0';
+
+            if (!strlen(file)) {
+                free(file);
+                continue;
+            }
+        }
+
         if (LinkPathIsDirectSub(&details, file)) {
             char *n = LinkPathConvertToRelativeSubdirectory(file);
             free(file);
