@@ -596,7 +596,7 @@ void *httpSiteOpenDirectoryListing(HttpSite *self, char *path) {
     scheme = NULL, GenerateHostHeader(&scheme, &details), GenerateConnectionHeader(&scheme);
 
     if (!(request = ioGenerateHttpGetRequest(absPath, scheme)))
-        goto httpSiteOpenDirectoryListing_abort2;
+        goto httpSiteOpenDirectoryListing_abort3;
 
     free(scheme);
 

@@ -3,14 +3,15 @@
 #include "io.h"
 
 char *generateSendRequest(const char *type, const char *path, const char *extra) {
-    const char *http = HTTP_RES HTTP_EOL;
-    size_t len = strlen(type) + strlen(path) + strlen(http) + 2;
+    const char *http = HTTP_RES HTTP_EOL HTTP_EOL "  ";
+    size_t len = strlen(type) + strlen(path) + strlen(http);
     char *req;
 
     if (extra)
         len += strlen(extra);
 
-    if (!(req = malloc(len + 1)))
+    /* Padding due to SIMD */
+    if (!(req = malloc(len + 8)))
         return NULL;
 
     if (extra)
