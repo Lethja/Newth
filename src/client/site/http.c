@@ -659,6 +659,11 @@ void *httpSiteOpenDirectoryListing(HttpSite *self, char *path) {
             free(file);
             if (n) {
                 size_t pLen = strlen(n);
+                char *p;
+
+                /* Strip trailing spaces */
+                while ((p = strrchr(n, '/')))
+                    p[0] = '\0';
 
                 hexConvertStringToAscii(n);
                 if (strlen(n) < pLen) {
