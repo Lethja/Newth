@@ -145,25 +145,6 @@ const char *HttpHeaderResponseFile = "HTTP/1.1 200 OK" HTTP_EOL
                                      "Content-Disposition: attachment" HTTP_EOL
                                      "Date: Thu, 1 Jan 1970 00:00:00 GMT" HTTP_EOL HTTP_EOL;
 
-const char *HttpBody = "<!DOCTYPE html>\n"
-                       "<html>\n"
-                       "<head>\n"
-                       "\t<title>Directory Listing</title>\n"
-                       "</head>\n"
-                       "<body>\n"
-                       "\t<h1>Directory Listing</h1>\n"
-                       "\t<img href=\"Logo.png\" alt=\"Logo\">\n"
-                       "\t<ul>\n"
-                       "\t\t<li><a href=\"file1.txt\">file1.txt</a></li>\n"
-                       "\t\t<li><a href=\"file2%2Etxt\">file2.txt</a></li>\n"
-                       "\t\t<li><a href=\"/file3.txt\">file3.txt</a></li>\n"
-                       "\t\t<li><a href=\"../file4.txt\">file4.txt</a></li>\n"
-                       "\t\t<li><a href=\"/foo/file5.txt\">file5.txt</a></li>\n"
-                       "\t\t<li><a href=\"http://example.com\">file6.txt</a></li>\n"
-                       "\t</ul>\n"
-                       "</body>\n"
-                       "</html>";
-
 static void SiteHttpNew(void **state) {
     Site site;
     assert_string_equal(siteNew(&site, SITE_HTTP, NULL), "No uri specified");
@@ -256,6 +237,24 @@ static void SiteHttpSetDirectoryFailFile(void **state) {
 }
 
 static void SiteHttpDirEntry(void **state) {
+    const char *HttpBody = "<!DOCTYPE html>\n"
+                           "<html>\n"
+                           "<head>\n"
+                           "\t<title>Directory Listing</title>\n"
+                           "</head>\n"
+                           "<body>\n"
+                           "\t<h1>Directory Listing</h1>\n"
+                           "\t<img href=\"Logo.png\" alt=\"Logo\">\n"
+                           "\t<ul>\n"
+                           "\t\t<li><a href=\"file1.txt\">file1.txt</a></li>\n"
+                           "\t\t<li><a href=\"file2%2Etxt\">file2.txt</a></li>\n"
+                           "\t\t<li><a href=\"/file3.txt\">file3.txt</a></li>\n"
+                           "\t\t<li><a href=\"../file4.txt\">file4.txt</a></li>\n"
+                           "\t\t<li><a href=\"/foo/file5.txt\">file5.txt</a></li>\n"
+                           "\t\t<li><a href=\"http://example.com\">file6.txt</a></li>\n"
+                           "\t</ul>\n"
+                           "</body>\n"
+                           "</html>";
     Site site;
     SiteDirectoryEntry *e;
     char length[255] = "";
@@ -306,6 +305,131 @@ static void SiteHttpDirEntry(void **state) {
     siteFree(&site);
 }
 
+static void SiteHttpDirEntryApache(void **state) {
+    const char *ApacheHtml = "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2 Final//EN\">\n"
+                             "<html>\n"
+                             "<body>\n"
+                             "<pre><img src=\"/icons/blank.gif\" alt=\"Icon \">"
+                             "<a href=\"?C=N;O=D\">Name</a> "
+                             "<a href=\"?C=M;O=A\">Last</a>"
+                             "<a href=\"?C=S;O=A\">Size</a> "
+                             "<a href=\"?C=D;O=A\">Description</a><hr>"
+                             "<a href=\"cloud/\">cloud/</a> 1970-01-01 00:00 - \n"
+                             "<a href=\"cloud2/\">cloud2/</a> 1970-01-01 00:00 - \n"
+                             "<a href=\"foo\">foo</a> 1970-01-01 00:00 0 \n"
+                             "<hr></pre>\n"
+                             "</body></html>";
+    Site site;
+    SiteDirectoryEntry *e;
+    char length[255] = "";
+    void *d;
+
+    mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
+    mockReceiveStream = tmpfile();
+
+    /* Setup mocked response */
+    sprintf(length, "content-length: %lu" HTTP_EOL HTTP_EOL, strlen(ApacheHtml)); /* Deliberately lowercase */
+    fwrite(HttpHeaderResponseDir, 1, strlen(HttpHeaderResponseDir) - 2, mockReceiveStream);
+    fwrite(length, 1, strlen(length), mockReceiveStream);
+    fwrite(ApacheHtml, 1, strlen(ApacheHtml), mockReceiveStream);
+    rewind(mockReceiveStream);
+
+    assert_null(siteNew(&site, SITE_HTTP, "http://127.0.0.1/")), rewind(mockReceiveStream);
+
+    /* Listing of http://127.0.0.1/ */
+    assert_non_null(d = siteOpenDirectoryListing(&site, "."));
+    assert_non_null(e = siteReadDirectoryListing(&site, d));
+    assert_string_equal(e->name, "cloud"), siteDirectoryEntryFree(e);
+    assert_non_null(e = siteReadDirectoryListing(&site, d));
+    assert_string_equal(e->name, "cloud2"), siteDirectoryEntryFree(e);
+    assert_non_null(e = siteReadDirectoryListing(&site, d));
+    assert_string_equal(e->name, "foo"), siteDirectoryEntryFree(e);
+    assert_null(siteReadDirectoryListing(&site, d));
+
+    siteCloseDirectoryListing(&site, d), rewind(mockReceiveStream);
+
+    siteFree(&site);
+}
+
+static void SiteHttpDirEntryLighttpd(void **state) {
+    const char *LighttpdHtml = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n"
+                               "<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\">\n"
+                               "<body>\n"
+                               "<tr><td class=\"n\"><a href=\"../\">Parent Directory</a>/</td>"
+                               "<tr><td class=\"n\"><a href=\"file.txt\">file.txt</a></td>"
+                               "<tr><td class=\"n\"><a href=\"file.txt.sig\">file.txt.sig</a>"
+                               "</td><td class=\"m\">1970-Jan-01 00:00:00</td>"
+                               "<td class=\"s\">0.1K</td><td class=\"t\">application/pgp-signature</td></tr>\n";
+    Site site;
+    SiteDirectoryEntry *e;
+    char length[255] = "";
+    void *d;
+
+    mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
+    mockReceiveStream = tmpfile();
+
+    /* Setup mocked response */
+    sprintf(length, "content-length: %lu" HTTP_EOL HTTP_EOL, strlen(LighttpdHtml)); /* Deliberately lowercase */
+    fwrite(HttpHeaderResponseDir, 1, strlen(HttpHeaderResponseDir) - 2, mockReceiveStream);
+    fwrite(length, 1, strlen(length), mockReceiveStream);
+    fwrite(LighttpdHtml, 1, strlen(LighttpdHtml), mockReceiveStream);
+    rewind(mockReceiveStream);
+
+    assert_null(siteNew(&site, SITE_HTTP, "http://127.0.0.1/")), rewind(mockReceiveStream);
+
+    /* Listing of http://127.0.0.1/ */
+    assert_non_null(d = siteOpenDirectoryListing(&site, "."));
+    assert_non_null(e = siteReadDirectoryListing(&site, d));
+    assert_string_equal(e->name, "file.txt"), siteDirectoryEntryFree(e);
+    assert_non_null(e = siteReadDirectoryListing(&site, d));
+    assert_string_equal(e->name, "file.txt.sig"), siteDirectoryEntryFree(e);
+
+    siteCloseDirectoryListing(&site, d), rewind(mockReceiveStream);
+
+    siteFree(&site);
+}
+
+static void SiteHttpDirEntryNginx(void **state) {
+    const char *NginxHttp = "<html>\n"
+                            "<head><title>Index of /</title></head>\n"
+                            "<body>\n"
+                            "<h1>Index of /</h1><hr><pre><a href=\"../\">../</a>\n"
+                            "<a href=\"cloud/\">cloud/</a>                                             01-Jan-1970 00:00                   -\n"
+                            "<a href=\"cloud2/\">cloud2/</a>                                            01-Jan-1970 00:00                   -\n"
+                            "<a href=\"foo\">foo</a>                                                01-Jan-1970 00:00                   0\n"
+                            "</pre><hr></body>\n"
+                            "</html>";
+    Site site;
+    SiteDirectoryEntry *e;
+    char length[255] = "";
+    void *d;
+
+    mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
+    mockReceiveStream = tmpfile();
+
+    /* Setup mocked response */
+    sprintf(length, "content-length: %lu" HTTP_EOL HTTP_EOL, strlen(NginxHttp)); /* Deliberately lowercase */
+    fwrite(HttpHeaderResponseDir, 1, strlen(HttpHeaderResponseDir) - 2, mockReceiveStream);
+    fwrite(length, 1, strlen(length), mockReceiveStream);
+    fwrite(NginxHttp, 1, strlen(NginxHttp), mockReceiveStream);
+    rewind(mockReceiveStream);
+
+    assert_null(siteNew(&site, SITE_HTTP, "http://127.0.0.1/")), rewind(mockReceiveStream);
+
+    /* Listing of http://127.0.0.1/ */
+    assert_non_null(d = siteOpenDirectoryListing(&site, "."));
+    assert_non_null(e = siteReadDirectoryListing(&site, d));
+    assert_string_equal(e->name, "cloud"), siteDirectoryEntryFree(e);
+    assert_non_null(e = siteReadDirectoryListing(&site, d));
+    assert_string_equal(e->name, "cloud2"), siteDirectoryEntryFree(e);
+    assert_non_null(e = siteReadDirectoryListing(&site, d));
+    assert_string_equal(e->name, "foo"), siteDirectoryEntryFree(e);
+
+    siteCloseDirectoryListing(&site, d), rewind(mockReceiveStream);
+
+    siteFree(&site);
+}
+
 #endif /* MOCK */
 
 #pragma endregion
@@ -318,7 +442,10 @@ const struct CMUnitTest siteTest[] = {cmocka_unit_test(SiteArrayFunctions), cmoc
 #ifdef MOCK
         , cmocka_unit_test(SiteHttpNew), cmocka_unit_test(SiteHttpNewWithPath), cmocka_unit_test(SiteHttpGetDirectory),
                                       cmocka_unit_test(SiteHttpSetDirectory),
-                                      cmocka_unit_test(SiteHttpSetDirectoryFailFile), cmocka_unit_test(SiteHttpDirEntry)
+                                      cmocka_unit_test(SiteHttpSetDirectoryFailFile),
+                                      cmocka_unit_test(SiteHttpDirEntry), cmocka_unit_test(SiteHttpDirEntryApache),
+                                      cmocka_unit_test(SiteHttpDirEntryLighttpd),
+                                      cmocka_unit_test(SiteHttpDirEntryNginx)
 #endif
 };
 
