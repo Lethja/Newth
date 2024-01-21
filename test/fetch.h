@@ -61,19 +61,21 @@ static void UriNewPathless(void **state) {
 }
 
 static void UriNewVerbose(void **state) {
-    const char *Uri = "http://localhost:8080/foo";
+    const char *Uri = "http://localhost:8080/foo?bar";
 
     UriDetails details = uriDetailsNewFrom(Uri);
     assert_string_equal(details.scheme, "http");
     assert_string_equal(details.host, "localhost");
     assert_string_equal(details.port, "8080");
     assert_string_equal(details.path, "/foo");
+    assert_string_equal(details.query, "bar");
 
     uriDetailsFree(&details);
     assert_null(details.scheme);
     assert_null(details.host);
     assert_null(details.port);
     assert_null(details.path);
+    assert_null(details.query);
 }
 
 static void UriDetailsToString(void **state) {
@@ -88,6 +90,16 @@ static void UriDetailsToString(void **state) {
 
 static void UriDetailsToStringWithPort(void **state) {
     const char *Uri = "http://localhost:8080/foo";
+    char *res;
+
+    UriDetails details = uriDetailsNewFrom(Uri);
+    assert_non_null((res = uriDetailsCreateString(&details)));
+    assert_string_equal(Uri, res);
+    free(res), uriDetailsFree(&details);
+}
+
+static void UriDetailsToStringWithQuery(void **state) {
+    const char *Uri = "http://localhost/foo?bar";
     char *res;
 
     UriDetails details = uriDetailsNewFrom(Uri);
@@ -405,10 +417,11 @@ const struct CMUnitTest fetchTest[] = {
         cmocka_unit_test(UriConvertToSocketAddress), cmocka_unit_test(UriConvertToSocketAddressWithPort),
         cmocka_unit_test(UriConvertToSocketAddressWithScheme), cmocka_unit_test(UriGetAddressFromAddress),
         cmocka_unit_test(UriDetailsToString), cmocka_unit_test(UriDetailsToStringWithPort),
-        cmocka_unit_test(UriGetAddressFromHost), cmocka_unit_test(UriGetPort), cmocka_unit_test(UriGetPortInvalid),
-        cmocka_unit_test(UriGetScheme), cmocka_unit_test(UriSetAddressAndPort), cmocka_unit_test(UriSetScheme),
-        cmocka_unit_test(UriNewMinimum), cmocka_unit_test(UriNewNoString), cmocka_unit_test(UriNewPathless),
-        cmocka_unit_test(UriNewVerbose), cmocka_unit_test(UriPathCombineString), cmocka_unit_test(UriPathAppend),
+        cmocka_unit_test(UriDetailsToStringWithQuery), cmocka_unit_test(UriGetAddressFromHost),
+        cmocka_unit_test(UriGetPort), cmocka_unit_test(UriGetPortInvalid), cmocka_unit_test(UriGetScheme),
+        cmocka_unit_test(UriSetAddressAndPort), cmocka_unit_test(UriSetScheme), cmocka_unit_test(UriNewMinimum),
+        cmocka_unit_test(UriNewNoString), cmocka_unit_test(UriNewPathless), cmocka_unit_test(UriNewVerbose),
+        cmocka_unit_test(UriPathCombineString), cmocka_unit_test(UriPathAppend),
         cmocka_unit_test(UriPathAppendAbsolute), cmocka_unit_test(UriPathAppendGoNowhere),
         cmocka_unit_test(UriPathAppendGoNowhereAndUp), cmocka_unit_test(UriPathAppendGoNowhereDouble),
         cmocka_unit_test(UriPathAppendGoNowhereYetSomewhere),

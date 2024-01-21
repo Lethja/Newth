@@ -9,7 +9,7 @@ typedef enum UriScheme {
 } UriScheme;
 
 typedef struct UriDetails {
-    char *scheme, *host, *path, *port;
+    char *scheme, *host, *path, *port, *query;
 } UriDetails;
 
 /**

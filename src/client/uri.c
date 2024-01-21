@@ -228,7 +228,7 @@ UriDetails uriDetailsNewFrom(const char *uri) {
     size_t len;
     char *p, *q, *i;
 
-    details.scheme = details.host = details.port = details.path = NULL;
+    details.scheme = details.host = details.port = details.path = details.query = NULL;
 
     if (!uri)
         return details;
@@ -237,9 +237,8 @@ UriDetails uriDetailsNewFrom(const char *uri) {
     p = strstr(uri, "://");
     if (p) {
         len = p - uri;
-        details.scheme = malloc(len + 1);
 
-        if (details.scheme)
+        if ((details.scheme = malloc(len + 1)))
             strncpy(details.scheme, uri, len), details.scheme[len] = '\0';
 
         q = p + 3;
@@ -252,61 +251,72 @@ UriDetails uriDetailsNewFrom(const char *uri) {
     if (p && i) {
         if (i < p) {
             len = i - q;
-            details.host = malloc(len + 1);
 
-            if (details.host)
+            if ((details.host = malloc(len + 1)))
                 strncpy(details.host, q, len), details.host[len] = '\0';
 
             /* Optional Port */
             len = p - i - 1;
-            details.port = malloc(len + 1);
 
-            if (details.port)
+            if ((details.port = malloc(len + 1)))
                 strncpy(details.port, i + 1, len), details.port[len] = '\0';
 
         } else {
             len = p - q;
-            details.host = malloc(len + 1);
 
-            if (details.host)
+            if ((details.host = malloc(len + 1)))
                 strncpy(details.host, q, len), details.host[len] = '\0';
 
         }
 
-        len = strlen(p);
-        details.path = malloc(len + 1);
+        /* Get Path (optional query) */
+        if ((q = strchr(p, '?'))) {
+            len = q - p;
+            if ((details.path = malloc(len + 1)))
+                strncpy(details.path, p, len), details.path[len] = '\0';
 
-        if (details.path)
-            strcpy(details.path, p);
+            len = strlen(q);
+            if ((details.query = malloc(len)))
+                strcpy(details.query, &q[1]);
+        } else {
+            len = strlen(p);
+            if ((details.path = malloc(len + 1)))
+                strcpy(details.path, p);
+        }
 
     } else if (p) {
         len = p - q;
-        details.host = malloc(len + 1);
 
-        if (details.host)
+        if ((details.host = malloc(len + 1)))
             strncpy(details.host, q, len), details.host[len] = '\0';
 
-        len = strlen(p);
-        details.path = malloc(len + 1);
+        /* Get Path (optional query) */
+        if ((q = strchr(p, '?'))) {
+            len = q - p;
+            if ((details.path = malloc(len + 1)))
+                strncpy(details.path, p, len), details.path[len] = '\0';
 
-        if (details.path)
-            strcpy(details.path, p);
+            len = strlen(q);
+            if ((details.query = malloc(len)))
+                strcpy(details.query, &q[1]);
+        } else {
+            len = strlen(p);
+            if ((details.path = malloc(len + 1)))
+                strcpy(details.path, p);
+        }
+
     } else if (i) {
         len = i - q;
-        details.host = malloc(len + 1);
 
-        if (details.host)
+        if ((details.host = malloc(len + 1)))
             strncpy(details.host, q, len), details.host[len] = '\0';
 
         len = strlen(i);
-        details.port = malloc(len + 1);
 
-        if (details.port)
+        if ((details.port = malloc(len + 1)))
             strcpy(details.port, i + 1);
     } else if (strlen(q)) {
-        details.host = malloc(strlen(q) + 1);
-
-        if (details.host)
+        if ((details.host = malloc(strlen(q) + 1)))
             strcpy(details.host, q);
 
     }
@@ -325,8 +335,17 @@ char *uriDetailsCreateString(UriDetails *details) {
 
     if (details->port && details->port != details->scheme) {
         len += strlen(details->port) + 1;
-        if ((r = malloc(len + 1)))
+        if (details->query) {
+            len += strlen(details->query) + 1;
+            if ((r = malloc(len + 1)))
+                sprintf(r, "%s://%s:%s%s?%s", details->scheme, details->host, details->port, details->path,
+                        details->query);
+        } else if ((r = malloc(len + 1)))
             sprintf(r, "%s://%s:%s%s", details->scheme, details->host, details->port, details->path);
+    } else if (details->query) {
+        len += strlen(details->query) + 1;
+        if ((r = malloc(len + 1)))
+            sprintf(r, "%s://%s%s?%s", details->scheme, details->host, details->path, details->query);
     } else if ((r = malloc(len + 1)))
         sprintf(r, "%s://%s%s", details->scheme, details->host, details->path);
 
@@ -338,6 +357,7 @@ void uriDetailsFree(UriDetails *details) {
     if (details->host) free(details->host), details->host = NULL;
     if (details->port) free(details->port), details->port = NULL;
     if (details->path) free(details->path), details->path = NULL;
+    if (details->query) free(details->query), details->query = NULL;
 }
 
 void uriPathCombine(char *output, const char *path1, const char *path2) {
