@@ -241,12 +241,23 @@ static void DirectoryListingClear(HttpSiteDirectoryListing *self) {
  * @remark Returned string should be freed before leaving scope
  */
 static inline char *LinkPathConvertToRelativeSubdirectory(const char *link) {
-    char *r, *p;
+    const char *p, *i = p = link;
+    char *r;
 
-    if ((p = strrchr(link, '/')))
-        ++p;
-    else
-        p = (char *) link;
+    /* Get last not tailing '/' */
+    while (*i != '\0') {
+        if (*i == '/') {
+            switch (i[1]) {
+                case '\0':
+                case '/':
+                    break;
+                default:
+                    p = &i[1];
+                    break;
+            }
+        }
+        ++i;
+    }
 
     if ((r = malloc(strlen(p) + 1)))
         strcpy(r, p);
