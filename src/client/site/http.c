@@ -474,14 +474,20 @@ const char *httpSiteNew(HttpSite *self, const char *path) {
         goto httpSiteSchemeNew_abort;
     }
 
-    if ((err = WakeUpAndSend(self, send, strlen(send))) || (err = ioHttpHeadRead(&self->socket, &header)) ||
-        (err = HttpGetEssentialResponse(header, &scheme, &response)))
+    if ((err = WakeUpAndSend(self, send, strlen(send)))) {
+        free(send);
         goto httpSiteSchemeNew_closeSocketAndAbort;
+    }
 
     free(send);
 
-    if (!(HttpResponseOk(response)))
+    if ((err = ioHttpHeadRead(&self->socket, &header)) || (err = HttpGetEssentialResponse(header, &scheme, &response)))
         goto httpSiteSchemeNew_closeSocketAndAbort;
+
+    if (!(HttpResponseOk(response))) {
+        err = "Server reply not acceptable";
+        goto httpSiteSchemeNew_closeSocketAndAbort;
+    }
 
     if (HttpResponseIsDir(header))
         self->fullUri = uriDetailsCreateString(&details);
@@ -515,7 +521,12 @@ const char *httpSiteNew(HttpSite *self, const char *path) {
 void *httpSiteOpenDirectoryListing(HttpSite *self, char *path) {
     size_t len, write = len = 0;
     char *absPath, *header = NULL, *request, *response, *scheme, *file;
-    UriDetails details = uriDetailsNewFrom(self->fullUri);
+    UriDetails details;
+
+    if (!self->fullUri)
+        return NULL;
+
+    details = uriDetailsNewFrom(self->fullUri);
 
     if (!(absPath = uriPathAbsoluteAppend(details.path, path)))
         goto httpSiteOpenDirectoryListing_abort1;
