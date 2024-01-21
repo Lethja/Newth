@@ -44,19 +44,25 @@ static inline const char *WakeUpAndSend(HttpSite *self, const void *data, size_t
     WakeUpAndSend_TryAgain:
     ++attempt;
 
-    if (s == -1) {
-        UriDetails details = uriDetailsNewFrom(self->fullUri);
-        if (self->socket != INVALID_SOCKET)
-            CLOSE_SOCKET(self->socket);
+    switch (s) {
+        case 0:
+            if (platformSocketGetLastError() == ECONNRESET) {
+                UriDetails details = uriDetailsNewFrom(self->fullUri);
+                if (self->socket != INVALID_SOCKET)
+                    CLOSE_SOCKET(self->socket);
 
-        err = ConnectTo(self, &details);
-        uriDetailsFree(&details);
-        if (err)
-            return err;
-        else if (attempt < maxAttempt)
-            goto WakeUpAndSend_TryAgain;
+                err = ConnectTo(self, &details);
+                uriDetailsFree(&details);
+                if (err)
+                    return err;
+                else if (attempt < maxAttempt)
+                    goto WakeUpAndSend_TryAgain;
 
-        return strerror(platformSocketGetLastError());
+                case -1:
+                    return strerror(platformSocketGetLastError());
+            }
+        default:
+            break;
     }
 
     return NULL;
@@ -375,6 +381,55 @@ static inline char *HttpGetContentLength(const char *header, size_t *length) {
     return NULL;
 }
 
+/**
+ * Generate a host request header
+ * @param details The hostname to generate for
+ * @return A host request header to use on success, otherwise NULL
+ */
+static inline char *GenerateHostHeader(char **self, UriDetails *details) {
+    size_t len = 8; /* Host: \r\n */
+    char *tmp;
+    if (!details->host)
+        return "No host information";
+
+    len += strlen(details->host);
+    if (!(tmp = malloc(len + 1)))
+        return strerror(errno);
+
+    sprintf(tmp, "Host: %s" HTTP_EOL, details->host);
+    if (!*self)
+        *self = tmp;
+    else {
+        if (platformHeapResize((void **) self, sizeof(char), strlen(*self) + strlen(tmp) + 1)) {
+            free(tmp);
+            return strerror(errno);
+        }
+
+        strcat(*self, tmp), free(tmp);
+    }
+
+    return NULL;
+}
+
+static inline char *GenerateConnectionHeader(char **self) {
+    const char *h = "Connection: Keep-Alive" HTTP_EOL;
+
+    if (!*self) {
+        if (!(*self = malloc(strlen(h) + 1)))
+            return strerror(errno);
+
+        strcpy(*self, h);
+    } else {
+        if (platformHeapResize((void **) self, sizeof(char), strlen(*self) + strlen(h) + 1)) {
+            return strerror(errno);
+        }
+
+        strcat(*self, h);
+    }
+
+    return NULL;
+}
+
 #pragma endregion
 
 int httpSiteSchemeChangeDirectory(HttpSite *self, const char *path) {
@@ -468,11 +523,18 @@ const char *httpSiteNew(HttpSite *self, const char *path) {
     if ((err = ConnectTo(self, &details)))
         goto httpSiteSchemeNew_abort;
 
-    header = scheme = response = NULL, send = ioGenerateHttpHeadRequest(details.path, NULL);
+    header = NULL, GenerateHostHeader(&header, &details), GenerateConnectionHeader(&header);
+    send = ioGenerateHttpHeadRequest(details.path, header);
+
+    if (header)
+        free(header), header = NULL;
+
     if (!send) {
         err = strerror(errno);
         goto httpSiteSchemeNew_abort;
     }
+
+    scheme = response = NULL;
 
     if ((err = WakeUpAndSend(self, send, strlen(send)))) {
         free(send);
@@ -531,8 +593,12 @@ void *httpSiteOpenDirectoryListing(HttpSite *self, char *path) {
     if (!(absPath = uriPathAbsoluteAppend(details.path, path)))
         goto httpSiteOpenDirectoryListing_abort1;
 
-    if (!(request = ioGenerateHttpGetRequest(absPath, NULL)))
+    scheme = NULL, GenerateHostHeader(&scheme, &details), GenerateConnectionHeader(&scheme);
+
+    if (!(request = ioGenerateHttpGetRequest(absPath, scheme)))
         goto httpSiteOpenDirectoryListing_abort2;
+
+    free(scheme);
 
     if (WakeUpAndSend(self, request, strlen(request)))
         goto httpSiteOpenDirectoryListing_abort2;

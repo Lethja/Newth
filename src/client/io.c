@@ -3,7 +3,7 @@
 #include "io.h"
 
 char *generateSendRequest(const char *type, const char *path, const char *extra) {
-    const char *http = HTTP_RES HTTP_EOL HTTP_EOL;
+    const char *http = HTTP_RES HTTP_EOL;
     size_t len = strlen(type) + strlen(path) + strlen(http) + 2;
     char *req;
 
@@ -14,9 +14,9 @@ char *generateSendRequest(const char *type, const char *path, const char *extra)
         return NULL;
 
     if (extra)
-        sprintf(req, "%s %s %s%s", type, path, http, extra);
+        sprintf(req, "%s %s %s%s" HTTP_EOL, type, path, http, extra);
     else
-        sprintf(req, "%s %s %s", type, path, http);
+        sprintf(req, "%s %s %s" HTTP_EOL, type, path, http);
 
     return req;
 }

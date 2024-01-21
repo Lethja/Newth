@@ -221,10 +221,13 @@ static inline void processCommand(char **args) {
 _Noreturn
 #endif
 
+static inline void DoNothing(int signal) {}
+
 static inline void interactiveMode(void) {
     char input[BUFSIZ];
     char *args[5];
 
+    platformConnectSignals(DoNothing, NULL, NULL);
     siteArrayInit();
 
 #pragma clang diagnostic push

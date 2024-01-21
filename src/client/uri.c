@@ -385,12 +385,22 @@ char *uriPathAbsoluteAppend(const char *currentPath, const char *append) {
     size_t len = strlen(currentPath) + strlen(append) + 2, i, j;
     char *c, *r;
 
-    if (append[0] == '/') {
-        if (!(r = malloc(strlen(append) + 1)))
-            return NULL;
+    switch (append[0]) {
+        case '/':
+            if (!(r = malloc(strlen(append) + 1)))
+                return NULL;
 
-        strcpy(r, append);
-        return r;
+            strcpy(r, append);
+            return r;
+        case '.':
+            if (append[1] == '\0') {
+                /* Quick return for '.' */
+                if (!(r = malloc(strlen(currentPath) + 1)))
+                    return NULL;
+
+                strcpy(r, currentPath);
+                return r;
+            }
     }
 
     if (currentPath[0] != '/' || !(c = calloc(len, sizeof(char))))
