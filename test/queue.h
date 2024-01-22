@@ -147,22 +147,22 @@ static void QueueRemove(void **state) {
 static void HeaderGetEssential(void **state) {
     const char *minHeader = "HTTP/1.1 200 OK" HTTP_EOL HTTP_EOL, *invalidHeader1 = "Hello", *invalidHeader2 = "World" HTTP_EOL HTTP_EOL, *emptyHeader = HTTP_EOL HTTP_EOL;
     char *scheme, *response = scheme = NULL;
-    assert_null(HttpGetEssentialResponse(minHeader, &scheme, &response));
+    assert_null(ioHttpResponseHeaderEssential(minHeader, &scheme, &response));
     assert_non_null(scheme);
     assert_non_null(response);
     assert_memory_equal(scheme, "HTTP/1.1", 9);
     assert_memory_equal(response, "200 OK", 7);
     free(scheme);
 
-    assert_non_null(HttpGetEssentialResponse(invalidHeader1, &scheme, &response));
+    assert_non_null(ioHttpResponseHeaderEssential(invalidHeader1, &scheme, &response));
     assert_null(scheme);
     assert_null(response);
 
-    assert_non_null(HttpGetEssentialResponse(invalidHeader2, &scheme, &response));
+    assert_non_null(ioHttpResponseHeaderEssential(invalidHeader2, &scheme, &response));
     assert_null(scheme);
     assert_null(response);
 
-    assert_non_null(HttpGetEssentialResponse(emptyHeader, &scheme, &response));
+    assert_non_null(ioHttpResponseHeaderEssential(emptyHeader, &scheme, &response));
     assert_null(scheme);
     assert_null(response);
 }
@@ -173,17 +173,17 @@ static void HeaderFind(void **state) {
                          "Content-Length: 5150" HTTP_EOL;
     char *value = NULL;
 
-    assert_null(FindHeader(header, HTTP_EOL "Date", &value));
+    assert_null(ioHttpResponseHeaderFind(header, HTTP_EOL "Date", &value));
     assert_non_null(value);
     assert_string_equal(value, "Wed, 12 Aug 1981 00:00:00 GMT");
     free(value), value = NULL;
 
-    assert_null(FindHeader(header, HTTP_EOL "Content-Length", &value));
+    assert_null(ioHttpResponseHeaderFind(header, HTTP_EOL "Content-Length", &value));
     assert_non_null(value);
     assert_string_equal(value, "5150");
     free(value), value = NULL;
 
-    assert_non_null(FindHeader(header, HTTP_EOL "Content-Disposition", &value));
+    assert_non_null(ioHttpResponseHeaderFind(header, HTTP_EOL "Content-Disposition", &value));
     assert_null(value);
 }
 

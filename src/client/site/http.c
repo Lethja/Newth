@@ -70,7 +70,7 @@ static inline const char *WakeUpAndSend(HttpSite *self, const void *data, size_t
 
 /**
  * Check if the HTTP response is generally considered a good one that can proceed
- * @param response The response string created by HttpGetEssentialResponse()
+ * @param response The response string created by ioHttpResponseHeaderEssential()
  * @return Non-zero on good responses (200 OK), zero on bad responses (404 NOT FOUND or 500 INTERNAL SERVER ERROR)
  */
 static inline char HttpResponseOk(const char *response) {
@@ -89,7 +89,7 @@ static inline char HttpResponseOk(const char *response) {
  */
 static inline char HttpResponseIsDir(const char *header) {
     char *ptr;
-    FindHeader(header, "Content-Disposition", &ptr);
+    ioHttpResponseHeaderFind(header, "Content-Disposition", &ptr);
     if (ptr) {
         char *p = platformStringFindNeedle(ptr, "attachment");
         free(ptr);
@@ -97,7 +97,7 @@ static inline char HttpResponseIsDir(const char *header) {
             return 0;
     }
 
-    FindHeader(header, "Content-Type", &ptr);
+    ioHttpResponseHeaderFind(header, "Content-Type", &ptr);
 
     if (ptr) {
         char *p = platformStringFindNeedle(ptr, "text/html");
@@ -346,7 +346,7 @@ static inline char *HtmlExtractNextLink(HttpSite *self, size_t *written) {
  * @return NULL on success, user friendly error message otherwise
  */
 static inline char *HttpGetContentLength(const char *header, size_t *length) {
-    char *cd, *e = FindHeader(header, "content-length", &cd);
+    char *cd, *e = ioHttpResponseHeaderFind(header, "content-length", &cd);
     if (e)
         return e;
 
@@ -455,7 +455,7 @@ int httpSiteSchemeChangeDirectory(HttpSite *self, const char *path) {
         return -1;
     }
 
-    if (!(send = ioGenerateHttpHeadRequest(details.path, NULL))) {
+    if (!(send = ioHttpRequestGenerateHead(details.path, NULL))) {
         uriDetailsFree(&details), free(newPath);
         return -1;
     }
@@ -467,12 +467,12 @@ int httpSiteSchemeChangeDirectory(HttpSite *self, const char *path) {
 
     free(send), header = NULL;
 
-    if (ioHttpHeadRead(&self->socket, &header)) {
+    if (ioHttpResponseHeaderRead(&self->socket, &header)) {
         uriDetailsFree(&details), free(newPath);
         return -1;
     }
 
-    if (HttpGetEssentialResponse(header, &scheme, &response)) {
+    if (ioHttpResponseHeaderEssential(header, &scheme, &response)) {
         uriDetailsFree(&details), free(newPath), free(header);
         return -1;
     }
@@ -535,7 +535,7 @@ const char *httpSiteNew(HttpSite *self, const char *path) {
         goto httpSiteSchemeNew_abort;
 
     header = NULL, GenerateHostHeader(&header, &details), GenerateConnectionHeader(&header);
-    send = ioGenerateHttpHeadRequest(details.path, header);
+    send = ioHttpRequestGenerateHead(details.path, header);
 
     if (header)
         free(header), header = NULL;
@@ -554,7 +554,8 @@ const char *httpSiteNew(HttpSite *self, const char *path) {
 
     free(send);
 
-    if ((err = ioHttpHeadRead(&self->socket, &header)) || (err = HttpGetEssentialResponse(header, &scheme, &response)))
+    if ((err = ioHttpResponseHeaderRead(&self->socket, &header)) ||
+        (err = ioHttpResponseHeaderEssential(header, &scheme, &response)))
         goto httpSiteSchemeNew_closeSocketAndAbort;
 
     if (!(HttpResponseOk(response))) {
@@ -606,7 +607,7 @@ void *httpSiteOpenDirectoryListing(HttpSite *self, char *path) {
 
     scheme = NULL, GenerateHostHeader(&scheme, &details), GenerateConnectionHeader(&scheme);
 
-    if (!(request = ioGenerateHttpGetRequest(absPath, scheme)))
+    if (!(request = ioHttpRequestGenerateGet(absPath, scheme)))
         goto httpSiteOpenDirectoryListing_abort3;
 
     free(scheme);
@@ -616,10 +617,10 @@ void *httpSiteOpenDirectoryListing(HttpSite *self, char *path) {
 
     free(request), request = NULL, scheme = NULL;
 
-    if (ioHttpHeadRead(&self->socket, &header))
+    if (ioHttpResponseHeaderRead(&self->socket, &header))
         goto httpSiteOpenDirectoryListing_abort3;
 
-    if (HttpGetEssentialResponse(header, &scheme, &response) ||
+    if (ioHttpResponseHeaderEssential(header, &scheme, &response) ||
         !(HttpResponseOk(response) || !HttpResponseIsDir(header)))
         goto httpSiteOpenDirectoryListing_abort3;
 

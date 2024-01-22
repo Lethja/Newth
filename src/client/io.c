@@ -2,7 +2,7 @@
 #include <sys/types.h>
 #include "io.h"
 
-char *generateSendRequest(const char *type, const char *path, const char *extra) {
+char *ioHttpRequestGenerateSend(const char *type, const char *path, const char *extra) {
     const char *http = HTTP_RES HTTP_EOL HTTP_EOL "  ";
     size_t len = strlen(type) + strlen(path) + strlen(http);
     char *req;
@@ -22,7 +22,7 @@ char *generateSendRequest(const char *type, const char *path, const char *extra)
     return req;
 }
 
-char *FindHeader(const char *headerFile, const char *header, char **variable) {
+char *ioHttpResponseHeaderFind(const char *headerFile, const char *header, char **variable) {
     char *i, *s, *e;
     if ((i = platformStringFindNeedle(headerFile, header))) {
         if ((s = strchr(i, ':'))) {
@@ -53,7 +53,7 @@ char *FindHeader(const char *headerFile, const char *header, char **variable) {
     return "Header not found";
 }
 
-char *HttpGetEssentialResponse(const char *headerFile, char **scheme, char **response) {
+char *ioHttpResponseHeaderEssential(const char *headerFile, char **scheme, char **response) {
     char *p = strstr(headerFile, HTTP_EOL), *s = NULL;
     size_t len;
 
@@ -88,7 +88,7 @@ char *ioCreateSocketFromSocketAddress(SocketAddress *self, SOCKET *sock) {
     return NULL;
 }
 
-char *ioHttpHeadRead(const SOCKET *socket, char **header) {
+char *ioHttpResponseHeaderRead(const SOCKET *socket, char **header) {
     const size_t headerMax = 4096;
     unsigned int totalBytes = 0;
     ssize_t bytesReceived;
@@ -147,10 +147,10 @@ char *ioHttpHeadRead(const SOCKET *socket, char **header) {
     return NULL;
 }
 
-char *ioGenerateHttpHeadRequest(const char *path, const char *extra) {
-    return generateSendRequest("HEAD", path, extra);
+char *ioHttpRequestGenerateHead(const char *path, const char *extra) {
+    return ioHttpRequestGenerateSend("HEAD", path, extra);
 }
 
-char *ioGenerateHttpGetRequest(const char *path, const char *extra) {
-    return generateSendRequest("GET", path, extra);
+char *ioHttpRequestGenerateGet(const char *path, const char *extra) {
+    return ioHttpRequestGenerateSend("GET", path, extra);
 }
