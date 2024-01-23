@@ -345,13 +345,13 @@ static inline char *HtmlExtractNextLink(HttpSite *self, size_t *written) {
  * @param length Out: The length of the http body of getting content length was successful
  * @return NULL on success, user friendly error message otherwise
  */
-static inline char *HttpGetContentLength(const char *header, size_t *length) {
+static inline char *HttpGetContentLength(const char *header, PlatformFileOffset *length) {
     char *cd, *e = ioHttpResponseHeaderFind(header, "content-length", &cd);
     if (e)
         return e;
 
     if (cd) {
-        size_t tmp = 0;
+        PlatformFileOffset tmp = 0;
         char *i = strchr(cd, '\r');
         if (i)
             i[0] = '\0';
@@ -390,6 +390,37 @@ static inline char *HttpGetContentLength(const char *header, size_t *length) {
     }
 
     return NULL;
+}
+
+static inline void GetAllHeaders(const char *header, HttpResponseHeader *headerResponse) {
+    char *v;
+
+    ioHttpResponseHeaderFind(header, "Transfer-Encoding", &v);
+    if (v) {
+        if (platformStringFindWord(v, "Chunked"))
+            headerResponse->options |= SA_STATE_ALT_MODE;
+        free(v);
+    } else
+        HttpGetContentLength(header, &headerResponse->length);
+
+    ioHttpResponseHeaderFind(header, "Last-Modified", &v);
+    if (v)
+        platformTimeGetFromHttpStr(v, headerResponse->modifiedDate), free(v);
+
+    ioHttpResponseHeaderFind(header, "Content-Disposition", &v);
+    if (v) {
+        char *p = platformStringFindWord(v, "filename");
+        if (p) {
+            if ((p = strchr(p, '='))) {
+                size_t len;
+
+                ++p, len = strlen(p);
+                if ((headerResponse->fileName = malloc(len + 1)))
+                    strcpy(headerResponse->fileName, p);
+            }
+        }
+        free(v);
+    }
 }
 
 /**
@@ -593,9 +624,10 @@ const char *httpSiteNew(HttpSite *self, const char *path) {
 }
 
 void *httpSiteOpenDirectoryListing(HttpSite *self, char *path) {
-    size_t len, write = len = 0;
+    size_t write = 0;
     char *absPath, *header = NULL, *request, *response, *scheme, *file;
     UriDetails details;
+    HttpResponseHeader headerResponse;
 
     if (!self->fullUri)
         return NULL;
@@ -624,8 +656,7 @@ void *httpSiteOpenDirectoryListing(HttpSite *self, char *path) {
         !(HttpResponseOk(response) || !HttpResponseIsDir(header)))
         goto httpSiteOpenDirectoryListing_abort3;
 
-    /* TODO: Handle chunked transfer encoding */
-    HttpGetContentLength(header, &len);
+    GetAllHeaders(header, &headerResponse);
     free(header), free(scheme);
 
     write += FastForwardToElement(self, "body");

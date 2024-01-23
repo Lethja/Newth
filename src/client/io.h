@@ -4,14 +4,12 @@
 #include "../platform/platform.h"
 #include "../common/defines.h"
 
-typedef struct ServerHeaderResponse {
+typedef struct HttpResponseHeader {
     PlatformTimeStruct *modifiedDate; /* Last modified date (to allow HTTP 304) */
     PlatformFileOffset length; /* Length of HTTP body */
-    char *filePath, *fileName;
-    short dataType; /* MIME type or is it a webpage with more links */
-    short httpCode; /* HTTP Response */
+    char *fileName; /* Content-Disposition given file name if applicable */
     int options; /* User options to change the behaviour of this download */
-} ServerHeaderResponse;
+} HttpResponseHeader;
 
 enum SocketAddressState {
     SA_STATE_QUEUED,
