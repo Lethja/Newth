@@ -392,6 +392,11 @@ static inline char *HttpGetContentLength(const char *header, PlatformFileOffset 
     return NULL;
 }
 
+/**
+ * Populate the header response with any and all found headers
+ * @param header The header response received from the remote
+ * @param headerResponse The response header populated with whatever is found
+ */
 static inline void GetAllHeaders(const char *header, HttpResponseHeader *headerResponse) {
     char *v;
 
