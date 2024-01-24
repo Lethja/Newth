@@ -479,7 +479,7 @@ static inline char *GenerateConnectionHeader(char **self) {
 
 #pragma endregion
 
-int httpSiteSchemeChangeDirectory(HttpSite *self, const char *path) {
+int httpSiteSchemeWorkingDirectorySet(HttpSite *self, const char *path) {
     char *newPath, *newUri, *header, *scheme, *response, *send;
     UriDetails details = uriDetailsNewFrom(self->fullUri);
 
@@ -548,7 +548,7 @@ void httpSiteSchemeFree(HttpSite *self) {
         CLOSE_SOCKET(self->socket);
 }
 
-char *httpSiteSchemeGetWorkingDirectory(HttpSite *self) {
+char *httpSiteSchemeWorkingDirectoryGet(HttpSite *self) {
     return self->fullUri;
 }
 
@@ -628,7 +628,7 @@ const char *httpSiteNew(HttpSite *self, const char *path) {
     return err;
 }
 
-void *httpSiteOpenDirectoryListing(HttpSite *self, char *path) {
+void *httpSiteSchemeDirectoryListingOpen(HttpSite *self, char *path) {
     size_t write = 0;
     char *absPath, *header = NULL, *request, *response, *scheme, *file;
     UriDetails details;
@@ -736,7 +736,7 @@ void *httpSiteOpenDirectoryListing(HttpSite *self, char *path) {
     return NULL;
 }
 
-void *httpSiteReadDirectoryListing(void *listing) {
+void *httpSiteSchemeDirectoryListingRead(void *listing) {
     HttpSiteDirectoryListing *l = listing;
     SiteDirectoryEntry *e;
 
@@ -757,7 +757,7 @@ void *httpSiteReadDirectoryListing(void *listing) {
     return NULL;
 }
 
-void httpSiteCloseDirectoryListing(void *listing) {
+void httpSiteSchemeDirectoryListingClose(void *listing) {
     DirectoryListingClear(listing);
 }
 

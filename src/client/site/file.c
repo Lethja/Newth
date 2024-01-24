@@ -13,7 +13,7 @@ static void UpdateFileUri(FileSite *self, char *path) {
 
 #pragma endregion
 
-int fileSiteSchemeChangeDirectory(FileSite *self, const char *path) {
+int fileSiteSchemeWorkingDirectorySet(FileSite *self, const char *path) {
     if (!platformPathSystemChangeWorkingDirectory(path)) {
         char *wd = malloc(FILENAME_MAX);
         if (!wd) {
@@ -36,7 +36,7 @@ void fileSiteSchemeFree(FileSite *self) {
         free(self->fullUri);
 }
 
-char *fileSiteSchemeGetWorkingDirectory(FileSite *self) {
+char *fileSiteSchemeWorkingDirectoryGet(FileSite *self) {
     return self->fullUri;
 }
 
@@ -68,7 +68,7 @@ char *fileSiteSchemeNew(FileSite *self, const char *path) {
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "UnusedParameter"
-void *fileSiteOpenDirectoryListing(FileSite *self, char *path) {
+void *fileSiteSchemeDirectoryListingOpen(FileSite *self, char *path) {
     PlatformFileStat stat;
 
     if (!platformFileStat(path, &stat)) {
@@ -80,7 +80,7 @@ void *fileSiteOpenDirectoryListing(FileSite *self, char *path) {
 }
 #pragma clang diagnostic pop
 
-void *fileSiteReadDirectoryListing(void *listing) {
+void *fileSiteSchemeDirectoryListingRead(void *listing) {
     char *name;
     size_t nameLen;
     PlatformDirEntry *entry;
@@ -106,6 +106,6 @@ void *fileSiteReadDirectoryListing(void *listing) {
     return siteEntry;
 }
 
-void fileSiteCloseDirectoryListing(void *listing) {
+void fileSiteSchemeDirectoryListingClose(void *listing) {
     platformDirClose(listing);
 }

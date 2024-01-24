@@ -18,17 +18,17 @@ typedef struct HttpSite {
     SOCKET socket;
 } HttpSite;
 
-int httpSiteSchemeChangeDirectory(HttpSite *self, const char *path);
+int httpSiteSchemeWorkingDirectorySet(HttpSite *self, const char *path);
 
-char *httpSiteSchemeGetWorkingDirectory(HttpSite *self);
+char *httpSiteSchemeWorkingDirectoryGet(HttpSite *self);
 
 void httpSiteSchemeFree(HttpSite *self);
 
-void *httpSiteOpenDirectoryListing(HttpSite *self, char *path);
+void *httpSiteSchemeDirectoryListingOpen(HttpSite *self, char *path);
 
-void *httpSiteReadDirectoryListing(void *listing);
+void *httpSiteSchemeDirectoryListingRead(void *listing);
 
-void httpSiteCloseDirectoryListing(void *listing);
+void httpSiteSchemeDirectoryListingClose(void *listing);
 
 const char *httpSiteNew(HttpSite *self, const char *path);
 

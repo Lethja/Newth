@@ -162,9 +162,9 @@ void siteFree(Site *self) {
 char *siteGetWorkingDirectory(Site *self) {
     switch (self->type) {
         case SITE_FILE:
-            return fileSiteSchemeGetWorkingDirectory(&self->site.file);
+            return fileSiteSchemeWorkingDirectoryGet(&self->site.file);
         case SITE_HTTP:
-            return httpSiteSchemeGetWorkingDirectory(&self->site.http);
+            return httpSiteSchemeWorkingDirectoryGet(&self->site.http);
         default:
             return NULL;
     }
@@ -173,9 +173,9 @@ char *siteGetWorkingDirectory(Site *self) {
 int siteSetWorkingDirectory(Site *self, char *path) {
     switch (self->type) {
         case SITE_FILE:
-            return fileSiteSchemeChangeDirectory(&self->site.file, path);
+            return fileSiteSchemeWorkingDirectorySet(&self->site.file, path);
         case SITE_HTTP:
-            return httpSiteSchemeChangeDirectory(&self->site.http, path);
+            return httpSiteSchemeWorkingDirectorySet(&self->site.http, path);
         default:
             return 1;
     }
@@ -184,9 +184,9 @@ int siteSetWorkingDirectory(Site *self, char *path) {
 void *siteOpenDirectoryListing(Site *self, char *path) {
     switch (self->type) {
         case SITE_FILE:
-            return fileSiteOpenDirectoryListing(&self->site.file, path);
+            return fileSiteSchemeDirectoryListingOpen(&self->site.file, path);
         case SITE_HTTP:
-            return httpSiteOpenDirectoryListing(&self->site.http, path);
+            return httpSiteSchemeDirectoryListingOpen(&self->site.http, path);
         default:
             return NULL;
     }
@@ -195,9 +195,9 @@ void *siteOpenDirectoryListing(Site *self, char *path) {
 SiteDirectoryEntry *siteReadDirectoryListing(Site *self, void *listing) {
     switch (self->type) {
         case SITE_FILE:
-            return fileSiteReadDirectoryListing(listing);
+            return fileSiteSchemeDirectoryListingRead(listing);
         case SITE_HTTP:
-            return httpSiteReadDirectoryListing(listing);
+            return httpSiteSchemeDirectoryListingRead(listing);
         default:
             return NULL;
     }
@@ -206,10 +206,10 @@ SiteDirectoryEntry *siteReadDirectoryListing(Site *self, void *listing) {
 void siteCloseDirectoryListing(Site *self, void *listing) {
     switch (self->type) {
         case SITE_FILE:
-            fileSiteCloseDirectoryListing(listing);
+            fileSiteSchemeDirectoryListingClose(listing);
             break;
         case SITE_HTTP:
-            httpSiteCloseDirectoryListing(listing);
+            httpSiteSchemeDirectoryListingClose(listing);
             break;
         default:
             break;
