@@ -25,32 +25,32 @@ static void SiteArrayFunctions(void **state) {
     assert_null(siteNew(&site1, SITE_FILE, "/"));
     assert_null(siteNew(&site2, SITE_FILE, "/"));
     siteArrayInit();
-    assert_null(siteArraySetActiveNth(0));
-    assert_non_null(siteArraySetActiveNth(1));
+    assert_null(siteArrayActiveSetNth(0));
+    assert_non_null(siteArrayActiveSetNth(1));
     assert_null(siteArrayAdd(&site1));
-    assert_null(siteArraySetActiveNth(1));
-    assert_non_null(siteArraySetActiveNth(2));
+    assert_null(siteArrayActiveSetNth(1));
+    assert_non_null(siteArrayActiveSetNth(2));
     assert_null(siteArrayAdd(&site2));
-    assert_null(siteArraySetActiveNth(2));
-    assert_non_null(siteArraySetActiveNth(3));
-    assert_null(siteArraySetActiveNth(2));
-    assert_memory_equal(siteArrayGetActive(), &site2, sizeof(Site));
-    assert_null(siteArraySetActiveNth(0));
-    assert_null(siteArraySetActiveNth(1));
-    assert_memory_equal(siteArrayGetActive(), &site1, sizeof(Site));
-    assert_null(siteArraySetActiveNth(2));
+    assert_null(siteArrayActiveSetNth(2));
+    assert_non_null(siteArrayActiveSetNth(3));
+    assert_null(siteArrayActiveSetNth(2));
+    assert_memory_equal(siteArrayActiveGet(), &site2, sizeof(Site));
+    assert_null(siteArrayActiveSetNth(0));
+    assert_null(siteArrayActiveSetNth(1));
+    assert_memory_equal(siteArrayActiveGet(), &site1, sizeof(Site));
+    assert_null(siteArrayActiveSetNth(2));
     siteArrayRemove(&site1);
-    assert_null(siteArrayGetActive());
-    assert_int_equal(siteArrayGetActiveNth(), -1);
-    assert_null(siteArraySetActiveNth(1));
-    assert_memory_equal(siteArrayGetActive(), &site2, sizeof(Site));
+    assert_null(siteArrayActiveGet());
+    assert_int_equal(siteArrayActiveGetNth(), -1);
+    assert_null(siteArrayActiveSetNth(1));
+    assert_memory_equal(siteArrayActiveGet(), &site2, sizeof(Site));
     assert_null(siteArrayAdd(&site1));
-    assert_null(siteArraySetActiveNth(2));
-    assert_non_null(siteArrayGetActive());
-    assert_int_equal(siteArrayGetActiveNth(), 2);
+    assert_null(siteArrayActiveSetNth(2));
+    assert_non_null(siteArrayActiveGet());
+    assert_int_equal(siteArrayActiveGetNth(), 2);
     siteArrayRemoveNth(2);
-    assert_null(siteArrayGetActive());
-    assert_int_equal(siteArrayGetActiveNth(), -1);
+    assert_null(siteArrayActiveGet());
+    assert_int_equal(siteArrayActiveGetNth(), -1);
     siteArrayFree(), siteFree(&site1);
 }
 
@@ -88,7 +88,7 @@ static void SiteFileGetDirectory(void **state) {
     assert_non_null(platformGetWorkingDirectory(wd, FILENAME_MAX));
     assert_non_null(site.site.file.fullUri);
 
-    assert_non_null(strstr(siteGetWorkingDirectory(&site), site.site.file.fullUri));
+    assert_non_null(strstr(siteWorkingDirectoryGet(&site), site.site.file.fullUri));
     free(wd), siteFree(&site);
 }
 
@@ -100,7 +100,7 @@ static void SiteFileSetDirectory(void **state) {
     assert_non_null(platformGetWorkingDirectory(wd, FILENAME_MAX));
     assert_non_null(site.site.file.fullUri);
 
-    siteSetWorkingDirectory(&site, "..");
+    siteWorkingDirectorySet(&site, "..");
     assert_non_null(strstr(wd, &site.site.file.fullUri[7]));
     free(wd), siteFree(&site);
 }
@@ -119,15 +119,15 @@ static void SiteFileDirEntry(void **state) {
             ++i;
     }
 
-    platformDirClose(d), d = siteOpenDirectoryListing(&site, ".");
+    platformDirClose(d), d = siteDirectoryListingOpen(&site, ".");
     assert_non_null(d);
 
-    while ((e = siteReadDirectoryListing(&site, d)))
+    while ((e = siteDirectoryListingRead(&site, d)))
         ++j, siteDirectoryEntryFree(e);
 
     assert_int_equal(i, j);
 
-    siteCloseDirectoryListing(&site, d), siteFree(&site);
+    siteDirectoryListingClose(&site, d), siteFree(&site);
 }
 
 #pragma endregion
@@ -180,7 +180,7 @@ static void SiteHttpGetDirectory(void **state) {
     assert_null(siteNew(&site, SITE_HTTP, "http://127.0.0.1"));
     assert_non_null(site.site.http.fullUri);
 
-    wd = siteGetWorkingDirectory(&site);
+    wd = siteWorkingDirectoryGet(&site);
     assert_string_equal(wd, "http://127.0.0.1/");
 
     details = uriDetailsNewFrom(wd);
@@ -200,19 +200,19 @@ static void SiteHttpSetDirectory(void **state) {
 
     assert_null(siteNew(&site, SITE_HTTP, wd)), rewind(mockReceiveStream);
     assert_non_null(site.site.file.fullUri);
-    assert_string_equal(siteGetWorkingDirectory(&site), wd);
+    assert_string_equal(siteWorkingDirectoryGet(&site), wd);
 
-    siteSetWorkingDirectory(&site, ".."), rewind(mockReceiveStream);
-    assert_string_equal(siteGetWorkingDirectory(&site), "http://127.0.0.1/");
+    siteWorkingDirectorySet(&site, ".."), rewind(mockReceiveStream);
+    assert_string_equal(siteWorkingDirectoryGet(&site), "http://127.0.0.1/");
 
-    siteSetWorkingDirectory(&site, "foo"), rewind(mockReceiveStream);
-    assert_string_equal(siteGetWorkingDirectory(&site), wd);
+    siteWorkingDirectorySet(&site, "foo"), rewind(mockReceiveStream);
+    assert_string_equal(siteWorkingDirectoryGet(&site), wd);
 
-    siteSetWorkingDirectory(&site, "bar"), rewind(mockReceiveStream);
-    assert_string_equal(siteGetWorkingDirectory(&site), "http://127.0.0.1/foo/bar");
+    siteWorkingDirectorySet(&site, "bar"), rewind(mockReceiveStream);
+    assert_string_equal(siteWorkingDirectoryGet(&site), "http://127.0.0.1/foo/bar");
 
-    siteSetWorkingDirectory(&site, "/bar");
-    assert_string_equal(siteGetWorkingDirectory(&site), "http://127.0.0.1/bar");
+    siteWorkingDirectorySet(&site, "/bar");
+    assert_string_equal(siteWorkingDirectoryGet(&site), "http://127.0.0.1/bar");
 
     siteFree(&site);
 }
@@ -227,11 +227,11 @@ static void SiteHttpSetDirectoryFailFile(void **state) {
 
     assert_null(siteNew(&site, SITE_HTTP, wd)), rewind(mockReceiveStream);
     assert_non_null(site.site.file.fullUri);
-    assert_string_equal(siteGetWorkingDirectory(&site), wd);
+    assert_string_equal(siteWorkingDirectoryGet(&site), wd);
     fwrite(HttpHeaderResponseFile, 1, strlen(HttpHeaderResponseFile), mockReceiveStream), rewind(mockReceiveStream);
 
-    assert_int_equal(siteSetWorkingDirectory(&site, "bar"), 1);
-    assert_string_equal(siteGetWorkingDirectory(&site), wd);
+    assert_int_equal(siteWorkingDirectorySet(&site, "bar"), 1);
+    assert_string_equal(siteWorkingDirectoryGet(&site), wd);
 
     siteFree(&site);
 }
@@ -273,34 +273,34 @@ static void SiteHttpDirEntry(void **state) {
     assert_null(siteNew(&site, SITE_HTTP, "http://127.0.0.1/foo")), rewind(mockReceiveStream);
 
     /* Listing of http://127.0.0.1/foo */
-    assert_non_null(d = siteOpenDirectoryListing(&site, "."));
-    assert_non_null(e = siteReadDirectoryListing(&site, d));
+    assert_non_null(d = siteDirectoryListingOpen(&site, "."));
+    assert_non_null(e = siteDirectoryListingRead(&site, d));
     assert_string_equal(e->name, "file1.txt"), siteDirectoryEntryFree(e);
-    assert_non_null(e = siteReadDirectoryListing(&site, d));
+    assert_non_null(e = siteDirectoryListingRead(&site, d));
     assert_string_equal(e->name, "file2.txt"), siteDirectoryEntryFree(e);
-    assert_non_null(e = siteReadDirectoryListing(&site, d));
+    assert_non_null(e = siteDirectoryListingRead(&site, d));
     assert_string_equal(e->name, "file5.txt"), siteDirectoryEntryFree(e);
-    siteCloseDirectoryListing(&site, d), rewind(mockReceiveStream);
+    siteDirectoryListingClose(&site, d), rewind(mockReceiveStream);
 
     /* Listing of http://127.0.0.1/ (absolute) */
-    assert_non_null(d = siteOpenDirectoryListing(&site, "/"));
-    assert_non_null(e = siteReadDirectoryListing(&site, d));
+    assert_non_null(d = siteDirectoryListingOpen(&site, "/"));
+    assert_non_null(e = siteDirectoryListingRead(&site, d));
     assert_string_equal(e->name, "file1.txt"), siteDirectoryEntryFree(e);
-    assert_non_null(e = siteReadDirectoryListing(&site, d));
+    assert_non_null(e = siteDirectoryListingRead(&site, d));
     assert_string_equal(e->name, "file2.txt"), siteDirectoryEntryFree(e);
-    assert_non_null(e = siteReadDirectoryListing(&site, d));
+    assert_non_null(e = siteDirectoryListingRead(&site, d));
     assert_string_equal(e->name, "file3.txt"), siteDirectoryEntryFree(e);
-    siteCloseDirectoryListing(&site, d), rewind(mockReceiveStream);
+    siteDirectoryListingClose(&site, d), rewind(mockReceiveStream);
 
     /* Listing of http://127.0.0.1/ (up) */
-    assert_non_null(d = siteOpenDirectoryListing(&site, ".."));
-    assert_non_null(e = siteReadDirectoryListing(&site, d));
+    assert_non_null(d = siteDirectoryListingOpen(&site, ".."));
+    assert_non_null(e = siteDirectoryListingRead(&site, d));
     assert_string_equal(e->name, "file1.txt"), siteDirectoryEntryFree(e);
-    assert_non_null(e = siteReadDirectoryListing(&site, d));
+    assert_non_null(e = siteDirectoryListingRead(&site, d));
     assert_string_equal(e->name, "file2.txt"), siteDirectoryEntryFree(e);
-    assert_non_null(e = siteReadDirectoryListing(&site, d));
+    assert_non_null(e = siteDirectoryListingRead(&site, d));
     assert_string_equal(e->name, "file3.txt"), siteDirectoryEntryFree(e);
-    siteCloseDirectoryListing(&site, d), rewind(mockReceiveStream);
+    siteDirectoryListingClose(&site, d), rewind(mockReceiveStream);
 
     siteFree(&site);
 }
@@ -337,16 +337,16 @@ static void SiteHttpDirEntryApache(void **state) {
     assert_null(siteNew(&site, SITE_HTTP, "http://127.0.0.1/")), rewind(mockReceiveStream);
 
     /* Listing of http://127.0.0.1/ */
-    assert_non_null(d = siteOpenDirectoryListing(&site, "."));
-    assert_non_null(e = siteReadDirectoryListing(&site, d));
+    assert_non_null(d = siteDirectoryListingOpen(&site, "."));
+    assert_non_null(e = siteDirectoryListingRead(&site, d));
     assert_string_equal(e->name, "cloud"), siteDirectoryEntryFree(e);
-    assert_non_null(e = siteReadDirectoryListing(&site, d));
+    assert_non_null(e = siteDirectoryListingRead(&site, d));
     assert_string_equal(e->name, "cloud2"), siteDirectoryEntryFree(e);
-    assert_non_null(e = siteReadDirectoryListing(&site, d));
+    assert_non_null(e = siteDirectoryListingRead(&site, d));
     assert_string_equal(e->name, "foo"), siteDirectoryEntryFree(e);
-    assert_null(siteReadDirectoryListing(&site, d));
+    assert_null(siteDirectoryListingRead(&site, d));
 
-    siteCloseDirectoryListing(&site, d), rewind(mockReceiveStream);
+    siteDirectoryListingClose(&site, d), rewind(mockReceiveStream);
 
     siteFree(&site);
 }
@@ -378,13 +378,13 @@ static void SiteHttpDirEntryLighttpd(void **state) {
     assert_null(siteNew(&site, SITE_HTTP, "http://127.0.0.1/")), rewind(mockReceiveStream);
 
     /* Listing of http://127.0.0.1/ */
-    assert_non_null(d = siteOpenDirectoryListing(&site, "."));
-    assert_non_null(e = siteReadDirectoryListing(&site, d));
+    assert_non_null(d = siteDirectoryListingOpen(&site, "."));
+    assert_non_null(e = siteDirectoryListingRead(&site, d));
     assert_string_equal(e->name, "file.txt"), siteDirectoryEntryFree(e);
-    assert_non_null(e = siteReadDirectoryListing(&site, d));
+    assert_non_null(e = siteDirectoryListingRead(&site, d));
     assert_string_equal(e->name, "file.txt.sig"), siteDirectoryEntryFree(e);
 
-    siteCloseDirectoryListing(&site, d), rewind(mockReceiveStream);
+    siteDirectoryListingClose(&site, d), rewind(mockReceiveStream);
 
     siteFree(&site);
 }
@@ -417,15 +417,15 @@ static void SiteHttpDirEntryNginx(void **state) {
     assert_null(siteNew(&site, SITE_HTTP, "http://127.0.0.1/")), rewind(mockReceiveStream);
 
     /* Listing of http://127.0.0.1/ */
-    assert_non_null(d = siteOpenDirectoryListing(&site, "."));
-    assert_non_null(e = siteReadDirectoryListing(&site, d));
+    assert_non_null(d = siteDirectoryListingOpen(&site, "."));
+    assert_non_null(e = siteDirectoryListingRead(&site, d));
     assert_string_equal(e->name, "cloud"), siteDirectoryEntryFree(e);
-    assert_non_null(e = siteReadDirectoryListing(&site, d));
+    assert_non_null(e = siteDirectoryListingRead(&site, d));
     assert_string_equal(e->name, "cloud2"), siteDirectoryEntryFree(e);
-    assert_non_null(e = siteReadDirectoryListing(&site, d));
+    assert_non_null(e = siteDirectoryListingRead(&site, d));
     assert_string_equal(e->name, "foo"), siteDirectoryEntryFree(e);
 
-    siteCloseDirectoryListing(&site, d), rewind(mockReceiveStream);
+    siteDirectoryListingClose(&site, d), rewind(mockReceiveStream);
 
     siteFree(&site);
 }

@@ -30,38 +30,26 @@ typedef struct Site {
  * Return the active site structure
  * @return Pointer to the currently active site
  */
-Site *siteArrayGetActive(void);
+Site *siteArrayActiveGet(void);
 
 /**
  * Return the active site number
  * @return Entry number of the active site
  */
-long siteArrayGetActiveNth(void);
+long siteArrayActiveGetNth(void);
 
 /**
  * Set the active site by pointer
  * @param site The site to set to active
  */
-void siteArraySetActive(Site *site);
+void siteArrayActiveSet(Site *site);
 
 /**
  * Set the active site by number
  * @param siteNumber The site number to set to active
  * @return NULL on success, user friendly error message as to why the site couldn't be changed otherwise
  */
-char *siteArraySetActiveNth(long siteNumber);
-
-/**
- * Initialize a siteArray system
- * @return Structure with a file:// site pre-mounted
- * @remark Free with siteArrayFree() after use
- */
-char *siteArrayInit(void);
-
-/**
- * Free all memory inside a siteArray made with siteArrayInit()
- */
-void siteArrayFree(void);
+char *siteArrayActiveSetNth(long siteNumber);
 
 /**
  * Add a site to the list of mounted devices
@@ -71,10 +59,23 @@ void siteArrayFree(void);
 char *siteArrayAdd(Site *site);
 
 /**
- * Remove index n from mounted devices
- * @param n the mounted device to be removed
+ * Free all memory inside a siteArray made with siteArrayInit()
  */
-void siteArrayRemoveNth(long n);
+void siteArrayFree(void);
+
+/**
+ * Initialize a siteArray system
+ * @return Structure with a file:// site pre-mounted
+ * @remark Free with siteArrayFree() after use
+ */
+char *siteArrayInit(void);
+
+/**
+ * Array pointer to iterate over, use with caution
+ * @param length Out/Null: The size of the array
+ * @return A pointer to the site array
+ */
+Site *siteArrayPtr(long *length);
 
 /**
  * Remove this site from mounted devices if found
@@ -83,11 +84,10 @@ void siteArrayRemoveNth(long n);
 void siteArrayRemove(Site *site);
 
 /**
- * Array pointer to iterate over, use with caution
- * @param length Out/Null: The size of the array
- * @return A pointer to the site array
+ * Remove index n from mounted devices
+ * @param n the mounted device to be removed
  */
-Site *siteArrayPtr(long *length);
+void siteArrayRemoveNth(long n);
 
 #pragma endregion
 
@@ -124,7 +124,7 @@ void siteFree(Site *self);
  * @return The full uri of the sites working directory
  * @remark Do not free returned value
  */
-char *siteGetWorkingDirectory(Site *self);
+char *siteWorkingDirectoryGet(Site *self);
 
 /**
  * Set the working directory of a site
@@ -132,7 +132,7 @@ char *siteGetWorkingDirectory(Site *self);
  * @param path In: The path to set the directory to. Can be relative to current directory, uri, or absolute
  * @return 0 on success, positive number on path error, negative value on unknown errors
  */
-int siteSetWorkingDirectory(Site *self, char *path);
+int siteWorkingDirectorySet(Site *self, char *path);
 
 /**
  * Site-like implementation of POSIX 'opendir()'
@@ -141,7 +141,7 @@ int siteSetWorkingDirectory(Site *self, char *path);
  * @return Pointer to a listing to be used on siteReadDirectoryListing or NULL on error
  * @remark Returned pointer must be freed with siteCloseDirectoryListing()
  */
-void *siteOpenDirectoryListing(Site *self, char *path);
+void *siteDirectoryListingOpen(Site *self, char *path);
 
 /**
  * Site-like implementation of POSIX 'readdir()'
@@ -150,14 +150,14 @@ void *siteOpenDirectoryListing(Site *self, char *path);
  * @return A SiteDirectoryEntry with the next files information
  * @remark Returned pointer must be freed with siteDirectoryEntryFree()
  */
-SiteDirectoryEntry *siteReadDirectoryListing(Site *self, void *listing);
+SiteDirectoryEntry *siteDirectoryListingRead(Site *self, void *listing);
 
 /**
  * Site-like implementation of POSIX 'closedir()'
  * @param self In: The site relative to the listing
  * @param listing In: The listing returned from siteOpenDirectoryListing() to free internal memory from
  */
-void siteCloseDirectoryListing(Site *self, void *listing);
+void siteDirectoryListingClose(Site *self, void *listing);
 
 #pragma endregion
 

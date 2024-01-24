@@ -33,32 +33,32 @@ static inline char SiteCompare(Site *site1, Site *site2) {
     return 0;
 }
 
-Site *siteArrayGetActive(void) {
+Site *siteArrayActiveGet(void) {
     if (Sites.set >= Sites.len)
         return NULL;
 
     return &Sites.array[Sites.set];
 }
 
-long siteArrayGetActiveNth(void) {
+long siteArrayActiveGetNth(void) {
     if (Sites.set >= Sites.len)
         return -1;
 
     return Sites.set;
 }
 
-void siteArraySetActive(Site *site) {
+void siteArrayActiveSet(Site *site) {
     long i;
 
     for (i = 0; i < Sites.len; ++i) {
         if (SiteCompare(&Sites.array[i], site)) {
-            siteArraySetActiveNth(i);
+            siteArrayActiveSetNth(i);
             return;
         }
     }
 }
 
-char *siteArraySetActiveNth(long siteNumber) {
+char *siteArrayActiveSetNth(long siteNumber) {
     if (siteNumber >= Sites.len)
         return "Invalid site";
 
@@ -159,7 +159,7 @@ void siteFree(Site *self) {
     }
 }
 
-char *siteGetWorkingDirectory(Site *self) {
+char *siteWorkingDirectoryGet(Site *self) {
     switch (self->type) {
         case SITE_FILE:
             return fileSiteSchemeWorkingDirectoryGet(&self->site.file);
@@ -170,7 +170,7 @@ char *siteGetWorkingDirectory(Site *self) {
     }
 }
 
-int siteSetWorkingDirectory(Site *self, char *path) {
+int siteWorkingDirectorySet(Site *self, char *path) {
     switch (self->type) {
         case SITE_FILE:
             return fileSiteSchemeWorkingDirectorySet(&self->site.file, path);
@@ -181,7 +181,7 @@ int siteSetWorkingDirectory(Site *self, char *path) {
     }
 }
 
-void *siteOpenDirectoryListing(Site *self, char *path) {
+void *siteDirectoryListingOpen(Site *self, char *path) {
     switch (self->type) {
         case SITE_FILE:
             return fileSiteSchemeDirectoryListingOpen(&self->site.file, path);
@@ -192,7 +192,7 @@ void *siteOpenDirectoryListing(Site *self, char *path) {
     }
 }
 
-SiteDirectoryEntry *siteReadDirectoryListing(Site *self, void *listing) {
+SiteDirectoryEntry *siteDirectoryListingRead(Site *self, void *listing) {
     switch (self->type) {
         case SITE_FILE:
             return fileSiteSchemeDirectoryListingRead(listing);
@@ -203,7 +203,7 @@ SiteDirectoryEntry *siteReadDirectoryListing(Site *self, void *listing) {
     }
 }
 
-void siteCloseDirectoryListing(Site *self, void *listing) {
+void siteDirectoryListingClose(Site *self, void *listing) {
     switch (self->type) {
         case SITE_FILE:
             fileSiteSchemeDirectoryListingClose(listing);

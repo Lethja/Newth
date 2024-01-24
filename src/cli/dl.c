@@ -70,11 +70,11 @@ static inline void PrintDirectoryFiles(Site *site) {
     SiteDirectoryEntry *entry;
 
     /* TODO: Allow parameters to determine path directory */
-    if (!(dir = siteOpenDirectoryListing(site, ".")))
+    if (!(dir = siteDirectoryListingOpen(site, ".")))
         return;
 
     putc(' ', stdout);
-    while ((entry = siteReadDirectoryListing(site, dir))) {
+    while ((entry = siteDirectoryListingRead(site, dir))) {
         char *folder = entry->isDirectory ? "/" : "";
         if (strchr(entry->name, ' '))
             printf("'%s%s'   ", entry->name, folder);
@@ -83,7 +83,7 @@ static inline void PrintDirectoryFiles(Site *site) {
         siteDirectoryEntryFree(entry);
     }
 
-    siteCloseDirectoryListing(site, dir), putc('\n', stdout);
+    siteDirectoryListingClose(site, dir), putc('\n', stdout);
 }
 
 static inline const char *mountSite(const char *parameter) {
@@ -110,14 +110,14 @@ static inline const char *mountSite(const char *parameter) {
     if ((err = siteNew(&site, type, parameter)) || (err = siteArrayAdd(&site)))
         return err;
 
-    siteArraySetActive(&site);
+    siteArrayActiveSet(&site);
     return NULL;
 }
 
 static inline void mountList(void) {
     long a, i, len;
     Site *sites = siteArrayPtr(&len);
-    a = siteArrayGetActiveNth();
+    a = siteArrayActiveGetNth();
     for (i = 0; i < len; ++i) {
         printf("%c%ld:\t%s\n", i == a ? '>' : ' ', i,
                sites[i].type == SITE_HTTP ? sites[i].site.http.fullUri : sites[i].site.file.fullUri);
@@ -141,7 +141,7 @@ static inline void processCommand(char **args) {
                     goto processCommand_notFound;
             case 'L':
                 if (toupper(args[0][1]) == 'S')
-                    PrintDirectoryFiles(siteArrayGetActive());
+                    PrintDirectoryFiles(siteArrayActiveGet());
                 else
                     goto processCommand_notFound;
                 break;
@@ -152,7 +152,7 @@ static inline void processCommand(char **args) {
                 break;
             case 'P':
                 if (toupper(args[0][1]) == 'W' && toupper(args[0][2]) == 'D')
-                    puts(siteGetWorkingDirectory(siteArrayGetActive()));
+                    puts(siteWorkingDirectoryGet(siteArrayActiveGet()));
                 else
                     goto processCommand_notFound;
                 break;
@@ -161,11 +161,11 @@ static inline void processCommand(char **args) {
                     toupper(args[0][4]) == 'N' && toupper(args[0][5]) == 'T') {
                     Site *site;
 
-                    if (!(site = siteArrayGetActive()))
+                    if (!(site = siteArrayActiveGet()))
                         return;
 
                     siteFree(site), siteArrayRemove(site);
-                    siteArraySetActiveNth(0);
+                    siteArrayActiveSetNth(0);
                 } else
                     goto processCommand_notFound;
                 break;
@@ -181,7 +181,7 @@ static inline void processCommand(char **args) {
             case '9':
                 errno = 0, l = strtol(args[0], NULL, 10);
                 if (!errno)  /* Must be a site switch */
-                    if ((str = siteArraySetActiveNth(l)))
+                    if ((str = siteArrayActiveSetNth(l)))
                         puts(str);
                 break;
             default:
@@ -191,7 +191,7 @@ static inline void processCommand(char **args) {
         switch (toupper(args[0][0])) {
             case 'C':
                 if (toupper(args[0][1]) == 'D')
-                    siteSetWorkingDirectory(siteArrayGetActive(), args[1]);
+                    siteWorkingDirectorySet(siteArrayActiveGet(), args[1]);
                 else
                     goto processCommand_notFound;
                 break;
@@ -230,7 +230,7 @@ static inline void interactiveMode(void) {
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "EndlessLoop"
     while (1) {
-        printf(SHELL_PS1, siteArrayGetActiveNth());
+        printf(SHELL_PS1, siteArrayActiveGetNth());
         if (fgets(input, sizeof(input), stdin)) {
             processInput(input, (char **) args);
             processCommand(args);
