@@ -632,7 +632,7 @@ void *httpSiteOpenDirectoryListing(HttpSite *self, char *path) {
     size_t write = 0;
     char *absPath, *header = NULL, *request, *response, *scheme, *file;
     UriDetails details;
-    HttpResponseHeader headerResponse;
+    HttpResponseHeader headerResponse = {0};
 
     if (!self->fullUri)
         return NULL;
