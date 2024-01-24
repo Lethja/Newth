@@ -552,7 +552,7 @@ char *httpSiteSchemeWorkingDirectoryGet(HttpSite *self) {
     return self->fullUri;
 }
 
-const char *httpSiteNew(HttpSite *self, const char *path) {
+const char *httpSiteSchemeNew(HttpSite *self, const char *path) {
     UriDetails details;
     const char *err;
     char *header, *scheme, *response, *send;
@@ -626,6 +626,14 @@ const char *httpSiteNew(HttpSite *self, const char *path) {
     uriDetailsFree(&details);
 
     return err;
+}
+
+void httpSiteSchemeDirectoryListingClose(void *listing) {
+    DirectoryListingClear(listing);
+}
+
+char *httpSiteSchemeDirectoryListingEntryStat(void *listing, void *entry, PlatformFileStat *st) {
+    return "Not yet implemented";
 }
 
 void *httpSiteSchemeDirectoryListingOpen(HttpSite *self, char *path) {
@@ -756,8 +764,3 @@ void *httpSiteSchemeDirectoryListingRead(void *listing) {
 
     return NULL;
 }
-
-void httpSiteSchemeDirectoryListingClose(void *listing) {
-    DirectoryListingClear(listing);
-}
-

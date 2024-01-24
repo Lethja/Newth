@@ -66,6 +66,17 @@ char *fileSiteSchemeNew(FileSite *self, const char *path) {
     return NULL;
 }
 
+void fileSiteSchemeDirectoryListingClose(void *listing) {
+    platformDirClose(listing);
+}
+
+char *fileSiteSchemeDirectoryListingEntryStat(void *listing, void *entry, PlatformFileStat *st) {
+    if (platformDirEntryGetStats(entry, listing, st))
+        return NULL;
+
+    return strerror(errno);
+}
+
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "UnusedParameter"
 void *fileSiteSchemeDirectoryListingOpen(FileSite *self, char *path) {
@@ -104,8 +115,4 @@ void *fileSiteSchemeDirectoryListingRead(void *listing) {
     strcpy(siteEntry->name, name);
     siteEntry->modifiedDate = 0, siteEntry->isDirectory = platformDirEntryIsDirectory(entry, listing, NULL);
     return siteEntry;
-}
-
-void fileSiteSchemeDirectoryListingClose(void *listing) {
-    platformDirClose(listing);
 }

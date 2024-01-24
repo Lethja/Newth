@@ -142,7 +142,7 @@ const char *siteNew(Site *site, enum SiteType type, const char *path) {
         case SITE_FILE:
             return fileSiteSchemeNew(&site->site.file, path);
         case SITE_HTTP:
-            return httpSiteNew(&site->site.http, path);
+            return httpSiteSchemeNew(&site->site.http, path);
         default:
             return "Unknown mount type";
     }
@@ -187,6 +187,17 @@ void *siteDirectoryListingOpen(Site *self, char *path) {
             return fileSiteSchemeDirectoryListingOpen(&self->site.file, path);
         case SITE_HTTP:
             return httpSiteSchemeDirectoryListingOpen(&self->site.http, path);
+        default:
+            return NULL;
+    }
+}
+
+char *siteDirectoryListingEntryStat(Site *self, void *listing, void *entry, PlatformFileStat *st) {
+    switch (self->type) {
+        case SITE_FILE:
+            return fileSiteSchemeDirectoryListingEntryStat(listing, entry, st);
+        case SITE_HTTP:
+            return httpSiteSchemeDirectoryListingEntryStat(listing, entry, st);
         default:
             return NULL;
     }

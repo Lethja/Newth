@@ -18,18 +18,20 @@ typedef struct HttpSite {
     SOCKET socket;
 } HttpSite;
 
-int httpSiteSchemeWorkingDirectorySet(HttpSite *self, const char *path);
+void httpSiteSchemeDirectoryListingClose(void *listing);
 
-char *httpSiteSchemeWorkingDirectoryGet(HttpSite *self);
-
-void httpSiteSchemeFree(HttpSite *self);
+char *httpSiteSchemeDirectoryListingEntryStat(void *entry, void *listing, PlatformFileStat *st);
 
 void *httpSiteSchemeDirectoryListingOpen(HttpSite *self, char *path);
 
 void *httpSiteSchemeDirectoryListingRead(void *listing);
 
-void httpSiteSchemeDirectoryListingClose(void *listing);
+void httpSiteSchemeFree(HttpSite *self);
 
-const char *httpSiteNew(HttpSite *self, const char *path);
+const char *httpSiteSchemeNew(HttpSite *self, const char *path);
+
+char *httpSiteSchemeWorkingDirectoryGet(HttpSite *self);
+
+int httpSiteSchemeWorkingDirectorySet(HttpSite *self, const char *path);
 
 #endif /* NEW_DL_HTTP_H */

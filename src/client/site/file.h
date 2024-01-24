@@ -11,6 +11,8 @@ char *fileSiteSchemeNew(FileSite *self, const char *path);
 
 void fileSiteSchemeDirectoryListingClose(void *listing);
 
+char *fileSiteSchemeDirectoryListingEntryStat(void *entry, void *listing, PlatformFileStat *st);
+
 void *fileSiteSchemeDirectoryListingOpen(FileSite *self, char *path);
 
 void *fileSiteSchemeDirectoryListingRead(void *listing);

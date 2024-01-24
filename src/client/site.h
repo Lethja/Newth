@@ -104,19 +104,39 @@ void siteDirectoryEntryFree(void *entry);
 #pragma region Site Base Functions
 
 /**
- * Create a new site that's ready to mount
- * @param site Out: Pointer to the site to populate
- * @param type In: The type of site to create
- * @param path In: The current site to mount or NULL for default
- * @return NULL on success, user friendly error message otherwise
+ * Site-like implementation of POSIX 'opendir()'
+ * @param self In: The site to open the path from
+ * @param path In: The path to open the directory of. Can be relative to current directory, uri, or absolute
+ * @return Pointer to a listing to be used on siteReadDirectoryListing or NULL on error
+ * @remark Returned pointer must be freed with siteCloseDirectoryListing()
  */
-const char *siteNew(Site *site, enum SiteType type, const char *path);
+void *siteDirectoryListingOpen(Site *self, char *path);
 
 /**
- * Free internal members of a site
- * @param self The site pointer to free internal members of
+ * Get the file stats of a entry
+ * @param self In: the site relative to the listing
+ * @param listing In: The listing returned from siteDirectoryListingOpen()
+ * @param entry In: The entry returned from siteDirectoryListingRead()
+ * @param st Out: The file stat structure to populate
+ * @return NULL on success, user friendly error message otherwise
  */
-void siteFree(Site *self);
+char *siteDirectoryListingEntryStat(Site *self, void *listing, void *entry, PlatformFileStat *st);
+
+/**
+ * Site-like implementation of POSIX 'readdir()'
+ * @param self In: The site relative to the listing
+ * @param listing In: The listing returned from siteDirectoryListingOpen()
+ * @return A SiteDirectoryEntry with the next files information
+ * @remark Returned pointer must be freed with siteDirectoryEntryFree()
+ */
+SiteDirectoryEntry *siteDirectoryListingRead(Site *self, void *listing);
+
+/**
+ * Site-like implementation of POSIX 'closedir()'
+ * @param self In: The site relative to the listing
+ * @param listing In: The listing returned from siteDirectoryListingOpen() to free internal memory from
+ */
+void siteDirectoryListingClose(Site *self, void *listing);
 
 /**
  * Get the current working directory of site
@@ -135,29 +155,19 @@ char *siteWorkingDirectoryGet(Site *self);
 int siteWorkingDirectorySet(Site *self, char *path);
 
 /**
- * Site-like implementation of POSIX 'opendir()'
- * @param self In: The site to open the path from
- * @param path In: The path to open the directory of. Can be relative to current directory, uri, or absolute
- * @return Pointer to a listing to be used on siteReadDirectoryListing or NULL on error
- * @remark Returned pointer must be freed with siteCloseDirectoryListing()
+ * Free internal members of a site
+ * @param self The site pointer to free internal members of
  */
-void *siteDirectoryListingOpen(Site *self, char *path);
+void siteFree(Site *self);
 
 /**
- * Site-like implementation of POSIX 'readdir()'
- * @param self In: The site relative to the listing
- * @param listing In: The listing returned from siteOpenDirectoryListing()
- * @return A SiteDirectoryEntry with the next files information
- * @remark Returned pointer must be freed with siteDirectoryEntryFree()
+ * Create a new site that's ready to mount
+ * @param site Out: Pointer to the site to populate
+ * @param type In: The type of site to create
+ * @param path In: The current site to mount or NULL for default
+ * @return NULL on success, user friendly error message otherwise
  */
-SiteDirectoryEntry *siteDirectoryListingRead(Site *self, void *listing);
-
-/**
- * Site-like implementation of POSIX 'closedir()'
- * @param self In: The site relative to the listing
- * @param listing In: The listing returned from siteOpenDirectoryListing() to free internal memory from
- */
-void siteDirectoryListingClose(Site *self, void *listing);
+const char *siteNew(Site *site, enum SiteType type, const char *path);
 
 #pragma endregion
 
