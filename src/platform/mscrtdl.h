@@ -9,6 +9,7 @@
 #define PF_OFFSET "I64d"
 #define HEX_OFFSET "lx"
 #define SOCKET_WOULD_BLOCK WSAEWOULDBLOCK
+#define ECONNRESET WSAECONNRESET
 #define snprintf _snprintf
 
 #ifndef SB_DATA_SIZE
@@ -108,6 +109,7 @@ typedef struct winSockNativeStat {
 } PlatformFileStat;
 
 typedef struct winSockNativeDir {
+    char *path;
     PlatformDirEntry nextEntry;
     PlatformDirEntry lastEntry;
     HANDLE directoryHandle;

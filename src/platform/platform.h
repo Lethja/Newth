@@ -287,7 +287,6 @@ void *platformDirRead(void *dirp);
  */
 char *platformDirEntryGetName(PlatformDirEntry *entry, size_t *length);
 
-/* TODO: Implement for doswatb and mscrtdl */
 /**
  * Get the file status of the file/folder in the entry
  * @param entry In: The entry to get the filename from

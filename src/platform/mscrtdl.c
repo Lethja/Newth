@@ -171,7 +171,8 @@ void platformPathCombine(char *output, const char *path1, const char *path2) {
     if (idx) {
         output[idx + 1] = '\0';
         strcat(output, &pathDivider[1]);
-    } else if ((output[0] == pathDivider[0] || output[idx] == pathDivider[1]) && (output[1] == pathDivider[0] || output[1] == pathDivider[1]))
+    } else if ((output[0] == pathDivider[0] || output[idx] == pathDivider[1]) &&
+               (output[1] == pathDivider[0] || output[1] == pathDivider[1]))
         output[1] = '\0';
 
     /* Jump over any leading dividers in the second path then concatenate it */
@@ -433,7 +434,6 @@ char *platformDirEntryGetName(PlatformDirEntry *entry, size_t *length) {
 }
 
 char platformDirEntryIsHidden(PlatformDirEntry *entry) {
-
     if (entry) {
         if (entry->cFileName[0] == '.') {
             switch (entry->cFileName[1]) {
@@ -449,11 +449,31 @@ char platformDirEntryIsHidden(PlatformDirEntry *entry) {
     return 1;
 }
 
+char platformDirEntryGetStats(PlatformDirEntry *entry, void *dirP, PlatformFileStat *st) {
+    DIR *dir = dirP;
+    char *entryPath;
+
+    if (!(entryPath = malloc(strlen(dir->path) + strlen(entry->cFileName) + 2))) {
+        free(dir);
+        return 0;
+    }
+
+    platformPathCombine(entryPath, dir->path, entry->cFileName);
+
+    if (platformFileStat(entryPath, st)) {
+        free(entryPath), free(dir);
+        return 0;
+    }
+
+    free(entryPath);
+
+    return 1;
+}
+
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "UnusedParameter"
 
-char platformDirEntryIsDirectory(PlatformDirEntry *entry, void *dirp) {
-
+char platformDirEntryIsDirectory(PlatformDirEntry *entry, void *dirP, PlatformFileStat **st) {
     if (entry)
         return (char) ((entry->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) > 0);
     return 0;

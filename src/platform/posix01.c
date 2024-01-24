@@ -517,7 +517,7 @@ char platformDirEntryGetStats(PlatformDirEntry *entry, void *dirP, PlatformFileS
 
     platformPathCombine(entryPath, dir->path, d->d_name);
 
-    if (stat(entryPath, st)) {
+    if (platformFileStat(entryPath, st)) {
         free(entryPath), free(dir);
         return 0;
     }

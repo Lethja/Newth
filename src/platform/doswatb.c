@@ -13,9 +13,7 @@
 
 typedef struct PlatformDir {
     DIR *dir;
-#ifdef DJGPP
     char *path;
-#endif
 } PlatformDir;
 
 char platformShouldExit(void) {
@@ -255,21 +253,36 @@ char platformDirEntryIsHidden(PlatformDirEntry *entry) {
 #endif
 }
 
-char platformDirEntryIsDirectory(PlatformDirEntry *entry, void *dirp) {
+char platformDirEntryIsDirectory(PlatformDirEntry *entry, void *dirp, PlatformFileStat **st) {
 #ifdef DJGPP
-    PlatformFileStat st;
     PlatformDir *pd = dirp;
-    char tmp1[PATH_MAX], tmp2[PATH_MAX];
-    strncpy((char *) &tmp1, pd->path, PATH_MAX);
-    platformPathCombine((char *) &tmp2, (char *) &tmp1, entry->d_name);
-    _fixpath((char *) &tmp2, (char *) &tmp1);
-    if(!platformFileStat((char *) &tmp1, &st))
-        return platformFileStatIsDirectory(&st);
+    if (!st) {
+        char tmp1[PATH_MAX], tmp2[PATH_MAX];
+        strncpy((char *) &tmp1, pd->path, PATH_MAX);
+        platformPathCombine((char *) &tmp2, (char *) &tmp1, entry->d_name);
+        _fixpath((char *) &tmp2, (char *) &tmp1);
+        if(!platformFileStat((char *) &tmp1, *st))
+            return platformFileStatIsDirectory(*st);
+    } else
+        return platformFileStatIsDirectory(*st);
 
     return 0;
 #else /* Watcom */
     return (entry->d_attr & _A_SUBDIR);
 #endif
+}
+
+char platformDirEntryGetStats(PlatformDirEntry *entry, void *dirP, PlatformFileStat *st) {
+    PlatformDir *pd = dirP;
+    char *tmp1[PATH_MAX], tmp2[PATH_MAX], *p;
+
+    strncpy((char *) &tmp1, pd->path, PATH_MAX);
+    platformPathCombine((char *) &tmp2, (char *) &tmp1, entry->d_name);
+    p = platformRealPath(tmp2);
+    if (!platformFileStat((char *) p, st))
+        return 1;
+
+    return 0;
 }
 
 int platformFileStat(const char *path, PlatformFileStat *fileStat) {
@@ -493,7 +506,6 @@ unsigned short platformGetPort(struct sockaddr *addr) {
 }
 
 int platformOfficiallySupportsIpv6(void) {
-    LINEDBG;
     return 0;
 }
 
