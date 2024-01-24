@@ -34,7 +34,7 @@ size_t DirectoryRoutineContinue(Routine *self) {
                     memcpy(pathBuf + pathLen, entryName, entryLen + 1);
 
                 /* Append '/' on the end of directory entries */
-                if (platformDirEntryIsDirectory(entry, self->type.dir.directory)) {
+                if (platformDirEntryIsDirectory(entry, self->type.dir.directory, NULL)) {
                     size_t len = strlen(pathBuf);
                     pathBuf[len] = '/', pathBuf[len + 1] = '\0';
                 }

@@ -505,6 +505,28 @@ char *platformDirEntryGetName(PlatformDirEntry *entry, size_t *length) {
     return r;
 }
 
+char platformDirEntryGetStats(PlatformDirEntry *entry, void *dirP, PlatformFileStat *st) {
+    struct dirent *d = entry;
+    PlatformDir *dir = dirP;
+    char *entryPath;
+
+    if (!(entryPath = malloc(strlen(dir->path) + strlen(d->d_name) + 2))) {
+        free(dir);
+        return 0;
+    }
+
+    platformPathCombine(entryPath, dir->path, d->d_name);
+
+    if (stat(entryPath, st)) {
+        free(entryPath), free(dir);
+        return 0;
+    }
+
+    free(entryPath);
+
+    return 1;
+}
+
 char platformDirEntryIsHidden(PlatformDirEntry *entry) {
     struct dirent *d = entry;
     return d->d_name[0] == '.' ? 1 : 0;
@@ -513,12 +535,10 @@ char platformDirEntryIsHidden(PlatformDirEntry *entry) {
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "UnusedParameter"
 
-char platformDirEntryIsDirectory(PlatformDirEntry *entry, void *dirp) {
+char platformDirEntryIsDirectory(PlatformDirEntry *entry, void *dirP, PlatformFileStat **st) {
 #pragma clang diagnostic pop
     struct dirent *d = entry;
-    PlatformDir *dir = dirp;
-    char *entryPath;
-    struct stat st;
+    struct stat *s;
 
 #ifdef _DIRENT_HAVE_D_TYPE
 
@@ -527,21 +547,18 @@ char platformDirEntryIsDirectory(PlatformDirEntry *entry, void *dirp) {
 
 #endif /* _DIRENT_HAVE_D_TYPE */
 
-    if (!(entryPath = malloc(strlen(dir->path) + strlen(d->d_name) + 1))) {
-        free(dir);
-        return 0;
+    if (st) {
+        s = *st;
+        return S_ISDIR(s->st_mode);
+    } else if ((s = malloc(sizeof(struct stat)))) {
+        if (platformDirEntryGetStats(entry, dirP, s)) {
+            char mode = S_ISDIR(s->st_mode);
+            free(s);
+            return mode;
+        }
     }
 
-    platformPathCombine(entryPath, dir->path, d->d_name);
-
-    if (stat(entryPath, &st)) {
-        free(entryPath), free(dir);
-        return 0;
-    }
-
-    free(entryPath);
-
-    return S_ISDIR(st.st_mode);
+    return 0;
 }
 
 int platformFileStat(const char *path, PlatformFileStat *fileStat) {

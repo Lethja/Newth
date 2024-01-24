@@ -287,6 +287,16 @@ void *platformDirRead(void *dirp);
  */
 char *platformDirEntryGetName(PlatformDirEntry *entry, size_t *length);
 
+/* TODO: Implement for doswatb and mscrtdl */
+/**
+ * Get the file status of the file/folder in the entry
+ * @param entry In: The entry to get the filename from
+ * @param dirP In: A pointer created from platformDirOpen() and used by platformDirRead() to get the entry variable
+ * @param st Out: A pointer to a struct to populate with the entries meta information
+ * @return zero on failure, other when successful
+ */
+char platformDirEntryGetStats(PlatformDirEntry *entry, void *dirP, PlatformFileStat *st);
+
 /**
  * Check if entry is hidden file/folder from the platforms point of view
  * @param entry In: The entry to check if the file/folder is hidden from
@@ -297,10 +307,11 @@ char platformDirEntryIsHidden(PlatformDirEntry *entry);
 /**
  * Check if entry is a Directory (aka Folder)
  * @param entry In: The entry to check if the file/folder is a folder
- * @param dirp In: A pointer created from platformDirOpen() and used by platformDirRead() to get the entry variable
+ * @param dirP In: A pointer created from platformDirOpen() and used by platformDirRead() to get the entry variable
+ * @param st In-Out-Optional: A pointer to a struct that may already contain entry stats (to prevent unnecessary lookup)
  * @return Zero if not a directory/folder, other if it is a directory/folder
  */
-char platformDirEntryIsDirectory(PlatformDirEntry *entry, void *dirp);
+char platformDirEntryIsDirectory(PlatformDirEntry *entry, void *dirP, PlatformFileStat **st);
 
 /**
  * Get the status structure of a file

@@ -102,7 +102,7 @@ void *fileSiteReadDirectoryListing(void *listing) {
     }
 
     strcpy(siteEntry->name, name);
-    siteEntry->modifiedDate = 0, siteEntry->isDirectory = platformDirEntryIsDirectory(entry, listing);
+    siteEntry->modifiedDate = 0, siteEntry->isDirectory = platformDirEntryIsDirectory(entry, listing, NULL);
     return siteEntry;
 }
 
