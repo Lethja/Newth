@@ -10,8 +10,14 @@ static inline char *PathAppendOrCreate(PathQueue *pathQueue, const char *path) {
         return "No Queue";
 
     if (pathQueue->paths == NULL) {
-        pathQueue->paths = malloc(sizeof(char *));
-        pathQueue->paths[0] = malloc(strlen(path) + 1);
+        if (!(pathQueue->paths = malloc(sizeof(char *))))
+            return strerror(errno);
+
+        if (!(pathQueue->paths[0] = malloc(strlen(path) + 1))) {
+            free(pathQueue->paths), pathQueue->paths = NULL;
+            return strerror(errno);
+        }
+
         strcpy(pathQueue->paths[0], path);
         pathQueue->pathsLen = 1;
         return NULL;
@@ -72,7 +78,7 @@ char *pathQueueAppendOrCreate(SocketAddress *address, const char *path) {
             PathQueue *q;
 
             if (!newPathQueue(&q, address)) {
-                void *tmp = realloc(addressQueue->queue, sizeof(AddressQueue) * addressQueue->queueLen + 1);
+                void *tmp = realloc(addressQueue->queue, sizeof(AddressQueue) * (addressQueue->queueLen + 1));
 
                 if (tmp) {
                     addressQueue->queue = tmp;
@@ -174,15 +180,18 @@ char *pathQueueRemove(SocketAddress *address, const char *path) {
             if (addressQueue->queueLen < 2)
                 free(addressQueue->queue), addressQueue->queue = NULL;
             else {
-                void *tmp = realloc(addressQueue->queue, sizeof(char *) * addressQueue->queueLen - 1);
+                void *tmp = realloc(addressQueue->queue, sizeof(char *) * (addressQueue->queueLen - 1));
                 if (tmp)
                     addressQueue->queue = tmp;
                 else
                     return strerror(errno);
             }
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "ConstantConditionsOC"
             if (addressQueue)
                 --addressQueue->queueLen;
+#pragma clang diagnostic pop
 
             if (!addressQueue->queueLen) {
                 free(addressQueue->queue);

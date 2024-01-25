@@ -258,8 +258,8 @@ void serverPoke(void) {
     ipv4.sin_addr.s_addr = inet_addr("127.0.0.1"), ipv4.sin_family = AF_INET, ipv4.sin_port = htons(
             getPort(&serverListenSocket[1]));
 
-    if (connect(sock, (struct sockaddr *) &ipv4, sizeof(ipv4)) == 0)
-        CLOSE_SOCKET(sock);
+    connect(sock, (struct sockaddr *) &ipv4, sizeof(ipv4)); /* NOLINT(*-unused-return-value) */
+    CLOSE_SOCKET(sock);
 }
 
 void serverFreeResources(void) {

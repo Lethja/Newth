@@ -16,8 +16,8 @@ static inline void allocStrAppend(char **alloc, char *append) {
         if (*alloc)
             strncat(*alloc, append, len2 + 1);
     } else {
-        *alloc = malloc(len2 + 1);
-        strncpy(*alloc, append, len2 + 1);
+        if ((*alloc = malloc(len2 + 1)))
+            strncpy(*alloc, append, len2 + 1);
     }
 }
 
@@ -57,11 +57,9 @@ char *httpClientReadUri(const char *request) {
     char *start, *end, *path;
     size_t len;
 
-    start = strchr(request, ' ');
-    if (!start)
+    if (!(start = strchr(request, ' ')) || !(end = strchr(start + 1, ' ')))
         return NULL;
 
-    end = strchr(start + 1, ' ');
     len = end - start;
 
     path = malloc(len + 1);
@@ -183,6 +181,7 @@ void httpHeaderWriteAcceptRanges(SocketBuffer *socketBuffer) {
 }
 
 #pragma GCC diagnostic ignored "-Wformat" /* PF_OFFSET is defined in posix01.h */
+
 void httpHeaderWriteRange(SocketBuffer *socketBuffer, PlatformFileOffset start, PlatformFileOffset finish,
                           PlatformFileOffset fileLength) {
     socketBufferPrintf(socketBuffer, SB_DATA_SIZE, "Content-Range: bytes %"PF_OFFSET"-%"PF_OFFSET"/%"PF_OFFSET HTTP_EOL,
@@ -288,8 +287,11 @@ void htmlHeaderWrite(char **buffer, char *title) {
                                           "\t<BODY>\n";
 
     size_t max = strlen(h1) + strlen(h2) + strlen(title);
+    char *tmp;
 
-    char *tmp = malloc(max + 1);
+    if (!(tmp = malloc(max + 1)))
+        return;
+
     sprintf(tmp, "%s%s%s", h1, title, h2);
 
     allocStrAppend(buffer, tmp);
@@ -333,12 +335,11 @@ void htmlListWritePathLink(char **buffer, char *webPath) {
 
     convertPathToUrl(linkPath, FILENAME_MAX);
     total = strlen(linkPath) + strlen(filePath + 1) + strlen(h1) + strlen(h2) + strlen(h3);
-    tmp = malloc(total + 1);
 
-    sprintf(tmp, "\t\t\t<LI><A HREF=\"%s\">%s</A></LI>\n", linkPath, filePath + 1);
-    allocStrAppend(buffer, tmp);
-
-    free(tmp);
+    if ((tmp = malloc(total + 1))) {
+        sprintf(tmp, "\t\t\t<LI><A HREF=\"%s\">%s</A></LI>\n", linkPath, filePath + 1);
+        allocStrAppend(buffer, tmp), free(tmp);
+    }
 }
 
 static inline void

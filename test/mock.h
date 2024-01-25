@@ -23,13 +23,13 @@ static void MockMalloc(void **state) {
     void *test;
     mockReset();
 
-    test = malloc(1);
-    assert_non_null(test);
+    assert_non_null((test = malloc(1)));
     free(test);
     mockOptions = MOCK_ALLOC_NO_MEMORY;
-    test = malloc(1);
-    assert_null(test);
+    assert_null((test = malloc(1)));
     assert_int_equal(platformSocketGetLastError(), ENOMEM);
+    if (test)
+        free(test);
 }
 
 static void MockRealloc(void **state) {
@@ -167,13 +167,13 @@ static void MockHttpBodyFindStart(void **state) {
     FILE *tmpFile1 = tmpfile(), *tmpFile2;
     long correctPosition, testPosition;
 
-    fwrite(http, strlen(http), 1, tmpFile1), correctPosition = ftell(tmpFile1);
+    assert_non_null(tmpFile1), fwrite(http, strlen(http), 1, tmpFile1), correctPosition = ftell(tmpFile1);
 
     fwrite(body, strlen(body), 1, tmpFile1);
     testPosition = findHttpBodyStart(tmpFile1);
     assert_int_equal(correctPosition, testPosition);
 
-    tmpFile2 = tmpfile(), fwrite(body, 1, strlen(body), tmpFile2), rewind(tmpFile2);
+    assert_non_null(tmpFile2 = tmpfile()), fwrite(body, 1, strlen(body), tmpFile2), rewind(tmpFile2);
     CompareStreams(state, tmpFile1, tmpFile2);
 
     fclose(tmpFile1), fclose(tmpFile2);

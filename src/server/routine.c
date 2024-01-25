@@ -52,8 +52,13 @@ size_t DirectoryRoutineContinue(Routine *self) {
         } else {
             const char *emptyDirectory = "\t\t\t<LI>Empty Directory</LI>\n";
             /* If the directory is empty, say so */
-            if (!self->type.dir.count)
-                buffer = malloc(strlen(emptyDirectory) + 1), strcpy(buffer, emptyDirectory);
+            if (!self->type.dir.count) {
+                if ((buffer = malloc(strlen(emptyDirectory) + 1)))
+                    strcpy(buffer, emptyDirectory);
+            }
+
+            if (!buffer)
+                return 0;
 
             htmlListEnd(&buffer);
             htmlFooterWrite(&buffer);

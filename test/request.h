@@ -29,7 +29,7 @@ static void RequestSmallFile(void **state) {
 
     mockOptions = MOCK_SEND, mockSendMaxBuf = BUFSIZ, writeSampleFile(read, SB_DATA_SIZE);
 
-    globalRootPath = malloc(FILENAME_MAX);
+    assert_non_null(globalRootPath = malloc(FILENAME_MAX));
     fdStr = strrchr(path, '/'), strncpy(globalRootPath, path, FILENAME_MAX), globalRootPath[fdStr - path] = '\0';
     ++fdStr;
 
@@ -54,7 +54,7 @@ static void RequestResumeFile(void **state) {
 
     mockOptions = MOCK_SEND, mockSendMaxBuf = BUFSIZ, writeSampleFile(read, SB_DATA_SIZE);
 
-    globalRootPath = malloc(FILENAME_MAX);
+    assert_non_null(globalRootPath = malloc(FILENAME_MAX));
     fdStr = strrchr(path, '/'), strncpy(globalRootPath, path, FILENAME_MAX), globalRootPath[fdStr - path] = '\0';
     ++fdStr;
 
@@ -79,7 +79,8 @@ static void TransferInterruptStart(void **state) {
 
     mockOptions = MOCK_SEND, mockSendMaxBuf = BUFSIZ, writeSampleFile(read, SB_DATA_SIZE), mockSendError = EPIPE;
 
-    globalRootPath = malloc(FILENAME_MAX);
+    assert_non_null(read);
+    assert_non_null(globalRootPath = malloc(FILENAME_MAX));
     fdStr = strrchr(path, '/'), strncpy(globalRootPath, path, FILENAME_MAX), globalRootPath[fdStr - path] = '\0';
     ++fdStr;
 
@@ -103,7 +104,8 @@ static void TransferInterruptMiddle(void **state) {
 
     mockOptions = MOCK_SEND, mockSendMaxBuf = 10, writeSampleFile(read, SB_DATA_SIZE);
 
-    globalRootPath = malloc(FILENAME_MAX);
+    assert_non_null(read);
+    assert_non_null(globalRootPath = malloc(FILENAME_MAX));
     fdStr = strrchr(path, '/'), strncpy(globalRootPath, path, FILENAME_MAX), globalRootPath[fdStr - path] = '\0';
     ++fdStr;
 

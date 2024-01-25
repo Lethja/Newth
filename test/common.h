@@ -26,10 +26,12 @@ static void writeSampleFile(FILE *file, size_t length) {
     const char *content = "123456789\n";
     size_t i, max = strlen(content);
 
-    for (i = 0; i < length; ++i)
-        fwrite(content, 1, (length - i) < max ? length - i : max, file);
+    if (file) {
+        for (i = 0; i < length; ++i)
+            fwrite(content, 1, (length - i) < max ? length - i : max, file);
 
-    fflush(file);
+        fflush(file);
+    }
 }
 
 static long findHttpBodyStart(FILE *stream) {

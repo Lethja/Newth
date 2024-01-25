@@ -558,6 +558,9 @@ char platformDirEntryIsDirectory(PlatformDirEntry *entry, void *dirP, PlatformFi
         }
     }
 
+    if(s)
+        free(s);
+
     return 0;
 }
 

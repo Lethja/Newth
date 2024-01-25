@@ -17,15 +17,19 @@
  * @return NULL on success, user friendly error message otherwise
  */
 static inline const char *ConnectTo(HttpSite *self, UriDetails *details) {
+    SOCKET sock;
     if (uriDetailsCreateSocketAddress(details, &self->address, SCHEME_HTTP) ||
-        ioCreateSocketFromSocketAddress(&self->address, &self->socket) ||
-        connect(self->socket, &self->address.address.sock, sizeof(self->address.address.sock)) == -1) {
-        if (self->socket != INVALID_SOCKET)
-            CLOSE_SOCKET(self->socket);
+        ioCreateSocketFromSocketAddress(&self->address, &sock))
+        return strerror(errno);
+
+    if (connect(sock, &self->address.address.sock, sizeof(self->address.address.sock)) == -1) {
+        if (sock == INVALID_SOCKET)
+            CLOSE_SOCKET(sock);
 
         return strerror(platformSocketGetLastError());
     }
 
+    self->socket = sock;
     return NULL;
 }
 
@@ -185,10 +189,12 @@ static char *DirectoryListingAdd(HttpSiteDirectoryListing *self, const char *nam
 
     strcpy(n, name);
     if (!self->entry) {
-        if (!(self->entry = malloc(sizeof(SiteDirectoryEntry)))) {
+        SiteDirectoryEntry *entry = malloc(sizeof(SiteDirectoryEntry));
+        if (!entry) {
             free(n);
             return strerror(errno);
         }
+        self->entry = entry;
     } else {
         void *tmp = realloc(self->entry, sizeof(SiteDirectoryEntry) * (self->len + 1));
         if (tmp)
@@ -564,8 +570,8 @@ const char *httpSiteSchemeNew(HttpSite *self, const char *path) {
 
     self->directory = NULL, details = uriDetailsNewFrom(path);
 
-    if (!details.path)
-        details.path = malloc(2), details.path[0] = '/', details.path[1] = '\0';
+    if (!details.path && (details.path = malloc(2)))
+        details.path[0] = '/', details.path[1] = '\0';
 
     if ((err = ConnectTo(self, &details)))
         goto httpSiteSchemeNew_abort;
@@ -670,6 +676,10 @@ void *httpSiteSchemeDirectoryListingOpen(HttpSite *self, char *path) {
         goto httpSiteOpenDirectoryListing_abort3;
 
     GetAllHeaders(header, &headerResponse);
+    /* TODO: Use headerResponse */
+    if (headerResponse.fileName)
+        free(headerResponse.fileName);
+
     free(header), free(scheme);
 
     write += FastForwardToElement(self, "body");

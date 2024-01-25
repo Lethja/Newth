@@ -62,8 +62,14 @@ char *XmlExtractAttribute(const char *element, const char *attribute) {
     if (t) {
         char *v = XmlExtractAttributeValue(t), qc;
         if (v) {
-            char *eq = strchr(t, '='), *singleQuote = strchr(eq, '\''), *doubleQuote = strchr(eq, '"');
-            len += strlen(v);
+            char *eq = strchr(t, '='), *singleQuote, *doubleQuote;
+
+            if (!eq) {
+                free(v);
+                return NULL;
+            }
+
+            len += strlen(v), singleQuote = strchr(eq, '\''), doubleQuote = strchr(eq, '"');
 
             if (singleQuote && doubleQuote)
                 qc = singleQuote < doubleQuote ? '\'' : '"';

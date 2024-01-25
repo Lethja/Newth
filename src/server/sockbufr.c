@@ -41,7 +41,7 @@ size_t socketBufferFlush(SocketBuffer *self) {
 #pragma region Handle socket error
                 case SOCKET_TRY_AGAIN:
 #if SOCKET_TRY_AGAIN != SOCKET_WOULD_BLOCK
-                    case SOCKET_WOULD_BLOCK:
+                case SOCKET_WOULD_BLOCK:
 #endif
                     return bytesFlushed;
 #pragma endregion
@@ -76,7 +76,7 @@ size_t socketBufferWriteData(SocketBuffer *self, const char *data, size_t len) {
 #pragma region Handle socket error
                 case SOCKET_TRY_AGAIN:
 #if SOCKET_TRY_AGAIN != SOCKET_WOULD_BLOCK
-                    case SOCKET_WOULD_BLOCK:
+                case SOCKET_WOULD_BLOCK:
 #endif
                     break;
 #pragma endregion
@@ -124,8 +124,10 @@ int socketBufferPrintf(SocketBuffer *self, size_t max, const char *format, ...) 
     if (!self->buffer) {
         char *msg = malloc(max);
 
-        if(!msg)
+        if (!msg) {
+            va_end(args);
             return -1;
+        }
 
         e = vsprintf(msg, format, args);
         socketBufferWriteText(self, msg);

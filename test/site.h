@@ -158,8 +158,8 @@ static void SiteHttpNewWithPath(void **state) {
     Site site;
 
     mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
-    mockReceiveStream = tmpfile(), fwrite(HttpHeaderResponseDir, 1, strlen(HttpHeaderResponseDir),
-                                          mockReceiveStream), rewind(mockReceiveStream);
+    assert_non_null((mockReceiveStream = tmpfile()));
+    fwrite(HttpHeaderResponseDir, 1, strlen(HttpHeaderResponseDir), mockReceiveStream), rewind(mockReceiveStream);
 
     assert_null(siteNew(&site, SITE_HTTP, "http://127.0.0.1"));
     assert_int_equal(site.type, SITE_HTTP);
@@ -174,7 +174,7 @@ static void SiteHttpGetDirectory(void **state) {
     char *wd;
 
     mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
-    mockReceiveStream = tmpfile(), fwrite(HttpHeaderResponseDir, 1, strlen(HttpHeaderResponseDir),
+    assert_non_null((mockReceiveStream = tmpfile())); fwrite(HttpHeaderResponseDir, 1, strlen(HttpHeaderResponseDir),
                                           mockReceiveStream), rewind(mockReceiveStream);
 
     assert_null(siteNew(&site, SITE_HTTP, "http://127.0.0.1"));
@@ -195,7 +195,7 @@ static void SiteHttpSetDirectory(void **state) {
     char *wd = "http://127.0.0.1/foo";
 
     mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
-    mockReceiveStream = tmpfile(), fwrite(HttpHeaderResponseDir, 1, strlen(HttpHeaderResponseDir),
+    assert_non_null((mockReceiveStream = tmpfile())); fwrite(HttpHeaderResponseDir, 1, strlen(HttpHeaderResponseDir),
                                           mockReceiveStream), rewind(mockReceiveStream);
 
     assert_null(siteNew(&site, SITE_HTTP, wd)), rewind(mockReceiveStream);
@@ -222,7 +222,7 @@ static void SiteHttpSetDirectoryFailFile(void **state) {
     char *wd = "http://127.0.0.1/foo";
 
     mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
-    mockReceiveStream = tmpfile(), fwrite(HttpHeaderResponseDir, 1, strlen(HttpHeaderResponseDir),
+    assert_non_null((mockReceiveStream = tmpfile())); fwrite(HttpHeaderResponseDir, 1, strlen(HttpHeaderResponseDir),
                                           mockReceiveStream), rewind(mockReceiveStream);
 
     assert_null(siteNew(&site, SITE_HTTP, wd)), rewind(mockReceiveStream);
@@ -261,7 +261,7 @@ static void SiteHttpDirEntry(void **state) {
     void *d;
 
     mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
-    mockReceiveStream = tmpfile();
+    assert_non_null((mockReceiveStream = tmpfile()));
 
     /* Setup mocked response */
     sprintf(length, "content-length: %lu" HTTP_EOL HTTP_EOL, strlen(HttpBody)); /* Deliberately lowercase */
@@ -325,7 +325,7 @@ static void SiteHttpDirEntryApache(void **state) {
     void *d;
 
     mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
-    mockReceiveStream = tmpfile();
+    assert_non_null((mockReceiveStream = tmpfile()));
 
     /* Setup mocked response */
     sprintf(length, "content-length: %lu" HTTP_EOL HTTP_EOL, strlen(ApacheHtml)); /* Deliberately lowercase */
@@ -366,7 +366,7 @@ static void SiteHttpDirEntryLighttpd(void **state) {
     void *d;
 
     mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
-    mockReceiveStream = tmpfile();
+    assert_non_null((mockReceiveStream = tmpfile()));
 
     /* Setup mocked response */
     sprintf(length, "content-length: %lu" HTTP_EOL HTTP_EOL, strlen(LighttpdHtml)); /* Deliberately lowercase */
@@ -405,7 +405,7 @@ static void SiteHttpDirEntryNginx(void **state) {
     void *d;
 
     mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
-    mockReceiveStream = tmpfile();
+    assert_non_null((mockReceiveStream = tmpfile()));
 
     /* Setup mocked response */
     sprintf(length, "content-length: %lu" HTTP_EOL HTTP_EOL, strlen(NginxHttp)); /* Deliberately lowercase */
