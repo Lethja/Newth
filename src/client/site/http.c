@@ -161,9 +161,10 @@ static inline char LinkPathIsDirectSub(const UriDetails *path, const char *link)
  * @param uriPath The full uri path this directory listing is representing
  * @return New directory listing on success, otherwise NULL
  */
-static HttpSiteDirectoryListing *DirectoryListingCreate(const char *uriPath) {
+static HttpSiteDirectoryListing *DirectoryListingCreate(const HttpSite *site, const char *uriPath) {
     HttpSiteDirectoryListing *self = calloc(1, sizeof(HttpSiteDirectoryListing));
     if (self) {
+        self->site = site;
         if (uriPath) {
             if ((self->fullUri = malloc(strlen(uriPath) + 1)))
                 strcpy(self->fullUri, uriPath);
@@ -547,9 +548,6 @@ void httpSiteSchemeFree(HttpSite *self) {
     if (self->fullUri)
         free(self->fullUri);
 
-    if (self->directory)
-        DirectoryListingClear(self->directory), free(self->directory);
-
     if (self->socket != INVALID_SOCKET)
         CLOSE_SOCKET(self->socket);
 }
@@ -568,7 +566,7 @@ const char *httpSiteSchemeNew(HttpSite *self, const char *path) {
         return "No uri specified";
     }
 
-    self->directory = NULL, details = uriDetailsNewFrom(path);
+    details = uriDetailsNewFrom(path);
 
     if (!details.path && (details.path = malloc(2)))
         details.path[0] = '/', details.path[1] = '\0';
@@ -635,7 +633,7 @@ const char *httpSiteSchemeNew(HttpSite *self, const char *path) {
 }
 
 void httpSiteSchemeDirectoryListingClose(void *listing) {
-    DirectoryListingClear(listing);
+    DirectoryListingClear(listing), free(listing);
 }
 
 char *httpSiteSchemeDirectoryListingEntryStat(void *listing, void *entry, PlatformFileStat *st) {
@@ -647,6 +645,7 @@ void *httpSiteSchemeDirectoryListingOpen(HttpSite *self, char *path) {
     char *absPath, *header = NULL, *request, *response, *scheme, *file;
     UriDetails details;
     HttpResponseHeader headerResponse = {0};
+    HttpSiteDirectoryListing *directoryListing;
 
     if (!self->fullUri)
         return NULL;
@@ -685,10 +684,7 @@ void *httpSiteSchemeDirectoryListingOpen(HttpSite *self, char *path) {
     write += FastForwardToElement(self, "body");
     write += FastForwardOverElement(self, "body");
 
-    if (self->directory)
-        DirectoryListingClear(self->directory), free(self->directory);
-
-    if (!(self->directory = DirectoryListingCreate(absPath))) {
+    if (!(directoryListing = DirectoryListingCreate(self, absPath))) {
         free(absPath), uriDetailsFree(&details);
         return NULL;
     }
@@ -727,15 +723,15 @@ void *httpSiteSchemeDirectoryListingOpen(HttpSite *self, char *path) {
                         n = tmp;
                 }
 
-                DirectoryListingAdd(self->directory, n), free(n);
+                DirectoryListingAdd(directoryListing, n), free(n);
             }
         } else
             free(file);
     }
 
     uriDetailsFree(&details);
-    DirectoryListingSetReloadDate(self->directory);
-    return self->directory;
+    DirectoryListingSetReloadDate(directoryListing);
+    return directoryListing;
 
     httpSiteOpenDirectoryListing_abort3:
     if (scheme)

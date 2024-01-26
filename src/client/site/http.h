@@ -4,19 +4,19 @@
 #include "../io.h"
 #include "../site.h"
 
+typedef struct HttpSite {
+    SocketAddress address;
+    char *fullUri;
+    SOCKET socket;
+} HttpSite;
+
 typedef struct HttpSiteDirectoryListing {
     time_t asOf; /* Date & Time of last reload */
     size_t idx, len; /* Position and Length of 'entry' array */
     SiteDirectoryEntry *entry; /* Array of entries */
     char *fullUri; /* uri of current listing in the 'entry' array */
+    const HttpSite *site;
 } HttpSiteDirectoryListing;
-
-typedef struct HttpSite {
-    SocketAddress address;
-    HttpSiteDirectoryListing *directory;
-    char *fullUri;
-    SOCKET socket;
-} HttpSite;
 
 void httpSiteSchemeDirectoryListingClose(void *listing);
 
