@@ -110,10 +110,9 @@ void platformPathCombine(char *output, const char *path1, const char *path2) {
     while (output[idx] == pathDivider[0] && idx)
         --idx;
 
-    if (idx) {
-        output[idx + 1] = '\0';
-        strcat(output, pathDivider);
-    } else if (output[0] == pathDivider[0] && output[1] == pathDivider[0])
+    if (idx || (output[0] == '.' && output[1] == '\0'))
+        output[idx + 1] = '\0', strcat(output, pathDivider);
+    else if (output[0] == pathDivider[0] && output[1] == pathDivider[0])
         output[1] = '\0';
 
     /* Jump over any leading dividers in the second path then concatenate it */

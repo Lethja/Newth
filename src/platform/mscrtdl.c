@@ -168,10 +168,9 @@ void platformPathCombine(char *output, const char *path1, const char *path2) {
     while ((output[idx] == pathDivider[0] || output[idx] == pathDivider[1]) && idx)
         --idx;
 
-    if (idx) {
-        output[idx + 1] = '\0';
-        strcat(output, &pathDivider[1]);
-    } else if ((output[0] == pathDivider[0] || output[idx] == pathDivider[1]) &&
+    if (idx || (output[0] == '.' && output[1] == '\0'))
+        output[idx + 1] = '\0', strcat(output, &pathDivider[1]);
+    else if ((output[0] == pathDivider[0] || output[idx] == pathDivider[1]) &&
                (output[1] == pathDivider[0] || output[1] == pathDivider[1]))
         output[1] = '\0';
 

@@ -33,23 +33,33 @@ char platformShouldExit(void) {
 }
 
 void platformPathCombine(char *output, const char *path1, const char *path2) {
-    const char pathDivider = '/', pathDivider2 = '\\';
-    size_t a = strlen(path1), path2Jump = 0;
+    const char *pathDivider = "/\\";
+    size_t len = strlen(path1), idx = len - 1;
+    const char *p2;
 
-    if ((path1[a - 1] != pathDivider && path1[a - 1] != pathDivider2) &&
-        (path2[0] != pathDivider && path2[0] != pathDivider2))
-        ++path2Jump;
-    else if ((path1[a - 1] == pathDivider || path1[a - 1] == pathDivider2) &&
-             (path2[0] == pathDivider || path2[0] == pathDivider2))
-        ++path2;
-
-    LINEDBG;
-
+    /* Copy first path into output buffer for manipulation */
     strcpy(output, path1);
-    if (path2Jump > 1)
-        output[a] = pathDivider;
 
-    strcpy(output + a + path2Jump, path2);
+    while ((output[idx] == pathDivider[0] || output[idx] == pathDivider[1]) && idx)
+        --idx;
+
+    if (idx || (output[0] == '.' && output[1] == '\0'))
+        output[idx + 1] = '\0', strcat(output, &pathDivider[1]);
+    else if ((output[0] == pathDivider[0] || output[idx] == pathDivider[1]) &&
+             (output[1] == pathDivider[0] || output[1] == pathDivider[1]))
+        output[1] = '\0';
+
+    /* Jump over any leading dividers in the second path then concatenate it */
+    len = strlen(path2), idx = 0;
+
+    while ((path2[idx] == pathDivider[0] || path2[idx] == pathDivider[1]) && idx < len)
+        ++idx;
+
+    if (idx == len)
+        return;
+
+    p2 = &path2[idx];
+    strcat(output, p2);
 }
 
 char *platformRealPath(char *path) {

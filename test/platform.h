@@ -82,6 +82,13 @@ static void PathCombineStringDumbInput(void **state) {
     assert_string_equal(output, DIVIDER);
 }
 
+static void PathCombineStringRelativeInput(void **state) {
+    const char *path1 = ".", *path2 = "foo";
+    char output[FILENAME_MAX];
+    platformPathCombine(output, path1, path2);
+    assert_string_equal(output, "./foo");
+}
+
 static void HaystackAndNeedle(void **state) {
     const char *msg1 = "foo", *msg2 = "bar", *msg3 = "foobar", *msg4 = "barfoo", *msg5 = "";
     const char *MSG1 = "FOO", *MSG2 = "BAR";
@@ -121,6 +128,7 @@ const struct CMUnitTest platformTest[] = {cmocka_unit_test(HaystackAndNeedle), c
                                           cmocka_unit_test(PathCombineStringJustDividers),
                                           cmocka_unit_test(PathCombineStringLeadingDivider),
                                           cmocka_unit_test(PathCombineStringNoDivider),
+                                          cmocka_unit_test(PathCombineStringRelativeInput),
                                           cmocka_unit_test(PathCombineStringTrailingDivider)
 #ifdef BACKSLASH_PATH_DIVIDER
         ,cmocka_unit_test(PathCombineStringUnixDividers)
