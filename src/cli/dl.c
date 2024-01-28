@@ -65,7 +65,37 @@ static inline void processInput(char *input, char **args) {
     args[i] = NULL;
 }
 
-static inline void PrintDirectoryFiles(Site *site) {
+static inline void PrintDirectoryFilesDosLike(Site *site) {
+    void *dir;
+    SiteDirectoryEntry *entry;
+
+    /* TODO: Allow parameters to determine path directory */
+    if (!(dir = siteDirectoryListingOpen(site, ".")))
+        return;
+
+    printf(" Site number is %ld\n Working directory is '%s'\n\n", siteArrayActiveGetNth(),
+           siteWorkingDirectoryGet(site));
+
+    while ((entry = siteDirectoryListingRead(site, dir))) {
+        struct stat st;
+        if (!siteDirectoryListingEntryStat(site, dir, entry, &st)) {
+            /* TODO: Test on all platforms */
+            char timeStr[20];
+            strftime(timeStr, 20, "%F %X", gmtime(&st.st_mtime));
+
+            if (S_ISDIR(st.st_mode))
+                printf("%-20s %12s %s\n", timeStr, "<DIR>", entry->name);
+            else
+                printf("%-20s %" PF_OFFSET" %s\n", timeStr, st.st_size, entry->name);
+        }
+
+        siteDirectoryEntryFree(entry);
+    }
+
+    siteDirectoryListingClose(site, dir), putc('\n', stdout);
+}
+
+static inline void PrintDirectoryFilesUnixLike(Site *site) {
     void *dir;
     SiteDirectoryEntry *entry;
 
@@ -133,6 +163,12 @@ static inline void processCommand(char **args) {
         long l;
         char *str;
         switch (toupper(args[0][0])) {
+            case 'D':
+                if (toupper(args[0][1]) == 'I' && toupper(args[0][2]) == 'R') {
+                    PrintDirectoryFilesDosLike(siteArrayActiveGet());
+                } else
+                    goto processCommand_notFound;
+                break;
             case 'E':
                 if (toupper(args[0][1]) == 'X' && toupper(args[0][2]) == 'I' && toupper(args[0][3]) == 'T') {
                     siteArrayFree();
@@ -141,7 +177,7 @@ static inline void processCommand(char **args) {
                     goto processCommand_notFound;
             case 'L':
                 if (toupper(args[0][1]) == 'S')
-                    PrintDirectoryFiles(siteArrayActiveGet());
+                    PrintDirectoryFilesUnixLike(siteArrayActiveGet());
                 else
                     goto processCommand_notFound;
                 break;
