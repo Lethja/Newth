@@ -81,7 +81,7 @@ static inline void PrintDirectoryFilesDosLike(Site *site) {
         if (!siteDirectoryListingEntryStat(site, dir, entry, &st)) {
             /* TODO: Test on all platforms */
             char timeStr[20];
-            strftime(timeStr, 20, "%F %X", gmtime(&st.st_mtime));
+            strftime(timeStr, 20, "%Y-%m-%d %H:%M:%S", gmtime(&st.st_mtime));
 
             if (S_ISDIR(st.st_mode))
                 printf("%-20s %12s %s\n", timeStr, "<DIR>", entry->name);

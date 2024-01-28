@@ -63,7 +63,13 @@ extern char platformShouldExit(void);
 #define SOCKET int
 #define SOCK_BUF_TYPE size_t
 #define STD_FILE_TYPE size_t
+
+#ifdef DJGPP
+#define PF_OFFSET "u"
+#else /* Open Watcom */
 #define PF_OFFSET "lu"
+#endif
+
 #define HEX_OFFSET "x"
 
 #ifndef SB_DATA_SIZE
