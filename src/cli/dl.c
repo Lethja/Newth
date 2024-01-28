@@ -77,18 +77,17 @@ static inline void PrintDirectoryFilesDosLike(Site *site) {
            siteWorkingDirectoryGet(site));
 
     while ((entry = siteDirectoryListingRead(site, dir))) {
-        struct stat st;
+        PlatformFileStat st;
         if (!siteDirectoryListingEntryStat(site, dir, entry, &st)) {
-            /* TODO: Test on all platforms */
-            char timeStr[20];
-            strftime(timeStr, 20, "%Y-%m-%d %H:%M:%S", gmtime(&st.st_mtime));
+            char timeStr[30];
+            platformGetTime(&st.st_mtime, (char *) &timeStr);
 
             if (platformFileStatIsDirectory(&st))
-                printf("%-20s %12s %s\n", timeStr, "<DIR>", entry->name);
+                printf("%-30s %12s %s\n", timeStr, "<DIR>", entry->name);
             else
-                printf("%-20s %12" PF_OFFSET" %s\n", timeStr, st.st_size, entry->name);
+                printf("%-30s %12" PF_OFFSET" %s\n", timeStr, st.st_size, entry->name);
         } else
-            printf("%-20s %12s %s\n", "<\?\?\?>", "<\?\?\?>", entry->name);
+            printf("%-30s %12s %s\n", "<\?\?\?>", "<\?\?\?>", entry->name);
 
         siteDirectoryEntryFree(entry);
     }

@@ -387,10 +387,13 @@ void *platformDirOpen(char *path) {
                     strcat(searchPath, "\\*");
             }
 
+            dir->path = platformRealPath(path);
             dir->error = 0;
             dir->directoryHandle = FindFirstFile(searchPath, &dir->nextEntry);
             if (dir->directoryHandle != INVALID_HANDLE_VALUE)
                 return dir;
+
+            free(dir->path);
         }
     }
 
@@ -403,8 +406,14 @@ void *platformDirOpen(char *path) {
 void platformDirClose(void *dirp) {
     DIR *dir = dirp;
 
-    FindClose(dir->directoryHandle);
+    FindClose(dir->directoryHandle), free(dir->path);
     free(dir);
+}
+
+void *platformDirPath(void *dirp) {
+    DIR *self = dirp;
+
+    return self->path;
 }
 
 void *platformDirRead(void *dirp) {
