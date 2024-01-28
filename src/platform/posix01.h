@@ -33,8 +33,22 @@ typedef FILE *PlatformFile;
 #define SOCKET int
 #define SOCK_BUF_TYPE size_t
 #define STD_FILE_TYPE size_t
-#define PF_OFFSET "ji"
+
+#ifndef PF_OFFSET
+#if _FILE_OFFSET_BITS == 64
+#define PF_OFFSET "lu"
+#else
+#define PF_OFFSET "u"
+#endif /* _FILE_OFFSET_BITS == 64 */
+#endif /* PF_OFFSET */
+
+#ifndef HEX_OFFSET
+#if _FILE_OFFSET_BITS == 64
 #define HEX_OFFSET "lx"
+#else
+#define HEX_OFFSET "x"
+#endif /* _FILE_OFFSET_BITS == 64 */
+#endif /* HEX_OFFSET */
 
 #ifndef SB_DATA_SIZE
 #define SB_DATA_SIZE BUFSIZ
