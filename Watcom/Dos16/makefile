@@ -12,6 +12,24 @@ dl.exe: release doswatb.o event.o hex.o io.o platform.o queue.o site.o s_file.o 
     %write link.lnk LIBF wattcpwl.lib
     wlink @link.lnk
 
+dldbg.exe: debug doswatb.o event.o hex.o io.o platform.o queue.o site.o s_file.o s_http.o uri.o xml.o dl.o
+    %write link.lnk NAME $@
+    %write link.lnk SYS  dos
+    %write link.lnk OPT  st=4608
+    %write link.lnk FILE doswatb.o,event.o,hex.o,io.o,platform.o,queue.o,site.o,s_file.o,s_http.o,uri.o,xml.o,dl.o
+    %write link.lnk LIBP watt32s/lib/
+    %write link.lnk LIBF wattcpwl.lib
+    wlink @link.lnk
+
+dlwlk.exe: walk doswatb.o event.o hex.o io.o platform.o queue.o site.o s_file.o s_http.o uri.o xml.o dl.o
+    %write link.lnk NAME $@
+    %write link.lnk SYS  dos
+    %write link.lnk OPT  st=4608
+    %write link.lnk FILE doswatb.o,event.o,hex.o,io.o,platform.o,queue.o,site.o,s_file.o,s_http.o,uri.o,xml.o,dl.o
+    %write link.lnk LIBP watt32s/lib/
+    %write link.lnk LIBF wattcpwl.lib
+    wlink @link.lnk
+
 th.exe: release doswatb.o event.o hex.o http.o platform.o poll.o routine.o server.o sockbufr.o th.o
     %write link.lnk NAME $@
     %write link.lnk SYS  dos
@@ -39,9 +57,9 @@ thwlk.exe: walk doswatb.o event.o hex.o http.o platform.o poll.o routine.o serve
     %write link.lnk LIBF wattcpwl.lib
     wlink @link.lnk
 
-dbg: .SYMBOLIC thdbg.exe
+dbg: .SYMBOLIC dldbg.exe thdbg.exe
 
-wlk: .SYMBOLIC thwlk.exe
+wlk: .SYMBOLIC dlwlk.exe thwlk.exe
 
 dl.o:
 	$(CC) @flag.lnk -fo="$@" "../../src/cli/dl.c"
