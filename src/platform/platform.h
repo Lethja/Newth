@@ -271,6 +271,14 @@ void *platformDirOpen(char *path);
 void platformDirClose(void *dirp);
 
 /**
+ * Get the path this PlatformDir is pointing to
+ * @param dirp In: A pointer created from platformDirOpen()
+ * @return The path this PlatformDir is referencing its entries from
+ * @remark Do not free or write to the returning string
+ */
+void *platformDirPath(void *dirp);
+
+/**
  * Get the First/Next entry
  * @param dirp In: A pointer created from platformDirOpen()
  * @return A PlatformDirEntry pointer that can be used with platformDirEntry functions

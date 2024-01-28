@@ -488,6 +488,12 @@ void platformDirClose(void *dirp) {
     free(self);
 }
 
+void *platformDirPath(void *dirp) {
+    PlatformDir *self = dirp;
+
+    return self->path;
+}
+
 void *platformDirRead(void *dirp) {
     PlatformDir *self = dirp;
 
@@ -505,16 +511,16 @@ char *platformDirEntryGetName(PlatformDirEntry *entry, size_t *length) {
 }
 
 char platformDirEntryGetStats(PlatformDirEntry *entry, void *dirP, PlatformFileStat *st) {
-    struct dirent *d = entry;
     PlatformDir *dir = dirP;
-    char *entryPath;
+    size_t nLen;
+    char *entryPath, *name = platformDirEntryGetName(entry, &nLen);
 
-    if (!(entryPath = malloc(strlen(dir->path) + strlen(d->d_name) + 2))) {
+    if (!name || !(entryPath = malloc(strlen(dir->path) + nLen + 2))) {
         free(dir);
         return 0;
     }
 
-    platformPathCombine(entryPath, dir->path, d->d_name);
+    platformPathCombine(entryPath, dir->path, name);
 
     if (platformFileStat(entryPath, st)) {
         free(entryPath), free(dir);
@@ -557,7 +563,7 @@ char platformDirEntryIsDirectory(PlatformDirEntry *entry, void *dirP, PlatformFi
         }
     }
 
-    if(s)
+    if (s)
         free(s);
 
     return 0;

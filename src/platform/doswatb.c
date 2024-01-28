@@ -219,6 +219,12 @@ void platformDirClose(void *dirp) {
 #endif
 }
 
+void *platformDirPath(void *dirp) {
+    PlatformDir *self = dirp;
+
+    return self->path;
+}
+
 void *platformDirRead(void *dirp) {
     PlatformDir *self = dirp;
 

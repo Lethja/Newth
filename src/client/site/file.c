@@ -71,10 +71,23 @@ void fileSiteSchemeDirectoryListingClose(void *listing) {
 }
 
 char *fileSiteSchemeDirectoryListingEntryStat(void *listing, void *entry, PlatformFileStat *st) {
-    if (platformDirEntryGetStats(entry, listing, st))
-        return NULL;
+    SiteDirectoryEntry *e = entry;
+    char *entryPath, *p = platformDirPath(listing);
 
-    return strerror(errno);
+    if (!p || !(entryPath = malloc(strlen(e->name) + strlen(p) + 2))) {
+        return 0;
+    }
+
+    platformPathCombine(entryPath, p, e->name);
+
+    if (platformFileStat(entryPath, st)) {
+        free(entryPath);
+        return strerror(errno);
+    }
+
+    free(entryPath);
+
+    return NULL;
 }
 
 #pragma clang diagnostic push
