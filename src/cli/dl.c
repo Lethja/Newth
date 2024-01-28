@@ -87,7 +87,8 @@ static inline void PrintDirectoryFilesDosLike(Site *site) {
                 printf("%-20s %12s %s\n", timeStr, "<DIR>", entry->name);
             else
                 printf("%-20s %" PF_OFFSET" %s\n", timeStr, st.st_size, entry->name);
-        }
+        } else
+            printf("%-20s %12s %s\n", " ", " ", entry->name);
 
         siteDirectoryEntryFree(entry);
     }
