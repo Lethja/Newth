@@ -64,8 +64,9 @@ void platformPathCombine(char *output, const char *path1, const char *path2) {
 
 char *platformRealPath(char *path) {
 #ifdef DJGPP
-    char *abs = malloc(PATH_MAX + 1);
-    _fixpath(path, abs);
+    char *abs;
+    if ((abs = malloc(PATH_MAX + 1)))
+        _fixpath(path, abs);
     return abs;
 #else /* Watcom */
     return _fullpath(NULL, path, _MAX_PATH);
@@ -189,6 +190,7 @@ char platformTimeGetFromHttpStr(const char *str, PlatformTimeStruct *time) {
 void *platformDirOpen(char *path) {
     PlatformDir *self;
     DIR *d = opendir(path);
+    char *p;
 
     if (!d)
         return NULL;
@@ -197,16 +199,13 @@ void *platformDirOpen(char *path) {
         closedir(d);
         return NULL;
     }
-#ifdef DJGPP
-    if(!(self->path = malloc(strlen(path) + 1))) {
-        closedir(d);
-        free(self);
+
+    if (!(p = platformRealPath(path))) {
+        closedir(d), free(self);
         return NULL;
     }
 
-    strcpy(self->path, path);
-#endif
-    self->dir = d;
+    self->dir = d, self->path = p;
     return self;
 }
 
@@ -214,9 +213,7 @@ void platformDirClose(void *dirp) {
     PlatformDir *self = dirp;
 
     closedir(self->dir);
-#ifdef DJGPP
     free(self->path);
-#endif
 }
 
 void *platformDirPath(void *dirp) {
@@ -273,12 +270,13 @@ char platformDirEntryIsDirectory(PlatformDirEntry *entry, void *dirp, PlatformFi
 #ifdef DJGPP
     PlatformDir *pd = dirp;
     if (!st) {
+        struct stat s;
         char tmp1[PATH_MAX], tmp2[PATH_MAX];
         strncpy((char *) &tmp1, pd->path, PATH_MAX);
         platformPathCombine((char *) &tmp2, (char *) &tmp1, entry->d_name);
         _fixpath((char *) &tmp2, (char *) &tmp1);
-        if(!platformFileStat((char *) &tmp1, *st))
-            return platformFileStatIsDirectory(*st);
+        if (!platformFileStat((char *) &tmp1, &s))
+            return platformFileStatIsDirectory(&s);
     } else
         return platformFileStatIsDirectory(*st);
 
@@ -289,14 +287,17 @@ char platformDirEntryIsDirectory(PlatformDirEntry *entry, void *dirp, PlatformFi
 }
 
 char platformDirEntryGetStats(PlatformDirEntry *entry, void *dirP, PlatformFileStat *st) {
-    PlatformDir *pd = dirP;
-    char *tmp1[PATH_MAX], tmp2[PATH_MAX], *p;
+    char *tmp, *p = platformDirPath(dirP);
 
-    strncpy((char *) &tmp1, pd->path, PATH_MAX);
-    platformPathCombine((char *) &tmp2, (char *) &tmp1, entry->d_name);
-    p = platformRealPath(tmp2);
-    if (!platformFileStat((char *) p, st))
-        return 1;
+    if ((tmp = malloc(strlen(p) + strlen(entry->d_name) + 1))) {
+        platformPathCombine(tmp, p, entry->d_name);
+        if (!platformFileStat(tmp, st)) {
+            free(tmp);
+            return 1;
+        }
+
+        free(tmp);
+    }
 
     return 0;
 }

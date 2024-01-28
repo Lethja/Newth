@@ -83,12 +83,12 @@ static inline void PrintDirectoryFilesDosLike(Site *site) {
             char timeStr[20];
             strftime(timeStr, 20, "%Y-%m-%d %H:%M:%S", gmtime(&st.st_mtime));
 
-            if (S_ISDIR(st.st_mode))
+            if (platformFileStatIsDirectory(&st))
                 printf("%-20s %12s %s\n", timeStr, "<DIR>", entry->name);
             else
-                printf("%-20s %" PF_OFFSET" %s\n", timeStr, st.st_size, entry->name);
+                printf("%-20s %12" PF_OFFSET" %s\n", timeStr, st.st_size, entry->name);
         } else
-            printf("%-20s %12s %s\n", " ", " ", entry->name);
+            printf("%-20s %12s %s\n", "<\?\?\?>", "<\?\?\?>", entry->name);
 
         siteDirectoryEntryFree(entry);
     }
