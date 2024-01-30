@@ -8,7 +8,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-static inline void allocStrAppend(char **alloc, char *append) {
+#pragma region Static Helper Functions
+
+/**
+ * Concatenate one string to another or start a new string if required
+ * @param alloc The variable to append a string to
+ * @param append The data to append to 'alloc'
+ */
+static inline void AllocStrAppend(char **alloc, char *append) {
     size_t len2 = strlen(append);
     if (*alloc) {
         size_t len1 = strlen(*alloc);
@@ -21,12 +28,81 @@ static inline void allocStrAppend(char **alloc, char *append) {
     }
 }
 
+/**
+ * Convert a ascii character to its uri escape equivalent
+ * @param ascii In: The character to convert
+ * @param out Out: The hex representation of that ascii character suitable for uris
+ */
 static inline void AsciiToHex(char ascii, char out[8]) {
     if (isalnum(ascii))
         out[0] = ascii, out[1] = '\0';
     else
         sprintf(out, "%%%x", ascii);
 }
+
+/**
+ * Get the filename of a path and convert it for use in a html <a href>
+ * @param path In: The path to convert into a link
+ * @param maxPaths In: The maximum depth a path name can go
+ * @param linkPath Out: The raw data that should be inserted into 'href' attribute of an 'a' element
+ * @param displayPath Out: The raw data that should be inserted inside the 'a' element
+ */
+static inline void
+GetPathName(const char *path, size_t maxPaths, char linkPath[FILENAME_MAX], char displayPath[FILENAME_MAX]) {
+    size_t i, max = strlen(path) + 1, currentPath = 0;
+    memcpy(linkPath, path, max);
+
+    for (i = 0; i < max; ++i) {
+        if (linkPath[i] != '/')
+            continue;
+        else {
+            if (currentPath != maxPaths)
+                ++currentPath;
+            else {
+                if (i)
+                    linkPath[i + 1] = '\0';
+                else {
+                    linkPath[1] = '\0';
+                    memcpy(displayPath, linkPath, 2);
+                    return;
+                }
+
+                break;
+            }
+        }
+    }
+
+    if (linkPath[i - 1] == '\0') {
+        --i;
+        linkPath[i] = '/', linkPath[i + 1] = '\0';
+    }
+
+    if (currentPath) {
+        do
+            --i;
+        while (linkPath[i] != '/');
+
+        memcpy(displayPath, &linkPath[i + 1], max - i);
+    } else
+        memcpy(displayPath, linkPath, max);
+}
+
+/**
+ * Count how many subdirectories exist on this path
+ * @param path The path to calculate
+ * @return The number of path dividers including zero if there are none
+ */
+static inline size_t GetPathCount(const char *path) {
+    size_t r = 0;
+    while (*path != '\0') {
+        if (path[0] == '/' && path[1] != '\0')
+            ++r;
+        ++path;
+    }
+    return r;
+}
+
+#pragma endregion
 
 char convertPathToUrl(char *path, size_t max) {
     size_t i = 0;
@@ -294,23 +370,23 @@ void htmlHeaderWrite(char **buffer, char *title) {
 
     sprintf(tmp, "%s%s%s", h1, title, h2);
 
-    allocStrAppend(buffer, tmp);
+    AllocStrAppend(buffer, tmp);
     free(tmp);
 }
 
 void htmlListStart(char **buffer) {
     const char *listStart = "\t\t<UL>\n";
-    allocStrAppend(buffer, (char *) listStart);
+    AllocStrAppend(buffer, (char *) listStart);
 }
 
 void htmlListEnd(char **buffer) {
     const char *listEnd = "\t\t</UL>\n";
-    allocStrAppend(buffer, (char *) listEnd);
+    AllocStrAppend(buffer, (char *) listEnd);
 }
 
 void htmlFooterWrite(char **buffer) {
     const char *htmlEnd = "\t</BODY>\n" "</HTML>\n";
-    allocStrAppend(buffer, (char *) htmlEnd);
+    AllocStrAppend(buffer, (char *) htmlEnd);
 }
 
 void htmlListWritePathLink(char **buffer, char *webPath) {
@@ -338,75 +414,25 @@ void htmlListWritePathLink(char **buffer, char *webPath) {
 
     if ((tmp = malloc(total + 1))) {
         sprintf(tmp, "\t\t\t<LI><A HREF=\"%s\">%s</A></LI>\n", linkPath, filePath + 1);
-        allocStrAppend(buffer, tmp), free(tmp);
+        AllocStrAppend(buffer, tmp), free(tmp);
     }
-}
-
-static inline void
-getPathName(const char *path, size_t maxPaths, char linkPath[FILENAME_MAX], char displayPath[FILENAME_MAX]) {
-    size_t i, max = strlen(path) + 1, currentPath = 0;
-    memcpy(linkPath, path, max);
-
-    for (i = 0; i < max; ++i) {
-        if (linkPath[i] != '/')
-            continue;
-        else {
-            if (currentPath != maxPaths)
-                ++currentPath;
-            else {
-                if (i)
-                    linkPath[i + 1] = '\0';
-                else {
-                    linkPath[1] = '\0';
-                    memcpy(displayPath, linkPath, 2);
-                    return;
-                }
-
-                break;
-            }
-        }
-    }
-
-    if (linkPath[i - 1] == '\0') {
-        --i;
-        linkPath[i] = '/', linkPath[i + 1] = '\0';
-    }
-
-    if (currentPath) {
-        do
-            --i;
-        while (linkPath[i] != '/');
-
-        memcpy(displayPath, &linkPath[i + 1], max - i);
-    } else
-        memcpy(displayPath, linkPath, max);
-}
-
-static inline size_t getPathCount(const char *path) {
-    size_t r = 0;
-    while (*path != '\0') {
-        if (path[0] == '/' && path[1] != '\0')
-            ++r;
-        ++path;
-    }
-    return r;
 }
 
 void htmlBreadCrumbWrite(char **buffer, const char *webPath) {
-    size_t i, max = getPathCount(webPath) + 1;
+    size_t i, max = GetPathCount(webPath) + 1;
 
-    allocStrAppend(buffer, "\t\t<DIV>\n");
+    AllocStrAppend(buffer, "\t\t<DIV>\n");
 
     for (i = 0; i < max; ++i) {
         const char *h1 = "\t\t\t<A HREF=\"", *h2 = "\">", *h3 = "</A>\n";
         char internalBuffer[20 + FILENAME_MAX * 2], linkPath[FILENAME_MAX], displayPath[FILENAME_MAX];
-        getPathName(webPath, i, linkPath, displayPath);
+        GetPathName(webPath, i, linkPath, displayPath);
         convertPathToUrl(linkPath, FILENAME_MAX);
         sprintf(internalBuffer, "%s%s%s%s%s", h1, linkPath, h2, displayPath, h3);
-        allocStrAppend(buffer, internalBuffer);
+        AllocStrAppend(buffer, internalBuffer);
     }
 
-    allocStrAppend(buffer, "\t\t</DIV>\n\t\t<HR>\n");
+    AllocStrAppend(buffer, "\t\t</DIV>\n\t\t<HR>\n");
 }
 
 size_t httpBodyWriteChunk(SocketBuffer *socketBuffer, char **buffer) {
