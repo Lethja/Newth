@@ -60,15 +60,16 @@ size_t DirectoryRoutineContinue(Routine *self) {
                     strcpy(buffer, emptyDirectory);
             }
 
-            if (!buffer)
-                return 0;
+            /* TODO: Ensure httpBodyWriteChunkEnding() always runs successfully so long as socket is valid */
 
             htmlListEnd(&buffer);
             htmlFooterWrite(&buffer);
-            if (httpBodyWriteChunk(&self->socketBuffer, &buffer))
+            if (buffer) {
+                if (httpBodyWriteChunk(&self->socketBuffer, &buffer))
+                    httpBodyWriteChunkEnding(&self->socketBuffer);
+                free(buffer);
+            } else
                 httpBodyWriteChunkEnding(&self->socketBuffer);
-
-            free(buffer);
 
             socketBufferFlush(&self->socketBuffer);
 
