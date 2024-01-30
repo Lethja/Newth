@@ -16,7 +16,9 @@ size_t DirectoryRoutineContinue(Routine *self) {
         entry = platformDirRead(self->type.dir.directory);
         if (entry) {
             size_t entryLen;
-            char pathBuf[BUFSIZ], *entryName;
+            const char *entryName;
+            char pathBuf[BUFSIZ];
+            PlatformFileStat st;
 
             if (platformDirEntryIsHidden(entry)) {
                 --i;
@@ -24,6 +26,7 @@ size_t DirectoryRoutineContinue(Routine *self) {
             }
 
             entryName = platformDirEntryGetName(entry, &entryLen);
+            platformDirEntryGetStats(entry, self->type.dir.directory, &st);
 
             if (pathLen + entryLen + 3 < BUFSIZ) {
                 memcpy(pathBuf, self->webPath, pathLen);
@@ -78,13 +81,11 @@ size_t DirectoryRoutineContinue(Routine *self) {
     return bytesWrite;
 }
 
-Routine DirectoryRoutineNew(SocketBuffer socketBuffer, DIR *dir, const char *webPath, char *rootPath) {
+Routine DirectoryRoutineNew(SocketBuffer socketBuffer, PlatformDir *dir, const char *webPath, char *rootPath) {
     size_t i;
-
     Routine self;
-    self.type.dir.directory = dir, self.type.dir.count = 0, self.type.dir.rootPath = rootPath, self.state =
-            TYPE_ROUTINE_DIR | STATE_FLUSH;
 
+    self.type.dir.directory = dir, self.type.dir.count = 0, self.state = TYPE_ROUTINE_DIR | STATE_FLUSH;
     self.socketBuffer = socketBuffer;
 
     for (i = 0; i < FILENAME_MAX; ++i) {

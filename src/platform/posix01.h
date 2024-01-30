@@ -26,6 +26,11 @@ typedef struct stat PlatformFileStat;
 typedef off_t PlatformFileOffset;
 typedef FILE *PlatformFile;
 
+typedef struct PlatformDir {
+    DIR *dir;
+    char *path;
+} PlatformDir;
+
 #define PLATFORM_SELECT_MAX_TIMEOUT 60
 
 #define SOCKIN6 sockaddr_in6

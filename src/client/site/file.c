@@ -72,7 +72,8 @@ void fileSiteSchemeDirectoryListingClose(void *listing) {
 
 char *fileSiteSchemeDirectoryListingEntryStat(void *listing, void *entry, PlatformFileStat *st) {
     SiteDirectoryEntry *e = entry;
-    char *entryPath, *p = platformDirPath(listing);
+    const char *p = platformDirPath(listing);
+    char *entryPath;
 
     if (!p || !(entryPath = malloc(strlen(e->name) + strlen(p) + 2))) {
         return 0;
@@ -105,7 +106,7 @@ void *fileSiteSchemeDirectoryListingOpen(FileSite *self, char *path) {
 #pragma clang diagnostic pop
 
 void *fileSiteSchemeDirectoryListingRead(void *listing) {
-    char *name;
+    const char *name;
     size_t nameLen;
     PlatformDirEntry *entry;
     SiteDirectoryEntry *siteEntry;

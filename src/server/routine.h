@@ -23,8 +23,7 @@ typedef struct FileRoutine {
 
 typedef struct DirectoryRoutine {
     size_t count;
-    DIR *directory;
-    char *rootPath;
+    PlatformDir *directory;
 } DirectoryRoutine;
 
 typedef struct Routine {
@@ -44,7 +43,7 @@ typedef struct RoutineArray {
 
 size_t DirectoryRoutineContinue(Routine *self);
 
-Routine DirectoryRoutineNew(SocketBuffer socket, DIR *dir, const char *webPath, char *rootPath);
+Routine DirectoryRoutineNew(SocketBuffer socket, PlatformDir *dir, const char *webPath, char *rootPath);
 
 void DirectoryRoutineFree(DirectoryRoutine *self);
 

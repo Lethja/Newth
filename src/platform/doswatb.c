@@ -11,11 +11,6 @@
 
 #define MAX_LISTEN 2
 
-typedef struct PlatformDir {
-    DIR *dir;
-    char *path;
-} PlatformDir;
-
 char platformShouldExit(void) {
     if (_bios_keybrd(1)) {
         unsigned short key = _bios_keybrd(0);
@@ -187,7 +182,7 @@ char platformTimeGetFromHttpStr(const char *str, PlatformTimeStruct *time) {
     return 1;
 }
 
-void *platformDirOpen(char *path) {
+PlatformDir *platformDirOpen(char *path) {
     PlatformDir *self;
     DIR *d = opendir(path);
     char *p;
@@ -209,26 +204,20 @@ void *platformDirOpen(char *path) {
     return self;
 }
 
-void platformDirClose(void *dirp) {
-    PlatformDir *self = dirp;
-
+void platformDirClose(PlatformDir *self) {
     closedir(self->dir);
     free(self->path);
 }
 
-void *platformDirPath(void *dirp) {
-    PlatformDir *self = dirp;
-
+const char *platformDirPath(PlatformDir *self) {
     return self->path;
 }
 
-void *platformDirRead(void *dirp) {
-    PlatformDir *self = dirp;
-
+PlatformDirEntry *platformDirRead(PlatformDir *self) {
     return readdir(self->dir);
 }
 
-char *platformDirEntryGetName(PlatformDirEntry *entry, size_t *length) {
+const char *platformDirEntryGetName(PlatformDirEntry *entry, size_t *length) {
     *length = strlen(entry->d_name);
     return entry->d_name;
 }
@@ -266,7 +255,7 @@ char platformDirEntryIsHidden(PlatformDirEntry *entry) {
 #endif
 }
 
-char platformDirEntryIsDirectory(PlatformDirEntry *entry, void *dirp, PlatformFileStat **st) {
+char platformDirEntryIsDirectory(PlatformDirEntry *entry, PlatformDir *dirp, PlatformFileStat **st) {
 #ifdef DJGPP
     PlatformDir *pd = dirp;
     if (!st) {
@@ -286,8 +275,9 @@ char platformDirEntryIsDirectory(PlatformDirEntry *entry, void *dirp, PlatformFi
 #endif
 }
 
-char platformDirEntryGetStats(PlatformDirEntry *entry, void *dirP, PlatformFileStat *st) {
-    char *tmp, *p = platformDirPath(dirP);
+char platformDirEntryGetStats(PlatformDirEntry *entry, PlatformDir *dirP, PlatformFileStat *st) {
+    const char *p = platformDirPath(dirP);
+    char *tmp;
 
     if ((tmp = malloc(strlen(p) + strlen(entry->d_name) + 1))) {
         platformPathCombine(tmp, p, entry->d_name);

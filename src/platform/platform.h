@@ -262,29 +262,29 @@ int platformTimeStructEquals(PlatformTimeStruct *t1, PlatformTimeStruct *t2);
  * @return NULL on error, else a directory struct pointer that can be used on other platformDir functions
  * @remark Returned result must be freed with platformDirClose()
  */
-void *platformDirOpen(char *path);
+PlatformDir *platformDirOpen(char *path);
 
 /**
  * Free the pointer created by platformDirOpen()
- * @param dirp In: A pointer created from platformDirOpen() to free
+ * @param self In: A pointer created from platformDirOpen() to free
  */
-void platformDirClose(void *dirp);
+void platformDirClose(PlatformDir *self);
 
 /**
  * Get the path this PlatformDir is pointing to
- * @param dirp In: A pointer created from platformDirOpen()
+ * @param self In: A pointer created from platformDirOpen()
  * @return The path this PlatformDir is referencing its entries from
  * @remark Do not free or write to the returning string
  */
-void *platformDirPath(void *dirp);
+const char *platformDirPath(PlatformDir *self);
 
 /**
  * Get the First/Next entry
- * @param dirp In: A pointer created from platformDirOpen()
+ * @param self In: A pointer created from platformDirOpen()
  * @return A PlatformDirEntry pointer that can be used with platformDirEntry functions
  * @remark Do not free or write to the returning pointer struct
  */
-void *platformDirRead(void *dirp);
+PlatformDirEntry *platformDirRead(PlatformDir *self);
 
 /**
  * Get the name of the file/folder in the entry
@@ -293,16 +293,16 @@ void *platformDirRead(void *dirp);
  * @return A string containing the name of the file or folder
  * @remark Do not free returned value, copy value if required beyond entry scope
  */
-char *platformDirEntryGetName(PlatformDirEntry *entry, size_t *length);
+const char *platformDirEntryGetName(PlatformDirEntry *entry, size_t *length);
 
 /**
  * Get the file status of the file/folder in the entry
  * @param entry In: The entry to get the filename from
- * @param dirP In: A pointer created from platformDirOpen() and used by platformDirRead() to get the entry variable
+ * @param self In: A pointer created from platformDirOpen() and used by platformDirRead() to get the entry variable
  * @param st Out: A pointer to a struct to populate with the entries meta information
  * @return zero on failure, other when successful
  */
-char platformDirEntryGetStats(PlatformDirEntry *entry, void *dirP, PlatformFileStat *st);
+char platformDirEntryGetStats(PlatformDirEntry *entry, PlatformDir *self, PlatformFileStat *st);
 
 /**
  * Check if entry is hidden file/folder from the platforms point of view
@@ -314,11 +314,11 @@ char platformDirEntryIsHidden(PlatformDirEntry *entry);
 /**
  * Check if entry is a Directory (aka Folder)
  * @param entry In: The entry to check if the file/folder is a folder
- * @param dirP In: A pointer created from platformDirOpen() and used by platformDirRead() to get the entry variable
+ * @param self In: A pointer created from platformDirOpen() and used by platformDirRead() to get the entry variable
  * @param st In-Out-Optional: A pointer to a struct that may already contain entry stats (to prevent unnecessary lookup)
  * @return Zero if not a directory/folder, other if it is a directory/folder
  */
-char platformDirEntryIsDirectory(PlatformDirEntry *entry, void *dirP, PlatformFileStat **st);
+char platformDirEntryIsDirectory(PlatformDirEntry *entry, PlatformDir *self, PlatformFileStat **st);
 
 /**
  * Get the status structure of a file

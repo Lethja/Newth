@@ -21,7 +21,7 @@ void noAction(int signal) {}
 char handleDir(SOCKET clientSocket, char *webPath, char *absolutePath, char type, PlatformFileStat *st) {
     char *buf = NULL;
     SocketBuffer socketBuffer = socketBufferNew(clientSocket, 0);
-    DIR *dir = platformDirOpen(absolutePath);
+    PlatformDir *dir = platformDirOpen(absolutePath);
 
     if (dir == NULL)
         return httpHeaderHandleError(&socketBuffer, webPath, httpGet, 404);

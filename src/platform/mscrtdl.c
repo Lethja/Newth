@@ -367,11 +367,11 @@ AdapterAddressArray *platformGetAdapterInformation(sa_family_t family) {
 
 #pragma region Directory Functions
 
-void *platformDirOpen(char *path) {
-    DIR *dir = malloc(sizeof(DIR));
+PlatformDir *platformDirOpen(char *path) {
+    PlatformDir *self = malloc(sizeof(PlatformDir));
     size_t len;
 
-    if (dir && path) {
+    if (self && path) {
         len = strlen(path);
         if (len > 0 && len < FILENAME_MAX - 3) {
             size_t searchPathLen;
@@ -387,50 +387,44 @@ void *platformDirOpen(char *path) {
                     strcat(searchPath, "\\*");
             }
 
-            dir->path = platformRealPath(path);
-            dir->error = 0;
-            dir->directoryHandle = FindFirstFile(searchPath, &dir->nextEntry);
-            if (dir->directoryHandle != INVALID_HANDLE_VALUE)
-                return dir;
+            self->path = platformRealPath(path);
+            self->error = 0;
+            self->directoryHandle = FindFirstFile(searchPath, &self->nextEntry);
+            if (self->directoryHandle != INVALID_HANDLE_VALUE)
+                return self;
 
-            free(dir->path);
+            free(self->path);
         }
     }
 
-    if (dir)
-        free(dir);
+    if (self)
+        free(self);
 
     return NULL;
 }
 
-void platformDirClose(void *dirp) {
-    DIR *dir = dirp;
-
-    FindClose(dir->directoryHandle), free(dir->path);
-    free(dir);
+void platformDirClose(PlatformDir *self) {
+    FindClose(self->directoryHandle), free(self->path);
+    free(self);
 }
 
-void *platformDirPath(void *dirp) {
-    DIR *self = dirp;
-
+const char *platformDirPath(PlatformDir *self) {
     return self->path;
 }
 
-void *platformDirRead(void *dirp) {
-    DIR *dir = dirp;
-
-    memcpy(&dir->lastEntry, &dir->nextEntry, sizeof(PlatformDirEntry));
-    switch (dir->error) {
+PlatformDirEntry *platformDirRead(PlatformDir *self) {
+    memcpy(&self->lastEntry, &self->nextEntry, sizeof(PlatformDirEntry));
+    switch (self->error) {
         case 0:
-            if (!FindNextFile(dir->directoryHandle, &dir->nextEntry))
-                ++dir->error;
-            return &dir->lastEntry;
+            if (!FindNextFile(self->directoryHandle, &self->nextEntry))
+                ++self->error;
+            return &self->lastEntry;
         default:
             return NULL;
     }
 }
 
-char *platformDirEntryGetName(PlatformDirEntry *entry, size_t *length) {
+const char *platformDirEntryGetName(PlatformDirEntry *entry, size_t *length) {
     if (entry) {
         if (length)
             *length = strlen(entry->cFileName);
@@ -457,19 +451,18 @@ char platformDirEntryIsHidden(PlatformDirEntry *entry) {
     return 1;
 }
 
-char platformDirEntryGetStats(PlatformDirEntry *entry, void *dirP, PlatformFileStat *st) {
-    DIR *dir = dirP;
+char platformDirEntryGetStats(PlatformDirEntry *entry, PlatformDir *self, PlatformFileStat *st) {
     char *entryPath;
 
-    if (!(entryPath = malloc(strlen(dir->path) + strlen(entry->cFileName) + 2))) {
-        free(dir);
+    if (!(entryPath = malloc(strlen(self->path) + strlen(entry->cFileName) + 2))) {
+        free(self);
         return 0;
     }
 
-    platformPathCombine(entryPath, dir->path, entry->cFileName);
+    platformPathCombine(entryPath, self->path, entry->cFileName);
 
     if (platformFileStat(entryPath, st)) {
-        free(entryPath), free(dir);
+        free(entryPath), free(self);
         return 0;
     }
 
@@ -481,7 +474,7 @@ char platformDirEntryGetStats(PlatformDirEntry *entry, void *dirP, PlatformFileS
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "UnusedParameter"
 
-char platformDirEntryIsDirectory(PlatformDirEntry *entry, void *dirP, PlatformFileStat **st) {
+char platformDirEntryIsDirectory(PlatformDirEntry *entry, PlatformDir *self, PlatformFileStat **st) {
     if (entry)
         return (char) ((entry->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) > 0);
     return 0;

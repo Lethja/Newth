@@ -94,11 +94,6 @@ static SOCKET *BindAllPortsManually(sa_family_t family, char *ports, SOCKET *max
 
 #pragma endregion
 
-typedef struct PlatformDir {
-    DIR *dir;
-    char *path;
-} PlatformDir;
-
 void platformPathCombine(char *output, const char *path1, const char *path2) {
     const char *pathDivider = "/";
     size_t len = strlen(path1), idx = len - 1;
@@ -457,7 +452,7 @@ char platformTimeGetFromHttpStr(const char *str, PlatformTimeStruct *time) {
     return 1;
 }
 
-void *platformDirOpen(char *path) {
+PlatformDir *platformDirOpen(char *path) {
     PlatformDir *self;
     DIR *d = opendir(path);
 
@@ -480,27 +475,21 @@ void *platformDirOpen(char *path) {
     return self;
 }
 
-void platformDirClose(void *dirp) {
-    PlatformDir *self = dirp;
-
+void platformDirClose(PlatformDir *self) {
     closedir(self->dir);
     free(self->path);
     free(self);
 }
 
-void *platformDirPath(void *dirp) {
-    PlatformDir *self = dirp;
-
+const char *platformDirPath(PlatformDir *self) {
     return self->path;
 }
 
-void *platformDirRead(void *dirp) {
-    PlatformDir *self = dirp;
-
+PlatformDirEntry *platformDirRead(PlatformDir *self) {
     return readdir(self->dir);
 }
 
-char *platformDirEntryGetName(PlatformDirEntry *entry, size_t *length) {
+const char *platformDirEntryGetName(PlatformDirEntry *entry, size_t *length) {
     struct dirent *d = entry;
     char *r = d->d_name;
 
@@ -510,10 +499,11 @@ char *platformDirEntryGetName(PlatformDirEntry *entry, size_t *length) {
     return r;
 }
 
-char platformDirEntryGetStats(PlatformDirEntry *entry, void *dirP, PlatformFileStat *st) {
+char platformDirEntryGetStats(PlatformDirEntry *entry, PlatformDir *dirP, PlatformFileStat *st) {
     PlatformDir *dir = dirP;
     size_t nLen;
-    char *entryPath, *name = platformDirEntryGetName(entry, &nLen);
+    const char *name = platformDirEntryGetName(entry, &nLen);
+    char *entryPath;
 
     if (!name || !(entryPath = malloc(strlen(dir->path) + nLen + 2))) {
         free(dir);
@@ -540,7 +530,7 @@ char platformDirEntryIsHidden(PlatformDirEntry *entry) {
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "UnusedParameter"
 
-char platformDirEntryIsDirectory(PlatformDirEntry *entry, void *dirP, PlatformFileStat **st) {
+char platformDirEntryIsDirectory(PlatformDirEntry *entry, PlatformDir *dir, PlatformFileStat **st) {
 #pragma clang diagnostic pop
     struct dirent *d = entry;
     struct stat *s;
@@ -556,7 +546,7 @@ char platformDirEntryIsDirectory(PlatformDirEntry *entry, void *dirP, PlatformFi
         s = *st;
         return S_ISDIR(s->st_mode);
     } else if ((s = malloc(sizeof(struct stat)))) {
-        if (platformDirEntryGetStats(entry, dirP, s)) {
+        if (platformDirEntryGetStats(entry, dir, s)) {
             char mode = S_ISDIR(s->st_mode);
             free(s);
             return mode;

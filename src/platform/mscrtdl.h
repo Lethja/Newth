@@ -102,19 +102,19 @@ typedef struct sockaddr_in6_nt6 {
 
 #define in_addr_t unsigned long
 
-typedef struct winSockNativeStat {
+typedef struct PlatformFileStat {
     PlatformFileOffset st_size;
     unsigned int st_mode;
     FILETIME st_mtime;
 } PlatformFileStat;
 
-typedef struct winSockNativeDir {
+typedef struct PlatformDir {
     char *path;
     PlatformDirEntry nextEntry;
     PlatformDirEntry lastEntry;
     HANDLE directoryHandle;
     int error;
-} DIR;
+} PlatformDir;
 
 #ifndef AF_INET6
 #define AF_INET6 23
