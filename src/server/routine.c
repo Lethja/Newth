@@ -82,7 +82,7 @@ size_t DirectoryRoutineContinue(Routine *self) {
     return bytesWrite;
 }
 
-Routine DirectoryRoutineNew(SocketBuffer socketBuffer, PlatformDir *dir, const char *webPath, char *rootPath) {
+Routine DirectoryRoutineNew(SocketBuffer socketBuffer, PlatformDir *dir, const char *webPath) {
     size_t i;
     Routine self;
 

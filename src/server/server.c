@@ -59,7 +59,7 @@ char handleDir(SOCKET clientSocket, char *webPath, char *absolutePath, char type
     socketBufferFlush(&socketBuffer);
     free(buf);
 
-    RoutineArrayAdd(&globalRoutineArray, DirectoryRoutineNew(socketBuffer, dir, webPath, globalRootPath));
+    RoutineArrayAdd(&globalRoutineArray, DirectoryRoutineNew(socketBuffer, dir, webPath));
 
     return 0;
 
