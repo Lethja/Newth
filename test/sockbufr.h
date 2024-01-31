@@ -1,7 +1,6 @@
 #ifndef NEW_TH_TEST_SOCKET_BUFFER_H
 #define NEW_TH_TEST_SOCKET_BUFFER_H
 
-#include "common.h"
 #include "../src/server/sockbufr.h"
 #include <errno.h>
 #include <string.h>
