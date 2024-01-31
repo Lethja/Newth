@@ -125,6 +125,7 @@ Run the configuration with the `./configure` script. the configuration script ha
 |-------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `--enable-iiface` | Manually bind a socket to every network adapter at the application level. This option should only be enabled when targeting operating systems that can't do this internally; possible but rare |
 | `--enable-poll`   | Use `poll()` network API instead of `select()`                                                                                                                                                 |
+| `--with-off_t`    | Set `_FILE_OFFSET_BITS`, defaults to `64`. `32` should only be set in conjunction with `--disable-largefile` and when this build will never need to handle files over ~2GB in size             |
 
 > Tip: Autoconf configurations are persistent (even after shutdowns).
 > You can run `./config.status --config` to see the current setup configuration
