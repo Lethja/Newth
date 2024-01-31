@@ -56,8 +56,8 @@ if CMOCKA
     unittest_LDFLAGS = ${cmocka_LIBS} \
 		-Wl,--wrap=malloc,--wrap=calloc,--wrap=realloc,--wrap=free,--wrap=connect,--wrap=recv,--wrap=send,--wrap=fclose
 
-    unittest_SOURCES = test/test.c test/fetch.h test/mock.h test/common.h test/platform.h \
-		test/request.h test/site.h test/sockbufr.h
+    unittest_SOURCES = test/test.c test/common.h test/fetch.h test/mock.h test/platform.h \
+		test/queue.h test/request.h test/site.h test/sockbufr.h test/xml.h
 
     unittest_SOURCES += src/platform/mockput.c src/platform/mockput.h \
         src/client/io.c src/client/io.h \
