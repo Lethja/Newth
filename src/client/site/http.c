@@ -410,7 +410,7 @@ static inline void GetAllHeaders(const char *header, HttpResponseHeader *headerR
     ioHttpResponseHeaderFind(header, "Transfer-Encoding", &v);
     if (v) {
         if (platformStringFindWord(v, "Chunked"))
-            headerResponse->options |= SA_STATE_ALT_MODE;
+            headerResponse->options |= SA_PROTOCOL_ALT_MODE;
         free(v);
     } else
         HttpGetContentLength(header, &headerResponse->length);
@@ -617,7 +617,50 @@ void httpSiteSchemeDirectoryListingClose(void *listing) {
 }
 
 char *httpSiteSchemeDirectoryListingEntryStat(void *listing, void *entry, PlatformFileStat *st) {
-    return "Not yet implemented";
+    HttpSiteDirectoryListing *l = listing;
+    SiteDirectoryEntry *e = entry;
+
+    char *entryPath, *request, *response;
+    HttpResponseHeader header;
+    UriDetails details;
+
+    details = uriDetailsNewFrom(l->fullUri);
+    if (!details.path) {
+        uriDetailsFree(&details);
+        return "Uri was not understood";
+    }
+
+    if (!(entryPath = malloc(strlen(details.path) + strlen(e->name) + 2))) {
+        uriDetailsFree(&details);
+        return strerror(errno);
+    }
+
+    platformPathCombine(entryPath, details.path, e->name), uriDetailsFree(&details);
+    if (!(request = ioHttpRequestGenerateHead(entryPath, NULL))) {
+        free(entryPath);
+        return strerror(errno);
+    }
+
+    free(entryPath);
+    if ((WakeUpAndSend((HttpSite *) l->site, request, strlen(request)))) {
+        free(request);
+        return strerror(platformSocketGetLastError());
+    }
+
+    free(request);
+    if ((ioHttpResponseHeaderRead(&l->site->socket, &response)))
+        return strerror(platformSocketGetLastError());
+
+    memset(&header, 0, sizeof(HttpResponseHeader));
+    GetAllHeaders(response, &header);
+
+    st->st_size = header.length;
+    st->st_mode = e->isDirectory ? S_IFDIR : S_IFREG;
+
+    if (header.modifiedDate)
+        memcpy(&st->st_mtim, header.modifiedDate, sizeof(PlatformTimeStruct)), free(header.modifiedDate);
+
+    return NULL;
 }
 
 void *httpSiteSchemeDirectoryListingOpen(HttpSite *self, char *path) {

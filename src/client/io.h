@@ -11,14 +11,15 @@ typedef struct HttpResponseHeader {
     int options; /* User options to change the behaviour of this download */
 } HttpResponseHeader;
 
-enum SocketAddressState {
+enum SocketAddressFlags {
     SA_STATE_QUEUED,
     SA_STATE_CONNECTED,
     SA_STATE_FAILED,
     SA_STATE_FINISHED,
     SA_STATE_TRY_LATER,
-    SA_STATE_ALT_MODE,
-    SA_STATE_ENCRYPTION
+    SA_PROTOCOL_ENCRYPTION,
+    SA_PROTOCOL_ALT_MODE,
+    SA_PROTOCOL_DIRECTORY
 };
 
 typedef struct SocketAddress {
@@ -46,7 +47,7 @@ extern char *ioCreateSocketFromSocketAddress(SocketAddress *self, SOCKET *sock);
  * Generate a GET HTTP 1.1 request ready for sending to a remote server
  * @param path In: The path to request
  * @param extra In: The raw string to append after the path or NULL
- * @return NULL on success, user friendly error message otherwise
+ * @return A string of the GET request on success, NULL on failure
  */
 extern char *ioHttpRequestGenerateGet(const char *path, const char *extra);
 
@@ -54,7 +55,7 @@ extern char *ioHttpRequestGenerateGet(const char *path, const char *extra);
  * Generate a HEAD HTTP 1.1 request ready for sending to a remote server
  * @param path In: The path to request
  * @param extra In: The raw string to append after the path or NULL
- * @return NULL on success, user friendly error message otherwise
+ * @return A string of the HEAD request on success, NULL on failure
  */
 extern char *ioHttpRequestGenerateHead(const char *path, const char *extra);
 
@@ -63,7 +64,7 @@ extern char *ioHttpRequestGenerateHead(const char *path, const char *extra);
  * @param type In: The type to request
  * @param path In: The path to request
  * @param extra In: The raw string to append after the path or NULL
- * @return NULL on success, user friendly error message otherwise
+ * @return A string of the HTTP request on success, NULL on failure
  */
 extern char *ioHttpRequestGenerateSend(const char *type, const char *path, const char *extra);
 
