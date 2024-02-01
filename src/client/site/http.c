@@ -152,7 +152,7 @@ static inline char LinkPathIsDirectSub(const UriDetails *path, const char *link)
         return 0;
     }
 
-    /* Not choice to but trust this is a relative path */
+    /* No choice to but trust this is a relative path */
     return 1;
 }
 
@@ -440,7 +440,7 @@ static inline void GetAllHeaders(const char *header, HttpResponseHeader *headerR
  * @param details The hostname to generate for
  * @return A host request header to use on success, otherwise NULL
  */
-static inline char *GenerateHostHeader(char **self, UriDetails *details) {
+static inline const char *GenerateHostHeader(char **self, UriDetails *details) {
     size_t len = 8; /* Host: \r\n */
     char *tmp;
     if (!details->host)
@@ -451,37 +451,17 @@ static inline char *GenerateHostHeader(char **self, UriDetails *details) {
         return strerror(errno);
 
     sprintf(tmp, "Host: %s" HTTP_EOL, details->host);
-    if (!*self)
-        *self = tmp;
-    else {
-        if (platformHeapResize((void **) self, sizeof(char), strlen(*self) + strlen(tmp) + 1)) {
-            free(tmp);
-            return strerror(errno);
-        }
-
-        strcat(*self, tmp), free(tmp);
-    }
-
-    return NULL;
+    return platformHeapStringAppendAndFree(self, tmp);
 }
 
-static inline char *GenerateConnectionHeader(char **self) {
+/**
+ * Generate a HTTP keep alive request header
+ * @param self The header string to concatenate onto the end of
+ * @return NULL on success, user friendly error message otherwise
+ */
+static inline const char *GenerateConnectionHeader(char **self) {
     const char *h = "Connection: Keep-Alive" HTTP_EOL;
-
-    if (!*self) {
-        if (!(*self = malloc(strlen(h) + 1)))
-            return strerror(errno);
-
-        strcpy(*self, h);
-    } else {
-        if (platformHeapResize((void **) self, sizeof(char), strlen(*self) + strlen(h) + 1)) {
-            return strerror(errno);
-        }
-
-        strcat(*self, h);
-    }
-
-    return NULL;
+    return platformHeapStringAppend(self, h);
 }
 
 #pragma endregion

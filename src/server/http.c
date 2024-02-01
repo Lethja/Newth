@@ -11,24 +11,6 @@
 #pragma region Static Helper Functions
 
 /**
- * Concatenate one string to another or start a new string if required
- * @param alloc The variable to append a string to
- * @param append The data to append to 'alloc'
- */
-static inline void AllocStrAppend(char **alloc, char *append) {
-    size_t len2 = strlen(append);
-    if (*alloc) {
-        size_t len1 = strlen(*alloc);
-        platformHeapResize((void **) alloc, 1, len1 + len2 + 1);
-        if (*alloc)
-            strncat(*alloc, append, len2 + 1);
-    } else {
-        if ((*alloc = malloc(len2 + 1)))
-            strncpy(*alloc, append, len2 + 1);
-    }
-}
-
-/**
  * Convert a ascii character to its uri escape equivalent
  * @param ascii In: The character to convert
  * @param out Out: The hex representation of that ascii character suitable for uris
@@ -369,24 +351,22 @@ void htmlHeaderWrite(char **buffer, char *title) {
         return;
 
     sprintf(tmp, "%s%s%s", h1, title, h2);
-
-    AllocStrAppend(buffer, tmp);
-    free(tmp);
+    platformHeapStringAppendAndFree(buffer, tmp);
 }
 
 void htmlListStart(char **buffer) {
     const char *listStart = "\t\t<UL>\n";
-    AllocStrAppend(buffer, (char *) listStart);
+    platformHeapStringAppend(buffer, listStart);
 }
 
 void htmlListEnd(char **buffer) {
     const char *listEnd = "\t\t</UL>\n";
-    AllocStrAppend(buffer, (char *) listEnd);
+    platformHeapStringAppend(buffer, listEnd);
 }
 
 void htmlFooterWrite(char **buffer) {
     const char *htmlEnd = "\t</BODY>\n" "</HTML>\n";
-    AllocStrAppend(buffer, (char *) htmlEnd);
+    platformHeapStringAppend(buffer, htmlEnd);
 }
 
 void htmlListWritePathLink(char **buffer, char *webPath) {
@@ -414,14 +394,14 @@ void htmlListWritePathLink(char **buffer, char *webPath) {
 
     if ((tmp = malloc(total + 1))) {
         sprintf(tmp, "\t\t\t<LI><A HREF=\"%s\">%s</A></LI>\n", linkPath, filePath + 1);
-        AllocStrAppend(buffer, tmp), free(tmp);
+        platformHeapStringAppendAndFree(buffer, tmp);
     }
 }
 
 void htmlBreadCrumbWrite(char **buffer, const char *webPath) {
     size_t i, max = GetPathCount(webPath) + 1;
 
-    AllocStrAppend(buffer, "\t\t<DIV>\n");
+    platformHeapStringAppend(buffer, "\t\t<DIV>\n");
 
     for (i = 0; i < max; ++i) {
         const char *h1 = "\t\t\t<A HREF=\"", *h2 = "\">", *h3 = "</A>\n";
@@ -429,10 +409,10 @@ void htmlBreadCrumbWrite(char **buffer, const char *webPath) {
         GetPathName(webPath, i, linkPath, displayPath);
         convertPathToUrl(linkPath, FILENAME_MAX);
         sprintf(internalBuffer, "%s%s%s%s%s", h1, linkPath, h2, displayPath, h3);
-        AllocStrAppend(buffer, internalBuffer);
+        platformHeapStringAppend(buffer, internalBuffer);
     }
 
-    AllocStrAppend(buffer, "\t\t</DIV>\n\t\t<HR>\n");
+    platformHeapStringAppend(buffer, "\t\t</DIV>\n\t\t<HR>\n");
 }
 
 size_t httpBodyWriteChunk(SocketBuffer *socketBuffer, char **buffer) {

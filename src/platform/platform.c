@@ -189,6 +189,31 @@ char platformHeapResize(void **heap, size_t elementSize, size_t elementNumber) {
     return 1;
 }
 
+const char *platformHeapStringAppend(char **alloc, const char *append) {
+    size_t len2 = strlen(append);
+
+    if (*alloc) {
+        size_t len1 = strlen(*alloc);
+        if (!platformHeapResize((void **) alloc, 1, len1 + len2 + 1))
+            strncat(*alloc, append, len2 + 1);
+        else
+            return strerror(errno);
+    } else {
+        if ((*alloc = malloc(len2 + 1)))
+            strncpy(*alloc, append, len2 + 1);
+        else
+            return strerror(errno);
+    }
+
+    return NULL;
+}
+
+const char *platformHeapStringAppendAndFree(char **alloc, char *append) {
+    const char *r = platformHeapStringAppend(alloc, append);
+    free(append);
+    return r;
+}
+
 FILE *platformMemoryStreamNew(void) {
     return tmpfile();
 }

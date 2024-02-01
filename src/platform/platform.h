@@ -161,6 +161,24 @@ int platformArgvGetFlag(int argc, char **argv, char shortFlag, char *longFlag, c
 char platformHeapResize(void **heap, size_t elementSize, size_t elementNumber);
 
 /**
+ * Concatenate one string to another and start a new heap allocation if required
+ * @param alloc The variable to append a string to
+ * @param append The data to append to 'alloc'
+ * @return NULL on success, user friendly error message otherwise
+ */
+const char *platformHeapStringAppend(char **alloc, const char *append);
+
+/**
+ * Like platformHeapStringAppend() except the appended string will be freed from the heap
+ * @param alloc The variable to append a string to
+ * @param append The data to append to 'alloc' which will be freed
+ * @return NULL on success, user friendly error message otherwise
+ * @remark 'append' will be freed from the heap regardless of success or failure.
+ * If this isn't what you want use 'platformHeapStringAppend()' instead.
+ */
+const char *platformHeapStringAppendAndFree(char **alloc, char *append);
+
+/**
  * Combine two path strings together
  * @param output Out: A string buffer with at least the combine amount of space for path1 and path 2
  * @param path1 In: The string to combine on the left
@@ -184,7 +202,7 @@ void platformIpStackExit(void);
 
 /**
  * Allocate any memory resources that this platform may need to run network services
- * @return NULL on success, human readable string to print error
+ * @return NULL on success, user friendly error message otherwise
  */
 char *platformIpStackInit(void);
 
