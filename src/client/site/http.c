@@ -637,12 +637,6 @@ void httpSiteSchemeDirectoryListingClose(void *listing) {
 }
 
 char *httpSiteSchemeDirectoryListingEntryStat(void *listing, void *entry, PlatformFileStat *st) {
-    /*
-    HttpSiteDirectoryListing *l = listing;
-    SiteDirectoryEntry *e = entry;
-    */
-
-    /* HttpSite accessible at l->site */
     return "Not yet implemented";
 }
 

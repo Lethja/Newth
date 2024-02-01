@@ -20,11 +20,6 @@ FILETYPE VFT_APP
             VALUE "OriginalFilename", "th-gui"
             VALUE "ProductName", "Newth HTTP File Server"
             VALUE "ProductVersion", "1.0"
-            /*
-            VALUE "InternalName", "write version info here"
-            VALUE "LegalTrademarks", "write version info here"
-            VALUE "CompanyName", "write version info here"
-            */
 		 }
     }
     BLOCK "VarFileInfo"

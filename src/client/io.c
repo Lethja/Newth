@@ -10,7 +10,7 @@ char *ioHttpRequestGenerateSend(const char *type, const char *path, const char *
     if (extra)
         len += strlen(extra);
 
-    /* Padding due to SIMD */
+    /* Padding to make valgrind happy on SIMD machines */
     if (!(req = malloc(len + 8)))
         return NULL;
 

@@ -368,17 +368,6 @@ char *platformGetWorkingDirectory(char *buffer, size_t length);
 short platformPathWebToSystem(const char *rootPath, char *webPath, char *absolutePath);
 
 /**
- * Convert a path from a system path to a HTTP path.
- * @param rootPath In: The root path of the server
- * @param absolutePath In: The absolute system file path
- * @param webPath Out: The HTTP request path representation
- * @return 0 on success, appropriate HTTP response code on failure
- */
-/*
-short platformPathSystemToWeb(const char *rootPath, char *absolutePath, char *webPath);
-*/
-
-/**
  * Convert a path from a system path to a FILE path.
  * @param path In: The system path to convert to a FILE scheme
  * @return NULL on failure, allocated memory containing the file scheme on success

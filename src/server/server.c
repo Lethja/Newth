@@ -4,10 +4,6 @@ char *globalRootPath = NULL;
 volatile int serverRun = 1;
 
 RoutineArray globalRoutineArray;
-/* TODO: Store all adapters with correct port numbers (for Haiku) */
-/*
-AdapterAddressArray adapters;
-*/
 
 SOCKET *serverListenSocket;
 
