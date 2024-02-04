@@ -207,9 +207,20 @@ static void HttpChunkPartial(void **state) {
     assert_memory_equal(sample, "This i", max);
 }
 
+static void HttpChunkPartialOverBufferEnd(void **state) {
+    char sample[] = "4" HTTP_EOL "This" HTTP_EOL "3" HTTP_EOL " is" HTTP_EOL "2";
+    size_t len = -1, max = strlen(sample);
+
+    assert_string_equal(ioHttpBodyChunkStrip((char *) &sample, &max, &len), "Chunk metadata overflows buffer");
+    assert_int_equal(len, 0);
+    assert_int_equal(max, 7);
+    assert_memory_equal(sample, "This is", max);
+}
+
 const struct CMUnitTest queueTest[] = {cmocka_unit_test(HeaderFind), cmocka_unit_test(HeaderGetEssential),
                                        cmocka_unit_test(HttpChunk), cmocka_unit_test(HttpChunkPartial),
-                                       cmocka_unit_test(QueueClear), cmocka_unit_test(QueueCreate),
-                                       cmocka_unit_test(QueueFind), cmocka_unit_test(QueueRemove)};
+                                       cmocka_unit_test(HttpChunkPartialOverBufferEnd), cmocka_unit_test(QueueClear),
+                                       cmocka_unit_test(QueueCreate), cmocka_unit_test(QueueFind),
+                                       cmocka_unit_test(QueueRemove)};
 
 #endif /* NEW_DL_TEST_QUEUE_H */

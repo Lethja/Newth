@@ -167,13 +167,13 @@ size_t ioHttpBodyChunkHexToSize(const char *hex) {
 }
 
 char *ioHttpBodyChunkStrip(char *data, size_t *max, size_t *len) {
-    size_t i, j, l = 0;
+    size_t i, j, l;
     char chunk[20] = {0};
 
     if (*len == -1) {
         ++*len;
 
-        for (i = j = 0; j < 19; ++j) {
+        for (i = j = 0, l = *max > 19 ? 19 : *max; j < l; ++j) {
             if (data[j] == '\r') {
                 memcpy(chunk, &data[i], j - i), chunk[j] = '\0';
                 break;
@@ -196,11 +196,16 @@ char *ioHttpBodyChunkStrip(char *data, size_t *max, size_t *len) {
             j = i + 2;
 
             /* Move hex string into its own buffer */
-            for (l = j + 19; j < l; ++j) {
-                if (data[j] == '\r') {
+            for (l = j + 19 > *max ? *max : j + 19; j < l; ++j) {
+                if (data[j] == '\r' && data[j + 1] == '\n') {
                     memcpy(chunk, &data[i + 2], j - i - 2), chunk[j - i - 2] = '\0';
                     break;
                 }
+            }
+
+            if (j == l) {
+                *max = i;
+                return "Chunk metadata overflows buffer";
             }
 
             if (!(l = strlen(chunk)))
