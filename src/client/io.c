@@ -154,3 +154,69 @@ char *ioHttpRequestGenerateHead(const char *path, const char *extra) {
 char *ioHttpRequestGenerateGet(const char *path, const char *extra) {
     return ioHttpRequestGenerateSend("GET", path, extra);
 }
+
+size_t ioHttpBodyChunkHexToSize(const char *hex) {
+    size_t value = 0, i, max = strlen(hex);
+
+    for (i = 0; i < max; i++) {
+        char v = (char) ((hex[i] & 0xF) + (hex[i] >> 6) | ((hex[i] >> 3) & 0x8));
+        value = (value << 4) | (size_t) v;
+    }
+
+    return value;
+}
+
+char *ioHttpBodyChunkStrip(char *data, size_t *max, size_t *len) {
+    size_t i, j, l = 0;
+    char chunk[20] = {0};
+
+    if (*len == -1) {
+        ++*len;
+
+        for (i = j = 0; j < 19; ++j) {
+            if (data[j] == '\r') {
+                memcpy(chunk, &data[i], j - i), chunk[j] = '\0';
+                break;
+            }
+        }
+
+        if (!(l = strlen(chunk)))
+            return "Malformed or impractically large HTTP chunk request";
+
+        if ((j = ioHttpBodyChunkHexToSize(chunk)))
+            *len = i + l + 2, memmove(data, &data[*len], *max - *len), *max -= *len, *len = j;
+
+    } else
+        i = 0;
+
+    for (; i < *max; ++i) {
+        if (*len > 0)
+            --*len;
+        else if (data[i] == '\r' && data[i + 1] == '\n') {
+            j = i + 2;
+
+            /* Move hex string into its own buffer */
+            for (l = j + 19; j < l; ++j) {
+                if (data[j] == '\r') {
+                    memcpy(chunk, &data[i + 2], j - i - 2), chunk[j - i - 2] = '\0';
+                    break;
+                }
+            }
+
+            if (!(l = strlen(chunk)))
+                return "Malformed or impractically large HTTP chunk request";
+
+            /* Remove chunk from data stream so it can be processed by other functions */
+            if ((j = ioHttpBodyChunkHexToSize(chunk))) {
+                *len = i + l + 4, memmove(&data[i], &data[*len], *max - *len);
+                *max -= *len - i, *len = j, --i;
+            } else {
+                *len = j, data[i] = '\0', *max -= 5;
+                return NULL;
+            }
+        } else
+            return "Unexpected end to chunk";
+    }
+
+    return NULL;
+}

@@ -44,6 +44,22 @@ typedef struct SocketAddress {
 extern char *ioCreateSocketFromSocketAddress(SocketAddress *self, SOCKET *sock);
 
 /**
+ * Convert hex string into a number
+ * @param hex In: The hex string to convert
+ * @return The number the hex string represents
+ */
+size_t ioHttpBodyChunkHexToSize(const char *hex);
+
+/**
+ * Reformat a stream of data to count and remove HTTP chunks
+ * @param data In-Out: The data buffer with http chunks that should be removed from it
+ * @param max In-Out: The maximum length of the data buffer
+ * @param len In-Out: The length remaining in the current chunk, should be set to -1 before first call into chunk body
+ * @return NULL on success, user friendly error message otherwise
+ */
+char *ioHttpBodyChunkStrip(char *data, size_t *max, size_t *len);
+
+/**
  * Generate a GET HTTP 1.1 request ready for sending to a remote server
  * @param path In: The path to request
  * @param extra In: The raw string to append after the path or NULL

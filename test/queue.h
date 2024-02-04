@@ -187,8 +187,19 @@ static void HeaderFind(void **state) {
     assert_null(value);
 }
 
+static void HttpChunk(void **state) {
+    char sample[] = "4" HTTP_EOL "This" HTTP_EOL "3" HTTP_EOL " is" HTTP_EOL "2" HTTP_EOL" a" HTTP_EOL "5" HTTP_EOL " test" HTTP_EOL "0" HTTP_EOL;
+    size_t len = -1, max = strlen(sample);
+
+    assert_null(ioHttpBodyChunkStrip((char *) &sample, &max, &len));
+    assert_int_equal(len, 0);
+    assert_int_equal(max, 14);
+    assert_string_equal(sample, "This is a test");
+}
+
 const struct CMUnitTest queueTest[] = {cmocka_unit_test(HeaderFind), cmocka_unit_test(HeaderGetEssential),
-                                       cmocka_unit_test(QueueClear), cmocka_unit_test(QueueCreate),
-                                       cmocka_unit_test(QueueFind), cmocka_unit_test(QueueRemove)};
+                                       cmocka_unit_test(HttpChunk), cmocka_unit_test(QueueClear),
+                                       cmocka_unit_test(QueueCreate), cmocka_unit_test(QueueFind),
+                                       cmocka_unit_test(QueueRemove)};
 
 #endif /* NEW_DL_TEST_QUEUE_H */
