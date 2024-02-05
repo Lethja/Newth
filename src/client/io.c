@@ -159,7 +159,7 @@ size_t ioHttpBodyChunkHexToSize(const char *hex) {
     size_t value = 0, i, max = strlen(hex);
 
     for (i = 0; i < max; i++) {
-        char v = (char) ((hex[i] & 0xF) + (hex[i] >> 6) | ((hex[i] >> 3) & 0x8));
+        char v = (char) (((hex[i] & 0xF) + (hex[i] >> 6)) | ((hex[i] >> 3) & 0x8));
         value = (value << 4) | (size_t) v;
     }
 
