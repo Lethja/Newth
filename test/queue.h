@@ -192,9 +192,9 @@ static void HttpChunk(void **state) {
     size_t len = -1, max = strlen(sample);
 
     assert_null(ioHttpBodyChunkStrip((char *) &sample, &max, &len));
-    assert_int_equal(len, 0);
+    assert_int_equal(len, -1);
     assert_int_equal(max, 14);
-    assert_string_equal(sample, "This is a test");
+    assert_memory_equal(sample, "This is a test", max);
 }
 
 static void HttpChunkPartial(void **state) {
@@ -206,7 +206,7 @@ static void HttpChunkPartial(void **state) {
     assert_int_equal(max, 6);
     assert_memory_equal(sample1, "This i", max), max = strlen(sample2);
     assert_null(ioHttpBodyChunkStrip((char *) &sample2, &max, &len));
-    assert_int_equal(len, 0);
+    assert_int_equal(len, -1);
     assert_int_equal(max, 8);
     assert_memory_equal(sample2, "s a test", max);
 }
@@ -220,13 +220,23 @@ static void HttpChunkPartialOverBufferEnd(void **state) {
     assert_int_equal(max, 7);
     assert_memory_equal(sample1, "This is", max), max = strlen(sample2);
     assert_null(ioHttpBodyChunkStrip((char *) &sample2, &max, &len));
-    assert_int_equal(len, 0);
+    assert_int_equal(len, -1);
     assert_int_equal(max, 7);
     assert_memory_equal(sample2, " a test", max);
 }
 
+static void HttpChunkLast(void **state) {
+    char sample[] = "0" HTTP_EOL;
+    size_t len = -1, max = strlen(sample);
+
+    assert_null(ioHttpBodyChunkStrip((char *) &sample, &max, &len));
+    assert_int_equal(len, -1);
+    assert_int_equal(max, 0);
+}
+
 const struct CMUnitTest queueTest[] = {cmocka_unit_test(HeaderFind), cmocka_unit_test(HeaderGetEssential),
-                                       cmocka_unit_test(HttpChunk), cmocka_unit_test(HttpChunkPartial),
+                                       cmocka_unit_test(HttpChunk), cmocka_unit_test(HttpChunkLast),
+                                       cmocka_unit_test(HttpChunkPartial),
                                        cmocka_unit_test(HttpChunkPartialOverBufferEnd), cmocka_unit_test(QueueClear),
                                        cmocka_unit_test(QueueCreate), cmocka_unit_test(QueueFind),
                                        cmocka_unit_test(QueueRemove)};

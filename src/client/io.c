@@ -185,6 +185,10 @@ char *ioHttpBodyChunkStrip(char *data, size_t *max, size_t *len) {
 
         if ((j = ioHttpBodyChunkHexToSize(chunk)))
             *len = i + l + 2, memmove(data, &data[*len], *max - *len), *max -= *len, *len = j;
+        else {
+            *len = -1, *max -= 3;
+            return NULL;
+        }
 
     } else
         i = 0;
@@ -216,7 +220,7 @@ char *ioHttpBodyChunkStrip(char *data, size_t *max, size_t *len) {
                 *len = i + l + 4, memmove(&data[i], &data[*len], *max - *len);
                 *max -= *len - i, *len = j, --i;
             } else {
-                *len = j, data[i] = '\0', *max -= 5;
+                *len = -1, *max -= 5;
                 return NULL;
             }
         } else

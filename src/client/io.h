@@ -52,10 +52,16 @@ size_t ioHttpBodyChunkHexToSize(const char *hex);
 
 /**
  * Reformat a stream of data to count and remove HTTP chunks
- * @param data In-Out: The data buffer with http chunks that should be removed from it
- * @param max In-Out: The maximum length of the data buffer
- * @param len In-Out: The length remaining in the current chunk, should be set to -1 before first call into chunk body
+ * @param data In-Out: The data buffer with http chunks that should be parsed and removed from the content stream.
+ * @param max In-Out: The maximum length of the data buffer.
+ * This parameter may return with a smaller number then called with to indicate the new length of the data buffer
+ * @param len In-Out: The length remaining in the current chunk. Should be set to -1 at the beginning of a chunk body.
+ * This value has reentrant significance and should not be written to while chunk data is being parsed.
+ * It will be set back to -1 to indicate the last chunk has been read.
  * @return NULL on success, user friendly error message otherwise
+ * @remark When returning 'Chunk metadata overflows buffer' valid data will be available up until the overflowing chunk.
+ * In this case the application can process data up to max like normal then should seek the buffer to the 'max' position
+ * so that the next chunk can be read in it's entirety.
  */
 char *ioHttpBodyChunkStrip(char *data, size_t *max, size_t *len);
 
