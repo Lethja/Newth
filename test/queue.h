@@ -198,23 +198,31 @@ static void HttpChunk(void **state) {
 }
 
 static void HttpChunkPartial(void **state) {
-    char sample[] = "4" HTTP_EOL "This" HTTP_EOL "3" HTTP_EOL " i";
-    size_t len = -1, max = strlen(sample);
+    char sample1[] = "4" HTTP_EOL "This" HTTP_EOL "3" HTTP_EOL " i", sample2[] = "s" HTTP_EOL "2" HTTP_EOL" a" HTTP_EOL "5" HTTP_EOL " test" HTTP_EOL "0" HTTP_EOL;
+    size_t len = -1, max = strlen(sample1);
 
-    assert_null(ioHttpBodyChunkStrip((char *) &sample, &max, &len));
+    assert_null(ioHttpBodyChunkStrip((char *) &sample1, &max, &len));
     assert_int_equal(len, 1);
     assert_int_equal(max, 6);
-    assert_memory_equal(sample, "This i", max);
+    assert_memory_equal(sample1, "This i", max), max = strlen(sample2);
+    assert_null(ioHttpBodyChunkStrip((char *) &sample2, &max, &len));
+    assert_int_equal(len, 0);
+    assert_int_equal(max, 8);
+    assert_memory_equal(sample2, "s a test", max);
 }
 
 static void HttpChunkPartialOverBufferEnd(void **state) {
-    char sample[] = "4" HTTP_EOL "This" HTTP_EOL "3" HTTP_EOL " is" HTTP_EOL "2";
-    size_t len = -1, max = strlen(sample);
+    char sample1[] = "4" HTTP_EOL "This" HTTP_EOL "3" HTTP_EOL " is" HTTP_EOL "2", sample2[] = HTTP_EOL "2" HTTP_EOL " a" HTTP_EOL "5" HTTP_EOL " test" HTTP_EOL "0" HTTP_EOL;
+    size_t len = -1, max = strlen(sample1);
 
-    assert_string_equal(ioHttpBodyChunkStrip((char *) &sample, &max, &len), "Chunk metadata overflows buffer");
+    assert_string_equal(ioHttpBodyChunkStrip((char *) &sample1, &max, &len), "Chunk metadata overflows buffer");
     assert_int_equal(len, 0);
     assert_int_equal(max, 7);
-    assert_memory_equal(sample, "This is", max);
+    assert_memory_equal(sample1, "This is", max), max = strlen(sample2);
+    assert_null(ioHttpBodyChunkStrip((char *) &sample2, &max, &len));
+    assert_int_equal(len, 0);
+    assert_int_equal(max, 7);
+    assert_memory_equal(sample2, " a test", max);
 }
 
 const struct CMUnitTest queueTest[] = {cmocka_unit_test(HeaderFind), cmocka_unit_test(HeaderGetEssential),
