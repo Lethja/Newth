@@ -8,6 +8,8 @@
 #include <stdlib.h>
 #include <time.h>
 
+#include <sys/stat.h>
+
 #pragma region Static Helper Functions
 
 /**
@@ -658,7 +660,7 @@ char *httpSiteSchemeDirectoryListingEntryStat(void *listing, void *entry, Platfo
     st->st_mode = e->isDirectory ? S_IFDIR : S_IFREG;
 
     if (header.modifiedDate)
-        memcpy(&st->st_mtim, header.modifiedDate, sizeof(PlatformTimeStruct)), free(header.modifiedDate);
+        memcpy(&st->st_mtime, header.modifiedDate, sizeof(PlatformTimeStruct)), free(header.modifiedDate);
 
     return NULL;
 }
