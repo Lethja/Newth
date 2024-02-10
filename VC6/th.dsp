@@ -119,7 +119,7 @@ SOURCE=..\src\server\server.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\server\sockbufr.c
+SOURCE=..\src\server\sendbufr.c
 # End Source File
 # Begin Source File
 
@@ -171,7 +171,7 @@ SOURCE=..\src\server\server.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\server\sockbufr.h
+SOURCE=..\src\server\sendbufr.h
 # End Source File
 # Begin Source File
 

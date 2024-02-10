@@ -1,20 +1,20 @@
-#include "sockbufr.h"
+#include "sendbufr.h"
 
 #include <stdarg.h>
 #include <string.h>
 
-void socketBufferFailFree(SocketBuffer *socketBuffer) {
-    if (socketBuffer->buffer)
-        platformMemoryStreamFree(socketBuffer->buffer);
+void sendBufferFailFree(SendBuffer *self) {
+    if (self->buffer)
+        platformMemoryStreamFree(self->buffer);
 }
 
-SocketBuffer socketBufferNew(SOCKET clientSocket, char options) {
-    SocketBuffer self;
+SendBuffer sendBufferNew(SOCKET clientSocket, char options) {
+    SendBuffer self;
     self.clientSocket = clientSocket, self.idx = 0, self.options = options, self.buffer = NULL;
     return self;
 }
 
-size_t socketBufferFlush(SocketBuffer *self) {
+size_t sendBufferFlush(SendBuffer *self) {
     char data[SB_DATA_SIZE];
     SOCK_BUF_TYPE flush;
     size_t bytesFlushed = 0, read;
@@ -62,7 +62,7 @@ size_t socketBufferFlush(SocketBuffer *self) {
     } while (1);
 }
 
-size_t socketBufferWriteData(SocketBuffer *self, const char *data, size_t len) {
+size_t sendBufferWriteData(SendBuffer *self, const char *data, size_t len) {
     SOCK_BUF_TYPE sent;
     size_t bytesSent = 0;
 
@@ -104,11 +104,11 @@ size_t socketBufferWriteData(SocketBuffer *self, const char *data, size_t len) {
     }
 }
 
-size_t socketBufferWriteText(SocketBuffer *self, const char *data) {
-    return socketBufferWriteData(self, data, strlen(data));
+size_t sendBufferWriteText(SendBuffer *self, const char *data) {
+    return sendBufferWriteData(self, data, strlen(data));
 }
 
-FILE *socketBufferGetBuffer(SocketBuffer *self) {
+FILE *sendBufferGetBuffer(SendBuffer *self) {
     if (!self->buffer)
         self->buffer = platformMemoryStreamNew();
     else
@@ -117,7 +117,7 @@ FILE *socketBufferGetBuffer(SocketBuffer *self) {
     return self->buffer;
 }
 
-int socketBufferPrintf(SocketBuffer *self, size_t max, const char *format, ...) {
+int sendBufferPrintf(SendBuffer *self, size_t max, const char *format, ...) {
     int e;
     va_list args;
     va_start(args, format);
@@ -130,7 +130,7 @@ int socketBufferPrintf(SocketBuffer *self, size_t max, const char *format, ...) 
         }
 
         e = vsprintf(msg, format, args);
-        socketBufferWriteText(self, msg);
+        sendBufferWriteText(self, msg);
         free(msg);
     } else {
         platformMemoryStreamSeek(self->buffer, 0, SEEK_END);

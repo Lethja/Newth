@@ -30,29 +30,29 @@ dlwlk.exe: walk_dl doswatbd.o hex.o io.o plat_dl.o queue.o site.o s_file.o s_htt
     %write link.lnk LIBF wattcpwf.lib
     wlink @link.lnk
 
-th.exe: release_th doswatbt.o event.o hex.o http.o plat_th.o poll.o routine.o server.o sockbufr.o th.o
+th.exe: release_th doswatbt.o event.o hex.o http.o plat_th.o poll.o routine.o server.o sendbufr.o th.o
     %write link.lnk NAME $@
     %write link.lnk SYS  dos4g
     %write link.lnk OPT  st=8192
-    %write link.lnk FILE doswatbt.o,event.o,hex.o,http.o,plat_th.o,poll.o,routine.o,server.o,sockbufr.o,th.o
+    %write link.lnk FILE doswatbt.o,event.o,hex.o,http.o,plat_th.o,poll.o,routine.o,server.o,sendbufr.o,th.o
     %write link.lnk LIBP watt32s/lib/
     %write link.lnk LIBF wattcpwf.lib
     wlink @link.lnk
     
-thdbg.exe: debug_th doswatbt.o event.o hex.o http.o plat_th.o poll.o routine.o server.o sockbufr.o th.o
+thdbg.exe: debug_th doswatbt.o event.o hex.o http.o plat_th.o poll.o routine.o server.o sendbufr.o th.o
     %write link.lnk NAME $@
     %write link.lnk SYS  dos4g
     %write link.lnk OPT  st=8192
-    %write link.lnk FILE doswatbt.o,event.o,hex.o,http.o,plat_th.o,poll.o,routine.o,server.o,sockbufr.o,th.o
+    %write link.lnk FILE doswatbt.o,event.o,hex.o,http.o,plat_th.o,poll.o,routine.o,server.o,sendbufr.o,th.o
     %write link.lnk LIBP watt32s/lib/
     %write link.lnk LIBF wattcpwf.lib
     wlink @link.lnk
 
-thwlk.exe: walk_th doswatbt.o event.o hex.o http.o plat_th.o poll.o routine.o server.o sockbufr.o th.o
+thwlk.exe: walk_th doswatbt.o event.o hex.o http.o plat_th.o poll.o routine.o server.o sendbufr.o th.o
     %write link.lnk NAME $@
     %write link.lnk SYS  dos4g
     %write link.lnk OPT  st=8192
-    %write link.lnk FILE doswatbt.o,event.o,hex.o,http.o,plat_th.o,poll.o,routine.o,server.o,sockbufr.o,th.o
+    %write link.lnk FILE doswatbt.o,event.o,hex.o,http.o,plat_th.o,poll.o,routine.o,server.o,sendbufr.o,th.o
     %write link.lnk LIBP watt32s/lib/
     %write link.lnk LIBF wattcpwf.lib
     wlink @link.lnk
@@ -87,8 +87,8 @@ routine.o: ../../src/server/routine.c
     $(CC) @flag.lnk -fo="$@" "../../src/server/routine.c"
 server.o: ../../src/server/server.c
     $(CC) @flag.lnk -fo="$@" "../../src/server/server.c"
-sockbufr.o: ../../src/server/sockbufr.c
-    $(CC) @flag.lnk -fo="$@" "../../src/server/sockbufr.c"
+sendbufr.o: ../../src/server/sendbufr.c
+    $(CC) @flag.lnk -fo="$@" "../../src/server/sendbufr.c"
 plat_dl.o: ../../src/platform/platform.c
     $(CC) @flag.lnk -fo="$@" "../../src/platform/platform.c"
 plat_th.o: ../../src/platform/platform.c

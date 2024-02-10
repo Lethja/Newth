@@ -265,10 +265,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../src/server/server.h" />
-		<Unit filename="../src/server/sockbufr.c">
+		<Unit filename="../src/server/sendbufr.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../src/server/sockbufr.h" />
+		<Unit filename="../src/server/sendbufr.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />

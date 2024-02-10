@@ -52,7 +52,7 @@ add_executable(th ../src/cli/th.c ../src/common/defines.h
         ../src/server/http.c ../src/server/http.h
         ../src/server/routine.c ../src/server/routine.h
         ../src/server/server.h ../src/server/server.c
-        ../src/server/sockbufr.c ../src/server/sockbufr.h
+        ../src/server/sendbufr.c ../src/server/sendbufr.h
         ${MULTIPLEX_SRC} ${PLATFORM_SRC} ${WSOCK_SRC})
 
 target_compile_definitions(th PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>" PLATFORM_NET_ADAPTER=1 PLATFORM_NET_LISTEN=1)
@@ -69,7 +69,7 @@ if (ENABLE_TEST)
 
     add_executable(test
             ../test/test.c ../test/mock.h ../test/common.h ../test/fetch.h ../test/platform.h ../test/queue.h
-            ../test/request.h ../test/site.h ../test/sockbufr.h ../test/xml.h
+            ../test/request.h ../test/site.h ../test/sendbufr.h ../test/xml.h
 
             ../src/client/io.c ../src/client/io.h
             ../src/client/queue.c ../src/client/queue.h
@@ -85,7 +85,7 @@ if (ENABLE_TEST)
             ../src/server/event.c ../src/server/event.h
             ../src/server/http.c ../src/server/http.h
             ../src/server/routine.c ../src/server/routine.h
-            ../src/server/sockbufr.c ../src/server/sockbufr.h
+            ../src/server/sendbufr.c ../src/server/sendbufr.h
             ${MULTIPLEX_SRC} ${PLATFORM_SRC} ${WSOCK_SRC} ${MOCK_SRC})
 
     target_compile_definitions(test PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>" SB_DATA_SIZE=128 EWOULDBLOCK=41 PLATFORM_NET_LISTEN=1)
@@ -113,7 +113,7 @@ if (WIN32)
             ../src/server/event.c ../src/server/event.h
             ../src/server/http.c ../src/server/http.h
             ../src/server/routine.c ../src/server/routine.h
-            ../src/server/sockbufr.c ../src/server/sockbufr.h
+            ../src/server/sendbufr.c ../src/server/sendbufr.h
             ${MULTIPLEX_SRC} ${PLATFORM_SRC} ${WSOCK_SRC} ${W32_RES})
 
     target_compile_definitions(th-gui PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>" PLATFORM_NET_ADAPTER=1 PLATFORM_NET_LISTEN=1)

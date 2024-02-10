@@ -43,7 +43,7 @@ th_SOURCES = src/cli/th.c src/common/defines.h \
     src/server/http.c src/server/http.h \
     src/server/routine.c src/server/routine.h \
     src/server/server.h src/server/server.c \
-    src/server/sockbufr.c src/server/sockbufr.h \
+    src/server/sendbufr.c src/server/sendbufr.h \
     $(MULTIPLEX_SRC) $(PLATFORM_SRC)
 
 th_CFLAGS = -DPLATFORM_NET_ADAPTER=1 -DPLATFORM_NET_LISTEN=1
@@ -57,7 +57,7 @@ if CMOCKA
 		-Wl,--wrap=malloc,--wrap=calloc,--wrap=realloc,--wrap=free,--wrap=connect,--wrap=recv,--wrap=send,--wrap=fclose
 
     unittest_SOURCES = test/test.c test/common.h test/fetch.h test/mock.h test/platform.h \
-		test/queue.h test/request.h test/site.h test/sockbufr.h test/xml.h
+		test/queue.h test/request.h test/site.h test/sendbufr.h test/xml.h
 
     unittest_SOURCES += src/platform/mockput.c src/platform/mockput.h \
         src/client/io.c src/client/io.h \
@@ -73,6 +73,6 @@ if CMOCKA
 		src/server/http.c src/server/http.h \
 		src/server/routine.c src/server/routine.h \
         src/server/server.h src/server/server.c \
-		src/server/sockbufr.c src/server/sockbufr.h \
+		src/server/sendbufr.c src/server/sendbufr.h \
 		$(MULTIPLEX_SRC) $(PLATFORM_SRC)
 endif

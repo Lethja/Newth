@@ -71,18 +71,18 @@ size_t DirectoryRoutineContinue(Routine *self) {
             } else
                 httpBodyWriteChunkEnding(&self->socketBuffer);
 
-            socketBufferFlush(&self->socketBuffer);
+            sendBufferFlush(&self->socketBuffer);
 
             return 0;
         }
     }
 
-    socketBufferFlush(&self->socketBuffer);
+    sendBufferFlush(&self->socketBuffer);
 
     return bytesWrite;
 }
 
-Routine DirectoryRoutineNew(SocketBuffer socketBuffer, PlatformDir *dir, const char *webPath) {
+Routine DirectoryRoutineNew(SendBuffer socketBuffer, PlatformDir *dir, const char *webPath) {
     size_t i;
     Routine self;
 
@@ -102,7 +102,7 @@ void DirectoryRoutineFree(DirectoryRoutine *self) {
     platformDirClose(self->directory);
 }
 
-Routine FileRoutineNew(SocketBuffer socketBuffer, FILE *file, PlatformFileOffset start, PlatformFileOffset end,
+Routine FileRoutineNew(SendBuffer socketBuffer, FILE *file, PlatformFileOffset start, PlatformFileOffset end,
                        char webPath[FILENAME_MAX]) {
     Routine self;
 
@@ -126,7 +126,7 @@ size_t FileRoutineContinue(Routine *self) {
                                  self->type.file.file);
 
     if (bytesRead > 0) {
-        bytesWrite = socketBufferWriteData(&self->socketBuffer, buffer, bytesRead);
+        bytesWrite = sendBufferWriteData(&self->socketBuffer, buffer, bytesRead);
 
 #pragma region Rewind file descriptor when socket buffer can not send all data
 
@@ -210,7 +210,7 @@ char RoutineArrayDel(RoutineArray *self, Routine *routine) {
     return 0;
 }
 
-Routine RoutineNew(SocketBuffer socketBuffer, const char *webPath) {
+Routine RoutineNew(SendBuffer socketBuffer, const char *webPath) {
     size_t i;
 
     Routine self;
@@ -243,7 +243,7 @@ void RoutineTick(RoutineArray *routineArray) {
                     if (routine->socketBuffer.options & SOC_BUF_ERR_FAIL) {
                         routine->state |= STATE_FAIL;
                     } else {
-                        size_t sent = socketBufferFlush(&routine->socketBuffer);
+                        size_t sent = sendBufferFlush(&routine->socketBuffer);
                         if (sent == 0 || routine->socketBuffer.options & SOC_BUF_ERR_FAIL)
                             routine->state |= STATE_FAIL;
                         else if (routine->socketBuffer.options & SOC_BUF_ERR_FULL)
@@ -260,7 +260,7 @@ void RoutineTick(RoutineArray *routineArray) {
             case STATE_FLUSH | TYPE_ROUTINE_FILE:
             case STATE_FLUSH | TYPE_ROUTINE_DIR:
                 if (routine->socketBuffer.buffer) {
-                    size_t sent = socketBufferFlush(&routine->socketBuffer);
+                    size_t sent = sendBufferFlush(&routine->socketBuffer);
                     if (sent == 0 && (routine->socketBuffer.options & SOC_BUF_ERR_FAIL))
                         routine->state |= STATE_FAIL, routine->state &= ~STATE_FLUSH;
                 } else {
@@ -299,7 +299,7 @@ void RoutineTick(RoutineArray *routineArray) {
                 serverDeferredSocketRemove(routine->socketBuffer.clientSocket);
                 eventHttpFinishInvoke(&routine->socketBuffer.clientSocket, routine->webPath, httpGet,
                                       (short) (routine->state & STATE_FAIL ? 1 : 0));
-                socketBufferFailFree(&routine->socketBuffer);
+                sendBufferFailFree(&routine->socketBuffer);
                 RoutineArrayDel(routineArray, routine);
                 break;
 
@@ -312,14 +312,14 @@ void RoutineTick(RoutineArray *routineArray) {
                 serverDeferredSocketRemove(routine->socketBuffer.clientSocket);
                 eventHttpFinishInvoke(&routine->socketBuffer.clientSocket, routine->webPath, httpGet,
                                       (short) (routine->state & STATE_FAIL ? 1 : 0));
-                socketBufferFailFree(&routine->socketBuffer);
+                sendBufferFailFree(&routine->socketBuffer);
                 RoutineArrayDel(routineArray, routine);
                 break;
 
             case STATE_FINISH | TYPE_ROUTINE:
             case STATE_FAIL | TYPE_ROUTINE:
                 serverDeferredSocketRemove(routine->socketBuffer.clientSocket);
-                socketBufferFailFree(&routine->socketBuffer);
+                sendBufferFailFree(&routine->socketBuffer);
                 RoutineArrayDel(routineArray, routine);
                 break;
         }

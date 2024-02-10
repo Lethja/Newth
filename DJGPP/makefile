@@ -29,7 +29,7 @@ th:
 		../src/server/http.c \
 		../src/server/routine.c \
 		../src/server/server.c \
-		../src/server/sockbufr.c \
+		../src/server/sendbufr.c \
 		../src/server/mltiplex/select.c \
 		watt32s/lib/libwatt.a -o th.exe
 
@@ -58,6 +58,6 @@ thdbg:
 		../src/server/http.c \
 		../src/server/routine.c \
 		../src/server/server.c \
-		../src/server/sockbufr.c \
+		../src/server/sendbufr.c \
 		../src/server/mltiplex/select.c \
 		watt32s/lib/libwatt.a -o thdbg.exe

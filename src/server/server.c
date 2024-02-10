@@ -16,7 +16,7 @@ void noAction(int signal) {}
 
 char handleDir(SOCKET clientSocket, char *webPath, char *absolutePath, char type, PlatformFileStat *st) {
     char *buf = NULL;
-    SocketBuffer socketBuffer = socketBufferNew(clientSocket, 0);
+    SendBuffer socketBuffer = sendBufferNew(clientSocket, 0);
     PlatformDir *dir = platformDirOpen(absolutePath);
 
     if (dir == NULL)
@@ -33,7 +33,7 @@ char handleDir(SOCKET clientSocket, char *webPath, char *absolutePath, char type
     eventHttpRespondInvoke(&socketBuffer.clientSocket, webPath, type, 200);
 
     if (type == httpHead) {
-        if (socketBufferFlush(&socketBuffer) == 0)
+        if (sendBufferFlush(&socketBuffer) == 0)
             goto handleDirAbort;
     }
 
@@ -42,7 +42,7 @@ char handleDir(SOCKET clientSocket, char *webPath, char *absolutePath, char type
     if (httpBodyWriteChunk(&socketBuffer, &buf) == 0)
         goto handleDirAbort;
 
-    socketBufferFlush(&socketBuffer);
+    sendBufferFlush(&socketBuffer);
     free(buf), buf = NULL;
 
     htmlBreadCrumbWrite(&buf, webPath[0] == '\0' ? "/" : webPath);
@@ -52,7 +52,7 @@ char handleDir(SOCKET clientSocket, char *webPath, char *absolutePath, char type
     if (httpBodyWriteChunk(&socketBuffer, &buf) == 0)
         goto handleDirAbort;
 
-    socketBufferFlush(&socketBuffer);
+    sendBufferFlush(&socketBuffer);
     free(buf);
 
     RoutineArrayAdd(&globalRoutineArray, DirectoryRoutineNew(socketBuffer, dir, webPath));
@@ -71,7 +71,7 @@ char handleDir(SOCKET clientSocket, char *webPath, char *absolutePath, char type
 
 char handleFile(SOCKET clientSocket, const char *header, char *webPath, char *absolutePath, char httpType,
                 PlatformFileStat *st) {
-    SocketBuffer socketBuffer = socketBufferNew(clientSocket, 0);
+    SendBuffer socketBuffer = sendBufferNew(clientSocket, 0);
     PlatformFile fp = platformFileOpen(absolutePath, "rb");
     PlatformFileOffset start, finish;
     char e;
@@ -126,7 +126,7 @@ char handlePath(SOCKET clientSocket, const char *header, char *webPath) {
         PlatformTimeStruct mt;
         if (!platformGetTimeStruct(&st.st_mtime, &mt)) {
             if (platformTimeStructEquals(&tm, &mt)) {
-                SocketBuffer socketBuffer = socketBufferNew(clientSocket, 0);
+                SendBuffer socketBuffer = sendBufferNew(clientSocket, 0);
 
                 httpHeaderWriteResponse(&socketBuffer, 304);
                 HTTP_HEADER_CONNECTION_NO_REUSE_WRITE(&socketBuffer);
@@ -150,7 +150,7 @@ char handlePath(SOCKET clientSocket, const char *header, char *webPath) {
 
     handlePathNotFound:
     {
-        SocketBuffer socketBuffer = socketBufferNew(clientSocket, 0);
+        SendBuffer socketBuffer = sendBufferNew(clientSocket, 0);
         return httpHeaderHandleError(&socketBuffer, webPath, e, 404);
     }
 }
@@ -189,14 +189,14 @@ char handleConnection(SOCKET clientSocket) {
             default:
                 messageSize += bytesRead;
                 if (messageSize >= BUFSIZ - 1) {
-                    SocketBuffer socketBuffer = socketBufferNew(clientSocket, 0);
+                    SendBuffer socketBuffer = sendBufferNew(clientSocket, 0);
 
                     httpHeaderWriteResponse(&socketBuffer, 431);
                     HTTP_HEADER_CONNECTION_NO_REUSE_WRITE(&socketBuffer);
                     httpHeaderWriteDate(&socketBuffer);
                     httpHeaderWriteContentLength(&socketBuffer, 0);
                     httpHeaderWriteEnd(&socketBuffer);
-                    socketBufferFlush(&socketBuffer);
+                    sendBufferFlush(&socketBuffer);
                     eventHttpRespondInvoke(&socketBuffer.clientSocket, "", httpUnknown, 431);
 
                     return 1;

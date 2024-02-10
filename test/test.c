@@ -15,7 +15,7 @@
 #include "platform.h"
 #include "queue.h"
 #include "site.h"
-#include "sockbufr.h"
+#include "sendbufr.h"
 #include "xml.h"
 
 #ifdef MOCK

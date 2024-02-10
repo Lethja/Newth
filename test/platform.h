@@ -1,7 +1,7 @@
 #ifndef NEW_TH_TEST_PLATFORM_H
 #define NEW_TH_TEST_PLATFORM_H
 
-#include "../src/server/sockbufr.h"
+#include "../src/server/sendbufr.h"
 #include <errno.h>
 #include <string.h>
 

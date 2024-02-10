@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 #include "../platform/platform.h"
-#include "sockbufr.h"
+#include "sendbufr.h"
 
 enum state {
     TYPE_ROUTINE = 1,
@@ -28,7 +28,7 @@ typedef struct DirectoryRoutine {
 
 typedef struct Routine {
     unsigned char state;
-    SocketBuffer socketBuffer;
+    SendBuffer socketBuffer;
     char webPath[FILENAME_MAX];
     union {
         struct FileRoutine file;
@@ -55,7 +55,7 @@ size_t DirectoryRoutineContinue(Routine *self);
  * @param webPath In: The full web path to concatenate links on
  * @return A new Routine to be used with DirectoryRoutineContinue()
  */
-Routine DirectoryRoutineNew(SocketBuffer socketBuffer, PlatformDir *dir, const char *webPath);
+Routine DirectoryRoutineNew(SendBuffer socketBuffer, PlatformDir *dir, const char *webPath);
 
 /**
  * Free a routines allocated memory
@@ -72,7 +72,7 @@ void DirectoryRoutineFree(DirectoryRoutine *self);
  * @param webPath In: The full web path to display
  * @return A new Routine to be used with FileRoutineContinue()
  */
-Routine FileRoutineNew(SocketBuffer socketBuffer, FILE *file, PlatformFileOffset start, PlatformFileOffset end,
+Routine FileRoutineNew(SendBuffer socketBuffer, FILE *file, PlatformFileOffset start, PlatformFileOffset end,
                        char webPath[FILENAME_MAX]);
 
 /**
@@ -118,7 +118,7 @@ char RoutineArrayDelSocket(RoutineArray *self, SOCKET socket);
  * @param webPath In: The web path associated with this routine
  * @return A new routine
  */
-Routine RoutineNew(SocketBuffer socketBuffer, const char *webPath);
+Routine RoutineNew(SendBuffer socketBuffer, const char *webPath);
 
 /**
  * A state machine that iterates and advances all routines inside it

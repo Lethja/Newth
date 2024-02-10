@@ -131,17 +131,17 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../src/server/server.h" />
-		<Unit filename="../src/server/sockbufr.c">
+		<Unit filename="../src/server/sendbufr.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../src/server/sockbufr.h" />
+		<Unit filename="../src/server/sendbufr.h" />
 		<Unit filename="../test/common.h" />
 		<Unit filename="../test/fetch.h" />
 		<Unit filename="../test/mock.h" />
 		<Unit filename="../test/platform.h" />
 		<Unit filename="../test/request.h" />
 		<Unit filename="../test/site.h" />
-		<Unit filename="../test/sockbufr.h" />
+		<Unit filename="../test/sendbufr.h" />
 		<Unit filename="../test/test.c">
 			<Option compilerVar="CC" />
 		</Unit>
