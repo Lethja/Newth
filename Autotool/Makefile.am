@@ -26,6 +26,7 @@ endif
 dl_SOURCES = src/cli/dl.c src/common/defines.h \
     src/client/io.c src/client/io.h \
     src/client/queue.c src/client/queue.h \
+    src/client/recvbufr.c src/client/recvbufr.h \
     src/client/site.c src/client/site.h \
     src/client/site/file.c src/client/site/file.h \
     src/client/site/http.c src/client/site/http.h \
@@ -62,6 +63,7 @@ if CMOCKA
     unittest_SOURCES += src/platform/mockput.c src/platform/mockput.h \
         src/client/io.c src/client/io.h \
         src/client/queue.c src/client/queue.h \
+        src/client/recvbufr.c src/client/recvbufr.h \
         src/client/site.c src/client/site.h \
         src/client/uri.c src/client/uri.h \
         src/client/xml.c src/client/xml.h \
