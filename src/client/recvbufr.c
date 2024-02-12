@@ -85,7 +85,7 @@ PlatformFileOffset recvBufferFind(RecvBuffer *self, PlatformFileOffset pos, cons
 }
 
 const char *recvBufferSearchFor(RecvBuffer *self, const char *token, size_t len) {
-    PlatformFileOffset o = 0;
+    PlatformFileOffset o;
     const char *e;
 
     while (!(e = recvBufferAppend(self, SB_DATA_SIZE))) {
@@ -99,6 +99,27 @@ const char *recvBufferSearchFor(RecvBuffer *self, const char *token, size_t len)
             if (o > 1)
                 recvBufferDitch(self, o);
 
+            return NULL;
+        }
+    }
+
+    return e;
+}
+
+const char *recvBufferSearchTo(RecvBuffer *self, const char *token, size_t len, size_t max) {
+    PlatformFileOffset i = 0, o;
+    const char *e;
+
+    while (!(e = recvBufferAppend(self, SB_DATA_SIZE))) {
+        if ((o = recvBufferFind(self, i, token, len)) == -1) {
+            platformMemoryStreamSeek(self->buffer, 0, SEEK_END);
+
+            if ((i = platformMemoryStreamTell(self->buffer)) > max)
+                return "Exceeded maximum allowed buffer size";
+            else
+                i -= (PlatformFileOffset) len;
+        } else {
+            platformMemoryStreamSeek(self->buffer, i + o, SEEK_CUR);
             return NULL;
         }
     }

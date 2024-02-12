@@ -55,4 +55,17 @@ RecvBuffer recvBufferNew(SOCKET serverSocket, char options);
  */
 const char *recvBufferSearchFor(RecvBuffer *self, const char *token, size_t len);
 
+/**
+ * Search for a byte match to data in the sockets data appending everything in the stream before the match
+ * @param self In: The buffer to search for the token in
+ * @param token In: The data to match
+ * @param len In: The length of the data to match
+ * @param max In: Roughly the maximum length the buffer can grow to before giving up and returning
+ * @return NULL on match, user friendly error message otherwise
+ * @remark The buffer will be appended to to the first matched instance,
+ * if no match is found or the buffer reaches the maximum size allowed
+ * then the entire buffer up to that point will stored in memory for further parsing.
+ */
+const char *recvBufferSearchTo(RecvBuffer *self, const char *token, size_t len, size_t max);
+
 #endif /* NEW_DL_RECEIVE_BUFFER_H */
