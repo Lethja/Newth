@@ -153,7 +153,6 @@
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
-			<Add option="-ansi" />
 			<Add option="-Wno-unknown-pragmas" />
 			<Add option="-DPLATFORM_NET_ADAPTER=1" />
 			<Add option="-DPLATFORM_NET_LISTEN=1" />
@@ -194,10 +193,14 @@
 			<Option compilerVar="CC" />
 			<Option target="Unix GCC Debug" />
 			<Option target="Unix GCC Release" />
+			<Option target="GCC Debug" />
+			<Option target="GCC Release" />
 		</Unit>
 		<Unit filename="../src/platform/posix01.h">
 			<Option target="Unix GCC Debug" />
 			<Option target="Unix GCC Release" />
+			<Option target="GCC Debug" />
+			<Option target="GCC Release" />
 		</Unit>
 		<Unit filename="../src/platform/winsock/wsipv6.c">
 			<Option compilerVar="CC" />
@@ -261,18 +264,15 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../src/server/routine.h" />
-		<Unit filename="../src/server/server.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/server/server.h" />
 		<Unit filename="../src/server/sendbufr.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../src/server/sendbufr.h" />
+		<Unit filename="../src/server/server.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/server/server.h" />
 		<Extensions>
-			<code_completion />
-			<envvars />
-			<debugger />
 			<lib_finder disable_auto="1" />
 		</Extensions>
 	</Project>
