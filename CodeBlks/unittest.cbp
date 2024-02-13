@@ -16,6 +16,7 @@
 					<Add option="-g" />
 					<Add option="-Wno-unknown-pragmas -Wno-unused-function -Wno-unused-variable" />
 					<Add option="-DDOS_DIVIDER=1" />
+					<Add option="-D_FILE_OFFSET_BITS=64" />
 				</Compiler>
 				<Linker>
 					<Add library="wsock32" />
@@ -31,6 +32,7 @@
 					<Add option="-O2" />
 					<Add option="-Wno-unknown-pragmas -Wno-unused-function -Wno-unused-variable" />
 					<Add option="-DDOS_DIVIDER=1" />
+					<Add option="-D_FILE_OFFSET_BITS=64" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -106,12 +108,26 @@
 		<Unit filename="../src/common/hex.h" />
 		<Unit filename="../src/platform/mscrtdl.c">
 			<Option compilerVar="CC" />
+			<Option target="MingW32 Debug" />
+			<Option target="MingW32 Release" />
 		</Unit>
-		<Unit filename="../src/platform/mscrtdl.h" />
+		<Unit filename="../src/platform/mscrtdl.h">
+			<Option target="MingW32 Debug" />
+			<Option target="MingW32 Release" />
+		</Unit>
 		<Unit filename="../src/platform/platform.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../src/platform/platform.h" />
+		<Unit filename="../src/platform/posix01.c">
+			<Option compilerVar="CC" />
+			<Option target="GCC Debug" />
+			<Option target="GCC Release" />
+		</Unit>
+		<Unit filename="../src/platform/posix01.h">
+			<Option target="GCC Debug" />
+			<Option target="GCC Release" />
+		</Unit>
 		<Unit filename="../src/server/event.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -127,29 +143,26 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../src/server/routine.h" />
-		<Unit filename="../src/server/server.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/server/server.h" />
 		<Unit filename="../src/server/sendbufr.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../src/server/sendbufr.h" />
+		<Unit filename="../src/server/server.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/server/server.h" />
 		<Unit filename="../test/common.h" />
 		<Unit filename="../test/fetch.h" />
 		<Unit filename="../test/mock.h" />
 		<Unit filename="../test/platform.h" />
 		<Unit filename="../test/request.h" />
-		<Unit filename="../test/site.h" />
 		<Unit filename="../test/sendbufr.h" />
+		<Unit filename="../test/site.h" />
 		<Unit filename="../test/test.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../test/xml.h" />
 		<Extensions>
-			<code_completion />
-			<envvars />
-			<debugger />
 			<lib_finder disable_auto="1" />
 		</Extensions>
 	</Project>
