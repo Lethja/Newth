@@ -14,6 +14,7 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-Wall" />
+					<Add option="-D_FILE_OFFSET_BITS=64" />
 				</Compiler>
 			</Target>
 			<Target title="GCC Release">
@@ -27,6 +28,7 @@
 					<Add option="-O2" />
 					<Add option="-Wall" />
 					<Add option="-DNDEBUG=1" />
+					<Add option="-D_FILE_OFFSET_BITS=64" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -41,7 +43,6 @@
 				<Option projectCompilerOptionsRelation="-1" />
 				<Option projectLinkerOptionsRelation="-1" />
 				<Option projectIncludeDirsRelation="-1" />
-				<Option projectResourceIncludeDirsRelation="-1" />
 				<Option projectLibDirsRelation="-1" />
 				<Compiler>
 					<Add option="-Wall" />
