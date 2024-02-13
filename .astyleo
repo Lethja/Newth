@@ -1,0 +1,9 @@
+# Run `astyle --options=.astyleo *.h,*.c` to format code automatically
+
+-A2	# Java style braces
+-H	# Pad an if/for statement with one space
+-n	# Do not create a .orig file
+-Q	# Only print out file names that are actaully changed
+-r	# Recursive
+-s	# Indent with spaces
+-xj	# Remove braces from single arguments
