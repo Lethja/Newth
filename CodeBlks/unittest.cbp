@@ -15,11 +15,10 @@
 				<Compiler>
 					<Add option="-g" />
 					<Add option="-Wno-unknown-pragmas -Wno-unused-function -Wno-unused-variable" />
-					<Add option="-DDOS_DIVIDER=1" />
 					<Add option="-D_FILE_OFFSET_BITS=64" />
 				</Compiler>
 				<Linker>
-					<Add library="wsock32" />
+					<Add library="cmocka" />
 				</Linker>
 			</Target>
 			<Target title="GCC Release">
@@ -31,11 +30,46 @@
 				<Compiler>
 					<Add option="-O2" />
 					<Add option="-Wno-unknown-pragmas -Wno-unused-function -Wno-unused-variable" />
-					<Add option="-DDOS_DIVIDER=1" />
 					<Add option="-D_FILE_OFFSET_BITS=64" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
+					<Add library="cmocka" />
+				</Linker>
+			</Target>
+			<Target title="GCC Debug With Mocking">
+				<Option platforms="Unix;Mac;" />
+				<Option output="bin/Debug/unittest" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+					<Add option="-Wno-unknown-pragmas -Wno-unused-function -Wno-unused-variable" />
+					<Add option="-D_FILE_OFFSET_BITS=64" />
+					<Add option="-DMOCK=1" />
+				</Compiler>
+				<Linker>
+					<Add option="-Wl,--wrap=malloc,--wrap=calloc,--wrap=realloc,--wrap=free,--wrap=connect,--wrap=recv,--wrap=send,--wrap=fclose" />
+					<Add library="cmocka" />
+				</Linker>
+			</Target>
+			<Target title="GCC Release With Mocking">
+				<Option platforms="Unix;Mac;" />
+				<Option output="bin/Release/unittest" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+					<Add option="-Wno-unknown-pragmas -Wno-unused-function -Wno-unused-variable" />
+					<Add option="-D_FILE_OFFSET_BITS=64" />
+					<Add option="-DMOCK=1" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+					<Add option="-Wl,--wrap=malloc,--wrap=calloc,--wrap=realloc,--wrap=free,--wrap=connect,--wrap=recv,--wrap=send,--wrap=fclose" />
+					<Add library="cmocka" />
 				</Linker>
 			</Target>
 			<Target title="MingW32 Debug">
@@ -106,6 +140,15 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../src/common/hex.h" />
+		<Unit filename="../src/platform/mockput.c">
+			<Option compilerVar="CC" />
+			<Option target="GCC Debug With Mocking" />
+			<Option target="GCC Release With Mocking" />
+		</Unit>
+		<Unit filename="../src/platform/mockput.h">
+			<Option target="GCC Debug With Mocking" />
+			<Option target="GCC Release With Mocking" />
+		</Unit>
 		<Unit filename="../src/platform/mscrtdl.c">
 			<Option compilerVar="CC" />
 			<Option target="MingW32 Debug" />
@@ -123,10 +166,14 @@
 			<Option compilerVar="CC" />
 			<Option target="GCC Debug" />
 			<Option target="GCC Release" />
+			<Option target="GCC Release With Mocking" />
+			<Option target="GCC Debug With Mocking" />
 		</Unit>
 		<Unit filename="../src/platform/posix01.h">
 			<Option target="GCC Debug" />
 			<Option target="GCC Release" />
+			<Option target="GCC Release With Mocking" />
+			<Option target="GCC Debug With Mocking" />
 		</Unit>
 		<Unit filename="../src/server/event.c">
 			<Option compilerVar="CC" />
