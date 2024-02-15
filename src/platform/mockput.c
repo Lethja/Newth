@@ -5,8 +5,9 @@
 #pragma region Mockup global variables
 
 int mockOptions = 0, mockReceiveError = 0, mockSendError = 0;
-size_t mockSendMaxBuf = 0, mockSendCountBuf = 0, mockReceiveMaxBuf = 0, mockReceiveCountBuf = 0;
-FILE *mockSendStream = NULL, *mockLastFileClosed = NULL, *mockReceiveStream = NULL;
+size_t mockSendMaxBuf = 0, mockSendCountBuf = 0, mockReceiveMaxBuf = 0, mockReceiveCountBuf = 0, mockReceiveDataPos = 0, mockReceiveDataMax = 0;
+FILE *mockSendStream = NULL, *mockLastFileClosed = NULL;
+char *mockReceiveData;
 void *mockLastFree = NULL;
 
 #pragma endregion
@@ -16,8 +17,8 @@ void mockReset(void) {
     mockReceiveCountBuf = mockReceiveMaxBuf = mockSendCountBuf = mockSendMaxBuf = mockOptions;
     mockLastFree = mockLastFileClosed = NULL;
 
-    if (mockReceiveStream)
-        fflush(mockReceiveStream), fclose(mockReceiveStream), mockReceiveStream = NULL;
+    if (mockReceiveData)
+        mockReceiveData = NULL, mockReceiveDataPos = 0;
 
     if (mockSendStream)
         fflush(mockSendStream), fclose(mockSendStream), mockSendStream = NULL;
@@ -118,12 +119,13 @@ ssize_t __wrap_recv(int fd, void *buf, size_t len, int flags) {
         } else
             r = len < mockReceiveMaxBuf ? len : mockReceiveMaxBuf;
 
-        if (mockReceiveStream) {
-            size_t s = fread(buf, 1, len, mockReceiveStream);
-            if (flags & MSG_PEEK)
-                fseek(mockReceiveStream, (long) -s, SEEK_CUR);
+        if (mockReceiveData) {
+            size_t l = mockReceiveDataMax - mockReceiveDataPos > r ? r : mockReceiveDataMax - mockReceiveDataPos;
+            memcpy(buf, &mockReceiveData[mockReceiveDataPos], l);
+            if (!(flags & MSG_PEEK))
+                mockReceiveDataPos += l;
 
-            return (ssize_t) s;
+            return (ssize_t) l;
         } else {
             char j, *b = (char *) buf;
             size_t i;

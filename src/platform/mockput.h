@@ -44,9 +44,10 @@ enum mockOptions {
 };
 
 extern int mockOptions, mockSendError;
-extern size_t mockReceiveMaxBuf, mockSendMaxBuf;
-extern FILE *mockSendStream, *mockLastFileClosed, *mockReceiveStream;
+extern size_t mockReceiveDataPos, mockReceiveDataMax, mockReceiveMaxBuf, mockSendMaxBuf;
+extern FILE *mockSendStream, *mockLastFileClosed;
 extern void *mockLastFree;
+extern char *mockReceiveData;
 
 void mockDumpFile(FILE *file);
 
