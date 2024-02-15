@@ -107,6 +107,8 @@
 		<Compiler>
 			<Add option="-Wall" />
 			<Add option="-DPLATFORM_NET_LISTEN=1" />
+			<Add option="-DSB_DATA_SIZE=128" />
+			<Add option="-DEWOULDBLOCK=41" />
 		</Compiler>
 		<Unit filename="../src/client/io.c">
 			<Option compilerVar="CC" />
