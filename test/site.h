@@ -158,7 +158,8 @@ static void SiteHttpNewWithPath(void **state) {
     Site site;
 
     mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
-    mockReceiveData = (char *) HttpHeaderResponseDir, mockReceiveDataMax = strlen(HttpHeaderResponseDir);
+    assert_non_null((mockReceiveStream = tmpfile()));
+    fwrite(HttpHeaderResponseDir, 1, strlen(HttpHeaderResponseDir), mockReceiveStream), rewind(mockReceiveStream);
 
     assert_null(siteNew(&site, SITE_HTTP, "http://127.0.0.1"));
     assert_int_equal(site.type, SITE_HTTP);
@@ -173,7 +174,8 @@ static void SiteHttpGetDirectory(void **state) {
     char *wd;
 
     mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
-    mockReceiveData = (char *) HttpHeaderResponseDir, mockReceiveDataMax = strlen(HttpHeaderResponseDir);
+    assert_non_null((mockReceiveStream = tmpfile())); fwrite(HttpHeaderResponseDir, 1, strlen(HttpHeaderResponseDir),
+                                          mockReceiveStream), rewind(mockReceiveStream);
 
     assert_null(siteNew(&site, SITE_HTTP, "http://127.0.0.1"));
     assert_non_null(site.site.http.fullUri);
@@ -193,19 +195,20 @@ static void SiteHttpSetDirectory(void **state) {
     char *wd = "http://127.0.0.1/foo";
 
     mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
-    mockReceiveData = (char *) HttpHeaderResponseDir, mockReceiveDataMax = strlen(HttpHeaderResponseDir);
+    assert_non_null((mockReceiveStream = tmpfile())); fwrite(HttpHeaderResponseDir, 1, strlen(HttpHeaderResponseDir),
+                                          mockReceiveStream), rewind(mockReceiveStream);
 
-    assert_null(siteNew(&site, SITE_HTTP, wd)), mockReceiveDataPos = 0;
+    assert_null(siteNew(&site, SITE_HTTP, wd)), rewind(mockReceiveStream);
     assert_non_null(site.site.file.fullUri);
     assert_string_equal(siteWorkingDirectoryGet(&site), wd);
 
-    siteWorkingDirectorySet(&site, ".."), mockReceiveDataPos = 0;
+    siteWorkingDirectorySet(&site, ".."), rewind(mockReceiveStream);
     assert_string_equal(siteWorkingDirectoryGet(&site), "http://127.0.0.1/");
 
-    siteWorkingDirectorySet(&site, "foo"), mockReceiveDataPos = 0;
+    siteWorkingDirectorySet(&site, "foo"), rewind(mockReceiveStream);
     assert_string_equal(siteWorkingDirectoryGet(&site), wd);
 
-    siteWorkingDirectorySet(&site, "bar"), mockReceiveDataPos = 0;
+    siteWorkingDirectorySet(&site, "bar"), rewind(mockReceiveStream);
     assert_string_equal(siteWorkingDirectoryGet(&site), "http://127.0.0.1/foo/bar");
 
     siteWorkingDirectorySet(&site, "/bar");
@@ -219,12 +222,13 @@ static void SiteHttpSetDirectoryFailFile(void **state) {
     char *wd = "http://127.0.0.1/foo";
 
     mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
-    mockReceiveData = (char *) HttpHeaderResponseDir, mockReceiveDataMax = strlen(HttpHeaderResponseDir);
+    assert_non_null((mockReceiveStream = tmpfile())); fwrite(HttpHeaderResponseDir, 1, strlen(HttpHeaderResponseDir),
+                                          mockReceiveStream), rewind(mockReceiveStream);
 
-    assert_null(siteNew(&site, SITE_HTTP, wd)), mockReceiveDataPos = 0;
+    assert_null(siteNew(&site, SITE_HTTP, wd)), rewind(mockReceiveStream);
     assert_non_null(site.site.file.fullUri);
     assert_string_equal(siteWorkingDirectoryGet(&site), wd);
-    mockReceiveData = (char *) HttpHeaderResponseFile, mockReceiveDataMax = strlen(HttpHeaderResponseFile);
+    fwrite(HttpHeaderResponseFile, 1, strlen(HttpHeaderResponseFile), mockReceiveStream), rewind(mockReceiveStream);
 
     assert_int_equal(siteWorkingDirectorySet(&site, "bar"), 1);
     assert_string_equal(siteWorkingDirectoryGet(&site), wd);
@@ -257,16 +261,16 @@ static void SiteHttpDirEntry(void **state) {
     void *d;
 
     mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
+    assert_non_null((mockReceiveStream = tmpfile()));
 
     /* Setup mocked response */
-    mockReceiveData = calloc(sizeof(char), 4096);
-    strcpy(mockReceiveData, HttpHeaderResponseDir);
     sprintf(length, "content-length: %lu" HTTP_EOL HTTP_EOL, strlen(HttpBody)); /* Deliberately lowercase */
-    mockReceiveData[strlen(mockReceiveData) - 2] = '\0', strcat(mockReceiveData, HttpHeaderResponseDir);
-    strcat(mockReceiveData, length), strcat(mockReceiveData, HttpBody);
-    mockReceiveDataMax = strlen(mockReceiveData);
+    fwrite(HttpHeaderResponseDir, 1, strlen(HttpHeaderResponseDir) - 2, mockReceiveStream);
+    fwrite(length, 1, strlen(length), mockReceiveStream);
+    fwrite(HttpBody, 1, strlen(HttpBody), mockReceiveStream);
+    rewind(mockReceiveStream);
 
-    assert_null(siteNew(&site, SITE_HTTP, "http://127.0.0.1/foo")), mockReceiveDataPos = 0;
+    assert_null(siteNew(&site, SITE_HTTP, "http://127.0.0.1/foo")), rewind(mockReceiveStream);
 
     /* Listing of http://127.0.0.1/foo */
     assert_non_null(d = siteDirectoryListingOpen(&site, "."));
@@ -276,7 +280,7 @@ static void SiteHttpDirEntry(void **state) {
     assert_string_equal(e->name, "file2.txt"), siteDirectoryEntryFree(e);
     assert_non_null(e = siteDirectoryListingRead(&site, d));
     assert_string_equal(e->name, "file5.txt"), siteDirectoryEntryFree(e);
-    siteDirectoryListingClose(&site, d), mockReceiveDataPos = 0;
+    siteDirectoryListingClose(&site, d), rewind(mockReceiveStream);
 
     /* Listing of http://127.0.0.1/ (absolute) */
     assert_non_null(d = siteDirectoryListingOpen(&site, "/"));
@@ -286,7 +290,7 @@ static void SiteHttpDirEntry(void **state) {
     assert_string_equal(e->name, "file2.txt"), siteDirectoryEntryFree(e);
     assert_non_null(e = siteDirectoryListingRead(&site, d));
     assert_string_equal(e->name, "file3.txt"), siteDirectoryEntryFree(e);
-    siteDirectoryListingClose(&site, d), mockReceiveDataPos = 0;
+    siteDirectoryListingClose(&site, d), rewind(mockReceiveStream);
 
     /* Listing of http://127.0.0.1/ (up) */
     assert_non_null(d = siteDirectoryListingOpen(&site, ".."));
@@ -296,7 +300,7 @@ static void SiteHttpDirEntry(void **state) {
     assert_string_equal(e->name, "file2.txt"), siteDirectoryEntryFree(e);
     assert_non_null(e = siteDirectoryListingRead(&site, d));
     assert_string_equal(e->name, "file3.txt"), siteDirectoryEntryFree(e);
-    siteDirectoryListingClose(&site, d), free(mockReceiveData);
+    siteDirectoryListingClose(&site, d), rewind(mockReceiveStream);
 
     siteFree(&site);
 }
@@ -321,16 +325,16 @@ static void SiteHttpDirEntryApache(void **state) {
     void *d;
 
     mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
-    mockReceiveData = calloc(sizeof(char), 4096);
+    assert_non_null((mockReceiveStream = tmpfile()));
 
     /* Setup mocked response */
     sprintf(length, "content-length: %lu" HTTP_EOL HTTP_EOL, strlen(ApacheHtml)); /* Deliberately lowercase */
-    strcpy(mockReceiveData, HttpHeaderResponseDir);
-    mockReceiveData[strlen(mockReceiveData) - 2] = '\0', strcat(mockReceiveData, HttpHeaderResponseDir);
-    strcat(mockReceiveData, length), strcat(mockReceiveData, ApacheHtml);
-    mockReceiveDataMax = strlen(mockReceiveData);
+    fwrite(HttpHeaderResponseDir, 1, strlen(HttpHeaderResponseDir) - 2, mockReceiveStream);
+    fwrite(length, 1, strlen(length), mockReceiveStream);
+    fwrite(ApacheHtml, 1, strlen(ApacheHtml), mockReceiveStream);
+    rewind(mockReceiveStream);
 
-    assert_null(siteNew(&site, SITE_HTTP, "http://127.0.0.1/")), mockReceiveDataPos = 0;
+    assert_null(siteNew(&site, SITE_HTTP, "http://127.0.0.1/")), rewind(mockReceiveStream);
 
     /* Listing of http://127.0.0.1/ */
     assert_non_null(d = siteDirectoryListingOpen(&site, "."));
@@ -342,7 +346,7 @@ static void SiteHttpDirEntryApache(void **state) {
     assert_string_equal(e->name, "foo"), siteDirectoryEntryFree(e);
     assert_null(siteDirectoryListingRead(&site, d));
 
-    siteDirectoryListingClose(&site, d), free(mockReceiveData);
+    siteDirectoryListingClose(&site, d), rewind(mockReceiveStream);
 
     siteFree(&site);
 }
@@ -362,16 +366,16 @@ static void SiteHttpDirEntryLighttpd(void **state) {
     void *d;
 
     mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
-    mockReceiveData = calloc(sizeof(char), 4096);
+    assert_non_null((mockReceiveStream = tmpfile()));
 
     /* Setup mocked response */
     sprintf(length, "content-length: %lu" HTTP_EOL HTTP_EOL, strlen(LighttpdHtml)); /* Deliberately lowercase */
-    strcpy(mockReceiveData, HttpHeaderResponseDir);
-    mockReceiveData[strlen(mockReceiveData) - 2] = '\0', strcat(mockReceiveData, HttpHeaderResponseDir);
-    strcat(mockReceiveData, length), strcat(mockReceiveData, LighttpdHtml);
-    mockReceiveDataMax = strlen(mockReceiveData);
+    fwrite(HttpHeaderResponseDir, 1, strlen(HttpHeaderResponseDir) - 2, mockReceiveStream);
+    fwrite(length, 1, strlen(length), mockReceiveStream);
+    fwrite(LighttpdHtml, 1, strlen(LighttpdHtml), mockReceiveStream);
+    rewind(mockReceiveStream);
 
-    assert_null(siteNew(&site, SITE_HTTP, "http://127.0.0.1/")), mockReceiveDataPos = 0;
+    assert_null(siteNew(&site, SITE_HTTP, "http://127.0.0.1/")), rewind(mockReceiveStream);
 
     /* Listing of http://127.0.0.1/ */
     assert_non_null(d = siteDirectoryListingOpen(&site, "."));
@@ -380,7 +384,7 @@ static void SiteHttpDirEntryLighttpd(void **state) {
     assert_non_null(e = siteDirectoryListingRead(&site, d));
     assert_string_equal(e->name, "file.txt.sig"), siteDirectoryEntryFree(e);
 
-    siteDirectoryListingClose(&site, d), free(mockReceiveData);
+    siteDirectoryListingClose(&site, d), rewind(mockReceiveStream);
 
     siteFree(&site);
 }
@@ -401,16 +405,16 @@ static void SiteHttpDirEntryNginx(void **state) {
     void *d;
 
     mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
-    mockReceiveData = calloc(sizeof(char), 4096);
+    assert_non_null((mockReceiveStream = tmpfile()));
 
     /* Setup mocked response */
     sprintf(length, "content-length: %lu" HTTP_EOL HTTP_EOL, strlen(NginxHttp)); /* Deliberately lowercase */
-    strcpy(mockReceiveData, HttpHeaderResponseDir);
-    mockReceiveData[strlen(mockReceiveData) - 2] = '\0', strcat(mockReceiveData, HttpHeaderResponseDir);
-    strcat(mockReceiveData, length), strcat(mockReceiveData, NginxHttp);
-    mockReceiveDataMax = strlen(mockReceiveData);
+    fwrite(HttpHeaderResponseDir, 1, strlen(HttpHeaderResponseDir) - 2, mockReceiveStream);
+    fwrite(length, 1, strlen(length), mockReceiveStream);
+    fwrite(NginxHttp, 1, strlen(NginxHttp), mockReceiveStream);
+    rewind(mockReceiveStream);
 
-    assert_null(siteNew(&site, SITE_HTTP, "http://127.0.0.1/")), mockReceiveDataPos = 0;
+    assert_null(siteNew(&site, SITE_HTTP, "http://127.0.0.1/")), rewind(mockReceiveStream);
 
     /* Listing of http://127.0.0.1/ */
     assert_non_null(d = siteDirectoryListingOpen(&site, "."));
@@ -421,7 +425,7 @@ static void SiteHttpDirEntryNginx(void **state) {
     assert_non_null(e = siteDirectoryListingRead(&site, d));
     assert_string_equal(e->name, "foo"), siteDirectoryEntryFree(e);
 
-    siteDirectoryListingClose(&site, d), free(mockReceiveData);
+    siteDirectoryListingClose(&site, d), rewind(mockReceiveStream);
 
     siteFree(&site);
 }

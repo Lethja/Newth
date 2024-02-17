@@ -89,7 +89,11 @@ static void MockReceiveStream(void **state) {
                              " Cras sed felis eget velit aliquet sagittis id consectetur.";
 
     mockReset(), mockOptions = MOCK_RECEIVE, mockReceiveMaxBuf = SB_DATA_SIZE, i = strlen(
-            SampleData), mockReceiveData = (char *) SampleData, mockReceiveDataMax = strlen(SampleData);
+            SampleData), mockReceiveStream = tmpfile();
+
+    assert_non_null(mockReceiveStream);
+    assert_int_equal(fwrite(SampleData, 1, i, mockReceiveStream), i);
+    rewind(mockReceiveStream);
 
     /* Receive should return the amount of data we ask of it */
     received = recv(0, junkData, 11, 0);
@@ -114,6 +118,8 @@ static void MockReceiveStream(void **state) {
     /* No more */
     received = recv(0, junkData, SB_DATA_SIZE, 0);
     assert_int_equal(received, 0);
+
+    fflush(mockReceiveStream), fclose(mockReceiveStream), mockReceiveStream = NULL;
 }
 
 static void MockSend(void **state) {
