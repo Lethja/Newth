@@ -38,7 +38,7 @@ int main(void) {
     if ((r = cmocka_run_group_tests(platformTest, NULL, NULL))) return r;
     if ((r = cmocka_run_group_tests(queueTest, NULL, NULL))) return r;
     if ((r = cmocka_run_group_tests(siteTest, NULL, NULL))) return r;
-    if ((r = cmocka_run_group_tests(socketTest, NULL, NULL))) return r;
+    if ((r = cmocka_run_group_tests(sendBufferSocketTest, NULL, NULL))) return r;
     if ((r = cmocka_run_group_tests(xmlTest, NULL, NULL))) return r;
 
 #ifdef MOCK

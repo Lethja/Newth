@@ -19,7 +19,7 @@
 
 #pragma endregion
 
-static void SocketMemoryFree(void **state) {
+static void SendBufferMemoryFree(void **state) {
     SendBuffer socketBuffer = sendBufferNew(0, 0);
 
 #ifdef MOCK
@@ -37,7 +37,7 @@ static void SocketMemoryFree(void **state) {
 
 #ifdef MOCK
 
-static void SocketTextWrite(void **state) {
+static void SendBufferTextWrite(void **state) {
     const char *text = "Hello Socket Buffer Text";
     const size_t textLen = strlen(text);
     SendBuffer socketBuffer = sendBufferNew(0, 0);
@@ -47,7 +47,7 @@ static void SocketTextWrite(void **state) {
     mockReset();
 }
 
-static void SocketDataWrite(void **state) {
+static void SendBufferDataWrite(void **state) {
     const char *data = "Hello Socket Buffer Data";
     const size_t dataLen = strlen(data);
     SendBuffer socketBuffer = sendBufferNew(0, 0);
@@ -57,7 +57,7 @@ static void SocketDataWrite(void **state) {
     mockReset();
 }
 
-static void SocketFlush(void **state) {
+static void SendBufferSocketFlush(void **state) {
     const char *text = "Hello Socket Buffer Flush";
     const size_t textLen = strlen(text), bufSize = 5;
     SendBuffer socketBuffer = sendBufferNew(0, 0);
@@ -112,9 +112,9 @@ static void SocketFlush(void **state) {
 
 #pragma clang diagnostic pop
 
-const struct CMUnitTest socketTest[] = {cmocka_unit_test(SocketMemoryFree)
+const struct CMUnitTest sendBufferSocketTest[] = {cmocka_unit_test(SendBufferMemoryFree)
 #ifdef MOCK
-        , cmocka_unit_test(SocketDataWrite), cmocka_unit_test(SocketTextWrite), cmocka_unit_test(SocketFlush)
+        , cmocka_unit_test(SendBufferDataWrite), cmocka_unit_test(SendBufferTextWrite), cmocka_unit_test(SendBufferSocketFlush)
 #endif
 };
 
