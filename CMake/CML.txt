@@ -70,7 +70,7 @@ if (ENABLE_TEST)
 
     add_executable(test
             ../test/test.c ../test/mock.h ../test/common.h ../test/fetch.h ../test/platform.h ../test/queue.h
-            ../test/request.h ../test/site.h ../test/sendbufr.h ../test/xml.h
+            ../test/recvbufr.h ../test/request.h ../test/site.h ../test/sendbufr.h ../test/xml.h
 
             ../src/client/io.c ../src/client/io.h
             ../src/client/queue.c ../src/client/queue.h

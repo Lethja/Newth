@@ -58,7 +58,7 @@ if CMOCKA
 		-Wl,--wrap=malloc,--wrap=calloc,--wrap=realloc,--wrap=free,--wrap=connect,--wrap=recv,--wrap=send,--wrap=fclose
 
     unittest_SOURCES = test/test.c test/common.h test/fetch.h test/mock.h test/platform.h \
-		test/queue.h test/request.h test/site.h test/sendbufr.h test/xml.h
+		test/queue.h test/recvbufr.h test/request.h test/site.h test/sendbufr.h test/xml.h
 
     unittest_SOURCES += src/platform/mockput.c src/platform/mockput.h \
         src/client/io.c src/client/io.h \

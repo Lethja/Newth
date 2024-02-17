@@ -118,6 +118,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../src/client/queue.h" />
+		<Unit filename="../src/client/recvbufr.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/client/recvbufr.h" />
 		<Unit filename="../src/client/site.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -204,6 +208,7 @@
 		<Unit filename="../test/fetch.h" />
 		<Unit filename="../test/mock.h" />
 		<Unit filename="../test/platform.h" />
+		<Unit filename="../test/recvbufr.h" />
 		<Unit filename="../test/request.h" />
 		<Unit filename="../test/sendbufr.h" />
 		<Unit filename="../test/site.h" />

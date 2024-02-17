@@ -26,6 +26,14 @@ char *recvBufferAppend(RecvBuffer *self, size_t len);
 void recvBufferClear(RecvBuffer *self);
 
 /**
+ * Remove all memory allocations. Usually used to clean up after a catastrophic failure with the underlying socket
+ * @param self The buffer to free all memory allocations from
+ * @remark This function is not suitable if the buffer is going to be reused.
+ * If in doubt use recvBufferClear() instead
+ */
+void recvBufferFailFree(RecvBuffer *self);
+
+/**
  * Find a specific character
  * @param self In: The buffer to find data in
  * @param pos In: The position from the start of the temporary buffer to look
