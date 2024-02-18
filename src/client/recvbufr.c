@@ -11,8 +11,11 @@ char *recvBufferAppend(RecvBuffer *self, size_t len) {
     while (i < len) {
         char buf[SB_DATA_SIZE];
         PlatformFileOffset l;
+        size_t s = len - i;
+        if (s > SB_DATA_SIZE)
+            s = SB_DATA_SIZE;
 
-        switch ((l = recv(self->serverSocket, buf, SB_DATA_SIZE, 0))) {
+        switch ((l = recv(self->serverSocket, buf, s, 0))) {
             case -1:
                 /* TODO: Handle when something is wrong with the socket */
                 return strerror(platformSocketGetLastError());
