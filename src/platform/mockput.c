@@ -129,7 +129,7 @@ ssize_t __wrap_recv(int fd, void *buf, size_t len, int flags) {
             size_t i;
 
             for (i = 0, j = '1'; i < r; ++i, ++j)
-                j = (char) (j + 1 > '9' ? '0' : j), b[i] = j;
+                j = (char) (j > '9' ? '0' : j), b[i] = j;
         }
 
         return (ssize_t) r;

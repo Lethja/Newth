@@ -64,9 +64,9 @@ static void MockReceive(void **state) {
     assert_memory_equal(junkData, "12345", sizeof(char) * 5);
 
     /* The amount of data should be how much was sent this call and not accumulate */
-    received = recv(0, junkData, 5, 0);
-    assert_int_equal(received, 5);
-    assert_memory_equal(junkData, "12345", sizeof(char) * 5);
+    received = recv(0, junkData, 15, 0);
+    assert_int_equal(received, 15);
+    assert_memory_equal(junkData, "123456789012345", sizeof(char) * 15);
 
     /* When the maximum is reached it should return as much as it can fit */
     mockReceiveMaxBuf -= 10;
