@@ -42,9 +42,9 @@ static void RecvBufferClear(void **state) {
     FILE *buffer;
     mockReset();
     buffer =
-#endif
+    #endif
 
-    socketBuffer.buffer = platformMemoryStreamNew();
+            socketBuffer.buffer = platformMemoryStreamNew();
     assert_non_null(&socketBuffer.buffer);
     recvBufferClear(&socketBuffer);
 
@@ -85,10 +85,38 @@ static void ReceiveDitch(void **state) {
     socketBuffer = recvBufferNew(0, 0);
     assert_null(recvBufferAppend(&socketBuffer, 10));
 
-    recvBufferDitch(&socketBuffer, 5);
-
+    recvBufferDitch(&socketBuffer, 5); /* Ditch the first 5 bytes */
     assert_null(recvBufferFetch(&socketBuffer, buf, 0, 11));
     assert_string_equal("67890", buf);
+
+    recvBufferDitch(&socketBuffer, 1); /* Ditch the next byte from the above result */
+    assert_null(recvBufferFetch(&socketBuffer, buf, 0, 11));
+    assert_string_equal("7890", buf);
+
+    recvBufferDitch(&socketBuffer, 0); /* Don't ditch if zero */
+    assert_null(recvBufferFetch(&socketBuffer, buf, 0, 11));
+    assert_string_equal("7890", buf);
+
+    recvBufferFailFree(&socketBuffer);
+}
+
+static void ReceiveFind(void **state) {
+    const char *data = "The quick brown fox jumps over the lazy dog";
+    size_t len = strlen(data);
+    RecvBuffer socketBuffer;
+    PlatformFileOffset pos;
+
+    mockReset(), mockOptions = MOCK_CONNECT | MOCK_RECEIVE, mockReceiveMaxBuf = len;
+    mockReceiveStream = tmpfile(), fwrite(data, 1, len, mockReceiveStream), rewind(mockReceiveStream);
+
+    socketBuffer = recvBufferNew(0, 0);
+    recvBufferAppend(&socketBuffer, len);
+
+    assert_int_equal(recvBufferFind(&socketBuffer, 0, "The", 3), 0);
+    assert_int_equal(recvBufferFind(&socketBuffer, 0, "he", 2), 1);
+    assert_int_equal((pos = recvBufferFind(&socketBuffer, 0, "fox", 3)), 16);
+    assert_int_equal((pos = recvBufferFind(&socketBuffer, pos, "ox", 2)), 17);
+    assert_int_equal(recvBufferFind(&socketBuffer, pos, "dog", 3), 40);
 
     recvBufferFailFree(&socketBuffer);
 }
@@ -100,8 +128,7 @@ static void ReceiveDitch(void **state) {
 const struct CMUnitTest recvBufferSocketTest[] = {cmocka_unit_test(RecvBufferClear),
                                                   cmocka_unit_test(RecvBufferMemoryFree)
 #ifdef MOCK
-        , cmocka_unit_test(ReceiveFetch),
-         cmocka_unit_test(ReceiveDitch)
+        , cmocka_unit_test(ReceiveFetch), cmocka_unit_test(ReceiveFind), cmocka_unit_test(ReceiveDitch)
 #endif
 };
 
