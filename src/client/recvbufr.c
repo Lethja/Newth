@@ -20,6 +20,9 @@ char *recvBufferAppend(RecvBuffer *self, size_t len) {
                 /* TODO: Handle when something is wrong with the socket */
                 return strerror(platformSocketGetLastError());
             case 0:
+                if (i)
+                    return NULL;
+
                 return "No data to be retrieved";
             default:
                 /* TODO: Get correct error to return */
@@ -75,7 +78,7 @@ char *recvBufferFetch(RecvBuffer *self, char *buf, PlatformFileOffset pos, size_
     return "No buffered data";
 }
 
-PlatformFileOffset recvBufferFind(RecvBuffer *self, PlatformFileOffset pos, const char *data, size_t len) {
+PlatformFileOffset recvBufferFind(RecvBuffer *self, PlatformFileOffset pos, const char *token, size_t len) {
     PlatformFileOffset r;
     size_t i, j, l;
     char buf[SB_DATA_SIZE];
@@ -86,7 +89,7 @@ PlatformFileOffset recvBufferFind(RecvBuffer *self, PlatformFileOffset pos, cons
     j = r = 0, platformMemoryStreamSeek(self->buffer, pos, SEEK_SET);
     while ((l = fread(buf, 1, SB_DATA_SIZE, self->buffer)) > 0) {
         for (i = 0; i < l; ++i) {
-            if (buf[i] == data[j]) {
+            if (buf[i] == token[j]) {
                 ++j;
                 if (j == len) {
                     r += pos + (PlatformFileOffset) (i - len + 1);
@@ -106,43 +109,51 @@ const char *recvBufferSearchFor(RecvBuffer *self, const char *token, size_t len)
     PlatformFileOffset o;
     const char *e;
 
-    while (!(e = recvBufferAppend(self, SB_DATA_SIZE))) {
-        if ((o = recvBufferFind(self, 0, token, len)) == -1) {
+    if (!self->buffer) {
+        if ((e = recvBufferAppend(self, SB_DATA_SIZE)))
+            return e;
+    }
+
+    while ((o = recvBufferFind(self, 0, token, len)) == -1) {
+        if (!(e = recvBufferAppend(self, SB_DATA_SIZE))) {
             PlatformFileOffset p;
 
             platformMemoryStreamSeek(self->buffer, 0, SEEK_END), p = platformMemoryStreamTell(self->buffer);
             if (p > len)
                 p -= (PlatformFileOffset) len, recvBufferDitch(self, p);
-        } else {
-            if (o > 1)
-                recvBufferDitch(self, o);
-
-            return NULL;
-        }
+        } else
+            return e;
     }
 
-    return e;
+    if (o > 1)
+        recvBufferDitch(self, o);
+
+    return NULL;
 }
 
 const char *recvBufferSearchTo(RecvBuffer *self, const char *token, size_t len, size_t max) {
     PlatformFileOffset i = 0, o;
     const char *e;
 
-    while (!(e = recvBufferAppend(self, SB_DATA_SIZE))) {
-        if ((o = recvBufferFind(self, i, token, len)) == -1) {
+    if (!self->buffer) {
+        if ((e = recvBufferAppend(self, SB_DATA_SIZE)))
+            return e;
+    }
+
+    while ((o = recvBufferFind(self, i, token, len)) == -1) {
+        if (!(e = recvBufferAppend(self, SB_DATA_SIZE))) {
             platformMemoryStreamSeek(self->buffer, 0, SEEK_END);
 
             if ((i = platformMemoryStreamTell(self->buffer)) > max)
                 return "Exceeded maximum allowed buffer size";
             else
                 i -= (PlatformFileOffset) len;
-        } else {
-            platformMemoryStreamSeek(self->buffer, i + o, SEEK_CUR);
-            return NULL;
-        }
+        } else
+            return e;
     }
 
-    return e;
+    platformMemoryStreamSeek(self->buffer, i + o, SEEK_CUR);
+    return NULL;
 }
 
 RecvBuffer recvBufferNew(SOCKET serverSocket, char options) {

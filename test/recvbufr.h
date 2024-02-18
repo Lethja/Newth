@@ -103,6 +103,7 @@ static void ReceiveDitch(void **state) {
 static void ReceiveFind(void **state) {
     const char *data = "The quick brown fox jumps over the lazy dog";
     size_t len = strlen(data);
+
     RecvBuffer socketBuffer;
     PlatformFileOffset pos;
 
@@ -121,6 +122,46 @@ static void ReceiveFind(void **state) {
     recvBufferFailFree(&socketBuffer);
 }
 
+static void ReceiveSearchFor(void **state) {
+    const char *data = "The quick brown fox jumps over the lazy dog";
+    size_t len = strlen(data);
+
+    RecvBuffer socketBuffer;
+    mockReset(), mockOptions = MOCK_CONNECT | MOCK_RECEIVE, mockReceiveMaxBuf = len;
+    mockReceiveStream = tmpfile(), fwrite(data, 1, len, mockReceiveStream), rewind(mockReceiveStream);
+
+    socketBuffer = recvBufferNew(0, 0);
+
+    assert_null(recvBufferSearchFor(&socketBuffer, "The", 3));
+    assert_null(recvBufferSearchFor(&socketBuffer, "he", 2));
+    assert_null(recvBufferSearchFor(&socketBuffer, "fox", 3));
+    assert_null(recvBufferSearchFor(&socketBuffer, "ox", 2));
+    assert_null(recvBufferSearchFor(&socketBuffer, "dog", 3));
+    assert_non_null(recvBufferSearchFor(&socketBuffer, "fox", 3)); /* Buffer eaten, fox is gone! */
+
+    recvBufferFailFree(&socketBuffer);
+}
+
+static void ReceiveSearchTo(void **state) {
+    const char *data = "The quick brown fox jumps over the lazy dog";
+    size_t len = strlen(data);
+
+    RecvBuffer socketBuffer;
+    mockReset(), mockOptions = MOCK_CONNECT | MOCK_RECEIVE, mockReceiveMaxBuf = len;
+    mockReceiveStream = tmpfile(), fwrite(data, 1, len, mockReceiveStream), rewind(mockReceiveStream);
+
+    socketBuffer = recvBufferNew(0, 0);
+
+    assert_null(recvBufferSearchTo(&socketBuffer, "The", 3, len));
+    assert_null(recvBufferSearchTo(&socketBuffer, "he", 2, len));
+    assert_null(recvBufferSearchTo(&socketBuffer, "fox", 3, len));
+    assert_null(recvBufferSearchTo(&socketBuffer, "ox", 2, len));
+    assert_null(recvBufferSearchTo(&socketBuffer, "dog", 3, len));
+    assert_null(recvBufferSearchTo(&socketBuffer, "fox", 3, len)); /* Buffer expanded, fox is still here */
+
+    recvBufferFailFree(&socketBuffer);
+}
+
 #endif /* MOCK */
 
 #pragma clang diagnostic pop
@@ -128,7 +169,8 @@ static void ReceiveFind(void **state) {
 const struct CMUnitTest recvBufferSocketTest[] = {cmocka_unit_test(RecvBufferClear),
                                                   cmocka_unit_test(RecvBufferMemoryFree)
 #ifdef MOCK
-        , cmocka_unit_test(ReceiveFetch), cmocka_unit_test(ReceiveFind), cmocka_unit_test(ReceiveDitch)
+        , cmocka_unit_test(ReceiveFetch), cmocka_unit_test(ReceiveFind), cmocka_unit_test(ReceiveDitch),
+                                                  cmocka_unit_test(ReceiveSearchFor), cmocka_unit_test(ReceiveSearchTo)
 #endif
 };
 

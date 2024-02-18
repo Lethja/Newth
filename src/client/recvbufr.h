@@ -47,11 +47,11 @@ char *recvBufferFetch(RecvBuffer *self, char *buf, PlatformFileOffset pos, size_
  * Find a specific character
  * @param self In: The buffer to find data in
  * @param pos In: The position from the start of the temporary buffer to look
- * @param data In: The data to match
+ * @param token In: The data to match
  * @param len In: The length of the data to match
  * @return The position relative to the start of the buffer or -1 when no match is found
  */
-PlatformFileOffset recvBufferFind(RecvBuffer *self, PlatformFileOffset pos, const char *data, size_t len);
+PlatformFileOffset recvBufferFind(RecvBuffer *self, PlatformFileOffset pos, const char *token, size_t len);
 
 /**
  * Disregard a certain amount of the start of the current buffer
