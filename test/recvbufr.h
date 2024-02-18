@@ -53,6 +53,8 @@ static void RecvBufferClear(void **state) {
 #endif
 }
 
+#ifdef MOCK
+
 static void ReceiveFetch(void **state) {
     RecvBuffer socketBuffer;
     char buf[11] = {0};
@@ -74,12 +76,32 @@ static void ReceiveFetch(void **state) {
     recvBufferFailFree(&socketBuffer);
 }
 
+static void ReceiveDitch(void **state) {
+    RecvBuffer socketBuffer;
+    char buf[11] = {0};
+
+    mockReset(), mockOptions = MOCK_CONNECT | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
+
+    socketBuffer = recvBufferNew(0, 0);
+    assert_null(recvBufferAppend(&socketBuffer, 10));
+
+    recvBufferDitch(&socketBuffer, 5);
+
+    assert_null(recvBufferFetch(&socketBuffer, buf, 0, 11));
+    assert_string_equal("67890", buf);
+
+    recvBufferFailFree(&socketBuffer);
+}
+
+#endif /* MOCK */
+
 #pragma clang diagnostic pop
 
 const struct CMUnitTest recvBufferSocketTest[] = {cmocka_unit_test(RecvBufferClear),
                                                   cmocka_unit_test(RecvBufferMemoryFree)
 #ifdef MOCK
-        , cmocka_unit_test(ReceiveFetch)
+        , cmocka_unit_test(ReceiveFetch),
+         cmocka_unit_test(ReceiveDitch)
 #endif
 };
 
