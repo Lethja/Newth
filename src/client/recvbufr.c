@@ -89,7 +89,7 @@ PlatformFileOffset recvBufferFind(RecvBuffer *self, PlatformFileOffset pos, cons
             if (buf[i] == data[j]) {
                 ++j;
                 if (j == len) {
-                    r += (PlatformFileOffset) j;
+                    r += pos + (PlatformFileOffset) (i - len + 1);
                     return r;
                 }
             } else
