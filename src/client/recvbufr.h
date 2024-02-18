@@ -34,6 +34,16 @@ void recvBufferClear(RecvBuffer *self);
 void recvBufferFailFree(RecvBuffer *self);
 
 /**
+ * Fetch whatever is in the buffer into a string array
+ * @param self The buffer to fetch out of
+ * @param buf The character buffer to fetch into
+ * @param pos The position in the buffer to fetch from
+ * @param len The length of the buffer to write into including the null terminator
+ * @return NULL on success, user friendly error message otherwise
+ */
+char *recvBufferFetch(RecvBuffer *self, char *buf, PlatformFileOffset pos, size_t len);
+
+/**
  * Find a specific character
  * @param self In: The buffer to find data in
  * @param pos In: The position from the start of the temporary buffer to look

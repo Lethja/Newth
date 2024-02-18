@@ -57,6 +57,21 @@ void recvBufferFailFree(RecvBuffer *self) {
         fclose(self->buffer);
 }
 
+char *recvBufferFetch(RecvBuffer *self, char *buf, PlatformFileOffset pos, size_t len) {
+    if (self->buffer) {
+        size_t l;
+        if (fseek(self->buffer, pos, SEEK_SET))
+            return strerror(errno);
+
+        if ((l = fread(buf, 1, len - 1, self->buffer))) {
+            buf[l] = '\0';
+            return NULL;
+        }
+    }
+
+    return "No buffered data";
+}
+
 PlatformFileOffset recvBufferFind(RecvBuffer *self, PlatformFileOffset pos, const char *data, size_t len) {
     PlatformFileOffset r;
     size_t i, j, l;
