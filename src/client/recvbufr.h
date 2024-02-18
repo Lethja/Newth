@@ -26,6 +26,13 @@ char *recvBufferAppend(RecvBuffer *self, size_t len);
 void recvBufferClear(RecvBuffer *self);
 
 /**
+ * Disregard a certain amount of the start of the current buffer
+ * @param self The buffer to disregard the start of
+ * @param len The amount of data from the start to disregard
+ */
+void recvBufferDitch(RecvBuffer *self, PlatformFileOffset len);
+
+/**
  * Remove all memory allocations. Usually used to clean up after a catastrophic failure with the underlying socket
  * @param self The buffer to free all memory allocations from
  * @remark This function is not suitable if the buffer is going to be reused.
@@ -54,15 +61,6 @@ char *recvBufferFetch(RecvBuffer *self, char *buf, PlatformFileOffset pos, size_
 PlatformFileOffset recvBufferFind(RecvBuffer *self, PlatformFileOffset pos, const char *token, size_t len);
 
 /**
- * Disregard a certain amount of the start of the current buffer
- * @param self The buffer to disregard the start of
- * @param len The amount of data from the start to disregard
- */
-void recvBufferDitch(RecvBuffer *self, PlatformFileOffset len);
-
-RecvBuffer recvBufferNew(SOCKET serverSocket, char options);
-
-/**
  * Search for a byte match to data in the sockets data consuming everything in the stream before the match
  * @param self In: The buffer to search for the token in
  * @param token In: The data to match
@@ -71,7 +69,7 @@ RecvBuffer recvBufferNew(SOCKET serverSocket, char options);
  * @remark The buffer will be consumed up to the first matched instance,
  * if no match is found the entire buffer will be consumed! Use this function with caution.
  */
-const char *recvBufferSearchFor(RecvBuffer *self, const char *token, size_t len);
+const char *recvBufferFindAndDitch(RecvBuffer *self, const char *token, size_t len);
 
 /**
  * Search for a byte match to data in the sockets data appending everything in the stream before the match
@@ -84,6 +82,15 @@ const char *recvBufferSearchFor(RecvBuffer *self, const char *token, size_t len)
  * if no match is found or the buffer reaches the maximum size allowed
  * then the entire buffer up to that point will stored in memory for further parsing.
  */
-const char *recvBufferSearchTo(RecvBuffer *self, const char *token, size_t len, size_t max);
+const char *recvBufferFindAndFetch(RecvBuffer *self, const char *token, size_t len, size_t max);
+
+/**
+ * Create a socket buffer to receive data on
+ * @param serverSocket In: The socket this buffer should manage
+ * @param options In: The options to set on the new socketBuffer
+ * @return The new socket buffer (stack allocated)
+ * @note One socket buffer per socket
+ */
+RecvBuffer recvBufferNew(SOCKET serverSocket, char options);
 
 #endif /* NEW_DL_RECEIVE_BUFFER_H */

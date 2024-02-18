@@ -31,8 +31,8 @@ size_t sendBufferFlush(SendBuffer *self);
 void sendBufferFailFree(SendBuffer *self);
 
 /**
- * Create a socket buffer for a socket
- * @param clientSocket In: The socket to create in a socketBuffer
+ * Create a socket buffer to send data on
+ * @param clientSocket In: The socket this buffer should manage
  * @param options In: The options to set on the new socketBuffer
  * @return The new socket buffer (stack allocated)
  * @note One socket buffer per socket

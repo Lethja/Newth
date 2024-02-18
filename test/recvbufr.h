@@ -122,7 +122,7 @@ static void ReceiveFind(void **state) {
     recvBufferFailFree(&socketBuffer);
 }
 
-static void ReceiveSearchFor(void **state) {
+static void ReceiveFindDitch(void **state) {
     const char *data = "The quick brown fox jumps over the lazy dog";
     size_t len = strlen(data);
 
@@ -132,17 +132,17 @@ static void ReceiveSearchFor(void **state) {
 
     socketBuffer = recvBufferNew(0, 0);
 
-    assert_null(recvBufferSearchFor(&socketBuffer, "The", 3));
-    assert_null(recvBufferSearchFor(&socketBuffer, "he", 2));
-    assert_null(recvBufferSearchFor(&socketBuffer, "fox", 3));
-    assert_null(recvBufferSearchFor(&socketBuffer, "ox", 2));
-    assert_null(recvBufferSearchFor(&socketBuffer, "dog", 3));
-    assert_non_null(recvBufferSearchFor(&socketBuffer, "fox", 3)); /* Buffer eaten, fox is gone! */
+    assert_null(recvBufferFindAndDitch(&socketBuffer, "The", 3));
+    assert_null(recvBufferFindAndDitch(&socketBuffer, "he", 2));
+    assert_null(recvBufferFindAndDitch(&socketBuffer, "fox", 3));
+    assert_null(recvBufferFindAndDitch(&socketBuffer, "ox", 2));
+    assert_null(recvBufferFindAndDitch(&socketBuffer, "dog", 3));
+    assert_non_null(recvBufferFindAndDitch(&socketBuffer, "fox", 3)); /* Buffer eaten, fox is gone! */
 
     recvBufferFailFree(&socketBuffer);
 }
 
-static void ReceiveSearchTo(void **state) {
+static void ReceiveFindFetch(void **state) {
     const char *data = "The quick brown fox jumps over the lazy dog";
     size_t len = strlen(data);
 
@@ -152,12 +152,12 @@ static void ReceiveSearchTo(void **state) {
 
     socketBuffer = recvBufferNew(0, 0);
 
-    assert_null(recvBufferSearchTo(&socketBuffer, "The", 3, len));
-    assert_null(recvBufferSearchTo(&socketBuffer, "he", 2, len));
-    assert_null(recvBufferSearchTo(&socketBuffer, "fox", 3, len));
-    assert_null(recvBufferSearchTo(&socketBuffer, "ox", 2, len));
-    assert_null(recvBufferSearchTo(&socketBuffer, "dog", 3, len));
-    assert_null(recvBufferSearchTo(&socketBuffer, "fox", 3, len)); /* Buffer expanded, fox is still here */
+    assert_null(recvBufferFindAndFetch(&socketBuffer, "The", 3, len));
+    assert_null(recvBufferFindAndFetch(&socketBuffer, "he", 2, len));
+    assert_null(recvBufferFindAndFetch(&socketBuffer, "fox", 3, len));
+    assert_null(recvBufferFindAndFetch(&socketBuffer, "ox", 2, len));
+    assert_null(recvBufferFindAndFetch(&socketBuffer, "dog", 3, len));
+    assert_null(recvBufferFindAndFetch(&socketBuffer, "fox", 3, len)); /* Buffer expanded, fox is still here */
 
     recvBufferFailFree(&socketBuffer);
 }
@@ -170,7 +170,7 @@ const struct CMUnitTest recvBufferSocketTest[] = {cmocka_unit_test(RecvBufferCle
                                                   cmocka_unit_test(RecvBufferMemoryFree)
 #ifdef MOCK
         , cmocka_unit_test(ReceiveFetch), cmocka_unit_test(ReceiveFind), cmocka_unit_test(ReceiveDitch),
-                                                  cmocka_unit_test(ReceiveSearchFor), cmocka_unit_test(ReceiveSearchTo)
+                                                  cmocka_unit_test(ReceiveFindDitch), cmocka_unit_test(ReceiveFindFetch)
 #endif
 };
 

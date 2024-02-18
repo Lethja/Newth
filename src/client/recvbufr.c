@@ -105,7 +105,7 @@ PlatformFileOffset recvBufferFind(RecvBuffer *self, PlatformFileOffset pos, cons
     return -1;
 }
 
-const char *recvBufferSearchFor(RecvBuffer *self, const char *token, size_t len) {
+const char *recvBufferFindAndDitch(RecvBuffer *self, const char *token, size_t len) {
     PlatformFileOffset o;
     const char *e;
 
@@ -131,7 +131,7 @@ const char *recvBufferSearchFor(RecvBuffer *self, const char *token, size_t len)
     return NULL;
 }
 
-const char *recvBufferSearchTo(RecvBuffer *self, const char *token, size_t len, size_t max) {
+const char *recvBufferFindAndFetch(RecvBuffer *self, const char *token, size_t len, size_t max) {
     PlatformFileOffset i = 0, o;
     const char *e;
 
