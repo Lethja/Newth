@@ -85,6 +85,15 @@ const char *recvBufferFindAndDitch(RecvBuffer *self, const char *token, size_t l
 const char *recvBufferFindAndFetch(RecvBuffer *self, const char *token, size_t len, size_t max);
 
 /**
+ * Update the server socket to another socket or a reconnected socket
+ * @param self The buffer to update to socket with
+ * @param socket The socket to update the buffer with
+ * @remark Aside from the switched out socket the rest of the buffer state remains unchanged.
+ * Use recvBufferClear to reset the buffer as needed
+ */
+void recvBufferUpdateSocket(RecvBuffer *self, SOCKET *socket);
+
+/**
  * Create a socket buffer to receive data on
  * @param serverSocket In: The socket this buffer should manage
  * @param options In: The options to set on the new socketBuffer

@@ -162,6 +162,23 @@ static void ReceiveFindFetch(void **state) {
     recvBufferFailFree(&socketBuffer);
 }
 
+static void ReceiveUpdateSocket(void **state) {
+    RecvBuffer socketBuffer1, socketBuffer2;
+    SOCKET sock = 1;
+    mockReset(), mockOptions = MOCK_CONNECT | MOCK_RECEIVE, mockReceiveMaxBuf = 1024;
+
+    socketBuffer1 = recvBufferNew(0, 0);
+    assert_null(recvBufferAppend(&socketBuffer1, 10));
+    socketBuffer2 = socketBuffer1;
+    recvBufferUpdateSocket(&socketBuffer1, &sock);
+
+    assert_ptr_equal(socketBuffer1.buffer, socketBuffer2.buffer);
+    assert_int_not_equal(socketBuffer1.serverSocket, socketBuffer2.serverSocket);
+    assert_int_equal(socketBuffer1.escape, socketBuffer2.escape);
+    assert_int_equal(socketBuffer1.remain, socketBuffer2.remain);
+    assert_int_equal(socketBuffer1.options, socketBuffer2.options);
+}
+
 #endif /* MOCK */
 
 #pragma clang diagnostic pop
@@ -170,7 +187,8 @@ const struct CMUnitTest recvBufferSocketTest[] = {cmocka_unit_test(RecvBufferCle
                                                   cmocka_unit_test(RecvBufferMemoryFree)
 #ifdef MOCK
         , cmocka_unit_test(ReceiveFetch), cmocka_unit_test(ReceiveFind), cmocka_unit_test(ReceiveDitch),
-                                                  cmocka_unit_test(ReceiveFindDitch), cmocka_unit_test(ReceiveFindFetch)
+                                                  cmocka_unit_test(ReceiveFindDitch), cmocka_unit_test(ReceiveFindFetch),
+                                                  cmocka_unit_test(ReceiveUpdateSocket)
 #endif
 };
 

@@ -156,6 +156,10 @@ const char *recvBufferFindAndFetch(RecvBuffer *self, const char *token, size_t l
     return NULL;
 }
 
+void recvBufferUpdateSocket(RecvBuffer *self, SOCKET *socket) {
+    self->serverSocket = *socket;
+}
+
 RecvBuffer recvBufferNew(SOCKET serverSocket, char options) {
     /* TODO: Make aware of site and/or socketAddress for reconnection */
     RecvBuffer self;
