@@ -7,8 +7,9 @@
 typedef struct RecvBuffer {
     PlatformFileOffset escape, remain;
     FILE *buffer;
+    SocketAddress serverAddress;
     SOCKET serverSocket;
-    char options;
+    int options;
 } RecvBuffer;
 
 /**
@@ -91,15 +92,27 @@ const char *recvBufferFindAndFetch(RecvBuffer *self, const char *token, size_t l
  * @remark Aside from the switched out socket the rest of the buffer state remains unchanged.
  * Use recvBufferClear to reset the buffer as needed
  */
-void recvBufferUpdateSocket(RecvBuffer *self, SOCKET *socket);
+void recvBufferUpdateSocket(RecvBuffer *self, const SOCKET *socket);
 
 /**
  * Create a socket buffer to receive data on
  * @param serverSocket In: The socket this buffer should manage
+ * @param serverAddress In: The address this buffer should manage
  * @param options In: The options to set on the new socketBuffer
  * @return The new socket buffer (stack allocated)
- * @note One socket buffer per socket
+ * @note One socket buffer per socket and socketAddress
  */
-RecvBuffer recvBufferNew(SOCKET serverSocket, char options);
+RecvBuffer recvBufferNew(SOCKET serverSocket, SocketAddress serverAddress, int options);
+
+/**
+ * Create a socket buffer to receive data on from a socket address.
+ * A socket will be connected as part of the creation process
+ * @param self In: The buffer to setup
+ * @param serverAddress In: The address this buffer should manage
+ * @param options In: The options to set on the new socketBuffer
+ * @return NULL on success, user friendly error message otherwise
+ * @note One socket buffer per socket and socketAddress
+ */
+char *recvBufferNewFromSocketAddress(RecvBuffer *self, SocketAddress serverAddress, int options);
 
 #endif /* NEW_DL_RECEIVE_BUFFER_H */

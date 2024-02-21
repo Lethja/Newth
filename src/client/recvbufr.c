@@ -157,15 +157,32 @@ const char *recvBufferFindAndFetch(RecvBuffer *self, const char *token, size_t l
     return NULL;
 }
 
-void recvBufferUpdateSocket(RecvBuffer *self, SOCKET *socket) {
+void recvBufferUpdateSocket(RecvBuffer *self, const SOCKET *socket) {
     self->serverSocket = *socket;
 }
 
-RecvBuffer recvBufferNew(SOCKET serverSocket, char options) {
-    /* TODO: Make aware of site and/or socketAddress for reconnection */
+RecvBuffer recvBufferNew(SOCKET serverSocket, SocketAddress serverAddress, int options) {
     RecvBuffer self;
 
-    self.options = options, self.serverSocket = serverSocket;
+    self.options = options, self.serverSocket = serverSocket, self.serverAddress = serverAddress;
     self.escape = self.remain = 0, self.buffer = NULL;
     return self;
+}
+
+char *recvBufferNewFromSocketAddress(RecvBuffer *self, SocketAddress serverAddress, int options) {
+    SOCKET sock;
+    char *e;
+
+    if((e = ioCreateSocketFromSocketAddress(&serverAddress, &sock)))
+        return e;
+
+    if (connect(sock, &self->serverAddress.address.sock, sizeof(self->serverAddress.address.sock)) == -1) {
+        if (sock == INVALID_SOCKET)
+            CLOSE_SOCKET(sock);
+
+        return strerror(platformSocketGetLastError());
+    }
+
+    *self = recvBufferNew(sock, serverAddress, options);
+    return NULL;
 }
