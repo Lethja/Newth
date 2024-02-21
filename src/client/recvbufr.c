@@ -25,9 +25,10 @@ char *recvBufferAppend(RecvBuffer *self, size_t len) {
 
                 return "No data to be retrieved";
             default:
-                /* TODO: Get correct error to return */
-                if ((fwrite(buf, 1, l, self->buffer)) != l)
-                    return strerror(errno);
+                if ((fwrite(buf, 1, l, self->buffer)) != l) {
+                    if (ferror(self->buffer))
+                        return "Error writing to volatile buffer";
+                }
 
                 self->remain -= l, self->escape += l;
                 i += l;
