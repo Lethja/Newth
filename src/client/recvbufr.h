@@ -128,7 +128,7 @@ void recvBufferUpdateSocket(RecvBuffer *self, const SOCKET *socket);
  * @param serverAddress In: The address this buffer should manage
  * @param options In: The options to set on the new socketBuffer
  * @return The new socket buffer (stack allocated)
- * @note One socket buffer per socket and socketAddress
+ * @note One socket buffer per socket/address
  */
 RecvBuffer recvBufferNew(SOCKET serverSocket, SocketAddress serverAddress, int options);
 
@@ -139,7 +139,7 @@ RecvBuffer recvBufferNew(SOCKET serverSocket, SocketAddress serverAddress, int o
  * @param serverAddress In: The address this buffer should manage
  * @param options In: The options to set on the new socketBuffer
  * @return NULL on success, user friendly error message otherwise
- * @note One socket buffer per socket and socketAddress
+ * @note One socket buffer per socket/address
  */
 char *recvBufferNewFromSocketAddress(RecvBuffer *self, SocketAddress serverAddress, int options);
 

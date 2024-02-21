@@ -1,8 +1,40 @@
 #include "recvbufr.h"
 
+#pragma region Static Helper Functions
+
+static inline char EndOfData(RecvBuffer *self, PlatformFileOffset added) {
+    if (self->options & RECV_BUFFER_DATA_LENGTH_CHUNK) {
+        if (self->length.chunk.escape >= self->length.chunk.next) {
+            /* TODO: Parse length of next chunk */
+        }
+    } else if (self->options & RECV_BUFFER_DATA_LENGTH_KNOWN) {
+        if (self->length.known.escape >= self->length.known.total)
+            return 1;
+    } else if (self->options & RECV_BUFFER_DATA_LENGTH_TOKEN) {
+        /* TODO: Check for token in the buffer */
+    } else {
+        if (self->length.unknown.escape >= self->length.unknown.limit)
+            return 1;
+    }
+    return 0;
+}
+
+static inline PlatformFileOffset *SetEscapePtr(RecvBuffer *self) {
+    if (self->options & RECV_BUFFER_DATA_LENGTH_CHUNK)
+        return &self->length.chunk.escape;
+    else if (self->options & RECV_BUFFER_DATA_LENGTH_KNOWN)
+        return &self->length.known.escape;
+    else if (self->options & RECV_BUFFER_DATA_LENGTH_TOKEN)
+        return NULL;
+    else
+        return (PlatformFileOffset *) &self->length.unknown.escape;
+}
+
+#pragma endregion
+
 char *recvBufferAppend(RecvBuffer *self, size_t len) {
     size_t i = 0;
-    PlatformFileOffset *escape;
+    PlatformFileOffset *escape = SetEscapePtr(self);
 
     if (!self->buffer)
         self->buffer = platformMemoryStreamNew();
@@ -16,15 +48,6 @@ char *recvBufferAppend(RecvBuffer *self, size_t len) {
 
         if (s > SB_DATA_SIZE)
             s = SB_DATA_SIZE;
-
-        if (self->options & RECV_BUFFER_DATA_LENGTH_CHUNK)
-            escape = &self->length.chunk.escape;
-        else if (self->options & RECV_BUFFER_DATA_LENGTH_KNOWN)
-            escape = &self->length.known.escape;
-        else if (self->options & RECV_BUFFER_DATA_LENGTH_TOKEN)
-            escape = NULL;
-        else
-            escape = (PlatformFileOffset *) &self->length.unknown.escape;
 
         switch ((l = recv(self->serverSocket, buf, s, 0))) {
             case -1:
@@ -43,6 +66,9 @@ char *recvBufferAppend(RecvBuffer *self, size_t len) {
 
                 if (escape)
                     *escape += l;
+
+                if(EndOfData(self, l))
+                    return NULL;
 
                 i += l;
                 break;
@@ -213,8 +239,8 @@ void recvBufferSetLengthKnown(RecvBuffer *self, PlatformFileOffset length) {
 }
 
 void recvBufferSetLengthUnknown(RecvBuffer *self, size_t limit) {
-    self->options &=
-            ~(1 << RECV_BUFFER_DATA_LENGTH_CHUNK) | ~(1 << RECV_BUFFER_DATA_LENGTH_KNOWN) | ~(1 << RECV_BUFFER_DATA_LENGTH_TOKEN);
+    self->options &= ~(1 << RECV_BUFFER_DATA_LENGTH_CHUNK) | ~(1 << RECV_BUFFER_DATA_LENGTH_KNOWN) |
+                     ~(1 << RECV_BUFFER_DATA_LENGTH_TOKEN);
     self->length.unknown.limit = limit, self->length.unknown.escape = 0;
 }
 
