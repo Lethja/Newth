@@ -20,7 +20,7 @@
 #pragma endregion
 
 static void RecvBufferMemoryFree(void **state) {
-    RecvBuffer socketBuffer = recvBufferNew(0, 0);
+    RecvBuffer socketBuffer = {0};
 
 #ifdef MOCK
     mockReset();
@@ -36,7 +36,7 @@ static void RecvBufferMemoryFree(void **state) {
 }
 
 static void RecvBufferClear(void **state) {
-    RecvBuffer socketBuffer = recvBufferNew(0, 0);
+    RecvBuffer socketBuffer = {0};
     char buf[10];
 
 #ifdef MOCK
@@ -56,15 +56,100 @@ static void RecvBufferClear(void **state) {
 #endif
 }
 
+static void ReceiveSetLengthChunk(void **state) {
+    RecvBuffer socketBuffer;
+
+    memset(&socketBuffer, 0, sizeof(RecvBuffer));
+    recvBufferSetLengthChunk(&socketBuffer);
+    assert_true(socketBuffer.options);
+    assert_true(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_CHUNK);
+    assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_KNOWN);
+    assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_TOKEN);
+    assert_int_equal(socketBuffer.length.chunk.next, 0);
+    assert_int_equal(socketBuffer.length.chunk.escape, 0);
+
+    memset(&socketBuffer, CHAR_MIN, sizeof(RecvBuffer));
+    recvBufferSetLengthChunk(&socketBuffer);
+    assert_true(socketBuffer.options);
+    assert_true(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_CHUNK);
+    assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_KNOWN);
+    assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_TOKEN);
+    assert_int_equal(socketBuffer.length.chunk.next, 0);
+    assert_int_equal(socketBuffer.length.chunk.escape, 0);
+}
+
+static void ReceiveSetLengthKnown(void **state) {
+    RecvBuffer socketBuffer;
+
+    memset(&socketBuffer, 0, sizeof(RecvBuffer));
+    recvBufferSetLengthKnown(&socketBuffer, 69);
+    assert_true(socketBuffer.options);
+    assert_true(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_KNOWN);
+    assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_CHUNK);
+    assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_TOKEN);
+    assert_int_equal(socketBuffer.length.known.total, 69);
+    assert_int_equal(socketBuffer.length.known.escape, 0);
+
+    memset(&socketBuffer, CHAR_MIN, sizeof(RecvBuffer));
+    recvBufferSetLengthKnown(&socketBuffer, 69);
+    assert_true(socketBuffer.options);
+    assert_true(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_KNOWN);
+    assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_CHUNK);
+    assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_TOKEN);
+    assert_int_equal(socketBuffer.length.known.total, 69);
+    assert_int_equal(socketBuffer.length.known.escape, 0);
+}
+
+static void ReceiveSetLengthToken(void **state) {
+    RecvBuffer socketBuffer;
+
+    memset(&socketBuffer, 0, sizeof(RecvBuffer));
+    recvBufferSetLengthToken(&socketBuffer, HTTP_EOL HTTP_EOL, 4);
+    assert_true(socketBuffer.options);
+    assert_true(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_TOKEN);
+    assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_CHUNK);
+    assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_KNOWN);
+    assert_memory_equal(socketBuffer.length.token.token, HTTP_EOL HTTP_EOL, 4);
+    assert_int_equal(socketBuffer.length.token.length, 4);
+
+    memset(&socketBuffer, CHAR_MIN, sizeof(RecvBuffer));
+    recvBufferSetLengthToken(&socketBuffer, HTTP_EOL HTTP_EOL, 4);
+    assert_true(socketBuffer.options);
+    assert_true(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_TOKEN);
+    assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_CHUNK);
+    assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_KNOWN);
+    assert_memory_equal(socketBuffer.length.token.token, HTTP_EOL HTTP_EOL, 4);
+    assert_int_equal(socketBuffer.length.token.length, 4);
+}
+
+static void ReceiveSetLengthUnknown(void **state) {
+    RecvBuffer socketBuffer;
+
+    memset(&socketBuffer, 0, sizeof(RecvBuffer));
+    recvBufferSetLengthUnknown(&socketBuffer, 69);
+    assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_CHUNK);
+    assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_KNOWN);
+    assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_TOKEN);
+    assert_int_equal(socketBuffer.length.unknown.limit, 69);
+    assert_int_equal(socketBuffer.length.known.escape, 0);
+
+    memset(&socketBuffer, CHAR_MIN, sizeof(RecvBuffer));
+    recvBufferSetLengthUnknown(&socketBuffer, 69);
+    assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_CHUNK);
+    assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_KNOWN);
+    assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_TOKEN);
+    assert_int_equal(socketBuffer.length.unknown.limit, 69);
+    assert_int_equal(socketBuffer.length.known.escape, 0);
+}
+
 #ifdef MOCK
 
 static void ReceiveDitch(void **state) {
-    RecvBuffer socketBuffer;
+    RecvBuffer socketBuffer = {0};
     char buf[11] = {0};
 
     mockReset(), mockOptions = MOCK_CONNECT | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
 
-    socketBuffer = recvBufferNew(0, 0);
     assert_null(recvBufferAppend(&socketBuffer, 10));
 
     recvBufferDitch(&socketBuffer, 5); /* Ditch the first 5 bytes */
@@ -83,12 +168,11 @@ static void ReceiveDitch(void **state) {
 }
 
 static void ReceiveFetch(void **state) {
-    RecvBuffer socketBuffer;
+    RecvBuffer socketBuffer = {0};
     char buf[11] = {0};
 
     mockReset(), mockOptions = MOCK_CONNECT | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
 
-    socketBuffer = recvBufferNew(0, 0);
     assert_null(recvBufferAppend(&socketBuffer, 10));
 
     assert_null(recvBufferFetch(&socketBuffer, buf, 0, 11));
@@ -107,13 +191,11 @@ static void ReceiveFind(void **state) {
     const char *data = "The quick brown fox jumps over the lazy dog";
     size_t len = strlen(data);
 
-    RecvBuffer socketBuffer;
+    RecvBuffer socketBuffer = {0};
     PlatformFileOffset pos;
 
     mockReset(), mockOptions = MOCK_CONNECT | MOCK_RECEIVE, mockReceiveMaxBuf = len;
     mockReceiveStream = tmpfile(), fwrite(data, 1, len, mockReceiveStream), rewind(mockReceiveStream);
-
-    socketBuffer = recvBufferNew(0, 0);
     recvBufferAppend(&socketBuffer, len);
 
     assert_int_equal(recvBufferFind(&socketBuffer, 0, "The", 3), 0);
@@ -129,11 +211,9 @@ static void ReceiveFindDitch(void **state) {
     const char *data = "The quick brown fox jumps over the lazy dog";
     size_t len = strlen(data);
 
-    RecvBuffer socketBuffer;
+    RecvBuffer socketBuffer = {0};
     mockReset(), mockOptions = MOCK_CONNECT | MOCK_RECEIVE, mockReceiveMaxBuf = len;
     mockReceiveStream = tmpfile(), fwrite(data, 1, len, mockReceiveStream), rewind(mockReceiveStream);
-
-    socketBuffer = recvBufferNew(0, 0);
 
     assert_null(recvBufferFindAndDitch(&socketBuffer, "The", 3));
     assert_null(recvBufferFindAndDitch(&socketBuffer, "he", 2));
@@ -149,11 +229,9 @@ static void ReceiveFindFetch(void **state) {
     const char *data = "The quick brown fox jumps over the lazy dog";
     size_t len = strlen(data);
 
-    RecvBuffer socketBuffer;
+    RecvBuffer socketBuffer = {0};
     mockReset(), mockOptions = MOCK_CONNECT | MOCK_RECEIVE, mockReceiveMaxBuf = len;
     mockReceiveStream = tmpfile(), fwrite(data, 1, len, mockReceiveStream), rewind(mockReceiveStream);
-
-    socketBuffer = recvBufferNew(0, 0);
 
     assert_null(recvBufferFindAndFetch(&socketBuffer, "The", 3, len));
     assert_null(recvBufferFindAndFetch(&socketBuffer, "he", 2, len));
@@ -166,19 +244,27 @@ static void ReceiveFindFetch(void **state) {
 }
 
 static void ReceiveUpdateSocket(void **state) {
+    SocketAddress address;
     RecvBuffer socketBuffer1, socketBuffer2;
+
+    UriDetails details = uriDetailsNewFrom("http://127.0.0.1:8080/foo?bar");
     SOCKET sock = 1;
+
     mockReset(), mockOptions = MOCK_CONNECT | MOCK_RECEIVE, mockReceiveMaxBuf = 1024;
 
-    socketBuffer1 = recvBufferNew(0, 0);
+    assert_false(uriDetailsCreateSocketAddress(&details, &address, 0));
+    uriDetailsFree(&details);
+
+    socketBuffer1 = recvBufferNew(0, address, 0);
+    recvBufferSetLengthKnown(&socketBuffer1, 99);
     assert_null(recvBufferAppend(&socketBuffer1, 10));
     socketBuffer2 = socketBuffer1;
     recvBufferUpdateSocket(&socketBuffer1, &sock);
 
     assert_ptr_equal(socketBuffer1.buffer, socketBuffer2.buffer);
     assert_int_not_equal(socketBuffer1.serverSocket, socketBuffer2.serverSocket);
-    assert_int_equal(socketBuffer1.escape, socketBuffer2.escape);
-    assert_int_equal(socketBuffer1.remain, socketBuffer2.remain);
+    assert_memory_equal(&socketBuffer1.serverAddress, &socketBuffer2.serverAddress, sizeof(SocketAddress));
+    assert_memory_equal(&socketBuffer1.length, &socketBuffer2.length, sizeof(RecvBufferLength));
     assert_int_equal(socketBuffer1.options, socketBuffer2.options);
 }
 
@@ -187,10 +273,15 @@ static void ReceiveUpdateSocket(void **state) {
 #pragma clang diagnostic pop
 
 const struct CMUnitTest recvBufferSocketTest[] = {cmocka_unit_test(RecvBufferClear),
-                                                  cmocka_unit_test(RecvBufferMemoryFree)
+                                                  cmocka_unit_test(RecvBufferMemoryFree),
+                                                  cmocka_unit_test(ReceiveSetLengthChunk),
+                                                  cmocka_unit_test(ReceiveSetLengthKnown),
+                                                  cmocka_unit_test(ReceiveSetLengthToken),
+                                                  cmocka_unit_test(ReceiveSetLengthUnknown)
 #ifdef MOCK
         , cmocka_unit_test(ReceiveFetch), cmocka_unit_test(ReceiveFind), cmocka_unit_test(ReceiveDitch),
-                                                  cmocka_unit_test(ReceiveFindDitch), cmocka_unit_test(ReceiveFindFetch),
+                                                  cmocka_unit_test(ReceiveFindDitch),
+                                                  cmocka_unit_test(ReceiveFindFetch),
                                                   cmocka_unit_test(ReceiveUpdateSocket)
 #endif
 };

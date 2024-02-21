@@ -4,19 +4,47 @@
 #include "../platform/platform.h"
 #include "site.h"
 
+enum RecvBufferOptions {
+    RECV_BUFFER_DATA_LENGTH_CHUNK, RECV_BUFFER_DATA_LENGTH_KNOWN, RECV_BUFFER_DATA_LENGTH_TOKEN
+};
+
+typedef struct RecvBufferLengthChunk {
+    PlatformFileOffset escape, next;
+} RecvBufferLengthChunk;
+
+typedef struct RecvBufferLengthKnown {
+    PlatformFileOffset escape, total;
+} RecvBufferLengthKnown;
+
+typedef struct RecvBufferLengthUnknown {
+    size_t escape, limit;
+} RecvBufferLengthUnknown;
+
+typedef struct RecvBufferLengthToken {
+    const char *token;
+    size_t length;
+} RecvBufferLengthToken;
+
+typedef union RecvBufferLength {
+    RecvBufferLengthChunk chunk;
+    RecvBufferLengthKnown known;
+    RecvBufferLengthToken token;
+    RecvBufferLengthUnknown unknown;
+} RecvBufferLength;
+
 typedef struct RecvBuffer {
-    PlatformFileOffset escape, remain;
     FILE *buffer;
     SocketAddress serverAddress;
     SOCKET serverSocket;
     int options;
+    union RecvBufferLength length;
 } RecvBuffer;
 
 /**
  * Read data out of the socket and append to the buffer
  * @param self The buffer to start or append more network data into the buffer of
  * @param len The length of the network data to fetch
- * @return
+ * @return NULL on success, user friendly error message otherwise
  */
 char *recvBufferAppend(RecvBuffer *self, size_t len);
 
@@ -114,5 +142,33 @@ RecvBuffer recvBufferNew(SOCKET serverSocket, SocketAddress serverAddress, int o
  * @note One socket buffer per socket and socketAddress
  */
 char *recvBufferNewFromSocketAddress(RecvBuffer *self, SocketAddress serverAddress, int options);
+
+/**
+ * Set this buffer to receive a http data request where length of the data is determined by the HTTP 1.1 chunk standard
+ * @param self The buffer to set in chunk length mode
+ */
+void recvBufferSetLengthChunk(RecvBuffer *self);
+
+/**
+ * Set this buffer to receive a request where length of the data has been predetermined in bytes
+ * @param self The buffer to set the data length of
+ * @param length The length of the expected data buffer
+ */
+void recvBufferSetLengthKnown(RecvBuffer *self, PlatformFileOffset length);
+
+/**
+ * Set this buffer to receive a request where the end of the data is determined by a token
+ * @param self The buffer to set to an known data length state
+ * @param token The token to represent the end of the data buffer
+ * @param length The length of the token string to match
+ */
+void recvBufferSetLengthToken(RecvBuffer *self, const char *token, size_t length);
+
+/**
+ * Set this buffer to receive a request where the length of data is not known
+ * @param self The buffer to set to an known data length state
+ * @param limit The maximum size the buffer can grow to
+ */
+void recvBufferSetLengthUnknown(RecvBuffer *self, size_t limit);
 
 #endif /* NEW_DL_RECEIVE_BUFFER_H */

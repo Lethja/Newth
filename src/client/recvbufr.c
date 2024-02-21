@@ -2,6 +2,7 @@
 
 char *recvBufferAppend(RecvBuffer *self, size_t len) {
     size_t i = 0;
+    PlatformFileOffset *escape;
 
     if (!self->buffer)
         self->buffer = platformMemoryStreamNew();
@@ -12,8 +13,18 @@ char *recvBufferAppend(RecvBuffer *self, size_t len) {
         char buf[SB_DATA_SIZE];
         PlatformFileOffset l;
         size_t s = len - i;
+
         if (s > SB_DATA_SIZE)
             s = SB_DATA_SIZE;
+
+        if (self->options & RECV_BUFFER_DATA_LENGTH_CHUNK)
+            escape = &self->length.chunk.escape;
+        else if (self->options & RECV_BUFFER_DATA_LENGTH_KNOWN)
+            escape = &self->length.known.escape;
+        else if (self->options & RECV_BUFFER_DATA_LENGTH_TOKEN)
+            escape = NULL;
+        else
+            escape = (PlatformFileOffset *) &self->length.unknown.escape;
 
         switch ((l = recv(self->serverSocket, buf, s, 0))) {
             case -1:
@@ -30,7 +41,9 @@ char *recvBufferAppend(RecvBuffer *self, size_t len) {
                         return "Error writing to volatile buffer";
                 }
 
-                self->remain -= l, self->escape += l;
+                if (escape)
+                    *escape += l;
+
                 i += l;
                 break;
         }
@@ -164,8 +177,8 @@ void recvBufferUpdateSocket(RecvBuffer *self, const SOCKET *socket) {
 RecvBuffer recvBufferNew(SOCKET serverSocket, SocketAddress serverAddress, int options) {
     RecvBuffer self;
 
-    self.options = options, self.serverSocket = serverSocket, self.serverAddress = serverAddress;
-    self.escape = self.remain = 0, self.buffer = NULL;
+    self.options = options, self.serverSocket = serverSocket, self.serverAddress = serverAddress, self.buffer = NULL;
+    memset(&self.length, 0, sizeof(RecvBufferLength));
     return self;
 }
 
@@ -173,7 +186,7 @@ char *recvBufferNewFromSocketAddress(RecvBuffer *self, SocketAddress serverAddre
     SOCKET sock;
     char *e;
 
-    if((e = ioCreateSocketFromSocketAddress(&serverAddress, &sock)))
+    if ((e = ioCreateSocketFromSocketAddress(&serverAddress, &sock)))
         return e;
 
     if (connect(sock, &self->serverAddress.address.sock, sizeof(self->serverAddress.address.sock)) == -1) {
@@ -185,4 +198,28 @@ char *recvBufferNewFromSocketAddress(RecvBuffer *self, SocketAddress serverAddre
 
     *self = recvBufferNew(sock, serverAddress, options);
     return NULL;
+}
+
+void recvBufferSetLengthChunk(RecvBuffer *self) {
+    self->options &= ~(1 << RECV_BUFFER_DATA_LENGTH_KNOWN) | ~(1 << RECV_BUFFER_DATA_LENGTH_TOKEN);
+    self->options |= 1 << RECV_BUFFER_DATA_LENGTH_CHUNK;
+    self->length.chunk.escape = self->length.chunk.next = 0;
+}
+
+void recvBufferSetLengthKnown(RecvBuffer *self, PlatformFileOffset length) {
+    self->options &= ~(1 << RECV_BUFFER_DATA_LENGTH_CHUNK) | ~(1 << RECV_BUFFER_DATA_LENGTH_TOKEN);
+    self->options |= 1 << RECV_BUFFER_DATA_LENGTH_KNOWN;
+    self->length.known.total = length, self->length.known.escape = 0;
+}
+
+void recvBufferSetLengthUnknown(RecvBuffer *self, size_t limit) {
+    self->options &=
+            ~(1 << RECV_BUFFER_DATA_LENGTH_CHUNK) | ~(1 << RECV_BUFFER_DATA_LENGTH_KNOWN) | ~(1 << RECV_BUFFER_DATA_LENGTH_TOKEN);
+    self->length.unknown.limit = limit, self->length.unknown.escape = 0;
+}
+
+void recvBufferSetLengthToken(RecvBuffer *self, const char *token, size_t length) {
+    self->options &= ~(1 << RECV_BUFFER_DATA_LENGTH_CHUNK) | ~(1 << RECV_BUFFER_DATA_LENGTH_KNOWN);
+    self->options |= 1 << RECV_BUFFER_DATA_LENGTH_TOKEN;
+    self->length.token.token = token, self->length.token.length = length;
 }
