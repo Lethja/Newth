@@ -71,6 +71,15 @@ FILE *recvBufferCopyBetween(RecvBuffer *self, PlatformFileOffset start, Platform
 void recvBufferDitch(RecvBuffer *self, PlatformFileOffset len);
 
 /**
+ * Remove data in the middle of a stream
+ * @param self The stream to remove data from
+ * @param start The position from the beginning of the stream to begin removing data from
+ * @param len The length of the data to remove
+ * @return NULL on success, user friendly error message otherwise
+ */
+char *recvBufferDitchBetween(RecvBuffer *self, PlatformFileOffset start, PlatformFileOffset len);
+
+/**
  * Remove all memory allocations. Usually used to clean up after a catastrophic failure with the underlying socket
  * @param self The buffer to free all memory allocations from
  * @remark This function is not suitable if the buffer is going to be reused.

@@ -124,6 +124,67 @@ void recvBufferDitch(RecvBuffer *self, PlatformFileOffset len) {
     fclose(self->buffer), self->buffer = tmp;
 }
 
+char *recvBufferDitchBetween(RecvBuffer *self, PlatformFileOffset start, PlatformFileOffset len) {
+    FILE *new;
+    PlatformFileOffset i = 0, k, m = platformMemoryStreamTell(self->buffer);
+
+    platformMemoryStreamSeek(self->buffer, 0, SEEK_END);
+    k = platformMemoryStreamTell(self->buffer);
+    platformMemoryStreamSeek(self->buffer, 0, SEEK_SET);
+
+    if (k <= start)
+        return NULL;
+
+    new = tmpfile();
+    while (i < start) {
+        SOCK_BUF_TYPE j;
+        char buf[SB_DATA_SIZE];
+        PlatformFileOffset l = start - i;
+        if (l > SB_DATA_SIZE)
+            l = SB_DATA_SIZE;
+
+        if (!(j = fread(buf, 1, l, self->buffer))) {
+            fclose(new);
+            return "Volatile buffer read error";
+        }
+
+        if (fwrite(buf, 1, j, new) != j) {
+            fclose(new);
+            return "Volatile buffer write error";
+        }
+
+        i += (PlatformFileOffset) j;
+    }
+
+    platformMemoryStreamSeek(self->buffer, len, SEEK_CUR), i += len;
+
+    while (i < k) {
+        SOCK_BUF_TYPE j;
+        char buf[SB_DATA_SIZE];
+        PlatformFileOffset l = k - i;
+        if (l > SB_DATA_SIZE)
+            l = SB_DATA_SIZE;
+
+        if (!(j = fread(buf, 1, l, self->buffer))) {
+            fclose(new);
+            return "Volatile buffer read error";
+        }
+
+        if (fwrite(buf, 1, j, new) != j) {
+            fclose(new);
+            return "Volatile buffer write error";
+        }
+
+        i += (PlatformFileOffset) j;
+    }
+
+    if (m > start)
+        m -= len;
+
+    fclose(self->buffer), platformMemoryStreamSeek(new, m, SEEK_SET), self->buffer = new;
+    return NULL;
+}
+
 void recvBufferFailFree(RecvBuffer *self) {
     if (self->buffer)
         fclose(self->buffer);

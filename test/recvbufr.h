@@ -41,6 +41,27 @@ static void RecvBufferCopyBetween(void **state) {
 
 }
 
+static void RecvBufferDitchBetween(void **state) {
+    RecvBuffer socketBuffer = {0};
+    char input[] = "The quick brown fox jumps over the lazy dog";
+    char buf[sizeof(input)] = {0};
+    size_t len = strlen(input);
+    FILE *stream;
+
+    assert_non_null(stream = socketBuffer.buffer = tmpfile());
+    assert_int_equal(fwrite(input, 1, len, socketBuffer.buffer), len);
+    assert_null(recvBufferDitchBetween(&socketBuffer, 25, 5));
+    assert_ptr_not_equal(socketBuffer.buffer, stream);
+    assert_null(recvBufferFetch(&socketBuffer, buf, 0, sizeof(input)));
+    assert_string_equal(buf, "The quick brown fox jumps the lazy dog");
+    assert_null(recvBufferDitchBetween(&socketBuffer, 30, 5));
+    assert_null(recvBufferFetch(&socketBuffer, buf, 0, sizeof(input)));
+    assert_string_equal(buf, "The quick brown fox jumps the dog");
+    assert_null(recvBufferDitchBetween(&socketBuffer, 25, 50));
+    assert_null(recvBufferFetch(&socketBuffer, buf, 0, sizeof(input)));
+    assert_string_equal(buf, "The quick brown fox jumps");
+}
+
 static void RecvBufferMemoryFree(void **state) {
     RecvBuffer socketBuffer = {0};
 
@@ -296,6 +317,7 @@ static void ReceiveUpdateSocket(void **state) {
 #pragma clang diagnostic pop
 
 const struct CMUnitTest recvBufferSocketTest[] = {cmocka_unit_test(RecvBufferClear), cmocka_unit_test(RecvBufferCopyBetween),
+                                                  cmocka_unit_test(RecvBufferDitchBetween),
                                                   cmocka_unit_test(RecvBufferMemoryFree),
                                                   cmocka_unit_test(ReceiveSetLengthChunk),
                                                   cmocka_unit_test(ReceiveSetLengthKnown),
