@@ -1,4 +1,5 @@
 #include "recvbufr.h"
+#include "uri.h"
 
 #pragma region Static Helper Functions
 
@@ -286,7 +287,7 @@ RecvBuffer recvBufferNew(SOCKET serverSocket, SocketAddress serverAddress, int o
     return self;
 }
 
-char *recvBufferNewFromSocketAddress(RecvBuffer *self, SocketAddress serverAddress, int options) {
+const char *recvBufferNewFromSocketAddress(RecvBuffer *self, SocketAddress serverAddress, int options) {
     SOCKET sock;
     char *e;
 
@@ -301,6 +302,24 @@ char *recvBufferNewFromSocketAddress(RecvBuffer *self, SocketAddress serverAddre
     }
 
     *self = recvBufferNew(sock, serverAddress, options);
+    return NULL;
+}
+
+const char *recvBufferNewFromUri(RecvBuffer *self, const char *uri, int options) {
+    const char *e;
+    UriDetails detail;
+    SocketAddress address;
+
+    detail = uriDetailsNewFrom(uri);
+    e = uriDetailsCreateSocketAddress(&detail, &address, uriDetailsGetScheme(&detail));
+    uriDetailsFree(&detail);
+
+    if (e)
+        return e;
+
+    if ((e = recvBufferNewFromSocketAddress(self, address, options)))
+        return e;
+
     return NULL;
 }
 

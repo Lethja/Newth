@@ -162,7 +162,19 @@ RecvBuffer recvBufferNew(SOCKET serverSocket, SocketAddress serverAddress, int o
  * @return NULL on success, user friendly error message otherwise
  * @note One socket buffer per socket/address
  */
-char *recvBufferNewFromSocketAddress(RecvBuffer *self, SocketAddress serverAddress, int options);
+const char *recvBufferNewFromSocketAddress(RecvBuffer *self, SocketAddress serverAddress, int options);
+
+/**
+ * Create a socket buffer to receive data on from a URI.
+ * A socket will be connected as part of the creation process
+ * @param self In: The buffer to setup
+ * @param uri In: The URI to connect to
+ * @param options In: The options to set on the new socketBuffer
+ * @return NULL on success, user friendly error message otherwise
+ * @note One socket buffer per socket/address
+ * @note Path an query sections of a uri will not be handled in any special way by the buffer
+ */
+const char *recvBufferNewFromUri(RecvBuffer *self, const char *uri, int options);
 
 /**
  * Set this buffer to receive a http data request where length of the data is determined by the HTTP 1.1 chunk standard

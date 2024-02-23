@@ -62,9 +62,9 @@ extern UriScheme uriDetailsGetScheme(const UriDetails *details);
  * @param self In: The UriDetails to get information from
  * @param socketAddress Out: The socketAddress union to populate
  * @param scheme In: The scheme to assume if that information is absent from 'self' or 'SCHEME_UNKNOWN'
- * @return 0 on success other on error
+ * @return NULL on success, user friendly error message otherwise
  */
-extern char uriDetailsCreateSocketAddress(UriDetails *self, SocketAddress *socketAddress, unsigned short scheme);
+extern const char *uriDetailsCreateSocketAddress(UriDetails *self, SocketAddress *socketAddress, unsigned short scheme);
 
 /**
  * Combine two path strings together

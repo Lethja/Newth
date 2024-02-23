@@ -179,7 +179,8 @@ static sa_family_t GetAddressFamily(const char *address) {
         return AF_INET;
 }
 
-char uriDetailsCreateSocketAddress(UriDetails *self, SocketAddress *socketAddress, unsigned short scheme) {
+const char *uriDetailsCreateSocketAddress(UriDetails *self, SocketAddress *socketAddress, unsigned short scheme) {
+    const char *err = "Unable to extract address information from URI";
     char *address = uriDetailsGetHostAddr(self);
     unsigned short port;
 
@@ -192,7 +193,7 @@ char uriDetailsCreateSocketAddress(UriDetails *self, SocketAddress *socketAddres
         if (address)
             free(address);
 
-        return 1;
+        return err;
     }
 
     socketAddress->address.sock.sa_family = GetAddressFamily(address);
@@ -216,11 +217,11 @@ char uriDetailsCreateSocketAddress(UriDetails *self, SocketAddress *socketAddres
 #endif
         default:
             socketAddress->state = SA_STATE_FAILED, free(address);
-            return 1;
+            return err;
     }
 
     socketAddress->scheme = scheme, socketAddress->state = SA_STATE_QUEUED, free(address);
-    return 0;
+    return NULL;
 }
 
 UriDetails uriDetailsNewFrom(const char *uri) {
