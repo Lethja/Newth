@@ -251,6 +251,7 @@ static void ReceiveUpdateSocket(void **state) {
     SOCKET sock = 1;
 
     mockReset(), mockOptions = MOCK_CONNECT | MOCK_RECEIVE, mockReceiveMaxBuf = 1024;
+    memset(&address, CHAR_MIN, sizeof(SocketAddress));
 
     assert_false(uriDetailsCreateSocketAddress(&details, &address, 0));
     uriDetailsFree(&details);
