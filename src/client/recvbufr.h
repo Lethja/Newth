@@ -55,6 +55,15 @@ char *recvBufferAppend(RecvBuffer *self, size_t len);
 void recvBufferClear(RecvBuffer *self);
 
 /**
+ * Create a new memory stream containing part of the current buffers content
+ * @param self The buffer to copy from
+ * @param start Where in the buffer to start copying from
+ * @param end Where in the buffer to stop copying from
+ * @return A new volatile stream on success, NULL on failure
+ */
+FILE *recvBufferCopyBetween(RecvBuffer *self, PlatformFileOffset start, PlatformFileOffset end);
+
+/**
  * Disregard a certain amount of the start of the current buffer
  * @param self The buffer to disregard the start of
  * @param len The amount of data from the start to disregard

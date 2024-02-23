@@ -19,6 +19,28 @@
 
 #pragma endregion
 
+static void RecvBufferCopyBetween(void **state) {
+    FILE *copy;
+
+    RecvBuffer socketBuffer = {0};
+    char input[] = "The quick brown fox jumps over the lazy dog";
+    char output[sizeof(input)] = {0};
+    size_t len = strlen(input);
+
+    assert_non_null(socketBuffer.buffer = tmpfile());
+    assert_int_equal(fwrite(input, 1, len, socketBuffer.buffer), len);
+    assert_non_null(copy = recvBufferCopyBetween(&socketBuffer, 4, 20));
+    assert_int_equal(fread(output, 1, 15, copy), 15);
+    assert_memory_equal(&input[4], output, 15);
+
+    fclose(copy), memset(output, 0, 15);
+    assert_non_null(copy = recvBufferCopyBetween(&socketBuffer, 35, 45));
+    assert_int_equal(fread(output, 1, 9, copy), 8);
+    assert_memory_equal(&input[35], output, 8);
+    fclose(copy);
+
+}
+
 static void RecvBufferMemoryFree(void **state) {
     RecvBuffer socketBuffer = {0};
 
@@ -273,7 +295,7 @@ static void ReceiveUpdateSocket(void **state) {
 
 #pragma clang diagnostic pop
 
-const struct CMUnitTest recvBufferSocketTest[] = {cmocka_unit_test(RecvBufferClear),
+const struct CMUnitTest recvBufferSocketTest[] = {cmocka_unit_test(RecvBufferClear), cmocka_unit_test(RecvBufferCopyBetween),
                                                   cmocka_unit_test(RecvBufferMemoryFree),
                                                   cmocka_unit_test(ReceiveSetLengthChunk),
                                                   cmocka_unit_test(ReceiveSetLengthKnown),

@@ -83,6 +83,32 @@ void recvBufferClear(RecvBuffer *self) {
         fclose(self->buffer), self->buffer = NULL;
 }
 
+FILE *recvBufferCopyBetween(RecvBuffer *self, PlatformFileOffset start, PlatformFileOffset end) {
+    FILE *newCopy = tmpfile();
+    PlatformFileOffset i, tmp = platformMemoryStreamTell(self->buffer);
+
+    platformMemoryStreamSeek(self->buffer, 0, SEEK_END);
+    if ((i = platformMemoryStreamTell(self->buffer)) < end)
+        end = i;
+
+    i = start, platformMemoryStreamSeek(self->buffer, start, SEEK_SET);
+
+    while (i < end) {
+        char buf[SB_DATA_SIZE];
+        SOCK_BUF_TYPE j = fread(buf, 1, SB_DATA_SIZE, self->buffer);
+
+        if (fwrite(buf, 1, j, newCopy) != j) {
+            fclose(newCopy);
+            return NULL;
+        }
+
+        i += (PlatformFileOffset) j;
+    }
+
+    platformMemoryStreamSeek(self->buffer, tmp, SEEK_SET), rewind(newCopy);
+    return newCopy;
+}
+
 void recvBufferDitch(RecvBuffer *self, PlatformFileOffset len) {
     FILE *tmp;
     SOCK_BUF_TYPE i;
