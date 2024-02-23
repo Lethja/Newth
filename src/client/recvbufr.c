@@ -3,15 +3,53 @@
 
 #pragma region Static Helper Functions
 
+static inline PlatformFileOffset ExtractChunkSize(RecvBuffer *self) {
+    char *buf;
+    size_t len;
+    PlatformFileOffset start, end, hex;
+
+    platformMemoryStreamSeek(self->buffer, self->length.chunk.next, SEEK_CUR);
+    start = platformMemoryStreamTell(self->buffer);
+    hex = self->length.chunk.total ? self->length.chunk.total + 2 : 0;
+    end = recvBufferFind(self, hex, HTTP_EOL, 2);
+
+    if (end == -1)
+        return -1;
+
+    len = end - hex, buf = malloc(len + 1);
+
+    if (recvBufferFetch(self, buf, hex, len + 1)) {
+        free(buf);
+        return -1;
+    }
+
+    if (hex > 1)
+        start = hex - 2;
+
+    if (self->length.chunk.total)
+        len += 2;
+
+    hex = (PlatformFileOffset) ioHttpBodyChunkHexToSize(buf), free(buf);
+    recvBufferDitchBetween(self, start, (PlatformFileOffset) len + 2);
+
+    return hex;
+}
+
 static inline char DataIncrement(RecvBuffer *self, PlatformFileOffset added) {
     if (self->options & RECV_BUFFER_DATA_LENGTH_CHUNK) {
         self->length.chunk.next -= added;
 
-        if (self->length.chunk.next <= 0) {
-            /* TODO: Parse length of next chunk */
+        while (self->length.chunk.next < 0) {
+            PlatformFileOffset chunk;
+            if (!(chunk = ExtractChunkSize(self)))
+                break;
+
+            self->length.chunk.next += chunk, self->length.chunk.total += chunk;
         }
 
-        self->length.chunk.total += added;
+        if (!self->length.chunk.next)
+            return 1;
+
     } else if (self->options & RECV_BUFFER_DATA_LENGTH_KNOWN) {
         self->length.known.escape += added;
         if (self->length.known.escape >= self->length.known.total)
@@ -336,8 +374,8 @@ void recvBufferSetLengthKnown(RecvBuffer *self, PlatformFileOffset length) {
 }
 
 void recvBufferSetLengthUnknown(RecvBuffer *self, size_t limit) {
-    self->options &= ~(RECV_BUFFER_DATA_LENGTH_CHUNK) | ~(RECV_BUFFER_DATA_LENGTH_KNOWN) |
-                     ~(RECV_BUFFER_DATA_LENGTH_TOKEN);
+    self->options &=
+            ~(RECV_BUFFER_DATA_LENGTH_CHUNK) | ~(RECV_BUFFER_DATA_LENGTH_KNOWN) | ~(RECV_BUFFER_DATA_LENGTH_TOKEN);
     self->length.unknown.limit = limit, self->length.unknown.escape = 0;
 }
 
