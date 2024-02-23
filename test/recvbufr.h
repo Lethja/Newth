@@ -105,18 +105,18 @@ static void ReceiveSetLengthChunk(void **state) {
     memset(&socketBuffer, 0, sizeof(RecvBuffer));
     recvBufferSetLengthChunk(&socketBuffer);
     assert_true(socketBuffer.options);
-    assert_true(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_CHUNK);
-    assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_KNOWN);
-    assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_TOKEN);
+    assert_true(socketBuffer.options & RECV_BUFFER_DATA_LENGTH_CHUNK);
+    assert_false(socketBuffer.options & RECV_BUFFER_DATA_LENGTH_KNOWN);
+    assert_false(socketBuffer.options & RECV_BUFFER_DATA_LENGTH_TOKEN);
     assert_int_equal(socketBuffer.length.chunk.next, 0);
     assert_int_equal(socketBuffer.length.chunk.total, 0);
 
     memset(&socketBuffer, CHAR_MIN, sizeof(RecvBuffer));
     recvBufferSetLengthChunk(&socketBuffer);
     assert_true(socketBuffer.options);
-    assert_true(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_CHUNK);
-    assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_KNOWN);
-    assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_TOKEN);
+    assert_true(socketBuffer.options & RECV_BUFFER_DATA_LENGTH_CHUNK);
+    assert_false(socketBuffer.options & RECV_BUFFER_DATA_LENGTH_KNOWN);
+    assert_false(socketBuffer.options & RECV_BUFFER_DATA_LENGTH_TOKEN);
     assert_int_equal(socketBuffer.length.chunk.next, 0);
     assert_int_equal(socketBuffer.length.chunk.total, 0);
 }
@@ -127,18 +127,18 @@ static void ReceiveSetLengthKnown(void **state) {
     memset(&socketBuffer, 0, sizeof(RecvBuffer));
     recvBufferSetLengthKnown(&socketBuffer, 69);
     assert_true(socketBuffer.options);
-    assert_true(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_KNOWN);
-    assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_CHUNK);
-    assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_TOKEN);
+    assert_true(socketBuffer.options & RECV_BUFFER_DATA_LENGTH_KNOWN);
+    assert_false(socketBuffer.options & RECV_BUFFER_DATA_LENGTH_CHUNK);
+    assert_false(socketBuffer.options & RECV_BUFFER_DATA_LENGTH_TOKEN);
     assert_int_equal(socketBuffer.length.known.total, 69);
     assert_int_equal(socketBuffer.length.known.escape, 0);
 
     memset(&socketBuffer, CHAR_MIN, sizeof(RecvBuffer));
     recvBufferSetLengthKnown(&socketBuffer, 69);
     assert_true(socketBuffer.options);
-    assert_true(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_KNOWN);
-    assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_CHUNK);
-    assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_TOKEN);
+    assert_true(socketBuffer.options & RECV_BUFFER_DATA_LENGTH_KNOWN);
+    assert_false(socketBuffer.options & RECV_BUFFER_DATA_LENGTH_CHUNK);
+    assert_false(socketBuffer.options & RECV_BUFFER_DATA_LENGTH_TOKEN);
     assert_int_equal(socketBuffer.length.known.total, 69);
     assert_int_equal(socketBuffer.length.known.escape, 0);
 }
@@ -149,18 +149,18 @@ static void ReceiveSetLengthToken(void **state) {
     memset(&socketBuffer, 0, sizeof(RecvBuffer));
     recvBufferSetLengthToken(&socketBuffer, HTTP_EOL HTTP_EOL, 4);
     assert_true(socketBuffer.options);
-    assert_true(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_TOKEN);
-    assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_CHUNK);
-    assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_KNOWN);
+    assert_true(socketBuffer.options & RECV_BUFFER_DATA_LENGTH_TOKEN);
+    assert_false(socketBuffer.options & RECV_BUFFER_DATA_LENGTH_CHUNK);
+    assert_false(socketBuffer.options & RECV_BUFFER_DATA_LENGTH_KNOWN);
     assert_memory_equal(socketBuffer.length.token.token, HTTP_EOL HTTP_EOL, 4);
     assert_int_equal(socketBuffer.length.token.length, 4);
 
     memset(&socketBuffer, CHAR_MIN, sizeof(RecvBuffer));
     recvBufferSetLengthToken(&socketBuffer, HTTP_EOL HTTP_EOL, 4);
     assert_true(socketBuffer.options);
-    assert_true(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_TOKEN);
-    assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_CHUNK);
-    assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_KNOWN);
+    assert_true(socketBuffer.options & RECV_BUFFER_DATA_LENGTH_TOKEN);
+    assert_false(socketBuffer.options & RECV_BUFFER_DATA_LENGTH_CHUNK);
+    assert_false(socketBuffer.options & RECV_BUFFER_DATA_LENGTH_KNOWN);
     assert_memory_equal(socketBuffer.length.token.token, HTTP_EOL HTTP_EOL, 4);
     assert_int_equal(socketBuffer.length.token.length, 4);
 }
@@ -170,17 +170,17 @@ static void ReceiveSetLengthUnknown(void **state) {
 
     memset(&socketBuffer, 0, sizeof(RecvBuffer));
     recvBufferSetLengthUnknown(&socketBuffer, 69);
-    assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_CHUNK);
-    assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_KNOWN);
-    assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_TOKEN);
+    assert_false(socketBuffer.options & RECV_BUFFER_DATA_LENGTH_CHUNK);
+    assert_false(socketBuffer.options & RECV_BUFFER_DATA_LENGTH_KNOWN);
+    assert_false(socketBuffer.options & RECV_BUFFER_DATA_LENGTH_TOKEN);
     assert_int_equal(socketBuffer.length.unknown.limit, 69);
     assert_int_equal(socketBuffer.length.known.escape, 0);
 
     memset(&socketBuffer, CHAR_MIN, sizeof(RecvBuffer));
     recvBufferSetLengthUnknown(&socketBuffer, 69);
-    assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_CHUNK);
-    assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_KNOWN);
-    assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_TOKEN);
+    assert_false(socketBuffer.options & RECV_BUFFER_DATA_LENGTH_CHUNK);
+    assert_false(socketBuffer.options & RECV_BUFFER_DATA_LENGTH_KNOWN);
+    assert_false(socketBuffer.options & RECV_BUFFER_DATA_LENGTH_TOKEN);
     assert_int_equal(socketBuffer.length.unknown.limit, 69);
     assert_int_equal(socketBuffer.length.known.escape, 0);
 }
