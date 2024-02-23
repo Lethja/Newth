@@ -109,7 +109,7 @@ static void ReceiveSetLengthChunk(void **state) {
     assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_KNOWN);
     assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_TOKEN);
     assert_int_equal(socketBuffer.length.chunk.next, 0);
-    assert_int_equal(socketBuffer.length.chunk.escape, 0);
+    assert_int_equal(socketBuffer.length.chunk.total, 0);
 
     memset(&socketBuffer, CHAR_MIN, sizeof(RecvBuffer));
     recvBufferSetLengthChunk(&socketBuffer);
@@ -118,7 +118,7 @@ static void ReceiveSetLengthChunk(void **state) {
     assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_KNOWN);
     assert_false(socketBuffer.options & 1 << RECV_BUFFER_DATA_LENGTH_TOKEN);
     assert_int_equal(socketBuffer.length.chunk.next, 0);
-    assert_int_equal(socketBuffer.length.chunk.escape, 0);
+    assert_int_equal(socketBuffer.length.chunk.total, 0);
 }
 
 static void ReceiveSetLengthKnown(void **state) {

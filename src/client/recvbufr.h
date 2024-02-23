@@ -5,11 +5,14 @@
 #include "site.h"
 
 enum RecvBufferOptions {
-    RECV_BUFFER_DATA_LENGTH_CHUNK, RECV_BUFFER_DATA_LENGTH_KNOWN, RECV_BUFFER_DATA_LENGTH_TOKEN
+    RECV_BUFFER_DATA_LENGTH_UNKNOWN = 0,
+    RECV_BUFFER_DATA_LENGTH_CHUNK,
+    RECV_BUFFER_DATA_LENGTH_KNOWN,
+    RECV_BUFFER_DATA_LENGTH_TOKEN
 };
 
 typedef struct RecvBufferLengthChunk {
-    PlatformFileOffset escape, next;
+    PlatformFileOffset next, total;
 } RecvBufferLengthChunk;
 
 typedef struct RecvBufferLengthKnown {

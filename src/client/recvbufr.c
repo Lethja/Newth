@@ -2,39 +2,33 @@
 
 #pragma region Static Helper Functions
 
-static inline char EndOfData(RecvBuffer *self, PlatformFileOffset added) {
+static inline char DataIncrement(RecvBuffer *self, PlatformFileOffset added) {
     if (self->options & RECV_BUFFER_DATA_LENGTH_CHUNK) {
-        if (self->length.chunk.escape >= self->length.chunk.next) {
+        self->length.chunk.next -= added;
+
+        if (self->length.chunk.next <= 0) {
             /* TODO: Parse length of next chunk */
         }
+
+        self->length.chunk.total += added;
     } else if (self->options & RECV_BUFFER_DATA_LENGTH_KNOWN) {
+        self->length.known.escape += added;
         if (self->length.known.escape >= self->length.known.total)
             return 1;
     } else if (self->options & RECV_BUFFER_DATA_LENGTH_TOKEN) {
         /* TODO: Check for token in the buffer */
     } else {
+        self->length.unknown.escape += added;
         if (self->length.unknown.escape >= self->length.unknown.limit)
             return 1;
     }
     return 0;
 }
 
-static inline PlatformFileOffset *SetEscapePtr(RecvBuffer *self) {
-    if (self->options & RECV_BUFFER_DATA_LENGTH_CHUNK)
-        return &self->length.chunk.escape;
-    else if (self->options & RECV_BUFFER_DATA_LENGTH_KNOWN)
-        return &self->length.known.escape;
-    else if (self->options & RECV_BUFFER_DATA_LENGTH_TOKEN)
-        return NULL;
-    else
-        return (PlatformFileOffset *) &self->length.unknown.escape;
-}
-
 #pragma endregion
 
 char *recvBufferAppend(RecvBuffer *self, size_t len) {
     size_t i = 0;
-    PlatformFileOffset *escape = SetEscapePtr(self);
 
     if (!self->buffer)
         self->buffer = platformMemoryStreamNew();
@@ -64,10 +58,7 @@ char *recvBufferAppend(RecvBuffer *self, size_t len) {
                         return "Error writing to volatile buffer";
                 }
 
-                if (escape)
-                    *escape += l;
-
-                if(EndOfData(self, l))
+                if (DataIncrement(self, l))
                     return NULL;
 
                 i += l;
@@ -316,7 +307,7 @@ char *recvBufferNewFromSocketAddress(RecvBuffer *self, SocketAddress serverAddre
 void recvBufferSetLengthChunk(RecvBuffer *self) {
     self->options &= ~(1 << RECV_BUFFER_DATA_LENGTH_KNOWN) | ~(1 << RECV_BUFFER_DATA_LENGTH_TOKEN);
     self->options |= 1 << RECV_BUFFER_DATA_LENGTH_CHUNK;
-    self->length.chunk.escape = self->length.chunk.next = 0;
+    self->length.chunk.total = self->length.chunk.next = 0;
 }
 
 void recvBufferSetLengthKnown(RecvBuffer *self, PlatformFileOffset length) {
