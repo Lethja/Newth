@@ -2,6 +2,42 @@
 #include <sys/types.h>
 #include "io.h"
 
+#pragma region Static Helper Function
+
+/**
+ * Determines if this character is valid to represent part of a hex number from '0' to 'f'
+ * @param c The character to test
+ * @return zero if this character is not part of the hex character otherwise non-zero
+ * @remark 'x' is not considered a valid hex character.
+ * If your string is formatted like "0xff" then skip the first two character when using this function in a loop
+ */
+static char IsValidHexCharacter(char c) {
+    switch (toupper(c)) {
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+        case 'A':
+        case 'B':
+        case 'C':
+        case 'D':
+        case 'E':
+        case 'F':
+            return 1;
+        default:
+            return 0;
+    }
+}
+
+#pragma endregion
+
+
 char *ioHttpRequestGenerateSend(const char *type, const char *path, const char *extra) {
     const char *http = HTTP_RES HTTP_EOL HTTP_EOL "  ";
     size_t len = strlen(type) + strlen(path) + strlen(http);
@@ -155,15 +191,19 @@ char *ioHttpRequestGenerateGet(const char *path, const char *extra) {
     return ioHttpRequestGenerateSend("GET", path, extra);
 }
 
-size_t ioHttpBodyChunkHexToSize(const char *hex) {
-    size_t value = 0, i, max = strlen(hex);
+const char *ioHttpBodyChunkHexToSize(const char *hex, size_t *value) {
+    size_t i, max = strlen(hex);
+    *value = 0;
 
     for (i = 0; i < max; i++) {
-        char v = (char) (((hex[i] & 0xF) + (hex[i] >> 6)) | ((hex[i] >> 3) & 0x8));
-        value = (value << 4) | (size_t) v;
+        if (IsValidHexCharacter(hex[i])) {
+            char v = (char) (((hex[i] & 0xF) + (hex[i] >> 6)) | ((hex[i] >> 3) & 0x8));
+            *value = (*value << 4) | (size_t) v;
+        } else
+            return "Illegal hex character";
     }
 
-    return value;
+    return NULL;
 }
 
 char *ioHttpBodyChunkStrip(char *data, size_t *max, size_t *len) {
@@ -183,7 +223,7 @@ char *ioHttpBodyChunkStrip(char *data, size_t *max, size_t *len) {
         if (!(l = strlen(chunk)))
             return "Malformed or impractically large HTTP chunk request";
 
-        if ((j = ioHttpBodyChunkHexToSize(chunk)))
+        if (!(ioHttpBodyChunkHexToSize(chunk, &j)) && j)
             *len = i + l + 2, memmove(data, &data[*len], *max - *len), *max -= *len, *len = j;
         else {
             *len = -1, *max -= 3;
@@ -216,7 +256,7 @@ char *ioHttpBodyChunkStrip(char *data, size_t *max, size_t *len) {
                 return "Malformed or impractically large HTTP chunk request";
 
             /* Remove chunk from data stream so it can be processed by other functions */
-            if ((j = ioHttpBodyChunkHexToSize(chunk))) {
+            if (!(ioHttpBodyChunkHexToSize(chunk, &j)) && j) {
                 *len = i + l + 4, memmove(&data[i], &data[*len], *max - *len);
                 *max -= *len - i, *len = j, --i;
             } else {

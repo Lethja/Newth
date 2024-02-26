@@ -314,6 +314,7 @@ static void ReceiveFetchChunkMalformedEnd(void **state) {
 
 static void ReceiveFetchChunkMalformedOverflow(void **state) {
     RecvBuffer socketBuffer;
+    const char *e;
 
     char sample[] = "5Error" HTTP_EOL;
     size_t max = strlen(sample);
@@ -324,7 +325,8 @@ static void ReceiveFetchChunkMalformedOverflow(void **state) {
     assert_null(recvBufferNewFromUri(&socketBuffer, "http://127.0.0.1:8080", 0));
     recvBufferSetLengthChunk(&socketBuffer);
 
-    assert_null(recvBufferAppend(&socketBuffer, 512));
+    assert_non_null(e = recvBufferAppend(&socketBuffer, 512));
+    assert_string_equal(e, "Illegal hex character");
 }
 
 static void ReceiveFind(void **state) {

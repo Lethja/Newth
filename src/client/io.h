@@ -46,9 +46,10 @@ extern char *ioCreateSocketFromSocketAddress(SocketAddress *self, SOCKET *sock);
 /**
  * Convert hex string into a number
  * @param hex In: The hex string to convert
- * @return The number the hex string represents
+ * @param value Out: The number the hex string represents
+ * @return NULL on success, user friendly error message otherwise
  */
-size_t ioHttpBodyChunkHexToSize(const char *hex);
+const char *ioHttpBodyChunkHexToSize(const char *hex, size_t *value);
 
 /**
  * Reformat a stream of data to count and remove HTTP chunks

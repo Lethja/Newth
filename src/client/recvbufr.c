@@ -47,9 +47,12 @@ static inline PlatformFileOffset ExtractChunkSize(RecvBuffer *self, const char *
     } else
         p = buf;
 
-    hex = (PlatformFileOffset) ioHttpBodyChunkHexToSize(p), free(buf);
-    recvBufferDitchBetween(self, start, (PlatformFileOffset) len + 2);
+    if ((*error = ioHttpBodyChunkHexToSize(p, (size_t *) &hex)))
+        hex = -1;
+    else
+        recvBufferDitchBetween(self, start, (PlatformFileOffset) len + 2);
 
+    free(buf);
     return hex;
 }
 
