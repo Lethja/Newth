@@ -3,7 +3,13 @@
 
 #pragma region Static Helper Functions
 
-static inline PlatformFileOffset ExtractChunkSize(RecvBuffer *self, const char **e) {
+/**
+ * Get the size of the the next chunk in chunk encoded transmission
+ * @param self In: The buffer that contains a chunk encoded transmission
+ * @param error Out: NULL on success, user friendly error message otherwise
+ * @return -1 on error, otherwise the size of the next chunk (which can be 0 in case of the last chunk)
+ */
+static inline PlatformFileOffset ExtractChunkSize(RecvBuffer *self, const char **error) {
     char *buf, *p;
     size_t len;
     PlatformFileOffset start, end, hex;
@@ -14,7 +20,7 @@ static inline PlatformFileOffset ExtractChunkSize(RecvBuffer *self, const char *
     end = recvBufferFind(self, hex, HTTP_EOL, 2);
 
     if (end == -1) {
-        *e = "Malformed Chunk Encoding";
+        *error = "Malformed Chunk Encoding";
         return -1;
     }
 
@@ -33,8 +39,8 @@ static inline PlatformFileOffset ExtractChunkSize(RecvBuffer *self, const char *
     if (self->length.chunk.total) {
         if (buf[0] != '\r' || buf[1] != '\n') {
             free(buf);
-            *e = "Malformed Chunk Encoding";
-            return 0;
+            *error = "Malformed Chunk Encoding";
+            return -1;
         }
 
         p = &buf[2];
@@ -47,14 +53,22 @@ static inline PlatformFileOffset ExtractChunkSize(RecvBuffer *self, const char *
     return hex;
 }
 
-static inline char DataIncrement(RecvBuffer *self, PlatformFileOffset added, const char **e) {
+/**
+ * Update the state of this transmission after data has been successfully appended to it.
+ * Handles the details of different types of encoding
+ * @param self In: The buffer to update the state of
+ * @param added In: The amount of data added to the end of the buffer
+ * @param error Out: NULL on success, user friendly error message otherwise
+ * @return zero when the data transmission should keep going, other on transmission finished or error
+ */
+static inline char DataIncrement(RecvBuffer *self, PlatformFileOffset added, const char **error) {
     if (self->options & RECV_BUFFER_DATA_LENGTH_CHUNK) {
         self->length.chunk.next -= added;
 
         while (self->length.chunk.next < 0) {
             PlatformFileOffset chunk;
-            if ((chunk = ExtractChunkSize(self, e)) <= 0) {
-                if (*e)
+            if ((chunk = ExtractChunkSize(self, error)) <= 0) {
+                if (*error)
                     return 1;
 
                 break;
@@ -84,7 +98,7 @@ static inline char DataIncrement(RecvBuffer *self, PlatformFileOffset added, con
 
 const char *recvBufferAppend(RecvBuffer *self, size_t len) {
     size_t i = 0;
-    const char *e = NULL;
+    const char *error = NULL;
 
     if (!self->buffer)
         self->buffer = platformMemoryStreamNew();
@@ -114,8 +128,8 @@ const char *recvBufferAppend(RecvBuffer *self, size_t len) {
                         return "Error writing to volatile buffer";
                 }
 
-                if (DataIncrement(self, l, &e))
-                    return e;
+                if (DataIncrement(self, l, &error))
+                    return error;
 
                 i += l;
                 break;
