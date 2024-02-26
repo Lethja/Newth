@@ -88,7 +88,7 @@ static void RecvBufferClear(void **state) {
     buffer =
     #endif
 
-    socketBuffer.buffer = platformMemoryStreamNew();
+            socketBuffer.buffer = platformMemoryStreamNew();
     assert_non_null(&socketBuffer.buffer);
     recvBufferClear(&socketBuffer);
     assert_null(socketBuffer.buffer);
@@ -248,6 +248,21 @@ static void ReceiveFetchChunk(void **state) {
     assert_string_equal(expect, output);
 }
 
+static void ReceiveFetchChunkEmpty(void **state) {
+    RecvBuffer socketBuffer;
+
+    char sample[] = "0" HTTP_EOL;
+    size_t max = strlen(sample);
+
+    mockReset(), mockOptions = MOCK_CONNECT | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
+    mockReceiveStream = tmpfile(), fwrite(sample, 1, max, mockReceiveStream), rewind(mockReceiveStream);
+
+    assert_null(recvBufferNewFromUri(&socketBuffer, "http://127.0.0.1:8080", 0));
+    recvBufferSetLengthChunk(&socketBuffer);
+
+    assert_null(recvBufferAppend(&socketBuffer, 512));
+}
+
 static void ReceiveFetchChunkMalformed(void **state) {
     RecvBuffer socketBuffer;
 
@@ -261,6 +276,55 @@ static void ReceiveFetchChunkMalformed(void **state) {
     recvBufferSetLengthChunk(&socketBuffer);
 
     assert_string_equal(recvBufferAppend(&socketBuffer, 512), "Malformed Chunk Encoding");
+}
+
+static void ReceiveFetchChunkMalformedStart(void **state) {
+    RecvBuffer socketBuffer;
+    const char *e;
+
+    char sample[] = "3" HTTP_EOL "Error";
+    size_t max = strlen(sample);
+
+    mockReset(), mockOptions = MOCK_CONNECT | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
+    mockReceiveStream = tmpfile(), fwrite(sample, 1, max, mockReceiveStream), rewind(mockReceiveStream);
+
+    assert_null(recvBufferNewFromUri(&socketBuffer, "http://127.0.0.1:8080", 0));
+    recvBufferSetLengthChunk(&socketBuffer);
+
+    assert_non_null(e = recvBufferAppend(&socketBuffer, 512));
+    assert_string_equal(e, "Malformed Chunk Encoding");
+}
+
+static void ReceiveFetchChunkMalformedEnd(void **state) {
+    RecvBuffer socketBuffer;
+    const char *e;
+
+    char sample[] = "5" HTTP_EOL "Error";
+    size_t max = strlen(sample);
+
+    mockReset(), mockOptions = MOCK_CONNECT | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
+    mockReceiveStream = tmpfile(), fwrite(sample, 1, max, mockReceiveStream), rewind(mockReceiveStream);
+
+    assert_null(recvBufferNewFromUri(&socketBuffer, "http://127.0.0.1:8080", 0));
+    recvBufferSetLengthChunk(&socketBuffer);
+
+    assert_non_null(e = recvBufferAppend(&socketBuffer, 512));
+    assert_string_equal(e, "Malformed Chunk Encoding");
+}
+
+static void ReceiveFetchChunkMalformedOverflow(void **state) {
+    RecvBuffer socketBuffer;
+
+    char sample[] = "5Error" HTTP_EOL;
+    size_t max = strlen(sample);
+
+    mockReset(), mockOptions = MOCK_CONNECT | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
+    mockReceiveStream = tmpfile(), fwrite(sample, 1, max, mockReceiveStream), rewind(mockReceiveStream);
+
+    assert_null(recvBufferNewFromUri(&socketBuffer, "http://127.0.0.1:8080", 0));
+    recvBufferSetLengthChunk(&socketBuffer);
+
+    assert_null(recvBufferAppend(&socketBuffer, 512));
 }
 
 static void ReceiveFind(void **state) {
@@ -360,6 +424,10 @@ const struct CMUnitTest recvBufferSocketTest[] = {cmocka_unit_test(RecvBufferCle
 #ifdef MOCK
         , cmocka_unit_test(ReceiveFetch), cmocka_unit_test(ReceiveFetchChunk),
                                                   cmocka_unit_test(ReceiveFetchChunkMalformed),
+                                                  cmocka_unit_test(ReceiveFetchChunkEmpty),
+                                                  cmocka_unit_test(ReceiveFetchChunkMalformedEnd),
+                                                  cmocka_unit_test(ReceiveFetchChunkMalformedOverflow),
+                                                  cmocka_unit_test(ReceiveFetchChunkMalformedStart),
                                                   cmocka_unit_test(ReceiveFind), cmocka_unit_test(ReceiveDitch),
                                                   cmocka_unit_test(ReceiveFindDitch),
                                                   cmocka_unit_test(ReceiveFindFetch),

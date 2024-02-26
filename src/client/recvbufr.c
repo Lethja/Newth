@@ -13,8 +13,10 @@ static inline PlatformFileOffset ExtractChunkSize(RecvBuffer *self, const char *
     hex = self->length.chunk.total ? self->length.chunk.total + 2 : 0;
     end = recvBufferFind(self, hex, HTTP_EOL, 2);
 
-    if (end == -1)
+    if (end == -1) {
+        *e = "Malformed Chunk Encoding";
         return -1;
+    }
 
     if (hex > 1)
         start = hex - 2, len = end - start;
@@ -30,6 +32,7 @@ static inline PlatformFileOffset ExtractChunkSize(RecvBuffer *self, const char *
 
     if (self->length.chunk.total) {
         if (buf[0] != '\r' || buf[1] != '\n') {
+            free(buf);
             *e = "Malformed Chunk Encoding";
             return 0;
         }
@@ -50,7 +53,7 @@ static inline char DataIncrement(RecvBuffer *self, PlatformFileOffset added, con
 
         while (self->length.chunk.next < 0) {
             PlatformFileOffset chunk;
-            if (!(chunk = ExtractChunkSize(self, e))) {
+            if ((chunk = ExtractChunkSize(self, e)) <= 0) {
                 if (*e)
                     return 1;
 
