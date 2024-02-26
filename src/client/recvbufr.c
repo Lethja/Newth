@@ -66,16 +66,24 @@ static inline PlatformFileOffset ExtractChunkSize(RecvBuffer *self, const char *
  */
 static inline char DataIncrement(RecvBuffer *self, PlatformFileOffset added, const char **error) {
     if (self->options & RECV_BUFFER_DATA_LENGTH_CHUNK) {
+        PlatformFileOffset stripped = 0;
         self->length.chunk.next -= added;
 
         while (self->length.chunk.next < 0) {
             PlatformFileOffset chunk;
+
+            if (stripped + -self->length.chunk.next < added)
+                break;
+
             if ((chunk = ExtractChunkSize(self, error)) <= 0) {
                 if (*error)
                     return 1;
 
                 break;
             }
+
+            /* Subtract chunk metadata, keep track of how large the stripped buffer is */
+            stripped += (chunk - ((chunk / 15) + 1)) - self->length.chunk.total ? 4 : 2;
 
             self->length.chunk.next += chunk, self->length.chunk.total += chunk;
         }
