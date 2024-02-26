@@ -8,8 +8,8 @@ static inline PlatformFileOffset ExtractChunkSize(RecvBuffer *self, const char *
     size_t len;
     PlatformFileOffset start, end, hex;
 
+    /* TODO: test in case where buffer is ditched */
     platformMemoryStreamSeek(self->buffer, self->length.chunk.next, SEEK_CUR);
-    start = platformMemoryStreamTell(self->buffer);
     hex = self->length.chunk.total ? self->length.chunk.total + 2 : 0;
     end = recvBufferFind(self, hex, HTTP_EOL, 2);
 
