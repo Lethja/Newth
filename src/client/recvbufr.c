@@ -3,8 +3,8 @@
 
 #pragma region Static Helper Functions
 
-static inline PlatformFileOffset ExtractChunkSize(RecvBuffer *self) {
-    char *buf;
+static inline PlatformFileOffset ExtractChunkSize(RecvBuffer *self, const char **e) {
+    char *buf, *p;
     size_t len;
     PlatformFileOffset start, end, hex;
 
@@ -16,33 +16,46 @@ static inline PlatformFileOffset ExtractChunkSize(RecvBuffer *self) {
     if (end == -1)
         return -1;
 
-    len = end - hex, buf = malloc(len + 1);
+    if (hex > 1)
+        start = hex - 2, len = end - start;
+    else
+        start = hex, len = end - hex;
 
-    if (recvBufferFetch(self, buf, hex, len + 1)) {
+    buf = malloc(len + 1);
+
+    if (recvBufferFetch(self, buf, start, len + 1)) {
         free(buf);
         return -1;
     }
 
-    if (hex > 1)
-        start = hex - 2;
+    if (self->length.chunk.total) {
+        if (buf[0] != '\r' || buf[1] != '\n') {
+            *e = "Malformed Chunk Encoding";
+            return 0;
+        }
 
-    if (self->length.chunk.total)
-        len += 2;
+        p = &buf[2];
+    } else
+        p = buf;
 
-    hex = (PlatformFileOffset) ioHttpBodyChunkHexToSize(buf), free(buf);
+    hex = (PlatformFileOffset) ioHttpBodyChunkHexToSize(p), free(buf);
     recvBufferDitchBetween(self, start, (PlatformFileOffset) len + 2);
 
     return hex;
 }
 
-static inline char DataIncrement(RecvBuffer *self, PlatformFileOffset added) {
+static inline char DataIncrement(RecvBuffer *self, PlatformFileOffset added, const char **e) {
     if (self->options & RECV_BUFFER_DATA_LENGTH_CHUNK) {
         self->length.chunk.next -= added;
 
         while (self->length.chunk.next < 0) {
             PlatformFileOffset chunk;
-            if (!(chunk = ExtractChunkSize(self)))
+            if (!(chunk = ExtractChunkSize(self, e))) {
+                if (*e)
+                    return 1;
+
                 break;
+            }
 
             self->length.chunk.next += chunk, self->length.chunk.total += chunk;
         }
@@ -66,8 +79,9 @@ static inline char DataIncrement(RecvBuffer *self, PlatformFileOffset added) {
 
 #pragma endregion
 
-char *recvBufferAppend(RecvBuffer *self, size_t len) {
+const char *recvBufferAppend(RecvBuffer *self, size_t len) {
     size_t i = 0;
+    const char *e = NULL;
 
     if (!self->buffer)
         self->buffer = platformMemoryStreamNew();
@@ -97,8 +111,8 @@ char *recvBufferAppend(RecvBuffer *self, size_t len) {
                         return "Error writing to volatile buffer";
                 }
 
-                if (DataIncrement(self, l))
-                    return NULL;
+                if (DataIncrement(self, l, &e))
+                    return e;
 
                 i += l;
                 break;

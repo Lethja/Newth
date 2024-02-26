@@ -49,7 +49,7 @@ typedef struct RecvBuffer {
  * @param len The length of the network data to fetch
  * @return NULL on success, user friendly error message otherwise
  */
-char *recvBufferAppend(RecvBuffer *self, size_t len);
+const char *recvBufferAppend(RecvBuffer *self, size_t len);
 
 /**
  * Remove the buffer from memory if there is one

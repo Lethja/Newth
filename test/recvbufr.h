@@ -248,6 +248,21 @@ static void ReceiveFetchChunk(void **state) {
     assert_string_equal(expect, output);
 }
 
+static void ReceiveFetchChunkMalformed(void **state) {
+    RecvBuffer socketBuffer;
+
+    char sample[] = "4" HTTP_EOL "This" HTTP_EOL "3" HTTP_EOL " is" HTTP_EOL "3" HTTP_EOL" an" HTTP_EOL "4" HTTP_EOL " test" HTTP_EOL "0" HTTP_EOL;
+    size_t max = strlen(sample);
+
+    mockReset(), mockOptions = MOCK_CONNECT | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
+    mockReceiveStream = tmpfile(), fwrite(sample, 1, max, mockReceiveStream), rewind(mockReceiveStream);
+
+    assert_null(recvBufferNewFromUri(&socketBuffer, "http://127.0.0.1:8080", 0));
+    recvBufferSetLengthChunk(&socketBuffer);
+
+    assert_string_equal(recvBufferAppend(&socketBuffer, 512), "Malformed Chunk Encoding");
+}
+
 static void ReceiveFind(void **state) {
     const char *data = "The quick brown fox jumps over the lazy dog";
     size_t len = strlen(data);
@@ -343,8 +358,10 @@ const struct CMUnitTest recvBufferSocketTest[] = {cmocka_unit_test(RecvBufferCle
                                                   cmocka_unit_test(ReceiveSetLengthToken),
                                                   cmocka_unit_test(ReceiveSetLengthUnknown)
 #ifdef MOCK
-        , cmocka_unit_test(ReceiveFetch), cmocka_unit_test(ReceiveFetchChunk), cmocka_unit_test(ReceiveFind),
-                                                  cmocka_unit_test(ReceiveDitch), cmocka_unit_test(ReceiveFindDitch),
+        , cmocka_unit_test(ReceiveFetch), cmocka_unit_test(ReceiveFetchChunk),
+                                                  cmocka_unit_test(ReceiveFetchChunkMalformed),
+                                                  cmocka_unit_test(ReceiveFind), cmocka_unit_test(ReceiveDitch),
+                                                  cmocka_unit_test(ReceiveFindDitch),
                                                   cmocka_unit_test(ReceiveFindFetch),
                                                   cmocka_unit_test(ReceiveUpdateSocket)
 #endif
