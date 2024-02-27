@@ -1,6 +1,8 @@
 #include "recvbufr.h"
 #include "uri.h"
 
+#include "../common/hex.h"
+
 #pragma region Static Helper Functions
 
 /**
@@ -83,7 +85,7 @@ static inline char DataIncrement(RecvBuffer *self, PlatformFileOffset added, con
             }
 
             /* Subtract chunk metadata, keep track of how large the stripped buffer is */
-            stripped += (chunk - ((chunk / 15) + 1)) - self->length.chunk.total ? 4 : 2;
+            stripped += chunk ? chunk - hexGetStringLength(chunk) - self->length.chunk.total ? 4 : 2 : 0;
 
             self->length.chunk.next += chunk, self->length.chunk.total += chunk;
         }

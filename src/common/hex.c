@@ -1,7 +1,5 @@
 #include "hex.h"
 
-#include "../platform/platform.h"
-
 #pragma region Static Helper Functions
 
 static inline char HexToAscii(const char *hex) {
@@ -35,4 +33,16 @@ void hexConvertStringToAscii(char *url) {
     /* Prevent system from being tricked into going up in a path it shouldn't */
     while ((i = strstr(url, "/..")))
         memmove(&i[1], &i[3], strlen(i) - 2);
+}
+
+size_t hexGetStringLength(size_t number) {
+    size_t r = 0;
+
+    if (number == 0)
+        return 1;
+
+    while (number != 0)
+        number /= 16, ++r;
+
+    return r;
 }
