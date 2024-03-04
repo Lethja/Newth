@@ -5,6 +5,7 @@
   * [Requirements](#requirements)
     * [Choose processor architecture](#choose-processor-architecture)
       * [Processor compatibility matrix](#processor-compatibility-matrix)
+      * [Build time](#build-time)
   * [Installing Open Watcom](#installing-open-watcom)
     * [Installing SvarDOS package manager onto another DOS (optional)](#installing-svardos-package-manager-onto-another-dos-optional)
 * [Building Newth](#building-newth)
@@ -98,6 +99,21 @@ and take advantage of the ISA.
 
 > Note: Open Watcom is a DOS4GW binary
 
+#### Build time
+
+Depending on the hardware being used to build Newth long periods may pass without any output printed to the screen.
+Expected build times are listed below:
+
+| Market Name       | ISA      | Clock  | Build time (up to) |
+|-------------------|----------|--------|--------------------|
+| Intel i386        | 80386    | 25Mhz  | ~14 minutes        |
+| Intel i486        | 80486    | 33Mhz  | ~6 minutes         |
+| Intel i486 DX2    | 80486    | 66Mhz  | ~3 minutes         |
+| Intel Pentium     | i586     | 60Mhz  | ~3 minutes         |
+| Intel Pentium MMX | i586+MMX | 133Mhz | ~1 minute          |
+| AMD K6            | K6       | 133Mhz | ~50 seconds        |
+| AMD Athlon        | K7       | 600Mhz | ~30 seconds        |
+
 ## Installing Open Watcom
 
 Installation instructions for Watcom differ depending on the build machines operating system.
@@ -161,7 +177,7 @@ into the directory containing `makefile` so that it looks like so.
 Watcom\Dos16\makefile
 Watcom\Dos16\Watt32s\inc
 Watcom\Dos16\Watt32s\lib
-Watcom\Dos16\makefile
+Watcom\Dos4g\makefile
 Watcom\Dos4g\Watt32s\inc
 Watcom\Dos4g\Watt32s\lib
 ```
