@@ -32,13 +32,12 @@ static void RecvBufferCopyBetween(void **state) {
     assert_non_null(copy = recvBufferCopyBetween(&socketBuffer, 4, 20));
     assert_int_equal(fread(output, 1, 15, copy), 15);
     assert_memory_equal(&input[4], output, 15);
-
     fclose(copy), memset(output, 0, 15);
+
     assert_non_null(copy = recvBufferCopyBetween(&socketBuffer, 35, 45));
     assert_int_equal(fread(output, 1, 9, copy), 8);
     assert_memory_equal(&input[35], output, 8);
     fclose(copy);
-
 }
 
 static void RecvBufferDitchBetween(void **state) {
@@ -88,7 +87,7 @@ static void RecvBufferClear(void **state) {
     buffer =
     #endif
 
-            socketBuffer.buffer = platformMemoryStreamNew();
+    socketBuffer.buffer = platformMemoryStreamNew();
     assert_non_null(&socketBuffer.buffer);
     recvBufferClear(&socketBuffer);
     assert_null(socketBuffer.buffer);
@@ -108,7 +107,7 @@ static void ReceiveSetLengthChunk(void **state) {
     assert_true(socketBuffer.options & RECV_BUFFER_DATA_LENGTH_CHUNK);
     assert_false(socketBuffer.options & RECV_BUFFER_DATA_LENGTH_KNOWN);
     assert_false(socketBuffer.options & RECV_BUFFER_DATA_LENGTH_TOKEN);
-    assert_int_equal(socketBuffer.length.chunk.next, 0);
+    assert_int_equal(socketBuffer.length.chunk.next, -1);
     assert_int_equal(socketBuffer.length.chunk.total, 0);
 
     memset(&socketBuffer, CHAR_MIN, sizeof(RecvBuffer));
@@ -117,7 +116,7 @@ static void ReceiveSetLengthChunk(void **state) {
     assert_true(socketBuffer.options & RECV_BUFFER_DATA_LENGTH_CHUNK);
     assert_false(socketBuffer.options & RECV_BUFFER_DATA_LENGTH_KNOWN);
     assert_false(socketBuffer.options & RECV_BUFFER_DATA_LENGTH_TOKEN);
-    assert_int_equal(socketBuffer.length.chunk.next, 0);
+    assert_int_equal(socketBuffer.length.chunk.next, -1);
     assert_int_equal(socketBuffer.length.chunk.total, 0);
 }
 
@@ -232,6 +231,7 @@ static void ReceiveFetch(void **state) {
 
 static void ReceiveFetchChunk(void **state) {
     RecvBuffer socketBuffer;
+    const char *e;
 
     char sample[] = "4" HTTP_EOL "This" HTTP_EOL "3" HTTP_EOL " is" HTTP_EOL "2" HTTP_EOL" a" HTTP_EOL "5" HTTP_EOL " test" HTTP_EOL "0" HTTP_EOL;
     char expect[] = "This is a test", output[sizeof(sample)] = {0};
@@ -243,9 +243,11 @@ static void ReceiveFetchChunk(void **state) {
     assert_null(recvBufferNewFromUri(&socketBuffer, "http://127.0.0.1:8080", 0));
     recvBufferSetLengthChunk(&socketBuffer);
 
-    assert_null(recvBufferAppend(&socketBuffer, 512));
+    e = recvBufferAppend(&socketBuffer, 512);
+    assert_ptr_equal(e, NULL);
     assert_null(recvBufferFetch(&socketBuffer, output, 0, 512));
     assert_string_equal(expect, output);
+    assert_int_equal(socketBuffer.length.chunk.next, -1);
 }
 
 static void ReceiveFetchChunkEmpty(void **state) {
@@ -261,12 +263,14 @@ static void ReceiveFetchChunkEmpty(void **state) {
     recvBufferSetLengthChunk(&socketBuffer);
 
     assert_null(recvBufferAppend(&socketBuffer, 512));
+    assert_int_equal(socketBuffer.length.chunk.next, -1);
 }
 
 static void ReceiveFetchChunkMalformed(void **state) {
     RecvBuffer socketBuffer;
+    const char *e;
 
-    char sample[] = "4" HTTP_EOL "This" HTTP_EOL "3" HTTP_EOL " is" HTTP_EOL "3" HTTP_EOL" an" HTTP_EOL "4" HTTP_EOL " test" HTTP_EOL "0" HTTP_EOL;
+    char sample[] = "4" HTTP_EOL "This" HTTP_EOL "3" HTTP_EOL " is" HTTP_EOL "3" HTTP_EOL" a" HTTP_EOL "4" HTTP_EOL " test" HTTP_EOL "0" HTTP_EOL;
     size_t max = strlen(sample);
 
     mockReset(), mockOptions = MOCK_CONNECT | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
@@ -275,12 +279,12 @@ static void ReceiveFetchChunkMalformed(void **state) {
     assert_null(recvBufferNewFromUri(&socketBuffer, "http://127.0.0.1:8080", 0));
     recvBufferSetLengthChunk(&socketBuffer);
 
-    assert_string_equal(recvBufferAppend(&socketBuffer, 512), "Malformed Chunk Encoding");
+    assert_non_null(e = recvBufferAppend(&socketBuffer, 512));
+    assert_string_equal(e, "Illegal hex character");
 }
 
 static void ReceiveFetchChunkMalformedStart(void **state) {
     RecvBuffer socketBuffer;
-    const char *e;
 
     char sample[] = "3" HTTP_EOL "Error";
     size_t max = strlen(sample);
@@ -291,8 +295,7 @@ static void ReceiveFetchChunkMalformedStart(void **state) {
     assert_null(recvBufferNewFromUri(&socketBuffer, "http://127.0.0.1:8080", 0));
     recvBufferSetLengthChunk(&socketBuffer);
 
-    assert_non_null(e = recvBufferAppend(&socketBuffer, 512));
-    assert_string_equal(e, "Malformed Chunk Encoding");
+    assert_null(recvBufferAppend(&socketBuffer, 512));
 }
 
 static void ReceiveFetchChunkOverflow(void **state) {
@@ -308,7 +311,7 @@ static void ReceiveFetchChunkOverflow(void **state) {
     recvBufferSetLengthChunk(&socketBuffer);
 
     assert_null(recvBufferAppend(&socketBuffer, 512));
-    assert_int_equal(socketBuffer.length.chunk.next, -1);
+    assert_int_equal(socketBuffer.length.chunk.next, 2);
 }
 
 static void ReceiveFetchChunkOverflowExact(void **state) {
@@ -324,6 +327,7 @@ static void ReceiveFetchChunkOverflowExact(void **state) {
     recvBufferSetLengthChunk(&socketBuffer);
 
     assert_null(recvBufferAppend(&socketBuffer, 512));
+    assert_int_equal(socketBuffer.length.chunk.next, 0);
 }
 
 static void ReceiveFetchChunkOverflowMalformed(void **state) {
@@ -341,6 +345,50 @@ static void ReceiveFetchChunkOverflowMalformed(void **state) {
 
     assert_non_null(e = recvBufferAppend(&socketBuffer, 512));
     assert_string_equal(e, "Illegal hex character");
+}
+
+static void ReceiveFetchChunkIterate(void **state) {
+    RecvBuffer socketBuffer;
+
+    char sample[] = "4" HTTP_EOL "This" HTTP_EOL "3" HTTP_EOL " is" HTTP_EOL "2" HTTP_EOL" a" HTTP_EOL "5" HTTP_EOL " test" HTTP_EOL "0" HTTP_EOL;
+    char output[sizeof(sample)] = {0};
+    size_t max = strlen(sample);
+
+    mockReset(), mockOptions = MOCK_CONNECT | MOCK_RECEIVE | MOCK_RECEIVE_COUNT;
+    mockReceiveStream = tmpfile(), fwrite(sample, 1, max, mockReceiveStream), rewind(mockReceiveStream);
+
+    assert_null(recvBufferNewFromUri(&socketBuffer, "http://127.0.0.1:8080", 0));
+    recvBufferSetLengthChunk(&socketBuffer);
+
+    mockReceiveMaxBuf = 4 + 3;
+    assert_null(recvBufferAppend(&socketBuffer, 512));
+    assert_null(recvBufferFetch(&socketBuffer, output, 0, 512));
+    assert_string_equal(output, "This");
+    assert_int_equal(socketBuffer.length.chunk.next, 0);
+
+    mockReceiveMaxBuf += 3 + 5;
+    assert_null(recvBufferAppend(&socketBuffer, 512));
+    assert_null(recvBufferFetch(&socketBuffer, output, 0, 512));
+    assert_string_equal(output, "This is");
+    assert_int_equal(socketBuffer.length.chunk.next, 0);
+
+    mockReceiveMaxBuf += 2 + 5;
+    assert_null(recvBufferAppend(&socketBuffer, 512));
+    assert_null(recvBufferFetch(&socketBuffer, output, 0, 512));
+    assert_string_equal(output, "This is a");
+    assert_int_equal(socketBuffer.length.chunk.next, 0);
+
+    mockReceiveMaxBuf += 5 + 5;
+    assert_null(recvBufferAppend(&socketBuffer, 512));
+    assert_null(recvBufferFetch(&socketBuffer, output, 0, 512));
+    assert_string_equal(output, "This is a test");
+    assert_int_equal(socketBuffer.length.chunk.next, 0);
+
+    mockReceiveMaxBuf += 0 + 5 + 1;
+    assert_null(recvBufferAppend(&socketBuffer, 512));
+    assert_null(recvBufferFetch(&socketBuffer, output, 0, 512));
+    assert_string_equal(output, "This is a test");
+    assert_int_equal(socketBuffer.length.chunk.next, -1);
 }
 
 static void ReceiveFind(void **state) {
@@ -438,8 +486,8 @@ const struct CMUnitTest recvBufferSocketTest[] = {cmocka_unit_test(RecvBufferCle
                                                   cmocka_unit_test(ReceiveSetLengthToken),
                                                   cmocka_unit_test(ReceiveSetLengthUnknown)
 #ifdef MOCK
-        , cmocka_unit_test(ReceiveFetch), cmocka_unit_test(ReceiveFetchChunk),
-                                                  cmocka_unit_test(ReceiveFetchChunkEmpty),
+        , cmocka_unit_test(ReceiveFetch), cmocka_unit_test(ReceiveFetchChunk), cmocka_unit_test(ReceiveFetchChunkEmpty),
+                                                  cmocka_unit_test(ReceiveFetchChunkIterate),
                                                   cmocka_unit_test(ReceiveFetchChunkOverflow),
                                                   cmocka_unit_test(ReceiveFetchChunkOverflowExact),
                                                   cmocka_unit_test(ReceiveFetchChunkOverflowMalformed),

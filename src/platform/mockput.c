@@ -108,20 +108,22 @@ ssize_t __wrap_recv(int fd, void *buf, size_t len, int flags) {
         }
 
         if (mockOptions & MOCK_RECEIVE_COUNT) {
-            if (mockReceiveCountBuf >= mockReceiveMaxBuf) {
+            if (mockReceiveCountBuf > mockReceiveMaxBuf) {
                 errno = EAGAIN;
                 return -1;
             }
 
             r = len < mockReceiveMaxBuf - mockReceiveCountBuf ? len : mockReceiveMaxBuf - mockReceiveCountBuf;
-            mockReceiveCountBuf += mockReceiveMaxBuf;
+            mockReceiveCountBuf += r;
         } else
             r = len < mockReceiveMaxBuf ? len : mockReceiveMaxBuf;
 
         if (mockReceiveStream) {
-            size_t s = fread(buf, 1, len, mockReceiveStream);
-            if (flags & MSG_PEEK)
+            size_t s = fread(buf, sizeof(char), r, mockReceiveStream);
+            if (flags & MSG_PEEK) {
                 fseek(mockReceiveStream, (long) -s, SEEK_CUR);
+                mockReceiveCountBuf -= s;
+            }
 
             return (ssize_t) s;
         } else {
