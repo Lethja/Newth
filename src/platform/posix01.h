@@ -37,7 +37,6 @@ typedef struct PlatformDir {
 #define CLOSE_SOCKET(x) close(x)
 #define SOCKET int
 #define SOCK_BUF_TYPE size_t
-#define STD_FILE_TYPE size_t
 
 #ifndef PF_OFFSET
 #if _FILE_OFFSET_BITS == 64

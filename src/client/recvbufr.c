@@ -1,67 +1,7 @@
 #include "recvbufr.h"
 #include "uri.h"
 
-#include "../common/hex.h"
-
 #pragma region Static Helper Functions
-
-/**
- * Check where the next chunk hex positions are in the stream
- * @param self In: The buffer stream to check
- * @param start Out: The position of the starting metadata token
- * @param end Out: The position of the ending metadata token
- * @param hex Out: The starting position of hex written size
- * @remark The length of the hex string can be calculated with 'end - hex'
- * @remark The length of the entire chunk can be calculated with '(end + 2) - start'
- * @return NULL on success, user friendly error message otherwise
- */
-static inline const char *
-ExtractChunkHex(RecvBuffer *self, PlatformFileOffset *start, PlatformFileOffset *end, PlatformFileOffset *hex) {
-    if (self->length.chunk.next > 0)
-        return "Next chunk has not arrived yet";
-
-    *start = self->length.chunk.total;
-    if ((*hex = recvBufferFind(self, *start, HTTP_EOL, 2)) < 0)
-        return "Malformed Chunk Encoding";
-
-    if (!*start)
-        *end = *hex, *hex = *start;
-    else {
-        *hex += 2;
-        if ((*end = recvBufferFind(self, *hex, HTTP_EOL, 2)) < 0)
-            return "Malformed Chunk Encoding";
-    }
-
-    return NULL;
-}
-
-/**
- * Get the size of the the next chunk in chunk encoded transmission
- * @param self In: The buffer that contains a chunk encoded transmission
- * @param error Out: NULL on success, user friendly error message otherwise
- * @return NULL on success, user friendly error message otherwise
- */
-static inline const char *ExtractChunkSize(RecvBuffer *self, PlatformFileOffset *chunk, PlatformFileOffset *ditched) {
-    const char *e;
-    char *buf;
-    size_t len;
-    PlatformFileOffset start, end, hex;
-
-    if ((e = ExtractChunkHex(self, &start, &end, &hex)))
-        return e;
-
-    len = end - hex, buf = malloc(len + 1);
-    recvBufferFetch(self, buf, hex, len + 1);
-
-    if ((e = ioHttpBodyChunkHexToSize(buf, (size_t *) &hex))) {
-        free(buf);
-        return e;
-    } else
-        len = (end + 2) - start, recvBufferDitchBetween(self, start, (PlatformFileOffset) len);
-
-    free(buf), *chunk = hex, *ditched = (PlatformFileOffset) len;
-    return NULL;
-}
 
 /**
  * Update the state of this transmission after data has been successfully appended to it.
@@ -71,23 +11,8 @@ static inline const char *ExtractChunkSize(RecvBuffer *self, PlatformFileOffset 
  * @param error Out: NULL on success, user friendly error message otherwise
  * @return zero when the data transmission should keep going, other on transmission finished or error
  */
-static inline char DataIncrement(RecvBuffer *self, PlatformFileOffset added, const char **error) {
-    if (self->options & RECV_BUFFER_DATA_LENGTH_CHUNK) {
-        self->length.chunk.next -= added;
-
-        while (added > 0) {
-            PlatformFileOffset chunk, ditched;
-
-            if ((*error = ExtractChunkSize(self, &chunk, &ditched)))
-                return 1;
-
-            added -= ditched + chunk, self->length.chunk.next += chunk + ditched, self->length.chunk.total += chunk;
-        }
-
-        if (self->length.chunk.next >= 0)
-            return 1;
-
-    } else if (self->options & RECV_BUFFER_DATA_LENGTH_KNOWN) {
+static inline char DataIncrement(RecvBuffer *self, PlatformFileOffset added) {
+    if (self->options & RECV_BUFFER_DATA_LENGTH_KNOWN) {
         self->length.known.escape += added;
         if (self->length.known.escape >= self->length.known.total)
             return 1;
@@ -101,12 +26,20 @@ static inline char DataIncrement(RecvBuffer *self, PlatformFileOffset added, con
     return 0;
 }
 
+/**
+ * Decode and append a HTTP chunk encoded body to the socket buffer
+ * @param self The socket buffer to append to
+ * @param len The maximum length of data to append
+ * @return NULL on success, user friendly error message otherwise
+ * @remark The caller should check if the transmission has finished
+ */
 static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
     size_t i = 0;
 
     if (self->length.chunk.next == -1)
         goto recvBufferAppendChunk_parse;
 
+    /* Iterate over the data until the next chunk */
     recvBufferAppendChunk_iterate:
     while (i < len && i < self->length.chunk.next) {
         SOCK_BUF_TYPE l;
@@ -145,10 +78,11 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
             return NULL; /* Next chuck not in transmission buffer yet */
     }
 
+    /* Parse the next chunk encoding */
     recvBufferAppendChunk_parse:
     {
         const char *e;
-        char buf[20] = {0}, *start, *finish, *hex;
+        char buf[20] = {0}, *finish, *hex;
         size_t l, j, k;
 
         if ((k = recv(self->serverSocket, buf, 19, MSG_PEEK)) == -1)
@@ -158,18 +92,17 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
             return NULL; /* Chunk not available yet */
 
         if (self->length.chunk.next != -1) {
-            if (!(start = strstr(buf, HTTP_EOL)))
+            if (!(hex = strstr(buf, HTTP_EOL)))
                 return "Malformed Chunk Encoding";
 
-            if ((finish = strstr(&start[2], HTTP_EOL)))
-                hex = &start[2];
+            if ((finish = strstr(&hex[2], HTTP_EOL)))
+                hex = &hex[2];
             else
                 return "Malformed Chunk Encoding";
         } else
-            start = hex = buf, finish = strstr(buf, HTTP_EOL);
+            hex = buf, finish = strstr(buf, HTTP_EOL);
 
         finish[0] = '\0';
-
         if ((e = ioHttpBodyChunkHexToSize(hex, &l)))
             return e;
 
@@ -225,7 +158,8 @@ const char *recvBufferAppend(RecvBuffer *self, size_t len) {
                         return "Error writing to volatile buffer";
                 }
 
-                if (DataIncrement(self, l, &error))
+                /* TODO: Replace with a function pointer to a append function for each length mode */
+                if (DataIncrement(self, l))
                     return error;
 
                 i += l;

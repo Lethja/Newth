@@ -266,6 +266,94 @@ static void ReceiveFetchChunkEmpty(void **state) {
     assert_int_equal(socketBuffer.length.chunk.next, -1);
 }
 
+static void ReceiveFetchChunkIterateAligned(void **state) {
+    RecvBuffer socketBuffer;
+
+    char sample[] = "4" HTTP_EOL "This" HTTP_EOL "3" HTTP_EOL " is" HTTP_EOL "2" HTTP_EOL" a" HTTP_EOL "5" HTTP_EOL " test" HTTP_EOL "0" HTTP_EOL;
+    char output[sizeof(sample)] = {0};
+    size_t max = strlen(sample);
+
+    mockReset(), mockOptions = MOCK_CONNECT | MOCK_RECEIVE | MOCK_RECEIVE_COUNT;
+    mockReceiveStream = tmpfile(), fwrite(sample, 1, max, mockReceiveStream), rewind(mockReceiveStream);
+
+    assert_null(recvBufferNewFromUri(&socketBuffer, "http://127.0.0.1:8080", 0));
+    recvBufferSetLengthChunk(&socketBuffer);
+
+    mockReceiveMaxBuf = 4 + 3;
+    assert_null(recvBufferAppend(&socketBuffer, 512));
+    assert_null(recvBufferFetch(&socketBuffer, output, 0, 512));
+    assert_string_equal(output, "This");
+    assert_int_equal(socketBuffer.length.chunk.next, 0);
+
+    mockReceiveMaxBuf += 3 + 5;
+    assert_null(recvBufferAppend(&socketBuffer, 512));
+    assert_null(recvBufferFetch(&socketBuffer, output, 0, 512));
+    assert_string_equal(output, "This is");
+    assert_int_equal(socketBuffer.length.chunk.next, 0);
+
+    mockReceiveMaxBuf += 2 + 5;
+    assert_null(recvBufferAppend(&socketBuffer, 512));
+    assert_null(recvBufferFetch(&socketBuffer, output, 0, 512));
+    assert_string_equal(output, "This is a");
+    assert_int_equal(socketBuffer.length.chunk.next, 0);
+
+    mockReceiveMaxBuf += 5 + 5;
+    assert_null(recvBufferAppend(&socketBuffer, 512));
+    assert_null(recvBufferFetch(&socketBuffer, output, 0, 512));
+    assert_string_equal(output, "This is a test");
+    assert_int_equal(socketBuffer.length.chunk.next, 0);
+
+    mockReceiveMaxBuf += 0 + 5 + 1;
+    assert_null(recvBufferAppend(&socketBuffer, 512));
+    assert_null(recvBufferFetch(&socketBuffer, output, 0, 512));
+    assert_string_equal(output, "This is a test");
+    assert_int_equal(socketBuffer.length.chunk.next, -1);
+}
+
+static void ReceiveFetchChunkIterateUnaligned(void **state) {
+    RecvBuffer socketBuffer;
+
+    char sample[] = "4" HTTP_EOL "This" HTTP_EOL "3" HTTP_EOL " is" HTTP_EOL "2" HTTP_EOL" a" HTTP_EOL "5" HTTP_EOL " test" HTTP_EOL "0" HTTP_EOL;
+    char output[sizeof(sample)] = {0};
+    size_t max = strlen(sample);
+
+    mockReset(), mockOptions = MOCK_CONNECT | MOCK_RECEIVE | MOCK_RECEIVE_COUNT;
+    mockReceiveStream = tmpfile(), fwrite(sample, 1, max, mockReceiveStream), rewind(mockReceiveStream);
+
+    assert_null(recvBufferNewFromUri(&socketBuffer, "http://127.0.0.1:8080", 0));
+    recvBufferSetLengthChunk(&socketBuffer);
+
+    mockReceiveMaxBuf = 3 + 3;
+    assert_null(recvBufferAppend(&socketBuffer, 512));
+    assert_null(recvBufferFetch(&socketBuffer, output, 0, 512));
+    assert_string_equal(output, "Thi");
+    assert_int_equal(socketBuffer.length.chunk.next, 1);
+
+    mockReceiveMaxBuf += 3 + 5;
+    assert_null(recvBufferAppend(&socketBuffer, 512));
+    assert_null(recvBufferFetch(&socketBuffer, output, 0, 512));
+    assert_string_equal(output, "This i");
+    assert_int_equal(socketBuffer.length.chunk.next, 1);
+
+    mockReceiveMaxBuf += 2 + 5;
+    assert_null(recvBufferAppend(&socketBuffer, 512));
+    assert_null(recvBufferFetch(&socketBuffer, output, 0, 512));
+    assert_string_equal(output, "This is ");
+    assert_int_equal(socketBuffer.length.chunk.next, 1);
+
+    mockReceiveMaxBuf += 5 + 5;
+    assert_null(recvBufferAppend(&socketBuffer, 512));
+    assert_null(recvBufferFetch(&socketBuffer, output, 0, 512));
+    assert_string_equal(output, "This is a tes");
+    assert_int_equal(socketBuffer.length.chunk.next, 1);
+
+    mockReceiveMaxBuf += 1 + 5 + 1;
+    assert_null(recvBufferAppend(&socketBuffer, 512));
+    assert_null(recvBufferFetch(&socketBuffer, output, 0, 512));
+    assert_string_equal(output, "This is a test");
+    assert_int_equal(socketBuffer.length.chunk.next, -1);
+}
+
 static void ReceiveFetchChunkMalformed(void **state) {
     RecvBuffer socketBuffer;
     const char *e;
@@ -345,50 +433,6 @@ static void ReceiveFetchChunkOverflowMalformed(void **state) {
 
     assert_non_null(e = recvBufferAppend(&socketBuffer, 512));
     assert_string_equal(e, "Illegal hex character");
-}
-
-static void ReceiveFetchChunkIterate(void **state) {
-    RecvBuffer socketBuffer;
-
-    char sample[] = "4" HTTP_EOL "This" HTTP_EOL "3" HTTP_EOL " is" HTTP_EOL "2" HTTP_EOL" a" HTTP_EOL "5" HTTP_EOL " test" HTTP_EOL "0" HTTP_EOL;
-    char output[sizeof(sample)] = {0};
-    size_t max = strlen(sample);
-
-    mockReset(), mockOptions = MOCK_CONNECT | MOCK_RECEIVE | MOCK_RECEIVE_COUNT;
-    mockReceiveStream = tmpfile(), fwrite(sample, 1, max, mockReceiveStream), rewind(mockReceiveStream);
-
-    assert_null(recvBufferNewFromUri(&socketBuffer, "http://127.0.0.1:8080", 0));
-    recvBufferSetLengthChunk(&socketBuffer);
-
-    mockReceiveMaxBuf = 4 + 3;
-    assert_null(recvBufferAppend(&socketBuffer, 512));
-    assert_null(recvBufferFetch(&socketBuffer, output, 0, 512));
-    assert_string_equal(output, "This");
-    assert_int_equal(socketBuffer.length.chunk.next, 0);
-
-    mockReceiveMaxBuf += 3 + 5;
-    assert_null(recvBufferAppend(&socketBuffer, 512));
-    assert_null(recvBufferFetch(&socketBuffer, output, 0, 512));
-    assert_string_equal(output, "This is");
-    assert_int_equal(socketBuffer.length.chunk.next, 0);
-
-    mockReceiveMaxBuf += 2 + 5;
-    assert_null(recvBufferAppend(&socketBuffer, 512));
-    assert_null(recvBufferFetch(&socketBuffer, output, 0, 512));
-    assert_string_equal(output, "This is a");
-    assert_int_equal(socketBuffer.length.chunk.next, 0);
-
-    mockReceiveMaxBuf += 5 + 5;
-    assert_null(recvBufferAppend(&socketBuffer, 512));
-    assert_null(recvBufferFetch(&socketBuffer, output, 0, 512));
-    assert_string_equal(output, "This is a test");
-    assert_int_equal(socketBuffer.length.chunk.next, 0);
-
-    mockReceiveMaxBuf += 0 + 5 + 1;
-    assert_null(recvBufferAppend(&socketBuffer, 512));
-    assert_null(recvBufferFetch(&socketBuffer, output, 0, 512));
-    assert_string_equal(output, "This is a test");
-    assert_int_equal(socketBuffer.length.chunk.next, -1);
 }
 
 static void ReceiveFind(void **state) {
@@ -487,7 +531,8 @@ const struct CMUnitTest recvBufferSocketTest[] = {cmocka_unit_test(RecvBufferCle
                                                   cmocka_unit_test(ReceiveSetLengthUnknown)
 #ifdef MOCK
         , cmocka_unit_test(ReceiveFetch), cmocka_unit_test(ReceiveFetchChunk), cmocka_unit_test(ReceiveFetchChunkEmpty),
-                                                  cmocka_unit_test(ReceiveFetchChunkIterate),
+                                                  cmocka_unit_test(ReceiveFetchChunkIterateAligned),
+                                                  cmocka_unit_test(ReceiveFetchChunkIterateUnaligned),
                                                   cmocka_unit_test(ReceiveFetchChunkOverflow),
                                                   cmocka_unit_test(ReceiveFetchChunkOverflowExact),
                                                   cmocka_unit_test(ReceiveFetchChunkOverflowMalformed),

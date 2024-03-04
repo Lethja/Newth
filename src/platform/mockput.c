@@ -1,6 +1,5 @@
 #include <errno.h>
 #include "mockput.h"
-#include "platform.h"
 
 #pragma region Mockup global variables
 

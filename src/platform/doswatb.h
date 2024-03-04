@@ -68,7 +68,6 @@ extern char platformShouldExit(void);
 #define CLOSE_SOCKET(x) closesocket(x)
 #define SOCKET int
 #define SOCK_BUF_TYPE size_t
-#define STD_FILE_TYPE size_t
 
 #ifdef DJGPP
 #define PF_OFFSET "u"

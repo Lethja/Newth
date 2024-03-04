@@ -4,8 +4,6 @@
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "bugprone-reserved-identifier"
 
-#pragma clang diagnostic pop
-
 #ifdef _WIN32
 #include "mscrtdl.h"
 #else
@@ -26,6 +24,8 @@ int __wrap_connect(int sockfd, const struct sockaddr *addr, __socklen_t addrlen)
 ssize_t __wrap_recv(int fd, void *buf, size_t len, int flags);
 
 ssize_t __wrap_send(int fd, const void *buf, size_t n, int flags);
+
+#pragma clang diagnostic pop
 
 #ifndef INET_ADDRSTRLEN
 #define INET_ADDRSTRLEN 22
