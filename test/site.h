@@ -140,6 +140,11 @@ const char *HttpHeaderResponseDir = "HTTP/1.1 200 OK" HTTP_EOL
                                     "Content-Type: text/html; charset=ISO-8859-1" HTTP_EOL
                                     "Date: Thu, 1 Jan 1970 00:00:00 GMT" HTTP_EOL HTTP_EOL;
 
+const char *HttpHeaderResponseDirChunk = "HTTP/1.1 200 OK" HTTP_EOL
+                                         "Content-Type: text/html; charset=ISO-8859-1" HTTP_EOL
+                                         "Date: Thu, 1 Jan 1970 00:00:00 GMT" HTTP_EOL
+                                         "Transfer-Encoding: chunked" HTTP_EOL HTTP_EOL;
+
 const char *HttpHeaderResponseFile = "HTTP/1.1 200 OK" HTTP_EOL
                                      "Content-Type: text/html; charset=ISO-8859-1" HTTP_EOL
                                      "Content-Disposition: attachment" HTTP_EOL
@@ -348,9 +353,7 @@ static void SiteHttpDirEntryBad(void **state) {
 
 static void SiteHttpDirEntryApache(void **state) {
     const char *ApacheHtml = "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2 Final//EN\">\n"
-                             "<html>\n"
-                             "<body>\n"
-                             "<pre><img src=\"/icons/blank.gif\" alt=\"Icon \">"
+                             "<html>\n<body>\n<pre><img src=\"/icons/blank.gif\" alt=\"Icon \">"
                              "<a href=\"?C=N;O=D\">Name</a> "
                              "<a href=\"?C=M;O=A\">Last</a>"
                              "<a href=\"?C=S;O=A\">Size</a> "
@@ -358,8 +361,7 @@ static void SiteHttpDirEntryApache(void **state) {
                              "<a href=\"cloud/\">cloud/</a> 1970-01-01 00:00 - \n"
                              "<a href=\"cloud2/\">cloud2/</a> 1970-01-01 00:00 - \n"
                              "<a href=\"foo\">foo</a> 1970-01-01 00:00 0 \n"
-                             "<hr></pre>\n"
-                             "</body></html>";
+                             "<hr></pre>\n</body></html>";
     Site site;
     SiteDirectoryEntry *e;
     char length[255] = "";
@@ -430,16 +432,63 @@ static void SiteHttpDirEntryLighttpd(void **state) {
     siteFree(&site);
 }
 
+static void SiteHttpDirEntryNewth(void **state) {
+    const char *NewthHtml = "10a" HTTP_EOL "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"\n"
+                            "\t\"http://www.w3.org/TR/html4/strict.dtd\">\n<HTML>\n\t<HEAD>\n"
+                            "\t\t<TITLE>/</TITLE>\n\t\t<STYLE TYPE=\"text/css\">\n\t\t*{\n"
+                            "\t\t\tfont-family: monospace;\n"
+                            "\t\t}\n\t\t\n\t\ta:hover,tr:hover{\n\t\t\tfont-weight: bold;\n\t\t}\n"
+                            "\t\t</STYLE>\n\t</HEAD>\n\n\t<BODY>\n"
+                            HTTP_EOL "34" HTTP_EOL
+                            "\t\t<DIV>\n\t\t\t<A HREF=\"/\">/</A>\n\t\t</DIV>\n\t\t<HR>\n\t\t<UL>\n"
+                            HTTP_EOL "29" HTTP_EOL
+                            "\t\t\t<LI><A HREF=\"/cloud/\">cloud/</A></LI>\n"
+                            HTTP_EOL "2b" HTTP_EOL
+                            "\t\t\t<LI><A HREF=\"/cloud2/\">cloud2/</A></LI>\n"
+                            HTTP_EOL "23" HTTP_EOL
+                            "\t\t\t<LI><A HREF=\"/foo\">foo</A></LI>\n"
+                            HTTP_EOL "19" HTTP_EOL
+                            "\t\t</UL>\n\t</BODY>\n</HTML>\n"
+                            HTTP_EOL "0" HTTP_EOL HTTP_EOL;
+    Site site;
+    SiteDirectoryEntry *e;
+    char length[255] = "";
+    void *d;
+
+    mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
+    assert_non_null((mockReceiveStream = tmpfile()));
+
+    /* Setup mocked response */
+    sprintf(length, "content-length: %lu" HTTP_EOL HTTP_EOL, strlen(NewthHtml)); /* Deliberately lowercase */
+    fwrite(HttpHeaderResponseDir, 1, strlen(HttpHeaderResponseDir) - 2, mockReceiveStream);
+    fwrite(length, 1, strlen(length), mockReceiveStream);
+    fwrite(NewthHtml, 1, strlen(NewthHtml), mockReceiveStream);
+    rewind(mockReceiveStream);
+
+    assert_null(siteNew(&site, SITE_HTTP, "http://127.0.0.1/")), rewind(mockReceiveStream);
+
+    /* Listing of http://127.0.0.1/ */
+    assert_non_null(d = siteDirectoryListingOpen(&site, "."));
+    assert_non_null(e = siteDirectoryListingRead(&site, d));
+    assert_string_equal(e->name, "cloud"), siteDirectoryEntryFree(e);
+    assert_non_null(e = siteDirectoryListingRead(&site, d));
+    assert_string_equal(e->name, "cloud2"), siteDirectoryEntryFree(e);
+    assert_non_null(e = siteDirectoryListingRead(&site, d));
+    assert_string_equal(e->name, "foo"), siteDirectoryEntryFree(e);
+    assert_null(siteDirectoryListingRead(&site, d));
+
+    siteDirectoryListingClose(&site, d), rewind(mockReceiveStream);
+
+    siteFree(&site);
+}
+
 static void SiteHttpDirEntryNginx(void **state) {
-    const char *NginxHttp = "<html>\n"
-                            "<head><title>Index of /</title></head>\n"
-                            "<body>\n"
+    const char *NginxHttp = "<html>\n<head><title>Index of /</title></head>\n<body>\n"
                             "<h1>Index of /</h1><hr><pre><a href=\"../\">../</a>\n"
                             "<a href=\"cloud/\">cloud/</a>                                             01-Jan-1970 00:00                   -\n"
                             "<a href=\"cloud2/\">cloud2/</a>                                            01-Jan-1970 00:00                   -\n"
                             "<a href=\"foo\">foo</a>                                                01-Jan-1970 00:00                   0\n"
-                            "</pre><hr></body>\n"
-                            "</html>";
+                            "</pre><hr></body>\n</html>";
     Site site;
     SiteDirectoryEntry *e;
     char length[255] = "";
@@ -487,7 +536,7 @@ const struct CMUnitTest siteTest[] = {cmocka_unit_test(SiteArrayFunctions), cmoc
                                       cmocka_unit_test(SiteHttpDirEntryBad), cmocka_unit_test(SiteHttpDirEntryGood),
                                       cmocka_unit_test(SiteHttpDirEntryApache),
                                       cmocka_unit_test(SiteHttpDirEntryLighttpd),
-                                      cmocka_unit_test(SiteHttpDirEntryNginx)
+                                      cmocka_unit_test(SiteHttpDirEntryNewth), cmocka_unit_test(SiteHttpDirEntryNginx)
 #endif
 };
 
