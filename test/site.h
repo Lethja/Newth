@@ -174,8 +174,8 @@ static void SiteHttpGetDirectory(void **state) {
     char *wd;
 
     mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
-    assert_non_null((mockReceiveStream = tmpfile())); fwrite(HttpHeaderResponseDir, 1, strlen(HttpHeaderResponseDir),
-                                          mockReceiveStream), rewind(mockReceiveStream);
+    assert_non_null((mockReceiveStream = tmpfile()));
+    fwrite(HttpHeaderResponseDir, 1, strlen(HttpHeaderResponseDir), mockReceiveStream), rewind(mockReceiveStream);
 
     assert_null(siteNew(&site, SITE_HTTP, "http://127.0.0.1"));
     assert_non_null(site.site.http.fullUri);
@@ -195,8 +195,8 @@ static void SiteHttpSetDirectory(void **state) {
     char *wd = "http://127.0.0.1/foo";
 
     mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
-    assert_non_null((mockReceiveStream = tmpfile())); fwrite(HttpHeaderResponseDir, 1, strlen(HttpHeaderResponseDir),
-                                          mockReceiveStream), rewind(mockReceiveStream);
+    assert_non_null((mockReceiveStream = tmpfile()));
+    fwrite(HttpHeaderResponseDir, 1, strlen(HttpHeaderResponseDir), mockReceiveStream), rewind(mockReceiveStream);
 
     assert_null(siteNew(&site, SITE_HTTP, wd)), rewind(mockReceiveStream);
     assert_non_null(site.site.file.fullUri);
@@ -222,8 +222,8 @@ static void SiteHttpSetDirectoryFailFile(void **state) {
     char *wd = "http://127.0.0.1/foo";
 
     mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
-    assert_non_null((mockReceiveStream = tmpfile())); fwrite(HttpHeaderResponseDir, 1, strlen(HttpHeaderResponseDir),
-                                          mockReceiveStream), rewind(mockReceiveStream);
+    assert_non_null((mockReceiveStream = tmpfile()));
+    fwrite(HttpHeaderResponseDir, 1, strlen(HttpHeaderResponseDir), mockReceiveStream), rewind(mockReceiveStream);
 
     assert_null(siteNew(&site, SITE_HTTP, wd)), rewind(mockReceiveStream);
     assert_non_null(site.site.file.fullUri);
@@ -236,25 +236,20 @@ static void SiteHttpSetDirectoryFailFile(void **state) {
     siteFree(&site);
 }
 
-static void SiteHttpDirEntry(void **state) {
-    const char *HttpBody = "<!DOCTYPE html>\n"
-                           "<html>\n"
-                           "<head>\n"
+static void SiteHttpDirEntryGood(void **state) {
+    const char *HttpBody = "<!DOCTYPE html>\n<html>\n<head>\n"
                            "\t<title>Directory Listing</title>\n"
-                           "</head>\n"
-                           "<body>\n"
-                           "\t<h1>Directory Listing</h1>\n"
-                           "\t<img href=\"Logo.png\" alt=\"Logo\">\n"
-                           "\t<ul>\n"
+                           "</head>\n<body>\n\t<h1>Directory Listing</h1>\n"
+                           "\t<img href=\"Logo.png\" alt=\"Logo\">\n\t<ul>\n"
                            "\t\t<li><a href=\"file1.txt\">file1.txt</a></li>\n"
                            "\t\t<li><a href=\"file2%2Etxt\">file2.txt</a></li>\n"
                            "\t\t<li><a href=\"/file3.txt\">file3.txt</a></li>\n"
-                           "\t\t<li><a href=\"../file4.txt\">file4.txt</a></li>\n"
                            "\t\t<li><a href=\"/foo/file5.txt\">file5.txt</a></li>\n"
-                           "\t\t<li><a href=\"http://example.com\">file6.txt</a></li>\n"
-                           "\t</ul>\n"
-                           "</body>\n"
-                           "</html>";
+                           "\t\t<li><a href=\"/foo/bar\">bar</a></li>\n"
+                           "\t\t<li><a href=\"/foo/bar/\">bar</a></li>\n"
+                           "\t\t<li><a href=\"foo\">bar</a></li>\n"
+                           "\t\t<li><a href=\"foo/\">bar/</a></li>\n"
+                           "\t</ul>\n</body>\n</html>";
     Site site;
     SiteDirectoryEntry *e;
     char length[255] = "";
@@ -280,6 +275,14 @@ static void SiteHttpDirEntry(void **state) {
     assert_string_equal(e->name, "file2.txt"), siteDirectoryEntryFree(e);
     assert_non_null(e = siteDirectoryListingRead(&site, d));
     assert_string_equal(e->name, "file5.txt"), siteDirectoryEntryFree(e);
+    assert_non_null(e = siteDirectoryListingRead(&site, d));
+    assert_string_equal(e->name, "bar"), siteDirectoryEntryFree(e);
+    assert_non_null(e = siteDirectoryListingRead(&site, d));
+    assert_string_equal(e->name, "bar"), siteDirectoryEntryFree(e);
+    assert_non_null(e = siteDirectoryListingRead(&site, d));
+    assert_string_equal(e->name, "foo"), siteDirectoryEntryFree(e);
+    assert_non_null(e = siteDirectoryListingRead(&site, d));
+    assert_string_equal(e->name, "foo"), siteDirectoryEntryFree(e);
     siteDirectoryListingClose(&site, d), rewind(mockReceiveStream);
 
     /* Listing of http://127.0.0.1/ (absolute) */
@@ -290,6 +293,10 @@ static void SiteHttpDirEntry(void **state) {
     assert_string_equal(e->name, "file2.txt"), siteDirectoryEntryFree(e);
     assert_non_null(e = siteDirectoryListingRead(&site, d));
     assert_string_equal(e->name, "file3.txt"), siteDirectoryEntryFree(e);
+    assert_non_null(e = siteDirectoryListingRead(&site, d));
+    assert_string_equal(e->name, "foo"), siteDirectoryEntryFree(e);
+    assert_non_null(e = siteDirectoryListingRead(&site, d));
+    assert_string_equal(e->name, "foo"), siteDirectoryEntryFree(e);
     siteDirectoryListingClose(&site, d), rewind(mockReceiveStream);
 
     /* Listing of http://127.0.0.1/ (up) */
@@ -300,7 +307,41 @@ static void SiteHttpDirEntry(void **state) {
     assert_string_equal(e->name, "file2.txt"), siteDirectoryEntryFree(e);
     assert_non_null(e = siteDirectoryListingRead(&site, d));
     assert_string_equal(e->name, "file3.txt"), siteDirectoryEntryFree(e);
+    assert_non_null(e = siteDirectoryListingRead(&site, d));
+    assert_string_equal(e->name, "foo"), siteDirectoryEntryFree(e);
+    assert_non_null(e = siteDirectoryListingRead(&site, d));
+    assert_string_equal(e->name, "foo"), siteDirectoryEntryFree(e);
     siteDirectoryListingClose(&site, d), rewind(mockReceiveStream);
+
+    siteFree(&site);
+}
+
+static void SiteHttpDirEntryBad(void **state) {
+    const char *HttpBody = "<!DOCTYPE html>\n<html>\n<head>\n"
+                           "\t<title>Directory Listing</title>\n</head>\n<body>\n"
+                           "\t<h1>Directory Listing</h1>\n\t<img href=\"Logo.png\" alt=\"Logo\">\n\t<ul>\n"
+                           "\t\t<li><a href=\"../file1.txt\">file1.txt</a></li>\n"
+                           "\t\t<li><a href=\"http://example.com\">file3.txt</a></li>\n"
+                           "\t\t<li><a href=\"http://example.com/file4.txt\">file4.txt</a></li>\n"
+                           "\t</ul>\n</body>\n</html>";
+    Site site;
+    char length[255] = "";
+
+    mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
+    assert_non_null((mockReceiveStream = tmpfile()));
+
+    /* Setup mocked response */
+    sprintf(length, "content-length: %lu" HTTP_EOL HTTP_EOL, strlen(HttpBody)); /* Deliberately lowercase */
+    fwrite(HttpHeaderResponseDir, 1, strlen(HttpHeaderResponseDir) - 2, mockReceiveStream);
+    fwrite(length, 1, strlen(length), mockReceiveStream);
+    fwrite(HttpBody, 1, strlen(HttpBody), mockReceiveStream);
+    rewind(mockReceiveStream);
+
+    assert_null(siteNew(&site, SITE_HTTP, "http://127.0.0.1/foo")), rewind(mockReceiveStream);
+
+    assert_null(siteDirectoryListingOpen(&site, ".")), rewind(mockReceiveStream);
+    assert_null(siteDirectoryListingOpen(&site, "/")), rewind(mockReceiveStream);
+    assert_null(siteDirectoryListingOpen(&site, "..")), rewind(mockReceiveStream);
 
     siteFree(&site);
 }
@@ -443,7 +484,8 @@ const struct CMUnitTest siteTest[] = {cmocka_unit_test(SiteArrayFunctions), cmoc
         , cmocka_unit_test(SiteHttpNew), cmocka_unit_test(SiteHttpNewWithPath), cmocka_unit_test(SiteHttpGetDirectory),
                                       cmocka_unit_test(SiteHttpSetDirectory),
                                       cmocka_unit_test(SiteHttpSetDirectoryFailFile),
-                                      cmocka_unit_test(SiteHttpDirEntry), cmocka_unit_test(SiteHttpDirEntryApache),
+                                      cmocka_unit_test(SiteHttpDirEntryBad), cmocka_unit_test(SiteHttpDirEntryGood),
+                                      cmocka_unit_test(SiteHttpDirEntryApache),
                                       cmocka_unit_test(SiteHttpDirEntryLighttpd),
                                       cmocka_unit_test(SiteHttpDirEntryNginx)
 #endif
