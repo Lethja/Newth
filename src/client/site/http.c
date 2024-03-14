@@ -143,10 +143,13 @@ static inline char LinkPathIsDirectSub(const UriDetails *path, const char *link)
     else if (link[0] == '/') {
         if (strstr(link, path->path) == link) {
             size_t len = strlen(path->path);
+            char *last;
+
             if (strlen(link) <= len) /* The same directory */
                 return 0;
 
-            if (strchr(&link[len + 1], '/')) /* Multiple levels down */
+            /* Check if link is multiple levels down but allow trailing '/' on a single level down */
+            if ((last = strchr(&link[len + 1], '/')) && last != &link[strlen(link) - 1])
                 return 0;
 
             return 1;
@@ -756,6 +759,10 @@ void *httpSiteSchemeDirectoryListingOpen(HttpSite *self, char *path) {
 
     uriDetailsFree(&details);
     DirectoryListingSetReloadDate(directoryListing);
+
+    if (!directoryListing->len)
+        httpSiteSchemeDirectoryListingClose(directoryListing), directoryListing = NULL;
+
     return directoryListing;
 
     httpSiteOpenDirectoryListing_abort3:
