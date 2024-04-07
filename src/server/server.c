@@ -7,13 +7,6 @@ RoutineArray globalRoutineArray;
 
 SOCKET *serverListenSocket;
 
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "UnusedParameter"
-
-void noAction(int signal) {}
-
-#pragma clang diagnostic pop
-
 char handleDir(SOCKET clientSocket, char *webPath, char *absolutePath, char type, PlatformFileStat *st) {
     char *buf = NULL;
     SendBuffer socketBuffer = sendBufferNew(clientSocket, 0);

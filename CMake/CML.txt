@@ -40,6 +40,7 @@ add_executable(dl ../src/cli/dl.c
         ../src/client/xml.c ../src/client/xml.h
         ../src/common/defines.h
         ../src/common/hex.c ../src/common/hex.h
+        ../src/common/signal.c ../src/common/signal.h
         ../src/platform/platform.c ../src/platform/platform.h
         ${PLATFORM_SRC})
 
@@ -48,6 +49,7 @@ target_compile_definitions(dl PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
 # Server
 add_executable(th ../src/cli/th.c ../src/common/defines.h
         ../src/common/hex.c ../src/common/hex.h
+        ../src/common/signal.c ../src/common/signal.h
         ../src/platform/platform.c ../src/platform/platform.h
         ../src/server/event.c ../src/server/event.h
         ../src/server/http.c ../src/server/http.h
@@ -82,6 +84,7 @@ if (ENABLE_TEST)
             ../src/client/site/http.c ../src/client/site/http.h
             ../src/common/defines.h
             ../src/common/hex.c ../src/common/hex.h
+            ../src/common/signal.c ../src/common/signal.h
             ../src/platform/platform.c ../src/platform/platform.h
             ../src/server/server.c ../src/server/server.h
             ../src/server/event.c ../src/server/event.h

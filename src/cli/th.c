@@ -1,4 +1,5 @@
 #include "../server/server.h"
+#include "../common/signal.h"
 
 static void shutdownCrash(int signal) {
     SOCKET *sockets;
@@ -171,7 +172,7 @@ static int setup(int argc, char **argv) {
 }
 
 int main(int argc, char **argv) {
-    platformConnectSignals(noAction, shutdownCrash, shutdownProgram);
+    platformConnectSignals(signalNoAction, shutdownCrash, shutdownProgram);
 
     if (argc > 1) {
         globalRootPath = platformGetDiskPath(argv[1]);

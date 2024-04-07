@@ -423,6 +423,48 @@ const char *recvBufferNewFromUri(RecvBuffer *self, const char *uri, int options)
     return NULL;
 }
 
+const char *recvBufferReconnect(RecvBuffer *self) {
+    SOCKET sock;
+    char *e;
+
+    CLOSE_SOCKET(self->serverSocket);
+    if ((e = ioCreateSocketFromSocketAddress(&self->serverAddress, &sock)))
+        return e;
+
+    if (connect(sock, &self->serverAddress.address.sock, sizeof(self->serverAddress.address.sock)) == -1) {
+        if (sock == INVALID_SOCKET)
+            CLOSE_SOCKET(sock);
+
+        return strerror(platformSocketGetLastError());
+    }
+
+    return NULL;
+}
+
+const char *recvBufferSend(RecvBuffer *self, const void *data, size_t n, int flags) {
+    const char* e;
+    SOCK_BUF_TYPE s;
+    recvBufferSend_retry:
+    s = send(self->serverSocket, data, n, flags);
+
+    switch(s) {
+        case -1:
+        case 0:
+            /* TODO: attempt reconnect */
+            e = recvBufferReconnect(self);
+            if (e)
+                return e;
+
+            goto recvBufferSend_retry;
+        default:
+            if(s == n)
+                break;
+            /* TODO: Do something about the size mismatch */
+    }
+
+    return NULL;
+}
+
 void recvBufferSetLengthChunk(RecvBuffer *self) {
     self->options &= ~(RECV_BUFFER_DATA_LENGTH_KNOWN) | ~(RECV_BUFFER_DATA_LENGTH_TOKEN);
     self->options |= RECV_BUFFER_DATA_LENGTH_CHUNK;

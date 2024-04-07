@@ -2,7 +2,7 @@
 #include "../client/queue.h"
 #include "../client/site.h"
 #include "../client/uri.h"
-#include "../server/http.h"
+#include "../common/signal.h"
 
 #include <ctype.h>
 
@@ -285,6 +285,9 @@ int main(int argc, char **argv) {
         puts(err);
         return 1;
     }
+
+    /* TODO: Use PlatformConnectSignals() instead */
+    signal(SIGPIPE, signalNoAction);
 
     switch (addressQueueGetTotalPathRequests()) {
         case 0:

@@ -19,6 +19,7 @@
  * @return NULL on success, user friendly error message otherwise
  */
 static inline const char *ConnectTo(HttpSite *self, UriDetails *details) {
+    /* TODO: Deprecate in favor of recvBufferReconnect() */
     SOCKET sock;
     if (uriDetailsCreateSocketAddress(details, &self->address, SCHEME_HTTP) ||
         ioCreateSocketFromSocketAddress(&self->address, &sock))
@@ -44,6 +45,7 @@ static inline const char *ConnectTo(HttpSite *self, UriDetails *details) {
  * @remark If the TCP connection was reset then this function will attempt to reestablish the connection internally
  */
 static inline const char *WakeUpAndSend(HttpSite *self, const void *data, size_t len) {
+    /* TODO: Deprecate in favor of recvBufferSend() */
     const char *err, maxAttempt = 3;
     char attempt = 0;
     SOCK_BUF_TYPE s = send(self->socket, data, len, 0);
@@ -285,6 +287,7 @@ static inline char *LinkPathConvertToRelativeSubdirectory(const char *link) {
  * if there's no element then everything will be lost.
  */
 static inline SOCK_BUF_TYPE FastForwardToElement(HttpSite *self, const char *element) {
+    /* TODO: Deprecate code in favor of recvBufferFind(AndDitch)() */
     char buf[2048] = {0}, *match;
     SOCK_BUF_TYPE bytesGot, totalBytes = 0;
 
@@ -421,8 +424,12 @@ static inline void GetAllHeaders(const char *header, HttpResponseHeader *headerR
         HttpGetContentLength(header, &headerResponse->length);
 
     ioHttpResponseHeaderFind(header, "Last-Modified", &v);
-    if (v)
+    if (v) {
+        if(!headerResponse->modifiedDate)
+            headerResponse->modifiedDate = calloc(1, sizeof (HttpResponseHeader));
+
         platformTimeGetFromHttpStr(v, headerResponse->modifiedDate), free(v);
+    }
 
     ioHttpResponseHeaderFind(header, "Content-Disposition", &v);
     if (v) {
@@ -704,6 +711,9 @@ void *httpSiteSchemeDirectoryListingOpen(HttpSite *self, char *path) {
 
     GetAllHeaders(header, &headerResponse);
     /* TODO: Use headerResponse */
+    if (headerResponse.modifiedDate)
+        free(headerResponse.modifiedDate);
+
     if (headerResponse.fileName)
         free(headerResponse.fileName);
 

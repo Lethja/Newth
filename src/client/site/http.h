@@ -3,10 +3,12 @@
 
 #include "../io.h"
 #include "../site.h"
+#include "../recvbufr.h"
 
 typedef struct HttpSite {
     SocketAddress address;
     char *fullUri;
+    /* TODO: socket should be made into a RecvBuffer */
     SOCKET socket;
 } HttpSite;
 

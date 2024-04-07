@@ -30,13 +30,6 @@ extern char serverDeferredSocketExists(SOCKET socket);
 
 extern void serverDeferredSocketRemove(SOCKET socket);
 
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "UnusedParameter"
-
-extern void noAction(int signal);
-
-#pragma clang diagnostic pop
-
 extern char handleDir(SOCKET clientSocket, char *webPath, char *absolutePath, char type, PlatformFileStat *st);
 
 extern char handleFile(SOCKET clientSocket, const char *header, char *webPath, char *absolutePath, char httpType,
