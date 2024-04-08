@@ -3,6 +3,7 @@
 
 #include "../platform/platform.h"
 #include "../common/defines.h"
+#include "recvbufr.h"
 
 typedef struct HttpResponseHeader {
     PlatformTimeStruct *modifiedDate; /* Last modified date (to allow HTTP 304) */
@@ -21,18 +22,6 @@ enum SocketAddressFlags {
     SA_PROTOCOL_ALT_MODE,
     SA_PROTOCOL_DIRECTORY
 };
-
-typedef struct SocketAddress {
-    union address {
-        struct sockaddr sock;
-        struct sockaddr_in ipv4;
-#ifdef ENABLE_IPV6
-        struct sockaddr_in6 ipv6;
-#endif
-        struct sockaddr_storage storage;
-    } address;
-    unsigned short scheme, state;
-} SocketAddress;
 
 /**
  * Prepare SocketAddress into a socket ready for connection

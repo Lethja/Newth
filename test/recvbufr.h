@@ -463,12 +463,12 @@ static void ReceiveFindDitch(void **state) {
     mockReset(), mockOptions = MOCK_CONNECT | MOCK_RECEIVE, mockReceiveMaxBuf = len;
     mockReceiveStream = tmpfile(), fwrite(data, 1, len, mockReceiveStream), rewind(mockReceiveStream);
 
-    assert_null(recvBufferFindAndDitch(&socketBuffer, "The", 3));
-    assert_null(recvBufferFindAndDitch(&socketBuffer, "he", 2));
-    assert_null(recvBufferFindAndDitch(&socketBuffer, "fox", 3));
-    assert_null(recvBufferFindAndDitch(&socketBuffer, "ox", 2));
-    assert_null(recvBufferFindAndDitch(&socketBuffer, "dog", 3));
-    assert_non_null(recvBufferFindAndDitch(&socketBuffer, "fox", 3)); /* Buffer eaten, fox is gone! */
+    assert_null(recvBufferFindAndDitch(&socketBuffer, "The", 3, NULL));
+    assert_null(recvBufferFindAndDitch(&socketBuffer, "he", 2, NULL));
+    assert_null(recvBufferFindAndDitch(&socketBuffer, "fox", 3, NULL));
+    assert_null(recvBufferFindAndDitch(&socketBuffer, "ox", 2, NULL));
+    assert_null(recvBufferFindAndDitch(&socketBuffer, "dog", 3, NULL));
+    assert_non_null(recvBufferFindAndDitch(&socketBuffer, "fox", 3, NULL)); /* Buffer eaten, fox is gone! */
 
     recvBufferFailFree(&socketBuffer);
 }

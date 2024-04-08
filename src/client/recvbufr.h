@@ -2,7 +2,6 @@
 #define NEW_DL_RECEIVE_BUFFER_H
 
 #include "../platform/platform.h"
-#include "site.h"
 
 enum RecvBufferOptions {
     RECV_BUFFER_DATA_LENGTH_UNKNOWN = 0,
@@ -34,6 +33,18 @@ typedef union RecvBufferLength {
     RecvBufferLengthToken token;
     RecvBufferLengthUnknown unknown;
 } RecvBufferLength;
+
+typedef struct SocketAddress {
+    union address {
+        struct sockaddr sock;
+        struct sockaddr_in ipv4;
+#ifdef ENABLE_IPV6
+        struct sockaddr_in6 ipv6;
+#endif
+        struct sockaddr_storage storage;
+    } address;
+    unsigned short scheme, state;
+} SocketAddress;
 
 typedef struct RecvBuffer {
     FILE *buffer;
@@ -115,11 +126,12 @@ PlatformFileOffset recvBufferFind(RecvBuffer *self, PlatformFileOffset pos, cons
  * @param self In: The buffer to search for the token in
  * @param token In: The data to match
  * @param len In: The length of the data to match
+ * @param ditched Optional Out: The amount of bytes that have been ditched
  * @return NULL on match, user friendly error message otherwise
  * @remark The buffer will be consumed up to the first matched instance,
  * if no match is found the entire buffer will be consumed! Use this function with caution.
  */
-const char *recvBufferFindAndDitch(RecvBuffer *self, const char *token, size_t len);
+const char *recvBufferFindAndDitch(RecvBuffer *self, const char *token, size_t len, SOCK_BUF_TYPE *ditched);
 
 /**
  * Search for a byte match to data in the sockets data appending everything in the stream before the match

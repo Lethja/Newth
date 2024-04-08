@@ -324,7 +324,8 @@ PlatformFileOffset recvBufferFind(RecvBuffer *self, PlatformFileOffset pos, cons
     return -1;
 }
 
-const char *recvBufferFindAndDitch(RecvBuffer *self, const char *token, size_t len) {
+const char *recvBufferFindAndDitch(RecvBuffer *self, const char *token, size_t len, SOCK_BUF_TYPE *ditched) {
+    SOCK_BUF_TYPE d;
     PlatformFileOffset o;
     const char *e;
 
@@ -333,6 +334,7 @@ const char *recvBufferFindAndDitch(RecvBuffer *self, const char *token, size_t l
             return e;
     }
 
+    d = 0;
     while ((o = recvBufferFind(self, 0, token, len)) == -1) {
         if (!(e = recvBufferAppend(self, SB_DATA_SIZE))) {
             PlatformFileOffset p;
@@ -340,12 +342,16 @@ const char *recvBufferFindAndDitch(RecvBuffer *self, const char *token, size_t l
             platformMemoryStreamSeek(self->buffer, 0, SEEK_END), p = platformMemoryStreamTell(self->buffer);
             if (p > len)
                 p -= (PlatformFileOffset) len, recvBufferDitch(self, p);
+            d += p;
         } else
             return e;
     }
 
     if (o > 1)
-        recvBufferDitch(self, o);
+        recvBufferDitch(self, o), d += o;
+
+    if (ditched)
+        *ditched = d;
 
     return NULL;
 }

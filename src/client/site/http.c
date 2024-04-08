@@ -20,6 +20,7 @@
  */
 static inline const char *ConnectTo(HttpSite *self, UriDetails *details) {
     /* TODO: Deprecate in favor of recvBufferReconnect() */
+#pragma message "ConnectTo is deprecated and currently non functional. A recvBuffer function should handle reconnecting TCP sockets"
     SOCKET sock;
     if (uriDetailsCreateSocketAddress(details, &self->address, SCHEME_HTTP) ||
         ioCreateSocketFromSocketAddress(&self->address, &sock))
@@ -32,7 +33,7 @@ static inline const char *ConnectTo(HttpSite *self, UriDetails *details) {
         return strerror(platformSocketGetLastError());
     }
 
-    self->socket = sock;
+    self->socket = recvBufferNew(sock, self->address, 0);
     return NULL;
 }
 
@@ -46,9 +47,11 @@ static inline const char *ConnectTo(HttpSite *self, UriDetails *details) {
  */
 static inline const char *WakeUpAndSend(HttpSite *self, const void *data, size_t len) {
     /* TODO: Deprecate in favor of recvBufferSend() */
+#pragma message "WakeUpAndSend is deprecated and currently non functional. A recvBuffer function should handle sending information up TCP sockets"
     const char *err, maxAttempt = 3;
     char attempt = 0;
-    SOCK_BUF_TYPE s = send(self->socket, data, len, 0);
+    /* TODO: Fix me with recvBuffer */
+    SOCK_BUF_TYPE s = 0/*send(self->socket, data, len, 0)*/;
     WakeUpAndSend_TryAgain:
     ++attempt;
 
@@ -56,8 +59,8 @@ static inline const char *WakeUpAndSend(HttpSite *self, const void *data, size_t
         case 0:
             if (platformSocketGetLastError() == ECONNRESET) {
                 UriDetails details = uriDetailsNewFrom(self->fullUri);
-                if (self->socket != INVALID_SOCKET)
-                    CLOSE_SOCKET(self->socket);
+                /* if (self->socket != INVALID_SOCKET)
+                    CLOSE_SOCKET(self->socket); */
 
                 err = ConnectTo(self, &details);
                 uriDetailsFree(&details);
@@ -287,23 +290,10 @@ static inline char *LinkPathConvertToRelativeSubdirectory(const char *link) {
  * if there's no element then everything will be lost.
  */
 static inline SOCK_BUF_TYPE FastForwardToElement(HttpSite *self, const char *element) {
-    /* TODO: Deprecate code in favor of recvBufferFind(AndDitch)() */
-    char buf[2048] = {0}, *match;
-    SOCK_BUF_TYPE bytesGot, totalBytes = 0;
+    SOCK_BUF_TYPE totalBytes = 0;
 
-    while ((bytesGot = recv(self->socket, buf, 2047, MSG_PEEK)) > 0) {
-        if ((match = XmlFindElement(buf, element))) {
-            size_t len = 0;
-            char *i = buf;
-
-            while (i < match)
-                ++i, ++len;
-
-            totalBytes += recv(self->socket, buf, len, 0);
-            break;
-        } else
-            totalBytes += recv(self->socket, buf, bytesGot, 0);
-    }
+    if(recvBufferFindAndDitch(&self->socket, element, strlen(element), &totalBytes))
+        return -1;
 
     return totalBytes;
 }
@@ -319,12 +309,12 @@ static inline SOCK_BUF_TYPE FastForwardOverElement(HttpSite *self, const char *e
     SOCK_BUF_TYPE r = 0;
     char buf[2048] = {0}, *found;
 
-    FastForwardToElement(self, element);
-    recv(self->socket, buf, 2047, MSG_PEEK);
+    r = FastForwardToElement(self, element);
 
     if ((found = XmlExtractElement(buf, element))) {
         size_t len = strlen(found);
-        free(found), r = recv(self->socket, buf, len, 0);
+        free(found), recvBufferDitch(&self->socket, (PlatformFileOffset) len);
+        r += len;
     }
 
     return r;
@@ -339,12 +329,9 @@ static inline SOCK_BUF_TYPE FastForwardOverElement(HttpSite *self, const char *e
  */
 static inline char *HtmlExtractNextLink(HttpSite *self, size_t *written) {
     char *a, *e, *v, buf[2048] = {0};
-    size_t got;
-
     *written += FastForwardToElement(self, "a");
-    got = recv(self->socket, buf, 2047, MSG_PEEK);
 
-    if (got && (e = XmlFindElement(buf, "a")) && (a = XmlFindAttribute(e, "href"))) {
+    if (!recvBufferFetch(&self->socket, buf, 0, 2048) && (e = XmlFindElement(buf, "a")) && (a = XmlFindAttribute(e, "href"))) {
         if ((v = XmlExtractAttributeValue(a))) {
             *written += FastForwardOverElement(self, "a");
             return v;
@@ -502,10 +489,13 @@ int httpSiteSchemeWorkingDirectorySet(HttpSite *self, const char *path) {
 
     free(send), header = NULL;
 
+#pragma message "ioHttpResponseHeaderRead() needs to use RecvBuffer type"
+    /*
     if (ioHttpResponseHeaderRead(&self->socket, &header)) {
         uriDetailsFree(&details), free(newPath);
         return -1;
     }
+    */
 
     if (ioHttpResponseHeaderEssential(header, &scheme, &response)) {
         uriDetailsFree(&details), free(newPath), free(header);
@@ -540,8 +530,8 @@ void httpSiteSchemeFree(HttpSite *self) {
     if (self->fullUri)
         free(self->fullUri);
 
-    if (self->socket != INVALID_SOCKET)
-        CLOSE_SOCKET(self->socket);
+    CLOSE_SOCKET(self->socket.serverSocket);
+    recvBufferClear(&self->socket);
 }
 
 char *httpSiteSchemeWorkingDirectoryGet(HttpSite *self) {
@@ -554,7 +544,7 @@ const char *httpSiteSchemeNew(HttpSite *self, const char *path) {
     char *header, *scheme, *response, *send;
 
     if (!path) {
-        self->socket = -1, self->fullUri = NULL, memset(&self->address, 0, sizeof(SocketAddress));
+        self->socket.serverSocket = INVALID_SOCKET, self->fullUri = NULL, memset(&self->address, 0, sizeof(SocketAddress));
         return "No uri specified";
     }
 
@@ -586,10 +576,13 @@ const char *httpSiteSchemeNew(HttpSite *self, const char *path) {
 
     free(send);
 
+    /* TODO: Refactor to use recvBuffer */
+#pragma message "ioHttpResponseHeaderRead() needs to use RecvBuffer type"
+    /*
     if ((err = ioHttpResponseHeaderRead(&self->socket, &header)) ||
         (err = ioHttpResponseHeaderEssential(header, &scheme, &response)))
         goto httpSiteSchemeNew_closeSocketAndAbort;
-
+    */
     if (!(HttpResponseOk(response))) {
         err = "Server reply not acceptable";
         goto httpSiteSchemeNew_closeSocketAndAbort;
@@ -609,8 +602,10 @@ const char *httpSiteSchemeNew(HttpSite *self, const char *path) {
     return NULL;
 
     httpSiteSchemeNew_closeSocketAndAbort:
+    /*
     if (self->socket == INVALID_SOCKET)
         CLOSE_SOCKET(self->socket);
+    */
 
     if (header)
         free(header);
@@ -632,8 +627,10 @@ char *httpSiteSchemeDirectoryListingEntryStat(void *listing, void *entry, Platfo
     HttpSiteDirectoryListing *l = listing;
     SiteDirectoryEntry *e = entry;
 
-    char *entryPath, *request, *response;
+    char *entryPath, *request/*, *response */;
+    /*
     HttpResponseHeader header;
+    */
     UriDetails details;
 
     details = uriDetailsNewFrom(l->fullUri);
@@ -660,18 +657,21 @@ char *httpSiteSchemeDirectoryListingEntryStat(void *listing, void *entry, Platfo
     }
 
     free(request);
+#pragma message "ioHttpResponseHeaderRead() needs to use RecvBuffer type"
+    /*
     if ((ioHttpResponseHeaderRead(&l->site->socket, &response)))
         return strerror(platformSocketGetLastError());
 
     memset(&header, 0, sizeof(HttpResponseHeader));
     GetAllHeaders(response, &header);
 
+
     st->st_size = header.length;
     st->st_mode = e->isDirectory ? S_IFDIR : S_IFREG;
 
     if (header.modifiedDate)
         memcpy(&st->st_mtime, header.modifiedDate, sizeof(PlatformTimeStruct)), free(header.modifiedDate);
-
+    */
     return NULL;
 }
 
@@ -702,8 +702,11 @@ void *httpSiteSchemeDirectoryListingOpen(HttpSite *self, char *path) {
 
     free(request), request = NULL, scheme = NULL;
 
+#pragma message "ioHttpResponseHeaderRead() needs to use RecvBuffer type"
+    /*
     if (ioHttpResponseHeaderRead(&self->socket, &header))
         goto httpSiteOpenDirectoryListing_abort3;
+    */
 
     if (ioHttpResponseHeaderEssential(header, &scheme, &response) ||
         !(HttpResponseOk(response) || !HttpResponseIsDir(header)))

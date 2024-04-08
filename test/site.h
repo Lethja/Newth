@@ -154,7 +154,7 @@ static void SiteHttpNew(void **state) {
     Site site;
     assert_string_equal(siteNew(&site, SITE_HTTP, NULL), "No uri specified");
     assert_int_equal(site.type, SITE_HTTP);
-    assert_int_equal(site.site.http.socket, -1);
+    assert_int_equal(site.site.http.socket.serverSocket, -1);
     assert_null(site.site.http.fullUri);
     siteFree(&site);
 }

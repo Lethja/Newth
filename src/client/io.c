@@ -1,5 +1,6 @@
 #include <ctype.h>
 #include <sys/types.h>
+#include "recvbufr.h"
 #include "io.h"
 
 #pragma region Static Helper Function

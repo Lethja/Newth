@@ -1,15 +1,12 @@
 #ifndef NEW_DL_HTTP_H
 #define NEW_DL_HTTP_H
 
-#include "../io.h"
-#include "../site.h"
 #include "../recvbufr.h"
 
 typedef struct HttpSite {
     SocketAddress address;
     char *fullUri;
-    /* TODO: socket should be made into a RecvBuffer */
-    SOCKET socket;
+    RecvBuffer socket;
 } HttpSite;
 
 typedef struct HttpSiteDirectoryListing {
