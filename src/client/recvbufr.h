@@ -140,7 +140,7 @@ const char *recvBufferFindAndDitch(RecvBuffer *self, const char *token, size_t l
  * @param len In: The length of the data to match
  * @param max In: Roughly the maximum length the buffer can grow to before giving up and returning
  * @return NULL on match, user friendly error message otherwise
- * @remark The buffer will be appended to to the first matched instance,
+ * @remark The buffer will be appended to the first matched instance,
  * if no match is found or the buffer reaches the maximum size allowed
  * then the entire buffer up to that point will stored in memory for further parsing.
  */
@@ -187,6 +187,16 @@ const char *recvBufferNewFromSocketAddress(RecvBuffer *self, SocketAddress serve
  * @note Path an query sections of a uri will not be handled in any special way by the buffer
  */
 const char *recvBufferNewFromUri(RecvBuffer *self, const char *uri, int options);
+
+/**
+ * Send a request over the same socket as the recvBuffer
+ * @param self The recvBuffer to send data over
+ * @param data The data to send
+ * @param n The size of the data in bytes
+ * @param flags Send flags as per system documentation
+ * @return NULL on success, user friendly error message otherwise
+ */
+const char *recvBufferSend(RecvBuffer *self, const void *data, size_t n, int flags);
 
 /**
  * Set this buffer to receive a http data request where length of the data is determined by the HTTP 1.1 chunk standard

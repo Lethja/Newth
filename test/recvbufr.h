@@ -491,6 +491,22 @@ static void ReceiveFindFetch(void **state) {
     recvBufferFailFree(&socketBuffer);
 }
 
+static void ReceiveSend(void **state) {
+    RecvBuffer socketBuffer;
+    const char *data = "The quick brown fox jumps over the lazy dog";
+    char *res;
+
+    mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND, mockSendMaxBuf = 1024, mockSendStream = tmpfile();
+
+    assert_null(recvBufferNewFromUri(&socketBuffer, "http://127.0.0.1", 0));
+    assert_null(recvBufferSend(&socketBuffer, data, strlen(data), 0));
+    assert_non_null(res = calloc(strlen(data) * 2, 1));
+    rewind(mockSendStream);
+    assert_int_not_equal(fread(res, sizeof(char), strlen(data) * 2, mockSendStream), 0);
+    assert_string_equal(data, res);
+    free(res);
+}
+
 static void ReceiveUpdateSocket(void **state) {
     SocketAddress address;
     RecvBuffer socketBuffer1, socketBuffer2;
@@ -528,21 +544,22 @@ const struct CMUnitTest recvBufferSocketTest[] = {cmocka_unit_test(RecvBufferCle
                                                   cmocka_unit_test(ReceiveSetLengthChunk),
                                                   cmocka_unit_test(ReceiveSetLengthKnown),
                                                   cmocka_unit_test(ReceiveSetLengthToken),
-                                                  cmocka_unit_test(ReceiveSetLengthUnknown)
+                                                  cmocka_unit_test(ReceiveSetLengthUnknown)};
 #ifdef MOCK
-        , cmocka_unit_test(ReceiveFetch), cmocka_unit_test(ReceiveFetchChunk), cmocka_unit_test(ReceiveFetchChunkEmpty),
-                                                  cmocka_unit_test(ReceiveFetchChunkIterateAligned),
-                                                  cmocka_unit_test(ReceiveFetchChunkIterateUnaligned),
-                                                  cmocka_unit_test(ReceiveFetchChunkOverflow),
-                                                  cmocka_unit_test(ReceiveFetchChunkOverflowExact),
-                                                  cmocka_unit_test(ReceiveFetchChunkOverflowMalformed),
-                                                  cmocka_unit_test(ReceiveFetchChunkMalformed),
-                                                  cmocka_unit_test(ReceiveFetchChunkMalformedStart),
-                                                  cmocka_unit_test(ReceiveFind), cmocka_unit_test(ReceiveDitch),
-                                                  cmocka_unit_test(ReceiveFindDitch),
-                                                  cmocka_unit_test(ReceiveFindFetch),
-                                                  cmocka_unit_test(ReceiveUpdateSocket)
+const struct CMUnitTest recvBufferSocketTestMock[] = {cmocka_unit_test(ReceiveFetch),
+                                                      cmocka_unit_test(ReceiveFetchChunk),
+                                                      cmocka_unit_test(ReceiveFetchChunkEmpty),
+                                                      cmocka_unit_test(ReceiveFetchChunkIterateAligned),
+                                                      cmocka_unit_test(ReceiveFetchChunkIterateUnaligned),
+                                                      cmocka_unit_test(ReceiveFetchChunkOverflow),
+                                                      cmocka_unit_test(ReceiveFetchChunkOverflowExact),
+                                                      cmocka_unit_test(ReceiveFetchChunkOverflowMalformed),
+                                                      cmocka_unit_test(ReceiveFetchChunkMalformed),
+                                                      cmocka_unit_test(ReceiveFetchChunkMalformedStart),
+                                                      cmocka_unit_test(ReceiveFind), cmocka_unit_test(ReceiveDitch),
+                                                      cmocka_unit_test(ReceiveFindDitch),
+                                                      cmocka_unit_test(ReceiveFindFetch), cmocka_unit_test(ReceiveSend),
+                                                      cmocka_unit_test(ReceiveUpdateSocket)};
 #endif
-};
 
 #endif /* NEW_DL_TEST_SOCKET_BUFFER_H */

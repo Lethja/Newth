@@ -33,6 +33,7 @@ int main(void) {
 
 #ifdef MOCK
     if ((r = cmocka_run_group_tests(mockTest, NULL, NULL))) return r;
+    if ((r = cmocka_run_group_tests(recvBufferSocketTestMock, NULL, NULL))) return r;
 #endif
 
     if ((r = cmocka_run_group_tests(fetchTest, NULL, NULL))) return r;

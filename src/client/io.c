@@ -125,63 +125,46 @@ char *ioCreateSocketFromSocketAddress(SocketAddress *self, SOCKET *sock) {
     return NULL;
 }
 
-char *ioHttpResponseHeaderRead(const SOCKET *socket, char **header) {
-    const size_t headerMax = 4096;
-    unsigned int totalBytes = 0;
-    ssize_t bytesReceived;
-    char *buf = malloc(SB_DATA_SIZE), *headEnd;
-    if (!buf)
-        return strerror(errno);
+const char *ioHttpResponseHeaderRead(RecvBuffer *socket, char **header) {
+    const char *token = HTTP_EOL HTTP_EOL, *e;
+    char *t;
+    size_t len = 4;
 
-    if (!*header) {
-        if (!(*header = calloc(SB_DATA_SIZE, sizeof(char)))) {
-            free(buf);
-            return strerror(errno);
-        }
+    if (!header)
+        return "Header not assigned";
+
+    recvBufferClear(socket);
+    recvBufferSetLengthToken(socket, token, len);
+
+    if ((e = recvBufferFindAndFetch(socket, token, len, 4096)))
+        goto ioHttpResponseHeaderRead_abort;
+
+    len = platformMemoryStreamTell(socket->buffer);
+    *header = malloc(len + 1);
+
+    if ((e = recvBufferFetch(socket, *header, 0, len + 1)))
+        goto ioHttpResponseHeaderRead_abort1;
+
+    /* Strip excess allocation that might occur */
+    if(!(t = strstr(*header, token))) {
+        e = "No token found";
+        goto ioHttpResponseHeaderRead_abort1;
     }
 
-    headEnd = NULL;
-
-    while ((bytesReceived = recv(*socket, buf, SB_DATA_SIZE - 1, MSG_PEEK)) > 0 && !headEnd) {
-        if (bytesReceived == -1)
-            return strerror(platformSocketGetLastError());
-
-        /* Check if the end of header was part of this buffer and truncate anything after if so */
-        buf[bytesReceived] = '\0';
-        if ((headEnd = strstr(buf, HTTP_EOL HTTP_EOL)) != NULL)
-            headEnd[2] = '\0', bytesReceived = (ssize_t) strlen(buf);
-
-        /* Write header buffer into return buffer */
-        totalBytes += bytesReceived;
-
-        {
-            char *tmp = realloc(*header, totalBytes + 1);
-            if (tmp)
-                *header = tmp;
-            else {
-                free(buf), free(*header), *header = NULL;
-                return strerror(errno);
-            }
-        }
-
-        strncat(*header, buf, totalBytes);
-
-        /* Non-peek to move buffer along */
-        recv(*socket, buf, bytesReceived, 0);
-
-        if (totalBytes >= headerMax) {
-            free(buf), free(*header), *header = NULL;
-            return "Header too large";
-        }
-    }
+    len = (t + 2) - *header, header[0][len] = '\0';
+    if (platformHeapResize((void **) header, sizeof(char), len))
+        goto ioHttpResponseHeaderRead_abort1;
 
     /* If the buffer has a body after the head then jump over it so the next function is ready to read the body */
-    if (headEnd)
-        recv(*socket, buf, 2, 0);
-
-    free(buf);
+    recvBufferDitch(socket, (PlatformFileOffset) (len + 2));
 
     return NULL;
+
+    ioHttpResponseHeaderRead_abort1:
+    free(*header), *header = NULL;
+
+    ioHttpResponseHeaderRead_abort:
+    return e;
 }
 
 char *ioHttpRequestGenerateHead(const char *path, const char *extra) {

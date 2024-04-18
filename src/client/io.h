@@ -108,6 +108,6 @@ extern char *ioHttpResponseHeaderFind(const char *headerFile, const char *header
  * @return NULL on success, user friendly error message otherwise
  * @note On success out parameter 'header' should be freed before leaving scope
  */
-extern char *ioHttpResponseHeaderRead(const SOCKET *socket, char **header);
+extern const char *ioHttpResponseHeaderRead(RecvBuffer *socket, char **header);
 
 #endif /* NEW_DL_IO_H */

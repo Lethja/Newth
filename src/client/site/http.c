@@ -482,20 +482,17 @@ int httpSiteSchemeWorkingDirectorySet(HttpSite *self, const char *path) {
         return -1;
     }
 
-    if (WakeUpAndSend(self, send, strlen(send))) {
-        uriDetailsFree(&details), free(send), free(newPath);
+    if (recvBufferSend(&self->socket, send, strlen(send), 0)) {
+        uriDetailsFree(&details), free(newPath), free(send);
         return -1;
     }
 
     free(send), header = NULL;
 
-#pragma message "ioHttpResponseHeaderRead() needs to use RecvBuffer type"
-    /*
     if (ioHttpResponseHeaderRead(&self->socket, &header)) {
         uriDetailsFree(&details), free(newPath);
         return -1;
     }
-    */
 
     if (ioHttpResponseHeaderEssential(header, &scheme, &response)) {
         uriDetailsFree(&details), free(newPath), free(header);
@@ -576,13 +573,10 @@ const char *httpSiteSchemeNew(HttpSite *self, const char *path) {
 
     free(send);
 
-    /* TODO: Refactor to use recvBuffer */
-#pragma message "ioHttpResponseHeaderRead() needs to use RecvBuffer type"
-    /*
     if ((err = ioHttpResponseHeaderRead(&self->socket, &header)) ||
         (err = ioHttpResponseHeaderEssential(header, &scheme, &response)))
         goto httpSiteSchemeNew_closeSocketAndAbort;
-    */
+
     if (!(HttpResponseOk(response))) {
         err = "Server reply not acceptable";
         goto httpSiteSchemeNew_closeSocketAndAbort;
@@ -627,10 +621,8 @@ char *httpSiteSchemeDirectoryListingEntryStat(void *listing, void *entry, Platfo
     HttpSiteDirectoryListing *l = listing;
     SiteDirectoryEntry *e = entry;
 
-    char *entryPath, *request/*, *response */;
-    /*
+    char *entryPath, *request, *response;
     HttpResponseHeader header;
-    */
     UriDetails details;
 
     details = uriDetailsNewFrom(l->fullUri);
@@ -657,8 +649,6 @@ char *httpSiteSchemeDirectoryListingEntryStat(void *listing, void *entry, Platfo
     }
 
     free(request);
-#pragma message "ioHttpResponseHeaderRead() needs to use RecvBuffer type"
-    /*
     if ((ioHttpResponseHeaderRead(&l->site->socket, &response)))
         return strerror(platformSocketGetLastError());
 
@@ -671,7 +661,7 @@ char *httpSiteSchemeDirectoryListingEntryStat(void *listing, void *entry, Platfo
 
     if (header.modifiedDate)
         memcpy(&st->st_mtime, header.modifiedDate, sizeof(PlatformTimeStruct)), free(header.modifiedDate);
-    */
+
     return NULL;
 }
 
@@ -702,11 +692,8 @@ void *httpSiteSchemeDirectoryListingOpen(HttpSite *self, char *path) {
 
     free(request), request = NULL, scheme = NULL;
 
-#pragma message "ioHttpResponseHeaderRead() needs to use RecvBuffer type"
-    /*
     if (ioHttpResponseHeaderRead(&self->socket, &header))
         goto httpSiteOpenDirectoryListing_abort3;
-    */
 
     if (ioHttpResponseHeaderEssential(header, &scheme, &response) ||
         !(HttpResponseOk(response) || !HttpResponseIsDir(header)))
