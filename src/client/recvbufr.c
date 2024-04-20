@@ -450,18 +450,20 @@ const char *recvBufferReconnect(RecvBuffer *self) {
 const char *recvBufferSend(RecvBuffer *self, const void *data, size_t n, int flags) {
     const char* e;
     SOCK_BUF_TYPE s;
-    recvBufferSend_retry:
-    s = send(self->serverSocket, data, n, flags);
+    unsigned int attempt = 0;
 
-    switch(s) {
+    recvBufferSend_retry:
+    if(attempt++ >= 3)
+        return e;
+
+    switch((s = send(self->serverSocket, data, n, flags))) {
         case -1:
         case 0:
             /* TODO: attempt reconnect */
             e = recvBufferReconnect(self);
             if (e)
-                return e;
-
-            goto recvBufferSend_retry;
+                goto recvBufferSend_retry;
+            break;
         default:
             if(s == n)
                 break;

@@ -3,7 +3,7 @@
 
 #pragma region Mockup global variables
 
-int mockOptions = 0, mockReceiveError = 0, mockSendError = 0;
+int mockOptions = 0, mockConnectError = 0, mockReceiveError = 0, mockSendError = 0, mockErrorReset = 0;
 size_t mockSendMaxBuf = 0, mockSendCountBuf = 0, mockReceiveMaxBuf = 0, mockReceiveCountBuf = 0;
 FILE *mockSendStream = NULL, *mockLastFileClosed = NULL, *mockReceiveStream = NULL;
 void *mockLastFree = NULL;
@@ -11,7 +11,7 @@ void *mockLastFree = NULL;
 #pragma endregion
 
 void mockReset(void) {
-    mockReceiveError = mockSendError = mockOptions = 0;
+    mockConnectError = mockReceiveError = mockSendError = mockErrorReset = mockOptions = 0;
     mockReceiveCountBuf = mockReceiveMaxBuf = mockSendCountBuf = mockSendMaxBuf = mockOptions;
     mockLastFree = mockLastFileClosed = NULL;
 
@@ -24,6 +24,7 @@ void mockReset(void) {
 
 void mockResetError(void) {
     errno = ENOERR;
+    mockErrorReset = 0;
 }
 
 #pragma region System function mockup
@@ -50,6 +51,14 @@ extern int __real_fclose(FILE *ptr);
 
 int __wrap_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
     if (mockOptions & MOCK_CONNECT) {
+        if (mockConnectError) {
+            errno = mockConnectError;
+
+            if (mockErrorReset)
+                if (!--mockErrorReset)
+                    mockConnectError = ENOERR;
+            return -1;
+        }
         return 4;
     }
 
@@ -98,6 +107,11 @@ ssize_t __wrap_recv(int fd, void *buf, size_t len, int flags) {
 
         if (mockReceiveError) {
             errno = mockReceiveError;
+
+            if(mockErrorReset)
+                if(!--mockErrorReset)
+                    mockReceiveError = ENOERR;
+
             return -1;
         }
 
@@ -145,6 +159,11 @@ ssize_t __wrap_send(int fd, const void *buf, size_t n, int flags) {
 
         if (mockSendError) {
             errno = mockSendError;
+
+            if(mockErrorReset)
+                if(!--mockErrorReset)
+                    mockSendError = ENOERR;
+
             return -1;
         }
 

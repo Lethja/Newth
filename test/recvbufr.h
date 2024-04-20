@@ -507,6 +507,30 @@ static void ReceiveSend(void **state) {
     free(res);
 }
 
+static void ReceiveSendReconnect(void **state) {
+    RecvBuffer socketBuffer;
+    const char *data = "The quick brown fox jumps over the lazy dog", *e;
+
+    mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND;
+    /* Initial connection establishment */
+    assert_null(recvBufferNewFromUri(&socketBuffer, "http://127.0.0.1", 0));
+    assert_null(recvBufferSend(&socketBuffer, data, strlen(data), 0));
+
+    /* TCP connection re-establishment */
+    mockConnectError = ECONNREFUSED, mockSendError = ECONNRESET, mockErrorReset = 2;
+    assert_null(recvBufferSend(&socketBuffer, data, strlen(data), 0));
+
+    /* Give up after too many attempts */
+    mockConnectError = ECONNREFUSED, mockSendError = ECONNRESET, mockErrorReset = 10;
+    assert_non_null(e = recvBufferSend(&socketBuffer, data, strlen(data), 0));
+    assert_string_equal(e, "Connection refused");
+    assert_int_equal(mockErrorReset, 4);
+}
+
+static void ReceiveSendUnderflow(void **state) {
+    /* TODO: Implement this test */
+}
+
 static void ReceiveUpdateSocket(void **state) {
     SocketAddress address;
     RecvBuffer socketBuffer1, socketBuffer2;
@@ -559,6 +583,8 @@ const struct CMUnitTest recvBufferSocketTestMock[] = {cmocka_unit_test(ReceiveFe
                                                       cmocka_unit_test(ReceiveFind), cmocka_unit_test(ReceiveDitch),
                                                       cmocka_unit_test(ReceiveFindDitch),
                                                       cmocka_unit_test(ReceiveFindFetch), cmocka_unit_test(ReceiveSend),
+                                                      cmocka_unit_test(ReceiveSendReconnect),
+                                                      cmocka_unit_test(ReceiveSendUnderflow),
                                                       cmocka_unit_test(ReceiveUpdateSocket)};
 #endif
 
