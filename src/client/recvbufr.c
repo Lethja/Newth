@@ -130,7 +130,7 @@ const char *recvBufferAppend(RecvBuffer *self, size_t len) {
     if (!self->buffer)
         self->buffer = platformMemoryStreamNew();
     else
-        platformMemoryStreamSeek(self->buffer, SEEK_END, 0);
+        platformMemoryStreamSeek(self->buffer, 0, SEEK_END);
 
     if (self->options & RECV_BUFFER_DATA_LENGTH_CHUNK)
         return recvBufferAppendChunk(self, len);
