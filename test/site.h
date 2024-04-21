@@ -204,7 +204,7 @@ static void SiteHttpSetDirectory(void **state) {
     fwrite(HttpHeaderResponseDir, 1, strlen(HttpHeaderResponseDir), mockReceiveStream), rewind(mockReceiveStream);
 
     assert_null(siteNew(&site, SITE_HTTP, wd)), rewind(mockReceiveStream);
-    assert_non_null(site.site.file.fullUri);
+    assert_non_null(site.site.http.fullUri);
     assert_string_equal(siteWorkingDirectoryGet(&site), wd);
 
     siteWorkingDirectorySet(&site, ".."), rewind(mockReceiveStream);
@@ -231,7 +231,7 @@ static void SiteHttpSetDirectoryFailFile(void **state) {
     fwrite(HttpHeaderResponseDir, 1, strlen(HttpHeaderResponseDir), mockReceiveStream), rewind(mockReceiveStream);
 
     assert_null(siteNew(&site, SITE_HTTP, wd)), rewind(mockReceiveStream);
-    assert_non_null(site.site.file.fullUri);
+    assert_non_null(site.site.http.fullUri);
     assert_string_equal(siteWorkingDirectoryGet(&site), wd);
     fwrite(HttpHeaderResponseFile, 1, strlen(HttpHeaderResponseFile), mockReceiveStream), rewind(mockReceiveStream);
 
