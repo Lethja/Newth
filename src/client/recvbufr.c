@@ -203,15 +203,20 @@ FILE *recvBufferCopyBetween(RecvBuffer *self, PlatformFileOffset start, Platform
 
 void recvBufferDitch(RecvBuffer *self, PlatformFileOffset len) {
     FILE *tmp;
-    SOCK_BUF_TYPE i;
     char buf[SB_DATA_SIZE];
+    PlatformFileOffset max, pos;
 
     if (!self->buffer || !(tmp = tmpfile()))
         return;
 
-    platformMemoryStreamSeek(self->buffer, len, SEEK_SET);
-    while ((i = fread(buf, 1, SB_DATA_SIZE, self->buffer)))
+    platformMemoryStreamSeek(self->buffer, 0, SEEK_END), max = platformMemoryStreamTell(self->buffer);
+    platformMemoryStreamSeek(self->buffer, len, SEEK_SET), pos = platformMemoryStreamTell(self->buffer);
+
+    while (pos < max) {
+        SOCK_BUF_TYPE i = fread(buf, 1, max - pos < SB_DATA_SIZE ? SB_DATA_SIZE : max - pos, self->buffer);
         fwrite(buf, 1, i, tmp);
+        pos += (PlatformFileOffset) i;
+    }
 
     fclose(self->buffer), self->buffer = tmp;
 }
