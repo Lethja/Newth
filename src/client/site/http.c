@@ -38,48 +38,6 @@ static inline const char *ConnectTo(HttpSite *self, UriDetails *details) {
 }
 
 /**
- * Prepare the already connected TCP socket for sending data
- * @param self The site to send HTTP requests over
- * @param data The data to be sent
- * @param len The total length of the data to be sent
- * @return NULL on success, user friendly error message otherwise
- * @remark If the TCP connection was reset then this function will attempt to reestablish the connection internally
- */
-static inline const char *WakeUpAndSend(HttpSite *self, const void *data, size_t len) {
-    /* TODO: Deprecate in favor of recvBufferSend() */
-#pragma message "WakeUpAndSend is deprecated and currently non functional. A recvBuffer function should handle sending information up TCP sockets"
-    const char *err, maxAttempt = 3;
-    char attempt = 0;
-    /* TODO: Fix me with recvBuffer */
-    SOCK_BUF_TYPE s = 0/*send(self->socket, data, len, 0)*/;
-    WakeUpAndSend_TryAgain:
-    ++attempt;
-
-    switch (s) {
-        case 0:
-            if (platformSocketGetLastError() == ECONNRESET) {
-                UriDetails details = uriDetailsNewFrom(self->fullUri);
-                /* if (self->socket != INVALID_SOCKET)
-                    CLOSE_SOCKET(self->socket); */
-
-                err = ConnectTo(self, &details);
-                uriDetailsFree(&details);
-                if (err)
-                    return err;
-                else if (attempt < maxAttempt)
-                    goto WakeUpAndSend_TryAgain;
-
-                case -1:
-                    return strerror(platformSocketGetLastError());
-            }
-        default:
-            break;
-    }
-
-    return NULL;
-}
-
-/**
  * Check if the HTTP response is generally considered a good one that can proceed
  * @param response The response string created by ioHttpResponseHeaderEssential()
  * @return Non-zero on good responses (200 OK), zero on bad responses (404 NOT FOUND or 500 INTERNAL SERVER ERROR)
@@ -292,7 +250,7 @@ static inline char *LinkPathConvertToRelativeSubdirectory(const char *link) {
 static inline SOCK_BUF_TYPE FastForwardToElement(HttpSite *self, const char *element) {
     SOCK_BUF_TYPE totalBytes = 0;
 
-    if(recvBufferFindAndDitch(&self->socket, element, strlen(element), &totalBytes))
+    if (recvBufferFindAndDitch(&self->socket, element, strlen(element), &totalBytes))
         return -1;
 
     return totalBytes;
@@ -331,7 +289,8 @@ static inline char *HtmlExtractNextLink(HttpSite *self, size_t *written) {
     char *a, *e, *v, buf[2048] = {0};
     *written += FastForwardToElement(self, "a");
 
-    if (!recvBufferFetch(&self->socket, buf, 0, 2048) && (e = XmlFindElement(buf, "a")) && (a = XmlFindAttribute(e, "href"))) {
+    if (!recvBufferFetch(&self->socket, buf, 0, 2048) && (e = XmlFindElement(buf, "a")) &&
+        (a = XmlFindAttribute(e, "href"))) {
         if ((v = XmlExtractAttributeValue(a))) {
             *written += FastForwardOverElement(self, "a");
             return v;
@@ -412,8 +371,8 @@ static inline void GetAllHeaders(const char *header, HttpResponseHeader *headerR
 
     ioHttpResponseHeaderFind(header, "Last-Modified", &v);
     if (v) {
-        if(!headerResponse->modifiedDate)
-            headerResponse->modifiedDate = calloc(1, sizeof (HttpResponseHeader));
+        if (!headerResponse->modifiedDate)
+            headerResponse->modifiedDate = calloc(1, sizeof(HttpResponseHeader));
 
         platformTimeGetFromHttpStr(v, headerResponse->modifiedDate), free(v);
     }
@@ -541,7 +500,8 @@ const char *httpSiteSchemeNew(HttpSite *self, const char *path) {
     char *header, *scheme, *response, *send;
 
     if (!path) {
-        self->socket.serverSocket = INVALID_SOCKET, self->fullUri = NULL, memset(&self->address, 0, sizeof(SocketAddress));
+        self->socket.serverSocket = INVALID_SOCKET, self->fullUri = NULL, memset(&self->address, 0,
+                                                                                 sizeof(SocketAddress));
         return "No uri specified";
     }
 
@@ -566,7 +526,7 @@ const char *httpSiteSchemeNew(HttpSite *self, const char *path) {
 
     scheme = response = NULL;
 
-    if ((err = WakeUpAndSend(self, send, strlen(send)))) {
+    if ((err = recvBufferSend(&self->socket, send, strlen(send), 0))) {
         free(send);
         goto httpSiteSchemeNew_closeSocketAndAbort;
     }
@@ -643,13 +603,13 @@ char *httpSiteSchemeDirectoryListingEntryStat(void *listing, void *entry, Platfo
     }
 
     free(entryPath);
-    if ((WakeUpAndSend((HttpSite *) l->site, request, strlen(request)))) {
+    if ((recvBufferSend((RecvBuffer *) &l->site->socket, request, strlen(request), 0))) {
         free(request);
         return strerror(platformSocketGetLastError());
     }
 
     free(request);
-    if ((ioHttpResponseHeaderRead(&l->site->socket, &response)))
+    if ((ioHttpResponseHeaderRead((RecvBuffer *) &l->site->socket, &response)))
         return strerror(platformSocketGetLastError());
 
     memset(&header, 0, sizeof(HttpResponseHeader));
@@ -687,7 +647,7 @@ void *httpSiteSchemeDirectoryListingOpen(HttpSite *self, char *path) {
 
     free(scheme);
 
-    if (WakeUpAndSend(self, request, strlen(request)))
+    if (recvBufferSend(&self->socket, request, strlen(request), 0))
         goto httpSiteOpenDirectoryListing_abort2;
 
     free(request), request = NULL, scheme = NULL;
