@@ -485,7 +485,7 @@ const char *httpSiteSchemeNew(HttpSite *self, const char *path) {
     if (!details.path && (details.path = malloc(2)))
         details.path[0] = '/', details.path[1] = '\0';
 
-    if ((err = recvBufferNewFromUri(&self->socket, (void *) &details, 0)))
+    if ((err = recvBufferNewFromUriDetails(&self->socket, (void *) &details, 0)))
         goto httpSiteSchemeNew_abort;
 
     header = NULL, GenerateHostHeader(&header, &details), GenerateConnectionHeader(&header);
