@@ -224,10 +224,20 @@ static inline char *LinkPathConvertToRelativeSubdirectory(const char *link) {
  */
 static inline SOCK_BUF_TYPE FastForwardToElement(HttpSite *self, const char *element) {
     SOCK_BUF_TYPE totalBytes = 0;
+    size_t s = strlen(element);
+    char *e = malloc(s + 3);
 
-    if (recvBufferFindAndDitch(&self->socket, element, strlen(element), &totalBytes))
+    if(!e)
         return -1;
 
+    e[0] = '<', memcpy(&e[1], element, s), e[s + 1] = '>', e[s + 2] = '\0';
+
+    if (recvBufferFindAndDitch(&self->socket, e, strlen(e), &totalBytes)) {
+        free(e);
+        return -1;
+    }
+
+    free(e);
     return totalBytes;
 }
 
@@ -243,6 +253,7 @@ static inline SOCK_BUF_TYPE FastForwardOverElement(HttpSite *self, const char *e
     char buf[2048] = {0}, *found;
 
     r = FastForwardToElement(self, element);
+    recvBufferFetch(&self->socket, buf, 0, 2047);
 
     if ((found = XmlExtractElement(buf, element))) {
         size_t len = strlen(found);
