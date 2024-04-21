@@ -431,22 +431,28 @@ const char *recvBufferNewFromSocketAddress(RecvBuffer *self, SocketAddress serve
     return NULL;
 }
 
-const char *recvBufferNewFromUri(RecvBuffer *self, const char *uri, int options) {
+const char *recvBufferNewFromUriDetails(RecvBuffer *self, void *details, int options) {
     const char *e;
-    UriDetails detail;
-    SocketAddress address;
+    SocketAddress a;
+    UriDetails *d = details;
 
-    detail = uriDetailsNewFrom(uri);
-    e = uriDetailsCreateSocketAddress(&detail, &address, uriDetailsGetScheme(&detail));
-    uriDetailsFree(&detail);
-
-    if (e)
+    if ((e = uriDetailsCreateSocketAddress(d, &a, uriDetailsGetScheme(d))))
         return e;
 
-    if ((e = recvBufferNewFromSocketAddress(self, address, options)))
+    if ((e = recvBufferNewFromSocketAddress(self, a, options)))
         return e;
 
     return NULL;
+}
+
+const char *recvBufferNewFromUri(RecvBuffer *self, const char *uri, int options) {
+    const char *e;
+    UriDetails detail;
+
+    detail = uriDetailsNewFrom(uri);
+    e = recvBufferNewFromUriDetails(self, &detail, options);
+    uriDetailsFree(&detail);
+    return e;
 }
 
 const char *recvBufferReconnect(RecvBuffer *self) {

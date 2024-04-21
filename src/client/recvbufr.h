@@ -189,6 +189,17 @@ const char *recvBufferNewFromSocketAddress(RecvBuffer *self, SocketAddress serve
 const char *recvBufferNewFromUri(RecvBuffer *self, const char *uri, int options);
 
 /**
+ * Create a socket buffer to receive data on from a UriDetails.
+ * @param self In: The buffer to setup
+ * @param detail In: The URI to connect to
+ * @param options In: The options to set on the new socketBuffer
+ * @return NULL on success, user friendly error message otherwise
+ * @note One socket buffer per socket/address
+ * @note Path an query sections of a detail struct will not be handled in any special way by the buffer
+ */
+const char *recvBufferNewFromUriDetails(RecvBuffer *self, void *detail, int options);
+
+/**
  * Send a request over the same socket as the recvBuffer
  * @param self The recvBuffer to send data over
  * @param data The data to send
