@@ -88,7 +88,7 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
         if ((k = recv(self->serverSocket, buf, 19, MSG_PEEK)) == -1)
             return strerror(platformSocketGetLastError());
 
-        else if(k < (self->length.chunk.next == -1 ? 3 : 5))
+        else if (k < (self->length.chunk.next == -1 ? 3 : 5))
             return NULL; /* Chunk not available yet */
 
         if (self->length.chunk.next != -1) {
@@ -468,15 +468,15 @@ const char *recvBufferReconnect(RecvBuffer *self) {
 }
 
 const char *recvBufferSend(RecvBuffer *self, const void *data, size_t n, int flags) {
-    const char* e;
+    const char *e;
     SOCK_BUF_TYPE s;
     unsigned int attempt = 0;
 
     recvBufferSend_retry:
-    if(attempt++ >= 3)
+    if (attempt++ >= 3)
         return e;
 
-    switch((s = send(self->serverSocket, data, n, flags))) {
+    switch ((s = send(self->serverSocket, data, n, flags))) {
         case -1:
         case 0:
             /* TODO: attempt reconnect */
@@ -485,7 +485,7 @@ const char *recvBufferSend(RecvBuffer *self, const void *data, size_t n, int fla
                 goto recvBufferSend_retry;
             break;
         default:
-            if(s == n)
+            if (s == n)
                 break;
             /* TODO: Do something about the size mismatch */
     }
