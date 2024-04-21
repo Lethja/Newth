@@ -474,7 +474,7 @@ const char *recvBufferReconnect(RecvBuffer *self) {
 }
 
 const char *recvBufferSend(RecvBuffer *self, const void *data, size_t n, int flags) {
-    const char *e;
+    const char *e = 0;
     SOCK_BUF_TYPE s;
     unsigned int attempt = 0;
 
