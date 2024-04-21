@@ -329,15 +329,24 @@ const char *recvBufferFindAndDitch(RecvBuffer *self, const char *token, size_t l
     PlatformFileOffset o;
     const char *e;
 
-    if (!self->buffer) {
+    if (!self->buffer)
         if ((e = recvBufferAppend(self, SB_DATA_SIZE)))
             return e;
+
+    platformMemoryStreamSeek(self->buffer, 0, SEEK_END);
+    while (platformMemoryStreamTell(self->buffer) < len) {
+        if ((e = recvBufferAppend(self, SB_DATA_SIZE)))
+            return e;
+        platformMemoryStreamSeek(self->buffer, 0, SEEK_END);
     }
 
     d = 0;
     while ((o = recvBufferFind(self, 0, token, len)) == -1) {
         if (!(e = recvBufferAppend(self, SB_DATA_SIZE))) {
             PlatformFileOffset p;
+
+            if ((o = recvBufferFind(self, 0, token, len)) != -1)
+                break;
 
             platformMemoryStreamSeek(self->buffer, 0, SEEK_END), p = platformMemoryStreamTell(self->buffer);
             if (p > len)
@@ -360,9 +369,15 @@ const char *recvBufferFindAndFetch(RecvBuffer *self, const char *token, size_t l
     PlatformFileOffset i = 0, o;
     const char *e;
 
-    if (!self->buffer) {
+    if (!self->buffer)
         if ((e = recvBufferAppend(self, SB_DATA_SIZE)))
             return e;
+
+    platformMemoryStreamSeek(self->buffer, 0, SEEK_END);
+    while (platformMemoryStreamTell(self->buffer) < len) {
+        if ((e = recvBufferAppend(self, SB_DATA_SIZE)))
+            return e;
+        platformMemoryStreamSeek(self->buffer, 0, SEEK_END);
     }
 
     while ((o = recvBufferFind(self, i, token, len)) == -1) {
