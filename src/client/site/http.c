@@ -13,31 +13,6 @@
 #pragma region Static Helper Functions
 
 /**
- * Initialize a TCP socket ready for HTTP communication
- * @param self The site the socket is related to
- * @param details The address details
- * @return NULL on success, user friendly error message otherwise
- */
-static inline const char *ConnectTo(HttpSite *self, UriDetails *details) {
-    /* TODO: Deprecate in favor of recvBufferReconnect() */
-#pragma message "ConnectTo is deprecated and currently non functional. A recvBuffer function should handle reconnecting TCP sockets"
-    SOCKET sock;
-    if (uriDetailsCreateSocketAddress(details, &self->address, SCHEME_HTTP) ||
-        ioCreateSocketFromSocketAddress(&self->address, &sock))
-        return strerror(errno);
-
-    if (connect(sock, &self->address.address.sock, sizeof(self->address.address.sock)) == -1) {
-        if (sock == INVALID_SOCKET)
-            CLOSE_SOCKET(sock);
-
-        return strerror(platformSocketGetLastError());
-    }
-
-    self->socket = recvBufferNew(sock, self->address, 0);
-    return NULL;
-}
-
-/**
  * Check if the HTTP response is generally considered a good one that can proceed
  * @param response The response string created by ioHttpResponseHeaderEssential()
  * @return Non-zero on good responses (200 OK), zero on bad responses (404 NOT FOUND or 500 INTERNAL SERVER ERROR)
@@ -264,7 +239,7 @@ static inline SOCK_BUF_TYPE FastForwardToElement(HttpSite *self, const char *ele
  * if there's no element or the nothing after the element then everything will be lost.
  */
 static inline SOCK_BUF_TYPE FastForwardOverElement(HttpSite *self, const char *element) {
-    SOCK_BUF_TYPE r = 0;
+    SOCK_BUF_TYPE r;
     char buf[2048] = {0}, *found;
 
     r = FastForwardToElement(self, element);
@@ -510,7 +485,7 @@ const char *httpSiteSchemeNew(HttpSite *self, const char *path) {
     if (!details.path && (details.path = malloc(2)))
         details.path[0] = '/', details.path[1] = '\0';
 
-    if ((err = ConnectTo(self, &details)))
+    if ((err = recvBufferNewFromUri(&self->socket, (void *) &details, 0)))
         goto httpSiteSchemeNew_abort;
 
     header = NULL, GenerateHostHeader(&header, &details), GenerateConnectionHeader(&header);
