@@ -4,6 +4,26 @@
 #pragma region Static Helper Functions
 
 /**
+ * Append data from a buffer to the end of the RecvBuffer, increase heap allocation if necessary
+ * @param self In: The RecvBuffer to append to
+ * @param buf In: The buffer to append from
+ * @param len In: The size of buffer to append from
+ * @return NULL on success, user friendly error message otherwise
+ */
+static inline char *BufferAppend(RecvBuffer *self, char *buf, size_t len) {
+    if (self->len + len > self->max) {
+        size_t max = self->len + len;
+        if (platformHeapResize((void **) &self->buffer, 1, max))
+            return strerror(errno);
+
+        self->max = max;
+    }
+
+    memcpy(&self->buffer[self->len], buf, len), self->len += len;
+    return NULL;
+}
+
+/**
  * Update the state of this transmission after data has been successfully appended to it.
  * Handles the details of different types of encoding
  * @param self In: The buffer to update the state of
@@ -45,17 +65,16 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
         SOCK_BUF_TYPE l;
         char buf[SB_DATA_SIZE];
         size_t s = self->length.chunk.next < len ? self->length.chunk.next : len;
+
         if (s > SB_DATA_SIZE)
             s = SB_DATA_SIZE;
 
         if ((l = recv(self->serverSocket, buf, s, MSG_PEEK)) == -1)
             return strerror(platformSocketGetLastError());
 
-        platformMemoryStreamSeek(self->buffer, 0, SEEK_END);
         if (self->length.chunk.next >= l) {
-            if ((fwrite(buf, 1, l, self->buffer)) != l)
-                if (ferror(self->buffer))
-                    return "Error writing to volatile buffer";
+            if (BufferAppend(self, buf, l))
+                return strerror(errno);
 
             self->length.chunk.next -= (PlatformFileOffset) l, len -= l;
             if (recv(self->serverSocket, buf, l, 0) == -1)
@@ -65,9 +84,8 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
             if (strcmp(p, HTTP_EOL) != 0)
                 return "Malformed Chunk Encoding";
 
-            if ((fwrite(buf, 1, l, self->buffer)) != l)
-                if (ferror(self->buffer))
-                    return "Error writing to volatile buffer";
+            if (BufferAppend(self, buf, len))
+                return strerror(errno);
 
             self->length.chunk.next -= self->length.chunk.next, len -= l;
             if (recv(self->serverSocket, buf, self->length.chunk.next, 0) == -1)
@@ -82,17 +100,17 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
     recvBufferAppendChunk_parse:
     {
         const char *e;
-        char buf[20] = {0}, *finish, *hex;
+        char b[20] = {0}, *finish, *hex;
         size_t l, j, k;
 
-        if ((k = recv(self->serverSocket, buf, 19, MSG_PEEK)) == -1)
+        if ((k = recv(self->serverSocket, b, 19, MSG_PEEK)) == -1)
             return strerror(platformSocketGetLastError());
 
         else if (k < (self->length.chunk.next == -1 ? 3 : 5))
             return NULL; /* Chunk not available yet */
 
         if (self->length.chunk.next != -1) {
-            if (!(hex = strstr(buf, HTTP_EOL)))
+            if (!(hex = strstr(b, HTTP_EOL)))
                 return "Malformed Chunk Encoding";
 
             if ((finish = strstr(&hex[2], HTTP_EOL)))
@@ -100,15 +118,15 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
             else
                 return "Malformed Chunk Encoding";
         } else
-            hex = buf, finish = strstr(buf, HTTP_EOL);
+            hex = b, finish = strstr(b, HTTP_EOL);
 
         finish[0] = '\0';
         if ((e = ioHttpBodyChunkHexToSize(hex, &l)))
             return e;
 
-        j = (&finish[2] - buf);
+        j = (&finish[2] - b);
 
-        if (recv(self->serverSocket, buf, j, 0) == -1)
+        if (recv(self->serverSocket, b, j, 0) == -1)
             return strerror(platformSocketGetLastError());
 
         if (l > 0) {
@@ -127,10 +145,12 @@ const char *recvBufferAppend(RecvBuffer *self, size_t len) {
     size_t i = 0;
     const char *error = NULL;
 
-    if (!self->buffer)
-        self->buffer = platformMemoryStreamNew();
-    else
-        platformMemoryStreamSeek(self->buffer, 0, SEEK_END);
+    if (!self->buffer) {
+        if (!(self->buffer = calloc(SB_DATA_SIZE, 1)))
+            return strerror(errno);
+        else
+            self->max = SB_DATA_SIZE, self->len = self->idx = 0;
+    }
 
     if (self->options & RECV_BUFFER_DATA_LENGTH_CHUNK)
         return recvBufferAppendChunk(self, len);
@@ -153,10 +173,8 @@ const char *recvBufferAppend(RecvBuffer *self, size_t len) {
 
                 return "No data to be retrieved";
             default:
-                if ((fwrite(buf, 1, l, self->buffer)) != l) {
-                    if (ferror(self->buffer))
-                        return "Error writing to volatile buffer";
-                }
+                if (BufferAppend(self, buf, len))
+                    return strerror(errno);
 
                 /* TODO: Replace with a function pointer to a append function for each length mode */
                 if (DataIncrement(self, l))
@@ -172,131 +190,47 @@ const char *recvBufferAppend(RecvBuffer *self, size_t len) {
 
 void recvBufferClear(RecvBuffer *self) {
     if (self->buffer)
-        fclose(self->buffer), self->buffer = NULL;
+        free(self->buffer), self->buffer = NULL, self->idx = self->len = self->max = 0;
 }
 
-FILE *recvBufferCopyBetween(RecvBuffer *self, PlatformFileOffset start, PlatformFileOffset end) {
-    FILE *newCopy = tmpfile();
-    PlatformFileOffset i, tmp = platformMemoryStreamTell(self->buffer);
+char *recvBufferCopyBetween(RecvBuffer *self, PlatformFileOffset start, PlatformFileOffset end) {
+    char *newCopy;
 
-    platformMemoryStreamSeek(self->buffer, 0, SEEK_END);
-    if ((i = platformMemoryStreamTell(self->buffer)) < end)
-        end = i;
+    if (start + (end - start) > end || !(newCopy = malloc(end - start)))
+        return NULL;
 
-    i = start, platformMemoryStreamSeek(self->buffer, start, SEEK_SET);
+    memcpy(newCopy, &self->buffer[start], end - start);
 
-    while (i < end) {
-        char buf[SB_DATA_SIZE];
-        SOCK_BUF_TYPE j = fread(buf, 1, SB_DATA_SIZE, self->buffer);
-
-        if (fwrite(buf, 1, j, newCopy) != j) {
-            fclose(newCopy);
-            return NULL;
-        }
-
-        i += (PlatformFileOffset) j;
-    }
-
-    platformMemoryStreamSeek(self->buffer, tmp, SEEK_SET), rewind(newCopy);
     return newCopy;
 }
 
 void recvBufferDitch(RecvBuffer *self, PlatformFileOffset len) {
-    FILE *tmp;
-    char buf[SB_DATA_SIZE];
-    PlatformFileOffset max, pos;
-
-    if (!self->buffer || !(tmp = tmpfile()))
-        return;
-
-    platformMemoryStreamSeek(self->buffer, 0, SEEK_END), max = platformMemoryStreamTell(self->buffer);
-    platformMemoryStreamSeek(self->buffer, len, SEEK_SET), pos = platformMemoryStreamTell(self->buffer);
-
-    while (pos < max) {
-        SOCK_BUF_TYPE i = fread(buf, 1, max - pos < SB_DATA_SIZE ? SB_DATA_SIZE : max - pos, self->buffer);
-        fwrite(buf, 1, i, tmp);
-        pos += (PlatformFileOffset) i;
+    if (len && len < self->len) {
+        memmove(self->buffer, &self->buffer[len], self->len - len);
+        self->len -= len;
     }
-
-    fclose(self->buffer), self->buffer = tmp;
 }
 
-char *recvBufferDitchBetween(RecvBuffer *self, PlatformFileOffset start, PlatformFileOffset len) {
-    FILE *new;
-    PlatformFileOffset i = 0, k, m = platformMemoryStreamTell(self->buffer);
-
-    platformMemoryStreamSeek(self->buffer, 0, SEEK_END);
-    k = platformMemoryStreamTell(self->buffer);
-    platformMemoryStreamSeek(self->buffer, 0, SEEK_SET);
-
-    if (k <= start)
-        return NULL;
-
-    new = tmpfile();
-    while (i < start) {
-        SOCK_BUF_TYPE j;
-        char buf[SB_DATA_SIZE];
-        PlatformFileOffset l = start - i;
-        if (l > SB_DATA_SIZE)
-            l = SB_DATA_SIZE;
-
-        if (!(j = fread(buf, 1, l, self->buffer))) {
-            fclose(new);
-            return "Volatile buffer read error";
-        }
-
-        if (fwrite(buf, 1, j, new) != j) {
-            fclose(new);
-            return "Volatile buffer write error";
-        }
-
-        i += (PlatformFileOffset) j;
-    }
-
-    platformMemoryStreamSeek(self->buffer, len, SEEK_CUR), i += len;
-
-    while (i < k) {
-        SOCK_BUF_TYPE j;
-        char buf[SB_DATA_SIZE];
-        PlatformFileOffset l = k - i;
-        if (l > SB_DATA_SIZE)
-            l = SB_DATA_SIZE;
-
-        if (!(j = fread(buf, 1, l, self->buffer))) {
-            fclose(new);
-            return "Volatile buffer read error";
-        }
-
-        if (fwrite(buf, 1, j, new) != j) {
-            fclose(new);
-            return "Volatile buffer write error";
-        }
-
-        i += (PlatformFileOffset) j;
-    }
-
-    if (m > start)
-        m = m > len ? m - len : 0;
-
-    fclose(self->buffer), platformMemoryStreamSeek(new, m, SEEK_SET), self->buffer = new;
-    return NULL;
+void recvBufferDitchBetween(RecvBuffer *self, PlatformFileOffset start, PlatformFileOffset len) {
+    size_t e = start + len, l = self->len - e;
+    memmove(&self->buffer[start], &self->buffer[e], l);
+    self->len -= len;
 }
 
 void recvBufferFailFree(RecvBuffer *self) {
     if (self->buffer)
-        fclose(self->buffer);
+        free(self->buffer);
 }
 
 char *recvBufferFetch(RecvBuffer *self, char *buf, PlatformFileOffset pos, size_t len) {
     if (self->buffer) {
-        size_t l;
-        if (fseek(self->buffer, pos, SEEK_SET))
-            return strerror(errno);
+        size_t l = (self->len - pos);
+        if (l < len)
+            memcpy(buf, &self->buffer[pos], l), buf[l] = '\0';
+        else
+            memcpy(buf, &self->buffer[pos], len - 1), buf[len - 1] = '\0';
 
-        if ((l = fread(buf, 1, len - 1, self->buffer))) {
-            buf[l] = '\0';
-            return NULL;
-        }
+        return NULL;
     }
 
     return "No buffered data";
@@ -304,26 +238,23 @@ char *recvBufferFetch(RecvBuffer *self, char *buf, PlatformFileOffset pos, size_
 
 PlatformFileOffset recvBufferFind(RecvBuffer *self, PlatformFileOffset pos, const char *token, size_t len) {
     PlatformFileOffset r;
+    char *p;
     size_t i, j, l;
-    char buf[SB_DATA_SIZE];
 
-    if (!self->buffer)
+    if (!self->buffer || pos + len > self->len)
         return -1;
 
-    j = r = 0, platformMemoryStreamSeek(self->buffer, pos, SEEK_SET);
-    while ((l = fread(buf, 1, SB_DATA_SIZE, self->buffer)) > 0) {
-        for (i = 0; i < l; ++i) {
-            if (buf[i] == token[j]) {
-                ++j;
-                if (j == len) {
-                    r += pos + (PlatformFileOffset) (i - len + 1);
-                    return r;
-                }
-            } else
-                j = 0;
-        }
+    p = &self->buffer[pos], l = self->len - pos;
 
-        r += (PlatformFileOffset) l;
+    for (i = j = 0; i < l; ++i) {
+        if (p[i] == token[j]) {
+            ++j;
+            if (j == len) {
+                r = pos + (PlatformFileOffset) (i - len + 1);
+                return r;
+            }
+        } else
+            j = 0;
     }
 
     return -1;
@@ -338,25 +269,23 @@ const char *recvBufferFindAndDitch(RecvBuffer *self, const char *token, size_t l
         if ((e = recvBufferAppend(self, SB_DATA_SIZE)))
             return e;
 
-    platformMemoryStreamSeek(self->buffer, 0, SEEK_END);
-    while (platformMemoryStreamTell(self->buffer) < len) {
+    while (self->len < len)
         if ((e = recvBufferAppend(self, SB_DATA_SIZE)))
             return e;
-        platformMemoryStreamSeek(self->buffer, 0, SEEK_END);
-    }
 
     d = 0;
     while ((o = recvBufferFind(self, 0, token, len)) == -1) {
         if (!(e = recvBufferAppend(self, SB_DATA_SIZE))) {
-            PlatformFileOffset p;
-
             if ((o = recvBufferFind(self, 0, token, len)) != -1)
                 break;
 
-            platformMemoryStreamSeek(self->buffer, 0, SEEK_END), p = platformMemoryStreamTell(self->buffer);
-            if (p > len)
-                p -= (PlatformFileOffset) len, recvBufferDitch(self, p);
-            d += p;
+            /* The token wasn't found in the current buffer, ditch what's here to keep memory usage down */
+            if (self->len > len) {
+                /* Overlapping the old buffer with the new by length of token prevents missing a potential match */
+                PlatformFileOffset ditch = (PlatformFileOffset) (self->len - len);
+                recvBufferDitch(self, ditch);
+                d += ditch;
+            }
         } else
             return e;
     }
@@ -371,25 +300,30 @@ const char *recvBufferFindAndDitch(RecvBuffer *self, const char *token, size_t l
 }
 
 const char *recvBufferFindAndFetch(RecvBuffer *self, const char *token, size_t len, size_t max) {
-    PlatformFileOffset i = 0, o;
+    PlatformFileOffset i;
     const char *e;
+
+    if (max < len)
+        return "Token bigger then buffer limits";
 
     if (!self->buffer)
         if ((e = recvBufferAppend(self, SB_DATA_SIZE)))
             return e;
 
-    platformMemoryStreamSeek(self->buffer, 0, SEEK_END);
-    while (platformMemoryStreamTell(self->buffer) < len) {
+    while (self->len < len)
         if ((e = recvBufferAppend(self, SB_DATA_SIZE)))
             return e;
-        platformMemoryStreamSeek(self->buffer, 0, SEEK_END);
+
+    if (self->len <= len) {
+        if ((e = recvBufferAppend(self, SB_DATA_SIZE)))
+            return e;
     }
 
-    while ((o = recvBufferFind(self, i, token, len)) == -1) {
+    i = 0;
+    while (recvBufferFind(self, i, token, len) == -1) {
         if (!(e = recvBufferAppend(self, SB_DATA_SIZE))) {
-            platformMemoryStreamSeek(self->buffer, 0, SEEK_END);
 
-            if ((i = platformMemoryStreamTell(self->buffer)) > max)
+            if (self->len > max)
                 return "Exceeded maximum allowed buffer size";
             else
                 i -= (PlatformFileOffset) len;
@@ -397,7 +331,6 @@ const char *recvBufferFindAndFetch(RecvBuffer *self, const char *token, size_t l
             return e;
     }
 
-    platformMemoryStreamSeek(self->buffer, i + o, SEEK_CUR);
     return NULL;
 }
 
@@ -447,9 +380,8 @@ const char *recvBufferNewFromUriDetails(RecvBuffer *self, void *details, int opt
 
 const char *recvBufferNewFromUri(RecvBuffer *self, const char *uri, int options) {
     const char *e;
-    UriDetails detail;
+    UriDetails detail = uriDetailsNewFrom(uri);
 
-    detail = uriDetailsNewFrom(uri);
     e = recvBufferNewFromUriDetails(self, &detail, options);
     uriDetailsFree(&detail);
     return e;

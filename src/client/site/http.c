@@ -227,11 +227,10 @@ static inline SOCK_BUF_TYPE FastForwardToElement(HttpSite *self, const char *ele
     size_t s = strlen(element);
     char *e = malloc(s + 3);
 
-    if(!e)
+    if (!e)
         return -1;
 
-    e[0] = '<', memcpy(&e[1], element, s), e[s + 1] = '>', e[s + 2] = '\0';
-
+    e[0] = '<', memcpy(&e[1], element, s), e[s + 1] = '\0';
     if (recvBufferFindAndDitch(&self->socket, e, strlen(e), &totalBytes)) {
         free(e);
         return -1;
@@ -239,6 +238,27 @@ static inline SOCK_BUF_TYPE FastForwardToElement(HttpSite *self, const char *ele
 
     free(e);
     return totalBytes;
+}
+
+/**
+ * Make sure the end of this XML element is in the buffer before continuing
+ * @param self HttpSite to find the end element tag in
+ * @param element The element to find the end tag of
+ * @return NULL on success, user friendly error message otherwise
+ */
+static inline const char *BufferToEndElement(HttpSite *self, const char *element) {
+    const char *r;
+    char *e;
+    size_t s = strlen(element);
+
+    if(!(e = malloc(s + 4)))
+        return strerror(errno);
+
+    e[0] = '<', e[1] = '/', memcpy(&e[2], element, s), e[s + 2] = '>', e[s + 3] = '\0';
+    r = recvBufferFindAndFetch(&self->socket, e, strlen(e), 2048);
+    free(e);
+
+    return r;
 }
 
 /**
@@ -272,8 +292,11 @@ static inline SOCK_BUF_TYPE FastForwardOverElement(HttpSite *self, const char *e
  * @remark Returned string should be freed before leaving scope
  */
 static inline char *HtmlExtractNextLink(HttpSite *self, size_t *written) {
+    const char *element = "a";
     char *a, *e, *v, buf[2048] = {0};
-    *written += FastForwardToElement(self, "a");
+    *written += FastForwardToElement(self, element);
+    if (BufferToEndElement(self, element))
+        return NULL;
 
     if (!recvBufferFetch(&self->socket, buf, 0, 2048) && (e = XmlFindElement(buf, "a")) &&
         (a = XmlFindAttribute(e, "href"))) {
@@ -358,7 +381,7 @@ static inline void GetAllHeaders(const char *header, HttpResponseHeader *headerR
     ioHttpResponseHeaderFind(header, "Last-Modified", &v);
     if (v) {
         if (!headerResponse->modifiedDate)
-            headerResponse->modifiedDate = calloc(1, sizeof(HttpResponseHeader));
+            headerResponse->modifiedDate = calloc(1, sizeof(PlatformTimeStruct));
 
         platformTimeGetFromHttpStr(v, headerResponse->modifiedDate), free(v);
     }
@@ -607,6 +630,9 @@ char *httpSiteSchemeDirectoryListingEntryStat(void *listing, void *entry, Platfo
 
     if (header.modifiedDate)
         memcpy(&st->st_mtime, header.modifiedDate, sizeof(PlatformTimeStruct)), free(header.modifiedDate);
+
+    if (header.fileName)
+        free(header.fileName);
 
     return NULL;
 }

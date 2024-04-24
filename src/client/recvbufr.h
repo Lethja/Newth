@@ -47,7 +47,8 @@ typedef struct SocketAddress {
 } SocketAddress;
 
 typedef struct RecvBuffer {
-    FILE *buffer;
+    char *buffer; /* TODO: Replace all stream code with heap equivalents */
+    size_t idx, len, max;
     SocketAddress serverAddress;
     SOCKET serverSocket;
     int options;
@@ -73,9 +74,9 @@ void recvBufferClear(RecvBuffer *self);
  * @param self The buffer to copy from
  * @param start Where in the buffer to start copying from
  * @param end Where in the buffer to stop copying from
- * @return A new volatile stream on success, NULL on failure
+ * @return A new heap allocation on success, NULL on failure
  */
-FILE *recvBufferCopyBetween(RecvBuffer *self, PlatformFileOffset start, PlatformFileOffset end);
+char *recvBufferCopyBetween(RecvBuffer *self, PlatformFileOffset start, PlatformFileOffset end);
 
 /**
  * Disregard a certain amount of the start of the current buffer
@@ -89,9 +90,8 @@ void recvBufferDitch(RecvBuffer *self, PlatformFileOffset len);
  * @param self The stream to remove data from
  * @param start The position from the beginning of the stream to begin removing data from
  * @param len The length of the data to remove
- * @return NULL on success, user friendly error message otherwise
  */
-char *recvBufferDitchBetween(RecvBuffer *self, PlatformFileOffset start, PlatformFileOffset len);
+void recvBufferDitchBetween(RecvBuffer *self, PlatformFileOffset start, PlatformFileOffset len);
 
 /**
  * Remove all memory allocations. Usually used to clean up after a catastrophic failure with the underlying socket

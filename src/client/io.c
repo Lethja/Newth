@@ -139,7 +139,7 @@ const char *ioHttpResponseHeaderRead(RecvBuffer *socket, char **header) {
     if ((e = recvBufferFindAndFetch(socket, token, len, 4096)))
         goto ioHttpResponseHeaderRead_abort;
 
-    len = platformMemoryStreamTell(socket->buffer);
+    len = socket->len;
     *header = malloc(len + 1);
 
     if ((e = recvBufferFetch(socket, *header, 0, len + 1)))
