@@ -231,9 +231,16 @@ long platformMemoryStreamTell(FILE *stream) {
 }
 
 char *platformStringFindNeedle(const char *haystack, const char *needle) {
-    size_t i, j, k = strlen(haystack), l = strlen(needle);
+    return platformStringFindNeedleRaw(haystack, needle, strlen(haystack), strlen(needle));
+}
 
-    for (i = 0; i < k; ++i) {
+char *platformStringFindNeedleRaw(const char *haystack, const char *needle, size_t haystackLen, size_t needleLen) {
+    size_t i, j;
+
+    if (haystackLen == 0 || needleLen == 0 || haystackLen < needleLen)
+        return NULL; /* A needle bigger then a haystack can't exist within it */
+
+    for (i = 0; i < haystackLen; ++i) {
         if (toupper(haystack[i]) == toupper(needle[0])) {
             size_t h;
             for (h = i, j = 0; needle[j] != '\0'; ++h, ++j) {
@@ -241,7 +248,7 @@ char *platformStringFindNeedle(const char *haystack, const char *needle) {
                     break;
             }
 
-            if (h - i == l)
+            if (h - i == needleLen)
                 return (char *) &haystack[i];
         }
     }

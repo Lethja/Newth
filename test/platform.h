@@ -95,7 +95,7 @@ static void HaystackAndNeedle(void **state) {
     /* Empty string shouldn't match, what is there to match? */
     assert_null(platformStringFindNeedle(msg5, msg5));
 
-    /* 'barfoo' starts to match 'foobar' but dosen't */
+    /* 'barfoo' starts to match 'foobar' but doesn't */
     assert_null(platformStringFindNeedle(msg3, msg4));
 
     /* 'foo' and 'bar' both match inside 'foobar' */

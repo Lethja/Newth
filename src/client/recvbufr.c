@@ -218,9 +218,11 @@ char *recvBufferCopyBetween(RecvBuffer *self, PlatformFileOffset start, Platform
 }
 
 void recvBufferDitch(RecvBuffer *self, PlatformFileOffset len) {
-    if (len && len < self->len) {
-        memmove(self->buffer, &self->buffer[len], self->len - len);
-        self->len -= len;
+    if (len) {
+        if (len < self->len)
+            memmove(self->buffer, &self->buffer[len], self->len - len), self->len -= len;
+        else
+            free(self->buffer), self->buffer = NULL;
     }
 }
 
@@ -254,20 +256,28 @@ PlatformFileOffset recvBufferFind(RecvBuffer *self, PlatformFileOffset pos, cons
     char *p;
     size_t i, j, l;
 
-    if (!self->buffer || pos + len > self->len)
+    if (!self->buffer || pos > self->len)
         return -1;
 
     p = &self->buffer[pos], l = self->len - pos;
 
-    for (i = j = 0; i < l; ++i) {
-        if (p[i] == token[j]) {
-            ++j;
-            if (j == len) {
-                r = pos + (PlatformFileOffset) (i - len + 1);
+    for (i = 0; i < l || p[i] == '\0'; ++i) {
+        if (p[i] == token[0]) {
+            size_t k;
+
+            if (i + len > self->len)
+                return -1;
+
+            for (k = 0, j = i; k < len; ++k, ++j) {
+                if (p[j] != token[k])
+                    break;
+            }
+
+            if (k == len) {
+                r = pos + (PlatformFileOffset) i;
                 return r;
             }
-        } else
-            j = 0;
+        }
     }
 
     return -1;
@@ -335,11 +345,8 @@ const char *recvBufferFindAndFetch(RecvBuffer *self, const char *token, size_t l
     i = 0;
     while (recvBufferFind(self, i, token, len) == -1) {
         if (!(e = recvBufferAppend(self, SB_DATA_SIZE))) {
-
             if (self->len > max)
                 return "Exceeded maximum allowed buffer size";
-            else
-                i -= (PlatformFileOffset) len;
         } else
             return e;
     }

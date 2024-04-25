@@ -140,20 +140,20 @@ const char *ioHttpResponseHeaderRead(RecvBuffer *socket, char **header) {
         goto ioHttpResponseHeaderRead_abort;
 
     len = socket->len;
-    *header = malloc(len + 1);
+    *header = calloc(len + 1, 1);
 
     if ((e = recvBufferFetch(socket, *header, 0, len + 1)))
         goto ioHttpResponseHeaderRead_abort1;
 
     /* Strip excess allocation that might occur */
-    if(!(t = strstr(*header, token))) {
+    if (!(t = strstr(*header, token))) {
         e = "No token found";
         goto ioHttpResponseHeaderRead_abort1;
+    } else {
+        len = (t + 2) - *header, header[0][len] = '\0';
+        if (platformHeapResize((void **) header, sizeof(char), len + 1))
+            goto ioHttpResponseHeaderRead_abort1;
     }
-
-    len = (t + 2) - *header, header[0][len] = '\0';
-    if (platformHeapResize((void **) header, sizeof(char), len))
-        goto ioHttpResponseHeaderRead_abort1;
 
     /* If the buffer has a body after the head then jump over it so the next function is ready to read the body */
     recvBufferDitch(socket, (PlatformFileOffset) (len + 2));

@@ -488,10 +488,19 @@ int platformSocketGetLastError(void);
  * Like strstr() but case-insensitive
  * @param haystack The string to look in
  * @param needle The search term to look for
- * @return Pointer within haystack to the first instance found, otherwise NULL
+ * @return Pointer within haystack to the first instance of needle found, otherwise NULL
  */
 char *platformStringFindNeedle(const char *haystack, const char *needle);
 
+/**
+ * Like strstr() but case-insensitive and with length specified
+ * @param haystack The string to look in
+ * @param needle The search term to look for
+ * @param haystackLen The length of the haystack
+ * @param needleLen The length of the needle
+ * @return Pointer within haystack to the first instance of needle found, otherwise NULL
+ */
+char *platformStringFindNeedleRaw(const char *haystack, const char *needle, size_t haystackLen, size_t needleLen);
 
 /**
  * Like strstr() but case-insensitive and checks that the needle is a word

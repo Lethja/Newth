@@ -495,7 +495,6 @@ void httpSiteSchemeFree(HttpSite *self) {
     if (self->fullUri)
         free(self->fullUri);
 
-    CLOSE_SOCKET(self->socket.serverSocket);
     recvBufferClear(&self->socket);
 }
 
