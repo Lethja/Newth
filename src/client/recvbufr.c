@@ -173,7 +173,7 @@ const char *recvBufferAppend(RecvBuffer *self, size_t len) {
 
                 return "No data to be retrieved";
             default:
-                if (BufferAppend(self, buf, len))
+                if (BufferAppend(self, buf, l))
                     return strerror(errno);
 
                 /* TODO: Replace with a function pointer to a append function for each length mode */
@@ -195,11 +195,24 @@ void recvBufferClear(RecvBuffer *self) {
 
 char *recvBufferCopyBetween(RecvBuffer *self, PlatformFileOffset start, PlatformFileOffset end) {
     char *newCopy;
+    size_t len = end - start;
 
-    if (start + (end - start) > end || !(newCopy = malloc(end - start)))
+    if (start + len > end)
         return NULL;
 
-    memcpy(newCopy, &self->buffer[start], end - start);
+    if (start + len > self->len) {
+        len = self->len - start;
+
+        if (!(newCopy = calloc(len + 1, 1)))
+            return NULL;
+
+        memcpy(newCopy, &self->buffer[start], len + 1);
+    } else {
+        if (!(newCopy = calloc(len, 1)))
+            return NULL;
+
+        memcpy(newCopy, &self->buffer[start], len - 1);
+    }
 
     return newCopy;
 }

@@ -26,6 +26,7 @@ static void RecvBufferCopyBetween(void **state) {
     char input[] = "The quick brown fox jumps over the lazy dog";
     char output[sizeof(input)] = {0};
 
+    socketBuffer.max = socketBuffer.len = strlen(input + 1);
     assert_non_null(socketBuffer.buffer = malloc(strlen(input) + 1));
     assert_non_null(strcpy(socketBuffer.buffer, input));
     assert_non_null(copy = recvBufferCopyBetween(&socketBuffer, 4, 20));
