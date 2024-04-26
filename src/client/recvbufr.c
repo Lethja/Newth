@@ -13,7 +13,7 @@
 static inline char *BufferAppend(RecvBuffer *self, char *buf, size_t len) {
     if (self->len + len > self->max) {
         size_t max = self->len + len;
-        if (platformHeapResize((void **) &self->buffer, 1, max))
+        if (platformHeapResize((void **) &self->buffer, sizeof(char), max))
             return strerror(errno);
 
         self->max = max;
@@ -259,9 +259,9 @@ PlatformFileOffset recvBufferFind(RecvBuffer *self, PlatformFileOffset pos, cons
     if (!self->buffer || pos > self->len)
         return -1;
 
-    p = &self->buffer[pos], l = self->len - pos;
+    p = &self->buffer[pos], l = self->len - pos - 1;
 
-    for (i = 0; i < l || p[i] == '\0'; ++i) {
+    for (i = 0; i < l; ++i) {
         if (p[i] == token[0]) {
             size_t k;
 
