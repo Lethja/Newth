@@ -226,9 +226,7 @@ static void ReceiveFetch(void **state) {
     recvBufferFailFree(&socketBuffer);
 }
 
-/* TODO: Make chunk encoding work correctly */
 static void ReceiveFetchChunk(void **state) {
-    /*
     RecvBuffer socketBuffer;
 
     char sample[] = "4" HTTP_EOL "This" HTTP_EOL "3" HTTP_EOL " is" HTTP_EOL "2" HTTP_EOL" a" HTTP_EOL "5" HTTP_EOL " test" HTTP_EOL "0" HTTP_EOL;
@@ -246,11 +244,9 @@ static void ReceiveFetchChunk(void **state) {
     assert_string_equal(expect, output);
     assert_int_equal(socketBuffer.length.chunk.next, -1);
     recvBufferFailFree(&socketBuffer);
-    */
 }
 
 static void ReceiveFetchChunkEmpty(void **state) {
-    /*
     RecvBuffer socketBuffer;
 
     char sample[] = "0" HTTP_EOL;
@@ -264,11 +260,10 @@ static void ReceiveFetchChunkEmpty(void **state) {
 
     assert_null(recvBufferAppend(&socketBuffer, 512));
     assert_int_equal(socketBuffer.length.chunk.next, -1);
-    */
+    recvBufferClear(&socketBuffer);
 }
 
 static void ReceiveFetchChunkIterateAligned(void **state) {
-    /*
     RecvBuffer socketBuffer;
 
     char sample[] = "4" HTTP_EOL "This" HTTP_EOL "3" HTTP_EOL " is" HTTP_EOL "2" HTTP_EOL" a" HTTP_EOL "5" HTTP_EOL " test" HTTP_EOL "0" HTTP_EOL;
@@ -310,11 +305,10 @@ static void ReceiveFetchChunkIterateAligned(void **state) {
     assert_null(recvBufferFetch(&socketBuffer, output, 0, 512));
     assert_string_equal(output, "This is a test");
     assert_int_equal(socketBuffer.length.chunk.next, -1);
-    */
+    recvBufferClear(&socketBuffer);
 }
 
 static void ReceiveFetchChunkIterateUnaligned(void **state) {
-    /*
     RecvBuffer socketBuffer;
 
     char sample[] = "4" HTTP_EOL "This" HTTP_EOL "3" HTTP_EOL " is" HTTP_EOL "2" HTTP_EOL" a" HTTP_EOL "5" HTTP_EOL " test" HTTP_EOL "0" HTTP_EOL;
@@ -356,11 +350,10 @@ static void ReceiveFetchChunkIterateUnaligned(void **state) {
     assert_null(recvBufferFetch(&socketBuffer, output, 0, 512));
     assert_string_equal(output, "This is a test");
     assert_int_equal(socketBuffer.length.chunk.next, -1);
-    */
+    recvBufferClear(&socketBuffer);
 }
 
 static void ReceiveFetchChunkMalformed(void **state) {
-    /*
     RecvBuffer socketBuffer;
     const char *e;
 
@@ -375,11 +368,10 @@ static void ReceiveFetchChunkMalformed(void **state) {
 
     assert_non_null(e = recvBufferAppend(&socketBuffer, 512));
     assert_string_equal(e, "Illegal hex character");
-    */
+    recvBufferClear(&socketBuffer);
 }
 
 static void ReceiveFetchChunkMalformedStart(void **state) {
-    /*
     RecvBuffer socketBuffer;
 
     char sample[] = "3" HTTP_EOL "Error";
@@ -392,11 +384,10 @@ static void ReceiveFetchChunkMalformedStart(void **state) {
     recvBufferSetLengthChunk(&socketBuffer);
 
     assert_null(recvBufferAppend(&socketBuffer, 512));
-    */
+    recvBufferClear(&socketBuffer);
 }
 
 static void ReceiveFetchChunkOverflow(void **state) {
-    /*
     RecvBuffer socketBuffer;
 
     char sample[] = "5" HTTP_EOL "Err";
@@ -410,11 +401,10 @@ static void ReceiveFetchChunkOverflow(void **state) {
 
     assert_null(recvBufferAppend(&socketBuffer, 512));
     assert_int_equal(socketBuffer.length.chunk.next, 2);
-    */
+    recvBufferClear(&socketBuffer);
 }
 
 static void ReceiveFetchChunkOverflowExact(void **state) {
-    /*
     RecvBuffer socketBuffer;
 
     char sample[] = "5" HTTP_EOL "Error";
@@ -428,11 +418,10 @@ static void ReceiveFetchChunkOverflowExact(void **state) {
 
     assert_null(recvBufferAppend(&socketBuffer, 512));
     assert_int_equal(socketBuffer.length.chunk.next, 0);
-    */
+    recvBufferClear(&socketBuffer);
 }
 
 static void ReceiveFetchChunkOverflowMalformed(void **state) {
-    /*
     RecvBuffer socketBuffer;
     const char *e;
 
@@ -447,7 +436,7 @@ static void ReceiveFetchChunkOverflowMalformed(void **state) {
 
     assert_non_null(e = recvBufferAppend(&socketBuffer, 512));
     assert_string_equal(e, "Illegal hex character");
-    */
+    recvBufferClear(&socketBuffer);
 }
 
 static void ReceiveFind(void **state) {
