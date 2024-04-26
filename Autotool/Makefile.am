@@ -10,6 +10,7 @@ unittest_LDADD = -lwsock32 ${cmocka_LIBS}
 else
 
 PLATFORM_SRC = src/platform/posix01.c src/platform/posix01.h
+unittest_LDADD = ${cmocka_LIBS}
 
 endif
 
