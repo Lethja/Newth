@@ -367,7 +367,7 @@ static inline char *HttpGetContentLength(const char *header, PlatformFileOffset 
  * @param header The header response received from the remote
  * @param headerResponse The response header populated with whatever is found
  */
-static inline void GetAllHeaders(const char *header, HttpResponseHeader *headerResponse) {
+static inline void HeadersPopulate(const char *header, HttpResponseHeader *headerResponse) {
     char *v;
 
     ioHttpResponseHeaderFind(header, "Transfer-Encoding", &v);
@@ -400,6 +400,30 @@ static inline void GetAllHeaders(const char *header, HttpResponseHeader *headerR
         }
         free(v);
     }
+}
+
+/**
+ * Check and compare header metadata of this request against local files, setup site to receive files if necessary
+ * @param self The Site to compute headers for
+ * @param headerResponse The header to compute from
+ */
+static inline void HeadersCompute(HttpSite *self, HttpResponseHeader *headerResponse) {
+    /* TODO: Check filename if exists, extract from url otherwise */
+    /* TODO: Check modification date against local file if exists */
+    /* TODO: Check length and/or chunk mode */
+}
+
+/**
+ * Free internal structures of a header
+ * @param headerResponse The header to free the internals of
+ * @remark If the header was allocated on the heap it will still need to be freed
+ */
+static inline void HeadersFree(HttpResponseHeader *headerResponse) {
+if (headerResponse->modifiedDate)
+    free(headerResponse->modifiedDate);
+
+if (headerResponse->fileName)
+    free(headerResponse->fileName);
 }
 
 /**
@@ -621,7 +645,7 @@ char *httpSiteSchemeDirectoryListingEntryStat(void *listing, void *entry, Platfo
         return strerror(platformSocketGetLastError());
 
     memset(&header, 0, sizeof(HttpResponseHeader));
-    GetAllHeaders(response, &header);
+    HeadersPopulate(response, &header);
 
 
     st->st_size = header.length;
@@ -670,13 +694,9 @@ void *httpSiteSchemeDirectoryListingOpen(HttpSite *self, char *path) {
         !(HttpResponseOk(response) || !HttpResponseIsDir(header)))
         goto httpSiteOpenDirectoryListing_abort3;
 
-    GetAllHeaders(header, &headerResponse);
-    /* TODO: Use headerResponse */
-    if (headerResponse.modifiedDate)
-        free(headerResponse.modifiedDate);
-
-    if (headerResponse.fileName)
-        free(headerResponse.fileName);
+    HeadersPopulate(header, &headerResponse);
+    HeadersCompute(self, &headerResponse);
+    HeadersFree(&headerResponse);
 
     free(header), free(scheme);
 
