@@ -459,7 +459,7 @@ static void SiteHttpDirEntryNewth(void **state) {
     assert_non_null((mockReceiveStream = tmpfile()));
 
     /* Setup mocked response */
-    sprintf(length, "content-length: %lu" HTTP_EOL HTTP_EOL, strlen(NewthHtml)); /* Deliberately lowercase */
+    sprintf(length, "transfer-encoding: chunked" HTTP_EOL HTTP_EOL); /* Deliberately lowercase */
     fwrite(HttpHeaderResponseDir, 1, strlen(HttpHeaderResponseDir) - 2, mockReceiveStream);
     fwrite(length, 1, strlen(length), mockReceiveStream);
     fwrite(NewthHtml, 1, strlen(NewthHtml), mockReceiveStream);
@@ -536,8 +536,7 @@ const struct CMUnitTest siteTest[] = {cmocka_unit_test(SiteArrayFunctions), cmoc
                                       cmocka_unit_test(SiteHttpDirEntryBad), cmocka_unit_test(SiteHttpDirEntryGood),
                                       cmocka_unit_test(SiteHttpDirEntryApache),
                                       cmocka_unit_test(SiteHttpDirEntryLighttpd),
-                                      /* TODO: Make chunk encoding work correctly */
-                                      /*cmocka_unit_test(SiteHttpDirEntryNewth), */cmocka_unit_test(SiteHttpDirEntryNginx)
+                                      cmocka_unit_test(SiteHttpDirEntryNewth), cmocka_unit_test(SiteHttpDirEntryNginx)
 #endif
 };
 

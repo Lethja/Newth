@@ -7,7 +7,8 @@ enum RecvBufferOptions {
     RECV_BUFFER_DATA_LENGTH_UNKNOWN = 0,
     RECV_BUFFER_DATA_LENGTH_CHUNK = 1,
     RECV_BUFFER_DATA_LENGTH_KNOWN = 2,
-    RECV_BUFFER_DATA_LENGTH_TOKEN = 4
+    RECV_BUFFER_DATA_LENGTH_TOKEN = 4,
+    RECV_BUFFER_DATA_LENGTH_COMPLETE = 8
 };
 
 typedef struct RecvBufferLengthChunk {
@@ -214,6 +215,12 @@ const char *recvBufferSend(RecvBuffer *self, const void *data, size_t n, int fla
  * @param self The buffer to set in chunk length mode
  */
 void recvBufferSetLengthChunk(RecvBuffer *self);
+
+/**
+ * Set this buffer to be complete, appends will return without any fetching attempts while in this mode
+ * @param self The buffer to set in chunk length mode
+ */
+void recvBufferSetLengthComplete(RecvBuffer *self);
 
 /**
  * Set this buffer to receive a request where length of the data has been predetermined in bytes

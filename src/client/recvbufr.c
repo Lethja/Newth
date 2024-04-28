@@ -96,6 +96,9 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
             return NULL; /* Next chuck not in transmission buffer yet */
     }
 
+    if (i == len)
+        return NULL;
+
     /* Parse the next chunk encoding */
     recvBufferAppendChunk_parse:
     {
@@ -132,8 +135,10 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
         if (l > 0) {
             self->length.chunk.next = (PlatformFileOffset) l;
             goto recvBufferAppendChunk_iterate;
-        } else
+        } else {
             self->length.chunk.next = -1;
+            recvBufferSetLengthComplete(self);
+        }
     }
 
     return NULL;
@@ -144,6 +149,9 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
 const char *recvBufferAppend(RecvBuffer *self, size_t len) {
     size_t i = 0;
     const char *error = NULL;
+
+    if(self->options & RECV_BUFFER_DATA_LENGTH_COMPLETE)
+        return "Request completed";
 
     if (!self->buffer) {
         if (!(self->buffer = calloc(SB_DATA_SIZE, 1)))
@@ -262,14 +270,14 @@ PlatformFileOffset recvBufferFind(RecvBuffer *self, PlatformFileOffset pos, cons
     p = &self->buffer[pos], l = self->len - pos - 1;
 
     for (i = 0; i < l; ++i) {
-        if (p[i] == token[0]) {
+        if (toupper(p[i]) == toupper(token[0])) {
             size_t k;
 
             if (i + len > self->len)
                 return -1;
 
             for (k = 0, j = i; k < len; ++k, ++j) {
-                if (p[j] != token[k])
+                if (toupper(p[j]) != toupper(token[k]))
                     break;
             }
 
@@ -452,20 +460,30 @@ const char *recvBufferSend(RecvBuffer *self, const void *data, size_t n, int fla
 }
 
 void recvBufferSetLengthChunk(RecvBuffer *self) {
-    self->options &= ~(RECV_BUFFER_DATA_LENGTH_KNOWN) | ~(RECV_BUFFER_DATA_LENGTH_TOKEN);
+    self->options &=
+            ~(RECV_BUFFER_DATA_LENGTH_KNOWN) | ~(RECV_BUFFER_DATA_LENGTH_TOKEN) | ~(RECV_BUFFER_DATA_LENGTH_COMPLETE);
     self->options |= RECV_BUFFER_DATA_LENGTH_CHUNK;
     self->length.chunk.total = 0, self->length.chunk.next = -1;
 }
 
+void recvBufferSetLengthComplete(RecvBuffer *self) {
+    self->options &=
+            ~(RECV_BUFFER_DATA_LENGTH_KNOWN) | ~(RECV_BUFFER_DATA_LENGTH_TOKEN) | ~(RECV_BUFFER_DATA_LENGTH_CHUNK);
+    self->options |= RECV_BUFFER_DATA_LENGTH_COMPLETE;
+    self->length.chunk.total = 0, self->length.chunk.next = -1;
+}
+
 void recvBufferSetLengthKnown(RecvBuffer *self, PlatformFileOffset length) {
-    self->options &= ~(RECV_BUFFER_DATA_LENGTH_CHUNK) | ~(RECV_BUFFER_DATA_LENGTH_TOKEN);
+    self->options &=
+            ~(RECV_BUFFER_DATA_LENGTH_CHUNK) | ~(RECV_BUFFER_DATA_LENGTH_TOKEN) | ~(RECV_BUFFER_DATA_LENGTH_COMPLETE);
     self->options |= RECV_BUFFER_DATA_LENGTH_KNOWN;
     self->length.known.total = length, self->length.known.escape = 0;
 }
 
 void recvBufferSetLengthUnknown(RecvBuffer *self, size_t limit) {
     self->options &=
-            ~(RECV_BUFFER_DATA_LENGTH_CHUNK) | ~(RECV_BUFFER_DATA_LENGTH_KNOWN) | ~(RECV_BUFFER_DATA_LENGTH_TOKEN);
+            ~(RECV_BUFFER_DATA_LENGTH_CHUNK) | ~(RECV_BUFFER_DATA_LENGTH_KNOWN) | ~(RECV_BUFFER_DATA_LENGTH_TOKEN) |
+            ~(RECV_BUFFER_DATA_LENGTH_COMPLETE);
     self->length.unknown.limit = limit, self->length.unknown.escape = 0;
 }
 

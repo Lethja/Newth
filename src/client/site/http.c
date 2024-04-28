@@ -251,7 +251,7 @@ static inline const char *BufferToEndElement(HttpSite *self, const char *element
     char *e;
     size_t s = strlen(element);
 
-    if(!(e = malloc(s + 4)))
+    if (!(e = malloc(s + 4)))
         return strerror(errno);
 
     e[0] = '<', e[1] = '/', memcpy(&e[2], element, s), e[s + 2] = '>', e[s + 3] = '\0';
@@ -400,6 +400,18 @@ static inline void HeadersPopulate(const char *header, HttpResponseHeader *heade
         }
         free(v);
     }
+
+    headerResponse->length = 0, ioHttpResponseHeaderFind(header, "Content-Length", &v);
+    if(v) {
+        size_t l = strlen(v), i;
+        for (i = 0; i < l; ++i)
+            if (!isdigit(v[i]))
+                return;
+
+        for (i = 0; i < l; ++i) {
+            headerResponse->length *= 10, headerResponse->length += v[i] - '0';
+        }
+    }
 }
 
 /**
@@ -410,7 +422,10 @@ static inline void HeadersPopulate(const char *header, HttpResponseHeader *heade
 static inline void HeadersCompute(HttpSite *self, HttpResponseHeader *headerResponse) {
     /* TODO: Check filename if exists, extract from url otherwise */
     /* TODO: Check modification date against local file if exists */
-    /* TODO: Check length and/or chunk mode */
+    if (headerResponse->options & SA_PROTOCOL_ALT_MODE)
+        recvBufferSetLengthChunk(&self->socket);
+    else
+        recvBufferSetLengthKnown(&self->socket, headerResponse->length);
 }
 
 /**
@@ -419,11 +434,11 @@ static inline void HeadersCompute(HttpSite *self, HttpResponseHeader *headerResp
  * @remark If the header was allocated on the heap it will still need to be freed
  */
 static inline void HeadersFree(HttpResponseHeader *headerResponse) {
-if (headerResponse->modifiedDate)
-    free(headerResponse->modifiedDate);
+    if (headerResponse->modifiedDate)
+        free(headerResponse->modifiedDate);
 
-if (headerResponse->fileName)
-    free(headerResponse->fileName);
+    if (headerResponse->fileName)
+        free(headerResponse->fileName);
 }
 
 /**
