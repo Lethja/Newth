@@ -415,6 +415,17 @@ const char *recvBufferNewFromUri(RecvBuffer *self, const char *uri, int options)
     return e;
 }
 
+const char *recvBufferConnect(RecvBuffer *self) {
+    if (connect(self->serverSocket, &self->serverAddress.address.sock, sizeof(self->serverAddress.address.sock)) == -1) {
+        if (self->serverSocket == INVALID_SOCKET)
+            CLOSE_SOCKET(self->serverSocket);
+
+        return strerror(platformSocketGetLastError());
+    }
+
+    return NULL;
+}
+
 const char *recvBufferReconnect(RecvBuffer *self) {
     SOCKET sock;
     char *e;
@@ -423,14 +434,9 @@ const char *recvBufferReconnect(RecvBuffer *self) {
     if ((e = ioCreateSocketFromSocketAddress(&self->serverAddress, &sock)))
         return e;
 
-    if (connect(sock, &self->serverAddress.address.sock, sizeof(self->serverAddress.address.sock)) == -1) {
-        if (sock == INVALID_SOCKET)
-            CLOSE_SOCKET(sock);
+    self->serverSocket = sock;
 
-        return strerror(platformSocketGetLastError());
-    }
-
-    return NULL;
+    return recvBufferConnect(self);
 }
 
 const char *recvBufferSend(RecvBuffer *self, const void *data, size_t n, int flags) {

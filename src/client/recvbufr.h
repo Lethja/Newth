@@ -71,6 +71,14 @@ const char *recvBufferAppend(RecvBuffer *self, size_t len);
 void recvBufferClear(RecvBuffer *self);
 
 /**
+ * Connect to the ServerSocket
+ * @param self Attempt to establish a connection to a recvBuffers serverAddress property.
+ * The socket will be stored in serverSocket if successful
+ * @return NULL on success, user friendly error message otherwise
+ */
+const char *recvBufferConnect(RecvBuffer *self);
+
+/**
  * Create a new memory stream containing part of the current buffers content
  * @param self The buffer to copy from
  * @param start Where in the buffer to start copying from
@@ -146,6 +154,13 @@ const char *recvBufferFindAndDitch(RecvBuffer *self, const char *token, size_t l
  * then the entire buffer up to that point will stored in memory for further parsing.
  */
 const char *recvBufferFindAndFetch(RecvBuffer *self, const char *token, size_t len, size_t max);
+
+/**
+ * Attempt to reconnect to the ServerSocket, useful if the connection has been closed due to inactivity
+ * @param self The RecvBuffer to reconnect the remote part to
+ * @return NULL on success, user friendly error message otherwise
+ */
+const char *recvBufferReconnect(RecvBuffer *self);
 
 /**
  * Update the server socket to another socket or a reconnected socket

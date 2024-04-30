@@ -52,9 +52,9 @@ char *ioHttpRequestGenerateSend(const char *type, const char *path, const char *
         return NULL;
 
     if (extra)
-        sprintf(req, "%s %s %s%s" HTTP_EOL, type, path, http, extra);
+        sprintf(req, "%s %s %s%s" HTTP_EOL, type, path, HTTP_RES HTTP_EOL, extra);
     else
-        sprintf(req, "%s %s %s" HTTP_EOL, type, path, http);
+        sprintf(req, "%s %s %s" HTTP_EOL, type, path, HTTP_RES HTTP_EOL);
 
     return req;
 }

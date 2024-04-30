@@ -402,15 +402,18 @@ static inline void HeadersPopulate(const char *header, HttpResponseHeader *heade
     }
 
     headerResponse->length = 0, ioHttpResponseHeaderFind(header, "Content-Length", &v);
-    if(v) {
+    if (v) {
         size_t l = strlen(v), i;
         for (i = 0; i < l; ++i)
-            if (!isdigit(v[i]))
+            if (!isdigit(v[i])) {
+                free(v);
                 return;
+            }
 
-        for (i = 0; i < l; ++i) {
+        for (i = 0; i < l; ++i)
             headerResponse->length *= 10, headerResponse->length += v[i] - '0';
-        }
+
+        free(v);
     }
 }
 
@@ -573,7 +576,7 @@ const char *httpSiteSchemeNew(HttpSite *self, const char *path) {
 
     scheme = response = NULL;
 
-    if ((err = recvBufferSend(&self->socket, send, strlen(send), 0))) {
+    if ((err = recvBufferConnect(&self->socket)) || (err = recvBufferSend(&self->socket, send, strlen(send), 0))) {
         free(send);
         goto httpSiteSchemeNew_closeSocketAndAbort;
     }
