@@ -171,6 +171,7 @@ const char *recvBufferAppend(RecvBuffer *self, size_t len) {
         if (s > SB_DATA_SIZE)
             s = SB_DATA_SIZE;
 
+        /* TODO: Set blocking, handle length modes */
         switch ((l = recv(self->serverSocket, buf, s, 0))) {
             case -1:
                 /* TODO: Handle when something is wrong with the socket */

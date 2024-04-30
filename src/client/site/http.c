@@ -421,14 +421,18 @@ static inline void HeadersPopulate(const char *header, HttpResponseHeader *heade
  * Check and compare header metadata of this request against local files, setup site to receive files if necessary
  * @param self The Site to compute headers for
  * @param headerResponse The header to compute from
+ * @param mode The mode this header is responding to
  */
-static inline void HeadersCompute(HttpSite *self, HttpResponseHeader *headerResponse) {
+static inline void HeadersCompute(HttpSite *self, HttpResponseHeader *headerResponse, const char *mode) {
     /* TODO: Check filename if exists, extract from url otherwise */
     /* TODO: Check modification date against local file if exists */
-    if (headerResponse->options & SA_PROTOCOL_ALT_MODE)
-        recvBufferSetLengthChunk(&self->socket);
-    else
-        recvBufferSetLengthKnown(&self->socket, headerResponse->length);
+    if (!strcasecmp(mode, "GET")) {
+        if (headerResponse->options & SA_PROTOCOL_ALT_MODE)
+            recvBufferSetLengthChunk(&self->socket);
+        else
+            recvBufferSetLengthKnown(&self->socket, headerResponse->length);
+    } else
+        recvBufferSetLengthComplete(&self->socket);
 }
 
 /**
@@ -606,10 +610,8 @@ const char *httpSiteSchemeNew(HttpSite *self, const char *path) {
     return NULL;
 
     httpSiteSchemeNew_closeSocketAndAbort:
-    /*
-    if (self->socket == INVALID_SOCKET)
-        CLOSE_SOCKET(self->socket);
-    */
+    if (self->socket.serverSocket == INVALID_SOCKET)
+        CLOSE_SOCKET(self->socket.serverSocket);
 
     if (header)
         free(header);
@@ -713,7 +715,7 @@ void *httpSiteSchemeDirectoryListingOpen(HttpSite *self, char *path) {
         goto httpSiteOpenDirectoryListing_abort3;
 
     HeadersPopulate(header, &headerResponse);
-    HeadersCompute(self, &headerResponse);
+    HeadersCompute(self, &headerResponse, "GET");
     HeadersFree(&headerResponse);
 
     free(header), free(scheme);
