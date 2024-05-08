@@ -244,12 +244,6 @@ void recvBufferDitch(RecvBuffer *self, PlatformFileOffset len) {
     }
 }
 
-void recvBufferDitchBetween(RecvBuffer *self, PlatformFileOffset start, PlatformFileOffset len) {
-    size_t e = start + len, l = self->len - e;
-    memmove(&self->buffer[start], &self->buffer[e], l);
-    self->len -= len;
-}
-
 void recvBufferFailFree(RecvBuffer *self) {
     if (self->buffer)
         free(self->buffer);

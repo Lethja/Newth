@@ -38,26 +38,6 @@ static void RecvBufferCopyBetween(void **state) {
     free(copy), recvBufferClear(&socketBuffer);
 }
 
-static void RecvBufferDitchBetween(void **state) {
-    /*
-    RecvBuffer socketBuffer = {0};
-    char input[] = "The quick brown fox jumps over the lazy dog";
-    char buf[sizeof(input)] = {0};
-
-    assert_non_null(socketBuffer.buffer = malloc(strlen(input) + 1));
-    assert_non_null(strcpy(socketBuffer.buffer, input));
-    recvBufferDitchBetween(&socketBuffer, 25, 5);
-    assert_null(recvBufferFetch(&socketBuffer, buf, 0, sizeof(input)));
-    assert_string_equal(buf, "The quick brown fox jumps the lazy dog");
-    recvBufferDitchBetween(&socketBuffer, 30, 5);
-    assert_null(recvBufferFetch(&socketBuffer, buf, 0, sizeof(input)));
-    assert_string_equal(buf, "The quick brown fox jumps the dog");
-    recvBufferDitchBetween(&socketBuffer, 25, 50);
-    assert_null(recvBufferFetch(&socketBuffer, buf, 0, sizeof(input)));
-    assert_string_equal(buf, "The quick brown fox jumps");
-    */
-}
-
 static void RecvBufferMemoryFree(void **state) {
     RecvBuffer socketBuffer = {0};
 
@@ -84,7 +64,7 @@ static void RecvBufferClear(void **state) {
     buffer =
     #endif
 
-    socketBuffer.buffer = malloc(10);
+            socketBuffer.buffer = malloc(10);
     assert_non_null(&socketBuffer.buffer);
     recvBufferClear(&socketBuffer);
     assert_null(socketBuffer.buffer);
@@ -563,10 +543,6 @@ static void ReceiveSendReconnect(void **state) {
     assert_int_equal(mockErrorReset, 4);
 }
 
-static void ReceiveSendUnderflow(void **state) {
-    /* TODO: Implement this test */
-}
-
 static void ReceiveUpdateSocket(void **state) {
     SocketAddress address;
     RecvBuffer socketBuffer1, socketBuffer2;
@@ -600,7 +576,6 @@ static void ReceiveUpdateSocket(void **state) {
 
 const struct CMUnitTest recvBufferSocketTest[] = {cmocka_unit_test(RecvBufferClear),
                                                   cmocka_unit_test(RecvBufferCopyBetween),
-                                                  cmocka_unit_test(RecvBufferDitchBetween),
                                                   cmocka_unit_test(RecvBufferMemoryFree),
                                                   cmocka_unit_test(ReceiveSetLengthChunk),
                                                   cmocka_unit_test(ReceiveSetLengthComplete),
@@ -622,7 +597,6 @@ const struct CMUnitTest recvBufferSocketTestMock[] = {cmocka_unit_test(ReceiveFe
                                                       cmocka_unit_test(ReceiveFindDitch),
                                                       cmocka_unit_test(ReceiveFindFetch), cmocka_unit_test(ReceiveSend),
                                                       cmocka_unit_test(ReceiveSendReconnect),
-                                                      cmocka_unit_test(ReceiveSendUnderflow),
                                                       cmocka_unit_test(ReceiveUpdateSocket)};
 #endif
 
