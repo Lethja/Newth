@@ -150,7 +150,7 @@ const char *recvBufferAppend(RecvBuffer *self, size_t len) {
     size_t i = 0;
     const char *error = NULL;
 
-    if(self->options & RECV_BUFFER_DATA_LENGTH_COMPLETE)
+    if (self->options & RECV_BUFFER_DATA_LENGTH_COMPLETE)
         return "Request completed";
 
     if (!self->buffer) {
@@ -174,8 +174,17 @@ const char *recvBufferAppend(RecvBuffer *self, size_t len) {
         /* TODO: Set blocking, handle length modes */
         switch ((l = recv(self->serverSocket, buf, s, 0))) {
             case -1:
-                /* TODO: Handle when something is wrong with the socket */
-                return strerror(platformSocketGetLastError());
+                switch (platformSocketGetLastError()) {
+#pragma region Handle socket error
+                    case SOCKET_TRY_AGAIN:
+#if SOCKET_TRY_AGAIN != SOCKET_WOULD_BLOCK
+                    case SOCKET_WOULD_BLOCK:
+#endif
+                        /* TODO: something sensible */
+                        return "Try Again";
+                    default:
+                        return strerror(platformSocketGetLastError());
+                }
             case 0:
                 if (i)
                     return NULL;
@@ -417,12 +426,18 @@ const char *recvBufferNewFromUri(RecvBuffer *self, const char *uri, int options)
 }
 
 const char *recvBufferConnect(RecvBuffer *self) {
-    if (connect(self->serverSocket, &self->serverAddress.address.sock, sizeof(self->serverAddress.address.sock)) == -1) {
+    struct sockaddr *socketAddress = &self->serverAddress.address.sock;
+    size_t socketLength = sizeof(self->serverAddress.address.sock);
+
+    if (connect(self->serverSocket, socketAddress, socketLength) == -1) {
         if (self->serverSocket == INVALID_SOCKET)
             CLOSE_SOCKET(self->serverSocket);
 
         return strerror(platformSocketGetLastError());
     }
+
+    if (platformSocketSetBlock(self->serverSocket, 0) == -1)
+        return strerror(platformSocketGetLastError());
 
     return NULL;
 }
