@@ -451,6 +451,60 @@ static void ReceiveFetchChunkOverflowMalformed(void **state) {
     recvBufferClear(&socketBuffer);
 }
 
+static void ReceiveFetchNonBlocking(void **state) {
+    RecvBuffer socketBuffer = {0};
+    const char *e;
+    char buf[11] = {0};
+
+    mockReset(), mockOptions = MOCK_CONNECT | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
+
+#pragma region A normal request
+
+    assert_null(e = recvBufferAppend(&socketBuffer, 10));
+    assert_null(e = recvBufferFetch(&socketBuffer, buf, 0, 11));
+    assert_string_equal("1234567890", buf);
+
+#pragma endregion
+
+#pragma region Client is too quick, no packets received
+
+    mockReceiveError = EAGAIN, mockErrorReset = 2;
+    recvBufferClear(&socketBuffer);
+
+    assert_non_null(e = recvBufferAppend(&socketBuffer, 10));
+    assert_string_equal(e, "Try Again");
+    assert_null(recvBufferFetch(&socketBuffer, buf, 1, 5));
+    assert_string_equal("", buf);
+
+    assert_non_null(e = recvBufferAppend(&socketBuffer, 10));
+    assert_string_equal(e, "Try Again");
+    assert_null(recvBufferFetch(&socketBuffer, buf, 5, 5));
+    assert_string_equal("", buf);
+
+#pragma region The transmission has caught up
+
+    assert_null(e = recvBufferAppend(&socketBuffer, 10));
+    assert_null(e = recvBufferFetch(&socketBuffer, buf, 0, 11));
+    assert_string_equal("1234567890", buf);
+
+#pragma endregion /* The transmission has caught up */
+
+#pragma endregion /* Client is too quick, no packets received */
+
+#pragma region There is some packets but less then requested
+
+    mockReceiveError = ENOERR, mockErrorReset = 0, mockReceiveMaxBuf = 2;
+    recvBufferClear(&socketBuffer), buf[0] = buf[1] = buf[2] = '\0';
+
+    assert_null(e = recvBufferAppend(&socketBuffer, 10));
+    assert_null(e = recvBufferFetch(&socketBuffer, buf, 0, 11));
+    assert_string_equal("12", buf);
+
+#pragma endregion
+
+    recvBufferFailFree(&socketBuffer);
+}
+
 static void ReceiveFind(void **state) {
     const char *data = "The quick brown fox jumps over the lazy dog";
     size_t len = strlen(data);
@@ -593,6 +647,7 @@ const struct CMUnitTest recvBufferSocketTestMock[] = {cmocka_unit_test(ReceiveFe
                                                       cmocka_unit_test(ReceiveFetchChunkOverflowMalformed),
                                                       cmocka_unit_test(ReceiveFetchChunkMalformed),
                                                       cmocka_unit_test(ReceiveFetchChunkMalformedStart),
+                                                      cmocka_unit_test(ReceiveFetchNonBlocking),
                                                       cmocka_unit_test(ReceiveFind), cmocka_unit_test(ReceiveDitch),
                                                       cmocka_unit_test(ReceiveFindDitch),
                                                       cmocka_unit_test(ReceiveFindFetch), cmocka_unit_test(ReceiveSend),
