@@ -399,6 +399,53 @@ static void ReceiveFetchChunkMalformedStart(void **state) {
     recvBufferClear(&socketBuffer);
 }
 
+static void ReceiveFetchChuckNonBlocking(void **state) {
+    RecvBuffer socketBuffer = {0};
+    const char *e;
+    char sample[] = "4" HTTP_EOL "This" HTTP_EOL "3" HTTP_EOL " is" HTTP_EOL "2" HTTP_EOL" a" HTTP_EOL "5" HTTP_EOL " test" HTTP_EOL "0" HTTP_EOL HTTP_EOL;
+    char output[sizeof(sample)] = {0};
+    size_t max = strlen(sample);
+
+    mockReset(), mockOptions = MOCK_CONNECT | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
+    mockReceiveStream = tmpfile(), fwrite(sample, 1, max, mockReceiveStream), rewind(mockReceiveStream);
+    recvBufferSetLengthChunk(&socketBuffer);
+
+#pragma region A normal request
+
+    assert_null(recvBufferAppend(&socketBuffer, 10));
+    assert_null(recvBufferFetch(&socketBuffer, output, 0, 11));
+    assert_string_equal("This is a ", output);
+
+#pragma endregion
+
+#pragma region Client is too quick, no packets received
+
+    mockReceiveError = EAGAIN, mockErrorReset = 2;
+    recvBufferClear(&socketBuffer);
+
+    assert_non_null(e = recvBufferAppend(&socketBuffer, 10));
+    assert_string_equal(e, "Try Again");
+    assert_null(recvBufferFetch(&socketBuffer, output, 1, 5));
+    assert_string_equal("", output);
+
+    assert_non_null(e = recvBufferAppend(&socketBuffer, 10));
+    assert_string_equal(e, "Try Again");
+    assert_null(recvBufferFetch(&socketBuffer, output, 5, 5));
+    assert_string_equal("", output);
+
+#pragma region The transmission has caught up
+
+    assert_null(recvBufferAppend(&socketBuffer, 10));
+    assert_null(recvBufferFetch(&socketBuffer, output, 0, 11));
+    assert_string_equal("test", output);
+
+#pragma endregion /* The transmission has caught up */
+
+#pragma endregion /* Client is too quick, no packets received */
+
+    recvBufferFailFree(&socketBuffer);
+}
+
 static void ReceiveFetchChunkOverflow(void **state) {
     RecvBuffer socketBuffer;
 
@@ -460,8 +507,8 @@ static void ReceiveFetchNonBlocking(void **state) {
 
 #pragma region A normal request
 
-    assert_null(e = recvBufferAppend(&socketBuffer, 10));
-    assert_null(e = recvBufferFetch(&socketBuffer, buf, 0, 11));
+    assert_null(recvBufferAppend(&socketBuffer, 10));
+    assert_null(recvBufferFetch(&socketBuffer, buf, 0, 11));
     assert_string_equal("1234567890", buf);
 
 #pragma endregion
@@ -483,8 +530,8 @@ static void ReceiveFetchNonBlocking(void **state) {
 
 #pragma region The transmission has caught up
 
-    assert_null(e = recvBufferAppend(&socketBuffer, 10));
-    assert_null(e = recvBufferFetch(&socketBuffer, buf, 0, 11));
+    assert_null(recvBufferAppend(&socketBuffer, 10));
+    assert_null(recvBufferFetch(&socketBuffer, buf, 0, 11));
     assert_string_equal("1234567890", buf);
 
 #pragma endregion /* The transmission has caught up */
@@ -496,8 +543,8 @@ static void ReceiveFetchNonBlocking(void **state) {
     mockReceiveError = ENOERR, mockErrorReset = 0, mockReceiveMaxBuf = 2;
     recvBufferClear(&socketBuffer), buf[0] = buf[1] = buf[2] = '\0';
 
-    assert_null(e = recvBufferAppend(&socketBuffer, 10));
-    assert_null(e = recvBufferFetch(&socketBuffer, buf, 0, 11));
+    assert_null(recvBufferAppend(&socketBuffer, 10));
+    assert_null(recvBufferFetch(&socketBuffer, buf, 0, 11));
     assert_string_equal("12", buf);
 
 #pragma endregion
@@ -642,11 +689,12 @@ const struct CMUnitTest recvBufferSocketTestMock[] = {cmocka_unit_test(ReceiveFe
                                                       cmocka_unit_test(ReceiveFetchChunkEmpty),
                                                       cmocka_unit_test(ReceiveFetchChunkIterateAligned),
                                                       cmocka_unit_test(ReceiveFetchChunkIterateUnaligned),
+                                                      cmocka_unit_test(ReceiveFetchChunkMalformed),
+                                                      cmocka_unit_test(ReceiveFetchChunkMalformedStart),
+                                                      cmocka_unit_test(ReceiveFetchChuckNonBlocking),
                                                       cmocka_unit_test(ReceiveFetchChunkOverflow),
                                                       cmocka_unit_test(ReceiveFetchChunkOverflowExact),
                                                       cmocka_unit_test(ReceiveFetchChunkOverflowMalformed),
-                                                      cmocka_unit_test(ReceiveFetchChunkMalformed),
-                                                      cmocka_unit_test(ReceiveFetchChunkMalformedStart),
                                                       cmocka_unit_test(ReceiveFetchNonBlocking),
                                                       cmocka_unit_test(ReceiveFind), cmocka_unit_test(ReceiveDitch),
                                                       cmocka_unit_test(ReceiveFindDitch),

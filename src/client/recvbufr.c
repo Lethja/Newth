@@ -70,7 +70,7 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
             s = SB_DATA_SIZE;
 
         if ((l = recv(self->serverSocket, buf, s, MSG_PEEK)) == -1)
-            return strerror(platformSocketGetLastError());
+            goto recvBufferAppendChunk_socketError;
 
         if (self->length.chunk.next >= l) {
             if (BufferAppend(self, buf, l))
@@ -78,7 +78,7 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
 
             self->length.chunk.next -= (PlatformFileOffset) l, len -= l;
             if (recv(self->serverSocket, buf, l, 0) == -1)
-                return strerror(platformSocketGetLastError());
+                goto recvBufferAppendChunk_socketError;
         } else {
             char *p = &buf[self->length.chunk.next];
             if (strcmp(p, HTTP_EOL) != 0)
@@ -89,7 +89,7 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
 
             self->length.chunk.next -= self->length.chunk.next, len -= l;
             if (recv(self->serverSocket, buf, self->length.chunk.next, 0) == -1)
-                return strerror(platformSocketGetLastError());
+                goto recvBufferAppendChunk_socketError;
         }
 
         if (l < s)
@@ -107,7 +107,7 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
         size_t l, j, k;
 
         if ((k = recv(self->serverSocket, b, 19, MSG_PEEK)) == -1)
-            return strerror(platformSocketGetLastError());
+            goto recvBufferAppendChunk_socketError;
 
         else if (k < (self->length.chunk.next == -1 ? 3 : 5))
             return NULL; /* Chunk not available yet */
@@ -130,7 +130,7 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
         j = (&finish[2] - b);
 
         if (recv(self->serverSocket, b, j, 0) == -1)
-            return strerror(platformSocketGetLastError());
+            goto recvBufferAppendChunk_socketError;
 
         if (l > 0) {
             self->length.chunk.next = (PlatformFileOffset) l;
@@ -142,6 +142,20 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
     }
 
     return NULL;
+
+    recvBufferAppendChunk_socketError:
+    {
+        int e;
+        switch ((e = platformSocketGetLastError())) {
+            case SOCKET_TRY_AGAIN:
+#if SOCKET_TRY_AGAIN != SOCKET_WOULD_BLOCK
+            case SOCKET_WOULD_BLOCK:
+#endif
+                return "Try Again";
+            default:
+                return strerror(e);
+        }
+    }
 }
 
 #pragma endregion
