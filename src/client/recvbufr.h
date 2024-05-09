@@ -61,6 +61,9 @@ typedef struct RecvBuffer {
  * @param self The buffer to start or append more network data into the buffer of
  * @param len The length of the network data to fetch
  * @return NULL on success, user friendly error message otherwise
+ * @remark The length serves as a maximum amount of data to request.
+ * It's possible for the actual length of data returned to be less including zero. If the exact amount of data appended
+ * is important then subtract RecvBuffer.len after calling this function by what it was before to get appended bytes.
  */
 const char *recvBufferAppend(RecvBuffer *self, size_t len);
 
