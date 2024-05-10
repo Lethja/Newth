@@ -15,7 +15,7 @@ typedef struct AddressQueue {
     PathQueue **queue;
 } AddressQueue;
 
-extern char *pathQueueAppendOrCreate(SocketAddress *address, const char *path);
+extern const char *pathQueueAppendOrCreate(SocketAddress *address, const char *path);
 
 extern void *pathQueueFind(SocketAddress *address, const char *path, size_t *addressIdx, size_t *pathIdx);
 

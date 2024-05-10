@@ -49,7 +49,7 @@ void siteArrayActiveSet(Site *site);
  * @param siteNumber The site number to set to active
  * @return NULL on success, user friendly error message as to why the site couldn't be changed otherwise
  */
-char *siteArrayActiveSetNth(long siteNumber);
+const char *siteArrayActiveSetNth(long siteNumber);
 
 /**
  * Add a site to the list of mounted devices
@@ -120,7 +120,7 @@ void *siteDirectoryListingOpen(Site *self, char *path);
  * @param st Out: The file stat structure to populate
  * @return NULL on success, user friendly error message otherwise
  */
-char *siteDirectoryListingEntryStat(Site *self, void *listing, void *entry, PlatformFileStat *st);
+const char *siteDirectoryListingEntryStat(Site *self, void *listing, void *entry, PlatformFileStat *st);
 
 /**
  * Site-like implementation of POSIX 'readdir()'

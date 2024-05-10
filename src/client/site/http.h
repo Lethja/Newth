@@ -19,7 +19,7 @@ typedef struct HttpSiteDirectoryListing {
 
 void httpSiteSchemeDirectoryListingClose(void *listing);
 
-char *httpSiteSchemeDirectoryListingEntryStat(void *entry, void *listing, PlatformFileStat *st);
+const char *httpSiteSchemeDirectoryListingEntryStat(void *entry, void *listing, PlatformFileStat *st);
 
 void *httpSiteSchemeDirectoryListingOpen(HttpSite *self, char *path);
 

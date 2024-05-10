@@ -378,8 +378,7 @@ static void ReceiveFetchChunkMalformed(void **state) {
     assert_null(recvBufferNewFromUri(&socketBuffer, "http://127.0.0.1:8080", 0));
     recvBufferSetLengthChunk(&socketBuffer);
 
-    assert_non_null(e = recvBufferAppend(&socketBuffer, 512));
-    assert_string_equal(e, "Illegal hex character");
+    assert_ptr_equal(e = recvBufferAppend(&socketBuffer, 512), ErrIllegalHexCharacter);
     recvBufferClear(&socketBuffer);
 }
 
@@ -423,13 +422,11 @@ static void ReceiveFetchChuckNonBlocking(void **state) {
     mockReceiveError = EAGAIN, mockErrorReset = 2;
     recvBufferClear(&socketBuffer);
 
-    assert_non_null(e = recvBufferAppend(&socketBuffer, 10));
-    assert_string_equal(e, "Try Again");
+    assert_ptr_equal(e = recvBufferAppend(&socketBuffer, 10), ErrTryAgain);
     assert_null(recvBufferFetch(&socketBuffer, output, 1, 5));
     assert_string_equal("", output);
 
-    assert_non_null(e = recvBufferAppend(&socketBuffer, 10));
-    assert_string_equal(e, "Try Again");
+    assert_ptr_equal(e = recvBufferAppend(&socketBuffer, 10), ErrTryAgain);
     assert_null(recvBufferFetch(&socketBuffer, output, 5, 5));
     assert_string_equal("", output);
 
@@ -518,13 +515,11 @@ static void ReceiveFetchNonBlocking(void **state) {
     mockReceiveError = EAGAIN, mockErrorReset = 2;
     recvBufferClear(&socketBuffer);
 
-    assert_non_null(e = recvBufferAppend(&socketBuffer, 10));
-    assert_string_equal(e, "Try Again");
+    assert_ptr_equal(e = recvBufferAppend(&socketBuffer, 10), ErrTryAgain);
     assert_null(recvBufferFetch(&socketBuffer, buf, 1, 5));
     assert_string_equal("", buf);
 
-    assert_non_null(e = recvBufferAppend(&socketBuffer, 10));
-    assert_string_equal(e, "Try Again");
+    assert_ptr_equal(e = recvBufferAppend(&socketBuffer, 10), ErrTryAgain);
     assert_null(recvBufferFetch(&socketBuffer, buf, 5, 5));
     assert_string_equal("", buf);
 
@@ -640,7 +635,7 @@ static void ReceiveSendReconnect(void **state) {
     /* Give up after too many attempts */
     mockConnectError = ECONNREFUSED, mockSendError = ECONNRESET, mockErrorReset = 10;
     assert_non_null(e = recvBufferSend(&socketBuffer, data, strlen(data), 0));
-    assert_string_equal(e, "Connection refused");
+    assert_string_equal(e, strerror(ECONNREFUSED));
     assert_int_equal(mockErrorReset, 4);
 }
 

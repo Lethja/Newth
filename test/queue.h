@@ -3,6 +3,7 @@
 
 #include "../src/client/queue.h"
 #include "../src/client/uri.h"
+#include "../src/common/err.h"
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "UnusedParameter"
@@ -215,7 +216,7 @@ static void HttpChunkPartialOverBufferEnd(void **state) {
     char sample1[] = "4" HTTP_EOL "This" HTTP_EOL "3" HTTP_EOL " is" HTTP_EOL "2", sample2[] = HTTP_EOL "2" HTTP_EOL " a" HTTP_EOL "5" HTTP_EOL " test" HTTP_EOL "0" HTTP_EOL;
     size_t len = -1, max = strlen(sample1);
 
-    assert_string_equal(ioHttpBodyChunkStrip((char *) &sample1, &max, &len), "Chunk metadata overflows buffer");
+    assert_ptr_equal(ioHttpBodyChunkStrip((char *) &sample1, &max, &len), ErrChunkMetadataOverflowsBuffer);
     assert_int_equal(len, 0);
     assert_int_equal(max, 7);
     assert_memory_equal(sample1, "This is", max), max = strlen(sample2);

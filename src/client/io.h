@@ -53,7 +53,7 @@ const char *ioHttpBodyChunkHexToSize(const char *hex, size_t *value);
  * In this case the application can process data up to max like normal then should seek the buffer to the 'max' position
  * so that the next chunk can be read in it's entirety.
  */
-char *ioHttpBodyChunkStrip(char *data, size_t *max, size_t *len);
+const char *ioHttpBodyChunkStrip(char *data, size_t *max, size_t *len);
 
 /**
  * Generate a GET HTTP 1.1 request ready for sending to a remote server

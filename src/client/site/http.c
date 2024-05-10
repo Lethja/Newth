@@ -1,5 +1,6 @@
 #include "../site.h"
 #include "http.h"
+#include "../../common/err.h"
 #include "../../common/hex.h"
 #include "../uri.h"
 #include "../xml.h"
@@ -556,7 +557,7 @@ const char *httpSiteSchemeNew(HttpSite *self, const char *path) {
     if (!path) {
         self->socket.serverSocket = INVALID_SOCKET, self->fullUri = NULL, memset(&self->address, 0,
                                                                                  sizeof(SocketAddress));
-        return "No uri specified";
+        return ErrNoUriSpecified;
     }
 
     details = uriDetailsNewFrom(path);
@@ -629,7 +630,7 @@ void httpSiteSchemeDirectoryListingClose(void *listing) {
     DirectoryListingClear(listing), free(listing);
 }
 
-char *httpSiteSchemeDirectoryListingEntryStat(void *listing, void *entry, PlatformFileStat *st) {
+const char *httpSiteSchemeDirectoryListingEntryStat(void *listing, void *entry, PlatformFileStat *st) {
     HttpSiteDirectoryListing *l = listing;
     SiteDirectoryEntry *e = entry;
 
@@ -640,7 +641,7 @@ char *httpSiteSchemeDirectoryListingEntryStat(void *listing, void *entry, Platfo
     details = uriDetailsNewFrom(l->fullUri);
     if (!details.path) {
         uriDetailsFree(&details);
-        return "Uri was not understood";
+        return ErrUriWasNotUnderstood;
     }
 
     if (!(entryPath = malloc(strlen(details.path) + strlen(e->name) + 2))) {

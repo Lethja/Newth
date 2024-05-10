@@ -33,6 +33,7 @@ dl_SOURCES = src/cli/dl.c src/common/defines.h \
     src/client/site/http.c src/client/site/http.h \
     src/client/uri.c src/client/uri.h \
     src/client/xml.c src/client/xml.h \
+    src/common/err.c src/common/err.h \
     src/common/hex.c src/common/hex.h \
     src/common/signal.c src/common/signal.h \
     src/platform/platform.c src/platform/platform.h \
@@ -40,8 +41,9 @@ dl_SOURCES = src/cli/dl.c src/common/defines.h \
 
 
 th_SOURCES = src/cli/th.c src/common/defines.h \
-    src/common/signal.c src/common/signal.h \
+    src/common/err.c src/common/err.h \
     src/common/hex.c src/common/hex.h \
+    src/common/signal.c src/common/signal.h \
     src/platform/platform.c src/platform/platform.h \
     src/server/event.c src/server/event.h \
     src/server/http.c src/server/http.h \
@@ -72,6 +74,7 @@ if CMOCKA
         src/client/xml.c src/client/xml.h \
         src/client/site/file.c src/client/site/file.h \
         src/client/site/http.c src/client/site/http.h \
+        src/common/err.c src/common/err.h \
         src/common/hex.c src/common/hex.h \
         src/common/signal.c src/common/signal.h \
 		src/platform/platform.c src/platform/platform.h \

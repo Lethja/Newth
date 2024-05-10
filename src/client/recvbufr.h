@@ -121,7 +121,7 @@ void recvBufferFailFree(RecvBuffer *self);
  * @param len The length of the buffer to write into including the null terminator
  * @return NULL on success, user friendly error message otherwise
  */
-char *recvBufferFetch(RecvBuffer *self, char *buf, PlatformFileOffset pos, size_t len);
+const char *recvBufferFetch(RecvBuffer *self, char *buf, PlatformFileOffset pos, size_t len);
 
 /**
  * Find a specific character

@@ -1,6 +1,8 @@
 #include "recvbufr.h"
 #include "uri.h"
 
+#include "../common/err.h"
+
 #pragma region Static Helper Functions
 
 /**
@@ -151,7 +153,7 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
 #if SOCKET_TRY_AGAIN != SOCKET_WOULD_BLOCK
             case SOCKET_WOULD_BLOCK:
 #endif
-                return "Try Again";
+                return ErrTryAgain;
             default:
                 return strerror(e);
         }
@@ -195,7 +197,7 @@ const char *recvBufferAppend(RecvBuffer *self, size_t len) {
                     case SOCKET_WOULD_BLOCK:
 #endif
                         /* TODO: something sensible */
-                        return "Try Again";
+                        return ErrTryAgain;
                     default:
                         return strerror(platformSocketGetLastError());
                 }
@@ -263,7 +265,7 @@ void recvBufferFailFree(RecvBuffer *self) {
         free(self->buffer);
 }
 
-char *recvBufferFetch(RecvBuffer *self, char *buf, PlatformFileOffset pos, size_t len) {
+const char *recvBufferFetch(RecvBuffer *self, char *buf, PlatformFileOffset pos, size_t len) {
     if (self->buffer) {
         size_t l = (self->len - pos);
         if (l < len)
@@ -274,7 +276,7 @@ char *recvBufferFetch(RecvBuffer *self, char *buf, PlatformFileOffset pos, size_
         return NULL;
     }
 
-    return "No buffered data";
+    return ErrNoBufferedData;
 }
 
 PlatformFileOffset recvBufferFind(RecvBuffer *self, PlatformFileOffset pos, const char *token, size_t len) {

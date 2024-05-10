@@ -2,6 +2,7 @@
 #include <sys/types.h>
 #include "recvbufr.h"
 #include "io.h"
+#include "../common/err.h"
 
 #pragma region Static Helper Function
 
@@ -183,13 +184,13 @@ const char *ioHttpBodyChunkHexToSize(const char *hex, size_t *value) {
             char v = (char) (((hex[i] & 0xF) + (hex[i] >> 6)) | ((hex[i] >> 3) & 0x8));
             *value = (*value << 4) | (size_t) v;
         } else
-            return "Illegal hex character";
+            return ErrIllegalHexCharacter;
     }
 
     return NULL;
 }
 
-char *ioHttpBodyChunkStrip(char *data, size_t *max, size_t *len) {
+const char *ioHttpBodyChunkStrip(char *data, size_t *max, size_t *len) {
     size_t i, j, l;
     char chunk[20] = {0};
 
@@ -204,7 +205,7 @@ char *ioHttpBodyChunkStrip(char *data, size_t *max, size_t *len) {
         }
 
         if (!(l = strlen(chunk)))
-            return "Malformed or impractically large HTTP chunk request";
+            return ErrMalformedOrImpracticallyLargeHttpChunkRequest;
 
         if (!(ioHttpBodyChunkHexToSize(chunk, &j)) && j)
             *len = i + l + 2, memmove(data, &data[*len], *max - *len), *max -= *len, *len = j;
@@ -232,11 +233,11 @@ char *ioHttpBodyChunkStrip(char *data, size_t *max, size_t *len) {
 
             if (j == l) {
                 *max = i;
-                return "Chunk metadata overflows buffer";
+                return ErrChunkMetadataOverflowsBuffer;
             }
 
             if (!(l = strlen(chunk)))
-                return "Malformed or impractically large HTTP chunk request";
+                return ErrMalformedOrImpracticallyLargeHttpChunkRequest;
 
             /* Remove chunk from data stream so it can be processed by other functions */
             if (!(ioHttpBodyChunkHexToSize(chunk, &j)) && j) {
@@ -247,7 +248,7 @@ char *ioHttpBodyChunkStrip(char *data, size_t *max, size_t *len) {
                 return NULL;
             }
         } else
-            return "Unexpected end to chunk";
+            return ErrUnexpectedEndToChunk;
     }
 
     return NULL;

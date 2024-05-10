@@ -152,7 +152,7 @@ const char *HttpHeaderResponseFile = "HTTP/1.1 200 OK" HTTP_EOL
 
 static void SiteHttpNew(void **state) {
     Site site;
-    assert_string_equal(siteNew(&site, SITE_HTTP, NULL), "No uri specified");
+    assert_ptr_equal(siteNew(&site, SITE_HTTP, NULL), ErrNoUriSpecified);
     assert_int_equal(site.type, SITE_HTTP);
     assert_int_equal(site.site.http.socket.serverSocket, -1);
     assert_null(site.site.http.fullUri);

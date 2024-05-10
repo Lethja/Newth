@@ -32,7 +32,7 @@ static inline void parseUris(int argc, char **argv) {
         UriDetails details;
         SocketAddress *address = parseUri(argv[i], &details);
         if (address) {
-            char *err;
+            const char *err;
             if ((err = pathQueueAppendOrCreate(address, details.path ? details.path : "/")))
                 printf("ERR: '%s' (%s)\n", argv[i], err), ++e;
         } else
@@ -161,7 +161,7 @@ static inline void processCommand(char **args) {
 
     if (args[1] == NULL || args[1][0] == '-') {
         long l;
-        char *str;
+        const char *str;
         switch (toupper(args[0][0])) {
             case 'D':
                 if (toupper(args[0][1]) == 'I' && toupper(args[0][2]) == 'R') {

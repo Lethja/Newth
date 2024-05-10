@@ -1,4 +1,5 @@
 #include "site.h"
+#include "../common/err.h"
 
 #pragma region Site Array Type & Functions
 
@@ -58,9 +59,9 @@ void siteArrayActiveSet(Site *site) {
     }
 }
 
-char *siteArrayActiveSetNth(long siteNumber) {
+const char *siteArrayActiveSetNth(long siteNumber) {
     if (siteNumber >= Sites.len)
-        return "Invalid site";
+        return ErrInvalidSite;
 
     Sites.set = siteNumber;
     return NULL;
@@ -144,7 +145,7 @@ const char *siteNew(Site *site, enum SiteType type, const char *path) {
         case SITE_HTTP:
             return httpSiteSchemeNew(&site->site.http, path);
         default:
-            return "Unknown mount type";
+            return ErrUnknownMountType;
     }
 }
 
@@ -192,7 +193,7 @@ void *siteDirectoryListingOpen(Site *self, char *path) {
     }
 }
 
-char *siteDirectoryListingEntryStat(Site *self, void *listing, void *entry, PlatformFileStat *st) {
+const char *siteDirectoryListingEntryStat(Site *self, void *listing, void *entry, PlatformFileStat *st) {
     switch (self->type) {
         case SITE_FILE:
             return fileSiteSchemeDirectoryListingEntryStat(listing, entry, st);

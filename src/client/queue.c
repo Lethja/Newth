@@ -1,13 +1,14 @@
 #include "queue.h"
 #include "../platform/platform.h"
+#include "../common/err.h"
 
 AddressQueue *addressQueue = NULL;
 
-static inline char *PathAppendOrCreate(PathQueue *pathQueue, const char *path) {
+static inline const char *PathAppendOrCreate(PathQueue *pathQueue, const char *path) {
     size_t i;
 
     if (!pathQueue)
-        return "No Queue";
+        return ErrNoQueue;
 
     if (pathQueue->paths == NULL) {
         if (!(pathQueue->paths = malloc(sizeof(char *))))
@@ -62,7 +63,7 @@ static inline char *newPathQueue(PathQueue **self, SocketAddress *address) {
     return NULL;
 }
 
-char *pathQueueAppendOrCreate(SocketAddress *address, const char *path) {
+const char *pathQueueAppendOrCreate(SocketAddress *address, const char *path) {
     if (addressQueue) {
         size_t i;
 

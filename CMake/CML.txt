@@ -42,7 +42,9 @@ add_executable(dl ../src/cli/dl.c
         ../src/common/hex.c ../src/common/hex.h
         ../src/common/signal.c ../src/common/signal.h
         ../src/platform/platform.c ../src/platform/platform.h
-        ${PLATFORM_SRC})
+        ${PLATFORM_SRC}
+        ../src/common/err.c
+        ../src/common/err.h)
 
 target_compile_definitions(dl PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
 
@@ -56,7 +58,9 @@ add_executable(th ../src/cli/th.c ../src/common/defines.h
         ../src/server/routine.c ../src/server/routine.h
         ../src/server/server.h ../src/server/server.c
         ../src/server/sendbufr.c ../src/server/sendbufr.h
-        ${MULTIPLEX_SRC} ${PLATFORM_SRC} ${WSOCK_SRC})
+        ${MULTIPLEX_SRC} ${PLATFORM_SRC} ${WSOCK_SRC}
+        ../src/common/err.c
+        ../src/common/err.h)
 
 target_compile_definitions(th PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>" PLATFORM_NET_ADAPTER=1 PLATFORM_NET_LISTEN=1)
 
@@ -67,7 +71,9 @@ endif ()
 # Unit Test Binary
 if (ENABLE_TEST)
     if (ENABLE_MOCK)
-        set(MOCK_SRC ../src/platform/mockput.c)
+        set(MOCK_SRC ../src/platform/mockput.c
+                ../src/common/err.c
+                ../src/common/err.h)
     endif ()
 
     add_executable(test
@@ -119,7 +125,9 @@ if (WIN32)
             ../src/server/http.c ../src/server/http.h
             ../src/server/routine.c ../src/server/routine.h
             ../src/server/sendbufr.c ../src/server/sendbufr.h
-            ${MULTIPLEX_SRC} ${PLATFORM_SRC} ${WSOCK_SRC} ${W32_RES})
+            ${MULTIPLEX_SRC} ${PLATFORM_SRC} ${WSOCK_SRC} ${W32_RES}
+            ../src/common/err.c
+            ../src/common/err.h)
 
     target_compile_definitions(th-gui PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>" PLATFORM_NET_ADAPTER=1 PLATFORM_NET_LISTEN=1)
     if (ENABLE_W32_SOCKET_1)
