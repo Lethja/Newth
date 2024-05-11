@@ -1,6 +1,6 @@
+#include "err.h"
 #include "queue.h"
 #include "../platform/platform.h"
-#include "../common/err.h"
 
 AddressQueue *addressQueue = NULL;
 

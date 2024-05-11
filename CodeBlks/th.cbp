@@ -170,6 +170,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../src/common/hex.h" />
+		<Unit filename="../src/common/signal.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/common/signal.h" />
 		<Unit filename="../src/platform/mscrtdl.c">
 			<Option compilerVar="CC" />
 			<Option target="MingW32 Debug" />

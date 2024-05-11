@@ -113,6 +113,10 @@
 		<Unit filename="../src/cli/dl.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="../src/client/err.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/client/err.h" />
 		<Unit filename="../src/client/io.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -121,6 +125,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../src/client/queue.h" />
+		<Unit filename="../src/client/recvbufr.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/client/recvbufr.h" />
 		<Unit filename="../src/client/site.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -145,6 +153,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../src/common/hex.h" />
+		<Unit filename="../src/common/signal.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/common/signal.h" />
 		<Unit filename="../src/platform/mscrtdl.c">
 			<Option compilerVar="CC" />
 			<Option target="MingW32 Debug" />

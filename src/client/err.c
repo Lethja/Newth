@@ -1,7 +1,6 @@
 const char *ErrAbsolutePathIsBeyondMaximumPathLimit = "Absolute path is beyond maximum path limit";
 const char *ErrAddressNotUnderstood = "Address not understood";
 const char *ErrChunkMetadataOverflowsBuffer = "Chunk metadata overflows buffer";
-const char *ErrCommandNotFound = "Command not found";
 const char *ErrContentLengthValueCausedBufferOverflow = "Content-Length value caused buffer overflow";
 const char *ErrContentLengthValueContainsNonDigitCharacters = "Content-Length value contains non-digit character(s)";
 const char *ErrExceededMaximumAllowedBufferSize = "Exceeded maximum allowed buffer size";
@@ -19,6 +18,7 @@ const char *ErrNoUriSpecified = "No uri specified";
 const char *ErrNotAValidHeaderLine = "Not a valid header line";
 const char *ErrRequestCompleted = "Request completed";
 const char *ErrSchemeNotRecognized = "Scheme not recognized";
+const char *ErrServerReplyNotAcceptable = "Server reply not acceptable";
 const char *ErrStateOfSocketInvalid = "State of socket invalid";
 const char *ErrTokenBiggerThenBufferLimits = "Token bigger then buffer limits";
 const char *ErrTryAgain = "Try again";

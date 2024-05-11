@@ -1,8 +1,9 @@
 #include <ctype.h>
 #include <sys/types.h>
+
+#include "err.h"
 #include "recvbufr.h"
 #include "io.h"
-#include "../common/err.h"
 
 #pragma region Static Helper Function
 

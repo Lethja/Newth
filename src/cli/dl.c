@@ -2,6 +2,7 @@
 #include "../client/queue.h"
 #include "../client/site.h"
 #include "../client/uri.h"
+#include "../client/err.h"
 #include "../common/signal.h"
 
 #include <ctype.h>
@@ -123,7 +124,7 @@ static inline const char *mountSite(const char *parameter) {
     const char *err;
 
     if (!details.host)
-        return "Address not understood";
+        return ErrAddressNotUnderstood;
 
     switch (uriDetailsGetScheme(&details)) {
         case SCHEME_HTTP:
@@ -132,7 +133,7 @@ static inline const char *mountSite(const char *parameter) {
             break;
         default:
         case SCHEME_UNKNOWN:
-            return "Scheme not recognized";
+            return ErrSchemeNotRecognized;
     }
 
     uriDetailsFree(&details);

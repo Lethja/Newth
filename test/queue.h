@@ -1,9 +1,9 @@
 #ifndef NEW_DL_TEST_QUEUE_H
 #define NEW_DL_TEST_QUEUE_H
 
+#include "../src/client/err.h"
 #include "../src/client/queue.h"
 #include "../src/client/uri.h"
-#include "../src/common/err.h"
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "UnusedParameter"

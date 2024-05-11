@@ -1,5 +1,5 @@
+#include "err.h"
 #include "site.h"
-#include "../common/err.h"
 
 #pragma region Site Array Type & Functions
 

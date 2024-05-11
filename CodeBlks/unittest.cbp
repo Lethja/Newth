@@ -110,6 +110,10 @@
 			<Add option="-DSB_DATA_SIZE=128" />
 			<Add option="-DEWOULDBLOCK=41" />
 		</Compiler>
+		<Unit filename="../src/client/err.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/client/err.h" />
 		<Unit filename="../src/client/io.c">
 			<Option compilerVar="CC" />
 		</Unit>

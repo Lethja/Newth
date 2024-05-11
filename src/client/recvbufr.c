@@ -1,7 +1,6 @@
+#include "err.h"
 #include "recvbufr.h"
 #include "uri.h"
-
-#include "../common/err.h"
 
 #pragma region Static Helper Functions
 

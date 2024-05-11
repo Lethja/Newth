@@ -1,5 +1,5 @@
-#ifndef NEW_TH_ERR_H
-#define NEW_TH_ERR_H
+#ifndef NEW_DL_ERR_H
+#define NEW_DL_ERR_H
 
 extern const char *ErrAbsolutePathIsBeyondMaximumPathLimit;
 extern const char *ErrAddressNotUnderstood;
@@ -22,6 +22,7 @@ extern const char *ErrNoUriSpecified;
 extern const char *ErrNotAValidHeaderLine;
 extern const char *ErrRequestCompleted;
 extern const char *ErrSchemeNotRecognized;
+extern const char *ErrServerReplyNotAcceptable;
 extern const char *ErrStateOfSocketInvalid;
 extern const char *ErrTokenBiggerThenBufferLimits;
 extern const char *ErrTryAgain;
@@ -31,4 +32,4 @@ extern const char *ErrUnexpectedEndToChunk;
 extern const char *ErrUnknownMountType;
 extern const char *ErrUriWasNotUnderstood;
 
-#endif /* NEW_TH_ERR_H */
+#endif /* NEW_DL_ERR_H */

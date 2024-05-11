@@ -30,6 +30,7 @@ endif ()
 
 # Client
 add_executable(dl ../src/cli/dl.c
+        ../src/client/err.c ../src/client/err.h
         ../src/client/io.c ../src/client/io.h
         ../src/client/queue.c ../src/client/queue.h
         ../src/client/recvbufr.c ../src/client/recvbufr.h
@@ -42,9 +43,7 @@ add_executable(dl ../src/cli/dl.c
         ../src/common/hex.c ../src/common/hex.h
         ../src/common/signal.c ../src/common/signal.h
         ../src/platform/platform.c ../src/platform/platform.h
-        ${PLATFORM_SRC}
-        ../src/common/err.c
-        ../src/common/err.h)
+        ${PLATFORM_SRC})
 
 target_compile_definitions(dl PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
 
@@ -58,9 +57,7 @@ add_executable(th ../src/cli/th.c ../src/common/defines.h
         ../src/server/routine.c ../src/server/routine.h
         ../src/server/server.h ../src/server/server.c
         ../src/server/sendbufr.c ../src/server/sendbufr.h
-        ${MULTIPLEX_SRC} ${PLATFORM_SRC} ${WSOCK_SRC}
-        ../src/common/err.c
-        ../src/common/err.h)
+        ${MULTIPLEX_SRC} ${PLATFORM_SRC} ${WSOCK_SRC})
 
 target_compile_definitions(th PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>" PLATFORM_NET_ADAPTER=1 PLATFORM_NET_LISTEN=1)
 
@@ -71,15 +68,14 @@ endif ()
 # Unit Test Binary
 if (ENABLE_TEST)
     if (ENABLE_MOCK)
-        set(MOCK_SRC ../src/platform/mockput.c
-                ../src/common/err.c
-                ../src/common/err.h)
+        set(MOCK_SRC ../src/platform/mockput.c)
     endif ()
 
     add_executable(test
             ../test/test.c ../test/mock.h ../test/common.h ../test/fetch.h ../test/platform.h ../test/queue.h
             ../test/recvbufr.h ../test/request.h ../test/site.h ../test/sendbufr.h ../test/xml.h
 
+            ../src/client/err.c ../src/client/err.h
             ../src/client/io.c ../src/client/io.h
             ../src/client/queue.c ../src/client/queue.h
             ../src/client/recvbufr.c ../src/client/recvbufr.h
@@ -125,9 +121,7 @@ if (WIN32)
             ../src/server/http.c ../src/server/http.h
             ../src/server/routine.c ../src/server/routine.h
             ../src/server/sendbufr.c ../src/server/sendbufr.h
-            ${MULTIPLEX_SRC} ${PLATFORM_SRC} ${WSOCK_SRC} ${W32_RES}
-            ../src/common/err.c
-            ../src/common/err.h)
+            ${MULTIPLEX_SRC} ${PLATFORM_SRC} ${WSOCK_SRC} ${W32_RES})
 
     target_compile_definitions(th-gui PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>" PLATFORM_NET_ADAPTER=1 PLATFORM_NET_LISTEN=1)
     if (ENABLE_W32_SOCKET_1)

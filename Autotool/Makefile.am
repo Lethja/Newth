@@ -25,6 +25,7 @@ MULTIPLEX_SRC = src/server/mltiplex/select.c
 endif
 
 dl_SOURCES = src/cli/dl.c src/common/defines.h \
+    src/client/err.c src/client/err.h \
     src/client/io.c src/client/io.h \
     src/client/queue.c src/client/queue.h \
     src/client/recvbufr.c src/client/recvbufr.h \
@@ -33,7 +34,6 @@ dl_SOURCES = src/cli/dl.c src/common/defines.h \
     src/client/site/http.c src/client/site/http.h \
     src/client/uri.c src/client/uri.h \
     src/client/xml.c src/client/xml.h \
-    src/common/err.c src/common/err.h \
     src/common/hex.c src/common/hex.h \
     src/common/signal.c src/common/signal.h \
     src/platform/platform.c src/platform/platform.h \
@@ -41,7 +41,6 @@ dl_SOURCES = src/cli/dl.c src/common/defines.h \
 
 
 th_SOURCES = src/cli/th.c src/common/defines.h \
-    src/common/err.c src/common/err.h \
     src/common/hex.c src/common/hex.h \
     src/common/signal.c src/common/signal.h \
     src/platform/platform.c src/platform/platform.h \
@@ -66,6 +65,7 @@ if CMOCKA
 		test/queue.h test/recvbufr.h test/request.h test/site.h test/sendbufr.h test/xml.h
 
     unittest_SOURCES += src/platform/mockput.c src/platform/mockput.h \
+        src/client/err.c src/client/err.h \
         src/client/io.c src/client/io.h \
         src/client/queue.c src/client/queue.h \
         src/client/recvbufr.c src/client/recvbufr.h \
@@ -74,7 +74,6 @@ if CMOCKA
         src/client/xml.c src/client/xml.h \
         src/client/site/file.c src/client/site/file.h \
         src/client/site/http.c src/client/site/http.h \
-        src/common/err.c src/common/err.h \
         src/common/hex.c src/common/hex.h \
         src/common/signal.c src/common/signal.h \
 		src/platform/platform.c src/platform/platform.h \

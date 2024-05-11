@@ -1,6 +1,6 @@
 #include "../site.h"
 #include "http.h"
-#include "../../common/err.h"
+#include "../../client/err.h"
 #include "../../common/hex.h"
 #include "../uri.h"
 #include "../xml.h"
@@ -593,7 +593,7 @@ const char *httpSiteSchemeNew(HttpSite *self, const char *path) {
         goto httpSiteSchemeNew_closeSocketAndAbort;
 
     if (!(HttpResponseOk(response))) {
-        err = "Server reply not acceptable";
+        err = ErrServerReplyNotAcceptable;
         goto httpSiteSchemeNew_closeSocketAndAbort;
     }
 
