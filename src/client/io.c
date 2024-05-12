@@ -206,7 +206,7 @@ const char *ioHttpBodyChunkStrip(char *data, size_t *max, size_t *len) {
         }
 
         if (!(l = strlen(chunk)))
-            return ErrMalformedOrImpracticallyLargeHttpChunkRequest;
+            return ErrMalformedOrImpracticallyLargeReplyFromRemote;
 
         if (!(ioHttpBodyChunkHexToSize(chunk, &j)) && j)
             *len = i + l + 2, memmove(data, &data[*len], *max - *len), *max -= *len, *len = j;
@@ -238,7 +238,7 @@ const char *ioHttpBodyChunkStrip(char *data, size_t *max, size_t *len) {
             }
 
             if (!(l = strlen(chunk)))
-                return ErrMalformedOrImpracticallyLargeHttpChunkRequest;
+                return ErrMalformedOrImpracticallyLargeReplyFromRemote;
 
             /* Remove chunk from data stream so it can be processed by other functions */
             if (!(ioHttpBodyChunkHexToSize(chunk, &j)) && j) {

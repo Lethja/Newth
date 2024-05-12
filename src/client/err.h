@@ -13,7 +13,7 @@ extern const char *ErrHeaderNotFound;
 extern const char *ErrIllegalHexCharacter;
 extern const char *ErrInvalidSite;
 extern const char *ErrMalformedChunkEncoding;
-extern const char *ErrMalformedOrImpracticallyLargeHttpChunkRequest;
+extern const char *ErrMalformedOrImpracticallyLargeReplyFromRemote;
 extern const char *ErrNoBufferedData;
 extern const char *ErrNoDataToBeRetrieved;
 extern const char *ErrNoHostInformation;

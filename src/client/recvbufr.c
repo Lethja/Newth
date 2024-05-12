@@ -29,22 +29,74 @@ static inline char *BufferAppend(RecvBuffer *self, char *buf, size_t len) {
  * Handles the details of different types of encoding
  * @param self In: The buffer to update the state of
  * @param added In: The amount of data added to the end of the buffer
- * @param error Out: NULL on success, user friendly error message otherwise
  * @return zero when the data transmission should keep going, other on transmission finished or error
  */
 static inline char DataIncrement(RecvBuffer *self, PlatformFileOffset added) {
     if (self->options & RECV_BUFFER_DATA_LENGTH_KNOWN) {
         self->length.known.escape += added;
         if (self->length.known.escape >= self->length.known.total)
-            return 1;
+            goto DataIncrement_complete;
     } else if (self->options & RECV_BUFFER_DATA_LENGTH_TOKEN) {
-        /* TODO: Check for token in the buffer */
+        self->length.token.length += added;
+        if (platformStringFindNeedleRaw(self->buffer, self->length.token.token, self->len,
+                                        strlen(self->length.token.token)))
+            goto DataIncrement_complete;
     } else {
         self->length.unknown.escape += added;
         if (self->length.unknown.escape >= self->length.unknown.limit)
-            return 1;
+            goto DataIncrement_complete;
     }
     return 0;
+
+    DataIncrement_complete:
+    /* TODO: Use `recvBufferSetLengthComplete()` to indicate the data is completed */
+    return 1;
+}
+
+/**
+ * Pull data into the RecvBuffer from a socket. Handles end of buffer internally
+ * @param self The RecvBuffer to pull data to and from
+ * @param len The maximum length of the data to be pulled
+ * @return NULL on success, user friendly error message otherwise
+ */
+static inline const char *BufferPull(RecvBuffer *self, size_t *i, const size_t *s) {
+    PlatformFileOffset l;
+    char buf[SB_DATA_SIZE];
+
+    switch ((l = recv(self->serverSocket, buf, *s, 0))) {
+        case -1:
+            switch (platformSocketGetLastError()) {
+#pragma region Handle socket error
+                case SOCKET_TRY_AGAIN:
+#if SOCKET_TRY_AGAIN != SOCKET_WOULD_BLOCK
+                case SOCKET_WOULD_BLOCK:
+#endif
+                    /* TODO: something sensible */
+                    return ErrTryAgain;
+                default:
+                    return strerror(platformSocketGetLastError());
+            }
+        case 0:
+            if (*i)
+                return NULL;
+
+            return "No data to be retrieved";
+        default:
+            if (BufferAppend(self, buf, l))
+                return strerror(errno);
+
+            if (DataIncrement(self, l)) {
+                if (!(self->options & RECV_BUFFER_DATA_LENGTH_COMPLETE))
+                    return ErrMalformedOrImpracticallyLargeReplyFromRemote;
+
+                return NULL;
+            }
+
+            *i += l;
+            break;
+    }
+
+    return NULL;
 }
 
 /**
@@ -186,7 +238,7 @@ const char *recvBufferAppend(RecvBuffer *self, size_t len) {
         if (s > SB_DATA_SIZE)
             s = SB_DATA_SIZE;
 
-        /* TODO: Set blocking, handle length modes */
+        /* TODO: Replace with BufferPull() */
         switch ((l = recv(self->serverSocket, buf, s, 0))) {
             case -1:
                 switch (platformSocketGetLastError()) {
@@ -204,7 +256,7 @@ const char *recvBufferAppend(RecvBuffer *self, size_t len) {
                 if (i)
                     return NULL;
 
-                return "No data to be retrieved";
+                return ErrNoDataToBeRetrieved;
             default:
                 if (BufferAppend(self, buf, l))
                     return strerror(errno);
