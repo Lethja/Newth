@@ -71,7 +71,6 @@ static inline const char *BufferPull(RecvBuffer *self, size_t *i, const size_t *
 #if SOCKET_TRY_AGAIN != SOCKET_WOULD_BLOCK
                 case SOCKET_WOULD_BLOCK:
 #endif
-                    /* TODO: something sensible */
                     return ErrTryAgain;
                 default:
                     return strerror(platformSocketGetLastError());
@@ -80,17 +79,13 @@ static inline const char *BufferPull(RecvBuffer *self, size_t *i, const size_t *
             if (*i)
                 return NULL;
 
-            return "No data to be retrieved";
+            return ErrNoDataToBeRetrieved;
         default:
             if (BufferAppend(self, buf, l))
                 return strerror(errno);
 
-            if (DataIncrement(self, l)) {
-                if (!(self->options & RECV_BUFFER_DATA_LENGTH_COMPLETE))
-                    return ErrMalformedOrImpracticallyLargeReplyFromRemote;
-
+            if (DataIncrement(self, l))
                 return NULL;
-            }
 
             *i += l;
             break;
@@ -135,7 +130,7 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
         } else {
             char *p = &buf[self->length.chunk.next];
             if (strcmp(p, HTTP_EOL) != 0)
-                return "Malformed Chunk Encoding";
+                return ErrMalformedChunkEncoding;
 
             if (BufferAppend(self, buf, len))
                 return strerror(errno);
@@ -167,12 +162,12 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
 
         if (self->length.chunk.next != -1) {
             if (!(hex = strstr(b, HTTP_EOL)))
-                return "Malformed Chunk Encoding";
+                return ErrMalformedChunkEncoding;
 
             if ((finish = strstr(&hex[2], HTTP_EOL)))
                 hex = &hex[2];
             else
-                return "Malformed Chunk Encoding";
+                return ErrMalformedChunkEncoding;
         } else
             hex = b, finish = strstr(b, HTTP_EOL);
 
@@ -215,10 +210,9 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
 
 const char *recvBufferAppend(RecvBuffer *self, size_t len) {
     size_t i = 0;
-    const char *error = NULL;
 
     if (self->options & RECV_BUFFER_DATA_LENGTH_COMPLETE)
-        return "Request completed";
+        return ErrRequestCompleted;
 
     if (!self->buffer) {
         if (!(self->buffer = calloc(SB_DATA_SIZE, 1)))
@@ -238,7 +232,12 @@ const char *recvBufferAppend(RecvBuffer *self, size_t len) {
         if (s > SB_DATA_SIZE)
             s = SB_DATA_SIZE;
 
-        /* TODO: Replace with BufferPull() */
+        /* TODO: Fix and use BufferPull() */
+        /*
+        if((error = BufferPull(self, &i, &s)))
+            return error;
+        */
+
         switch ((l = recv(self->serverSocket, buf, s, 0))) {
             case -1:
                 switch (platformSocketGetLastError()) {
@@ -247,7 +246,6 @@ const char *recvBufferAppend(RecvBuffer *self, size_t len) {
 #if SOCKET_TRY_AGAIN != SOCKET_WOULD_BLOCK
                     case SOCKET_WOULD_BLOCK:
 #endif
-                        /* TODO: something sensible */
                         return ErrTryAgain;
                     default:
                         return strerror(platformSocketGetLastError());
@@ -261,9 +259,8 @@ const char *recvBufferAppend(RecvBuffer *self, size_t len) {
                 if (BufferAppend(self, buf, l))
                     return strerror(errno);
 
-                /* TODO: Replace with a function pointer to a append function for each length mode */
                 if (DataIncrement(self, l))
-                    return error;
+                    return NULL;
 
                 i += l;
                 break;
@@ -406,7 +403,7 @@ const char *recvBufferFindAndFetch(RecvBuffer *self, const char *token, size_t l
     const char *e;
 
     if (max < len)
-        return "Token bigger then buffer limits";
+        return ErrTokenBiggerThenBufferLimits;
 
     if (!self->buffer)
         if ((e = recvBufferAppend(self, SB_DATA_SIZE)))
@@ -425,7 +422,7 @@ const char *recvBufferFindAndFetch(RecvBuffer *self, const char *token, size_t l
     while (recvBufferFind(self, i, token, len) == -1) {
         if (!(e = recvBufferAppend(self, SB_DATA_SIZE))) {
             if (self->len > max)
-                return "Exceeded maximum allowed buffer size";
+                return ErrExceededMaximumAllowedBufferSize;
         } else
             return e;
     }
