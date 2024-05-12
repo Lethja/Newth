@@ -54,47 +54,6 @@ static inline char DataIncrement(RecvBuffer *self, PlatformFileOffset added) {
 }
 
 /**
- * Pull data into the RecvBuffer from a socket. Handles end of buffer internally
- * @param self The RecvBuffer to pull data to and from
- * @param len The maximum length of the data to be pulled
- * @return NULL on success, user friendly error message otherwise
- */
-static inline const char *BufferPull(RecvBuffer *self, size_t *i, const size_t *s) {
-    PlatformFileOffset l;
-    char buf[SB_DATA_SIZE];
-
-    switch ((l = recv(self->serverSocket, buf, *s, 0))) {
-        case -1:
-            switch (platformSocketGetLastError()) {
-#pragma region Handle socket error
-                case SOCKET_TRY_AGAIN:
-#if SOCKET_TRY_AGAIN != SOCKET_WOULD_BLOCK
-                case SOCKET_WOULD_BLOCK:
-#endif
-                    return ErrTryAgain;
-                default:
-                    return strerror(platformSocketGetLastError());
-            }
-        case 0:
-            if (*i)
-                return NULL;
-
-            return ErrNoDataToBeRetrieved;
-        default:
-            if (BufferAppend(self, buf, l))
-                return strerror(errno);
-
-            if (DataIncrement(self, l))
-                return NULL;
-
-            *i += l;
-            break;
-    }
-
-    return NULL;
-}
-
-/**
  * Decode and append a HTTP chunk encoded body to the socket buffer
  * @param self The socket buffer to append to
  * @param len The maximum length of data to append
@@ -232,12 +191,8 @@ const char *recvBufferAppend(RecvBuffer *self, size_t len) {
         if (s > SB_DATA_SIZE)
             s = SB_DATA_SIZE;
 
-        /* TODO: Fix and use BufferPull() */
-        /*
-        if((error = BufferPull(self, &i, &s)))
-            return error;
-        */
-
+        recvBufferAppend_tryAgain:
+        /* TODO: Add callback call here so progress can be reported and a stuck connection can be cancelled by a user */
         switch ((l = recv(self->serverSocket, buf, s, 0))) {
             case -1:
                 switch (platformSocketGetLastError()) {
@@ -246,7 +201,7 @@ const char *recvBufferAppend(RecvBuffer *self, size_t len) {
 #if SOCKET_TRY_AGAIN != SOCKET_WOULD_BLOCK
                     case SOCKET_WOULD_BLOCK:
 #endif
-                        return ErrTryAgain;
+                        goto recvBufferAppend_tryAgain;
                     default:
                         return strerror(platformSocketGetLastError());
                 }

@@ -510,28 +510,16 @@ static void ReceiveFetchNonBlocking(void **state) {
 
 #pragma endregion
 
-#pragma region Client is too quick, no packets received
+#pragma region Client is too quick, no packets at the moment, should block until at least a byte is ready
 
     mockReceiveError = EAGAIN, mockErrorReset = 2;
     recvBufferClear(&socketBuffer);
-
-    assert_ptr_equal(e = recvBufferAppend(&socketBuffer, 10), ErrTryAgain);
-    assert_null(recvBufferFetch(&socketBuffer, buf, 1, 5));
-    assert_string_equal("", buf);
-
-    assert_ptr_equal(e = recvBufferAppend(&socketBuffer, 10), ErrTryAgain);
-    assert_null(recvBufferFetch(&socketBuffer, buf, 5, 5));
-    assert_string_equal("", buf);
-
-#pragma region The transmission has caught up
 
     assert_null(recvBufferAppend(&socketBuffer, 10));
     assert_null(recvBufferFetch(&socketBuffer, buf, 0, 11));
     assert_string_equal("1234567890", buf);
 
-#pragma endregion /* The transmission has caught up */
-
-#pragma endregion /* Client is too quick, no packets received */
+#pragma endregion
 
 #pragma region There is some packets but less then requested
 
