@@ -430,8 +430,15 @@ static inline void HeadersCompute(HttpSite *self, HttpResponseHeader *headerResp
     if (!strcasecmp(mode, "GET")) {
         if (headerResponse->options & SA_PROTOCOL_ALT_MODE)
             recvBufferSetLengthChunk(&self->socket);
-        else
-            recvBufferSetLengthKnown(&self->socket, headerResponse->length);
+        else {
+            if (headerResponse->length == self->socket.len)
+                recvBufferSetLengthComplete(&self->socket);
+            else {
+                /* Add any existing buffer that was picked up with the header */
+                recvBufferSetLengthKnown(&self->socket, headerResponse->length);
+                self->socket.length.known.escape = (PlatformFileOffset) self->socket.len;
+            }
+        }
     } else
         recvBufferSetLengthComplete(&self->socket);
 }
@@ -775,6 +782,8 @@ void *httpSiteSchemeDirectoryListingOpen(HttpSite *self, char *path) {
     if (!directoryListing->len)
         httpSiteSchemeDirectoryListingClose(directoryListing), directoryListing = NULL;
 
+    recvBufferClear(&self->socket);
+
     return directoryListing;
 
     httpSiteOpenDirectoryListing_abort3:
@@ -790,6 +799,7 @@ void *httpSiteSchemeDirectoryListingOpen(HttpSite *self, char *path) {
 
     httpSiteOpenDirectoryListing_abort1:
     uriDetailsFree(&details);
+    recvBufferClear(&self->socket);
 
     return NULL;
 }

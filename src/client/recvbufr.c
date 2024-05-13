@@ -156,7 +156,7 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
         switch ((e = platformSocketGetLastError())) {
             case SOCKET_TRY_AGAIN:
 #if SOCKET_TRY_AGAIN != SOCKET_WOULD_BLOCK
-            case SOCKET_WOULD_BLOCK:
+                case SOCKET_WOULD_BLOCK:
 #endif
                 return ErrTryAgain;
             default:
@@ -199,7 +199,7 @@ const char *recvBufferAppend(RecvBuffer *self, size_t len) {
 #pragma region Handle socket error
                     case SOCKET_TRY_AGAIN:
 #if SOCKET_TRY_AGAIN != SOCKET_WOULD_BLOCK
-                    case SOCKET_WOULD_BLOCK:
+                        case SOCKET_WOULD_BLOCK:
 #endif
                         goto recvBufferAppend_tryAgain;
                     default:
@@ -505,7 +505,6 @@ void recvBufferSetLengthComplete(RecvBuffer *self) {
     self->options &=
             ~(RECV_BUFFER_DATA_LENGTH_KNOWN) | ~(RECV_BUFFER_DATA_LENGTH_TOKEN) | ~(RECV_BUFFER_DATA_LENGTH_CHUNK);
     self->options |= RECV_BUFFER_DATA_LENGTH_COMPLETE;
-    self->length.chunk.total = 0, self->length.chunk.next = -1;
 }
 
 void recvBufferSetLengthKnown(RecvBuffer *self, PlatformFileOffset length) {
@@ -523,7 +522,8 @@ void recvBufferSetLengthUnknown(RecvBuffer *self, size_t limit) {
 }
 
 void recvBufferSetLengthToken(RecvBuffer *self, const char *token, size_t length) {
-    self->options &= ~(RECV_BUFFER_DATA_LENGTH_CHUNK) | ~(RECV_BUFFER_DATA_LENGTH_KNOWN);
+    self->options &=
+            ~(RECV_BUFFER_DATA_LENGTH_CHUNK) | ~(RECV_BUFFER_DATA_LENGTH_KNOWN) | ~(RECV_BUFFER_DATA_LENGTH_COMPLETE);
     self->options |= RECV_BUFFER_DATA_LENGTH_TOKEN;
     self->length.token.token = token, self->length.token.length = length;
 }
