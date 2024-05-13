@@ -42,7 +42,7 @@ static inline int HttpResponseToSystemError(const char *response) {
                 case '0':
                     switch (response[2]) {
                         case '0':
-                            return EBADFD;
+                            return EFAULT;
                         case '1':
                         case '2':
                         case '3':
