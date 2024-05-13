@@ -14,7 +14,10 @@
 #include <dos.h>
 
 #ifdef DJGPP
+
 #include <dirent.h>
+#include <sys/stat.h>
+
 #else /* Open Watcom assumed */
 
 #include <direct.h>

@@ -269,8 +269,8 @@ char platformDirEntryIsDirectory(PlatformDirEntry *entry, PlatformDir *dirp, Pla
     PlatformDir *pd = dirp;
     if (!st) {
         struct stat s;
-        char tmp1[PATH_MAX], tmp2[PATH_MAX];
-        strncpy((char *) &tmp1, pd->path, PATH_MAX);
+        char tmp1[PATH_MAX] = {0}, tmp2[PATH_MAX];
+        strncpy((char *) &tmp1, pd->path, PATH_MAX-1);
         platformPathCombine((char *) &tmp2, (char *) &tmp1, entry->d_name);
         _fixpath((char *) &tmp2, (char *) &tmp1);
         if (!platformFileStat((char *) &tmp1, &s))
