@@ -469,27 +469,69 @@ const char *recvBufferReconnect(RecvBuffer *self) {
 }
 
 const char *recvBufferSend(RecvBuffer *self, const void *data, size_t n, int flags) {
-    const char *e = 0;
-    SOCK_BUF_TYPE s;
+    const char *e = 0, *d = data;
+    SOCK_BUF_TYPE s, sent = 0;
     unsigned int attempt = 0;
+    char dump[SB_DATA_SIZE];
 
-    recvBufferSend_retry:
+#pragma region Limit the amount of reattempts at establishing a connection there can be
+
+    recvBufferSend_reattempt:
     if (attempt++ >= 3)
         return e;
 
-    switch ((s = send(self->serverSocket, data, n, flags))) {
+#pragma endregion
+
+#pragma region Make sure the entirity of the data is sent on a non-blocking socket
+
+    recvBufferSend_keepSending:
+    switch ((s = send(self->serverSocket, &d[sent], n - sent, flags))) {
         case -1:
+            switch (platformSocketGetLastError()) {
+                case SOCKET_TRY_AGAIN:
+#if SOCKET_TRY_AGAIN != SOCKET_WOULD_BLOCK
+                    case SOCKET_WOULD_BLOCK:
+#endif
+                    /* TODO: Platform agnostic sleep in milliseconds */
+                    usleep(500 * 1000);
+                    goto recvBufferSend_reattempt;
+            }
         case 0:
-            /* TODO: attempt reconnect */
+        recvBufferSend_reconnect:
             e = recvBufferReconnect(self);
-            if (e)
-                goto recvBufferSend_retry;
-            break;
+            goto recvBufferSend_reattempt;
         default:
-            if (s == n)
+            sent += s;
+            if (sent == n)
                 break;
-            /* TODO: Do something about the size mismatch */
+
+            goto recvBufferSend_keepSending;
     }
+
+#pragma endregion
+
+#pragma region Check the remote is alive and responding otherwise reattempt
+
+    recvBufferSend_reply:
+    switch (recv(self->serverSocket, dump, SB_DATA_SIZE, MSG_PEEK)) {
+        case -1:
+            switch (platformSocketGetLastError()) {
+                case SOCKET_TRY_AGAIN:
+#if SOCKET_TRY_AGAIN != SOCKET_WOULD_BLOCK
+                    case SOCKET_WOULD_BLOCK:
+#endif
+                    /* TODO: Platform agnostic sleep in milliseconds */
+                    usleep(500 * 1000);
+                    goto recvBufferSend_reply;
+            }
+        case 0:
+            sent = 0;
+            goto recvBufferSend_reconnect;
+        default:
+            break;
+    }
+
+#pragma endregion
 
     return NULL;
 }
