@@ -134,7 +134,6 @@ const char *ioHttpResponseHeaderRead(RecvBuffer *socket, char **header) {
     if (!header)
         return "Header not assigned";
 
-    recvBufferClear(socket);
     recvBufferSetLengthToken(socket, token, len);
 
     if ((e = recvBufferFindAndFetch(socket, token, len, 4096)))

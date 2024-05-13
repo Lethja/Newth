@@ -495,35 +495,35 @@ const char *recvBufferSend(RecvBuffer *self, const void *data, size_t n, int fla
 }
 
 void recvBufferSetLengthChunk(RecvBuffer *self) {
-    self->options &=
-            ~(RECV_BUFFER_DATA_LENGTH_KNOWN) | ~(RECV_BUFFER_DATA_LENGTH_TOKEN) | ~(RECV_BUFFER_DATA_LENGTH_COMPLETE);
+    self->options &= ~(RECV_BUFFER_DATA_LENGTH_KNOWN | RECV_BUFFER_DATA_LENGTH_TOKEN |
+                       RECV_BUFFER_DATA_LENGTH_COMPLETE);
     self->options |= RECV_BUFFER_DATA_LENGTH_CHUNK;
     self->length.chunk.total = 0, self->length.chunk.next = -1;
 }
 
 void recvBufferSetLengthComplete(RecvBuffer *self) {
-    self->options &=
-            ~(RECV_BUFFER_DATA_LENGTH_KNOWN) | ~(RECV_BUFFER_DATA_LENGTH_TOKEN) | ~(RECV_BUFFER_DATA_LENGTH_CHUNK);
+    self->options &= ~(RECV_BUFFER_DATA_LENGTH_KNOWN | RECV_BUFFER_DATA_LENGTH_TOKEN | RECV_BUFFER_DATA_LENGTH_CHUNK);
     self->options |= RECV_BUFFER_DATA_LENGTH_COMPLETE;
+    /* Clear data */
+    self->length.chunk.total = 0, self->length.chunk.next = -1;
 }
 
 void recvBufferSetLengthKnown(RecvBuffer *self, PlatformFileOffset length) {
-    self->options &=
-            ~(RECV_BUFFER_DATA_LENGTH_CHUNK) | ~(RECV_BUFFER_DATA_LENGTH_TOKEN) | ~(RECV_BUFFER_DATA_LENGTH_COMPLETE);
+    self->options &= ~(RECV_BUFFER_DATA_LENGTH_CHUNK | RECV_BUFFER_DATA_LENGTH_TOKEN |
+                       RECV_BUFFER_DATA_LENGTH_COMPLETE);
     self->options |= RECV_BUFFER_DATA_LENGTH_KNOWN;
     self->length.known.total = length, self->length.known.escape = 0;
 }
 
 void recvBufferSetLengthUnknown(RecvBuffer *self, size_t limit) {
-    self->options &=
-            ~(RECV_BUFFER_DATA_LENGTH_CHUNK) | ~(RECV_BUFFER_DATA_LENGTH_KNOWN) | ~(RECV_BUFFER_DATA_LENGTH_TOKEN) |
-            ~(RECV_BUFFER_DATA_LENGTH_COMPLETE);
+    self->options &= ~(RECV_BUFFER_DATA_LENGTH_CHUNK | RECV_BUFFER_DATA_LENGTH_KNOWN | RECV_BUFFER_DATA_LENGTH_TOKEN |
+                       RECV_BUFFER_DATA_LENGTH_COMPLETE);
     self->length.unknown.limit = limit, self->length.unknown.escape = 0;
 }
 
 void recvBufferSetLengthToken(RecvBuffer *self, const char *token, size_t length) {
-    self->options &=
-            ~(RECV_BUFFER_DATA_LENGTH_CHUNK) | ~(RECV_BUFFER_DATA_LENGTH_KNOWN) | ~(RECV_BUFFER_DATA_LENGTH_COMPLETE);
+    self->options &= ~(RECV_BUFFER_DATA_LENGTH_CHUNK | RECV_BUFFER_DATA_LENGTH_KNOWN |
+                       RECV_BUFFER_DATA_LENGTH_COMPLETE);
     self->options |= RECV_BUFFER_DATA_LENGTH_TOKEN;
     self->length.token.token = token, self->length.token.length = length;
 }
