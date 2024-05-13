@@ -28,6 +28,34 @@ static inline char HttpResponseOk(const char *response) {
 }
 
 /**
+ * Give the closest system error message to the HTTP response
+ * @param response The HTTP response to convert to a system error
+ * @return A system error or -1 if there isn't a good match
+ */
+static inline int HttpResponseToSystemError(const char *response) {
+    switch(response[0]) {
+        case '1':
+        case '2':
+            return 0;
+        case '4':
+            switch(response[1]) {
+                case '0':
+                    switch (response[2]) {
+                        case '0':
+                            return EBADFD;
+                        case '1':
+                        case '2':
+                        case '3':
+                            return EPERM;
+                        case '4':
+                            return ENOENT;
+                    }
+            }
+    }
+    return -1;
+}
+
+/**
  * Attempt to detect if this page can be considered a file directory page from information in the header
  * @param header The header to use to determine if this page is a directory listing
  * @return Zero if not a directory listing, positive number for a directory listing, negative number if unsure
@@ -496,10 +524,11 @@ int httpSiteSchemeWorkingDirectorySet(HttpSite *self, const char *path) {
 
     if (!(newPath = uriPathAbsoluteAppend(details.path, path))) {
         uriDetailsFree(&details);
+        errno = EFAULT;
         return -1;
     }
 
-    if (!(send = ioHttpRequestGenerateHead(details.path, NULL))) {
+    if (!(send = ioHttpRequestGenerateHead(newPath, NULL))) {
         uriDetailsFree(&details), free(newPath);
         return -1;
     }
@@ -521,8 +550,15 @@ int httpSiteSchemeWorkingDirectorySet(HttpSite *self, const char *path) {
         return -1;
     }
 
-    if (!HttpResponseOk(response) || !HttpResponseIsDir(header)) {
+    if (!HttpResponseOk(response)) {
+        errno = HttpResponseToSystemError(response);
         uriDetailsFree(&details), free(newPath), free(header), free(scheme);
+        return 1;
+    }
+
+    if (!HttpResponseIsDir(header)) {
+        uriDetailsFree(&details), free(newPath), free(header), free(scheme);
+        errno = ENOTDIR;
         return 1;
     }
 
@@ -709,6 +745,7 @@ void *httpSiteSchemeDirectoryListingOpen(HttpSite *self, char *path) {
         goto httpSiteOpenDirectoryListing_abort3;
 
     free(scheme);
+    recvBufferClear(&self->socket);
 
     if (recvBufferSend(&self->socket, request, strlen(request), 0))
         goto httpSiteOpenDirectoryListing_abort2;

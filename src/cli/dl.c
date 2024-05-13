@@ -227,9 +227,10 @@ static inline void processCommand(char **args) {
     } else if (args[2] == NULL || args[2][0] == '-') {
         switch (toupper(args[0][0])) {
             case 'C':
-                if (toupper(args[0][1]) == 'D')
-                    siteWorkingDirectorySet(siteArrayActiveGet(), args[1]);
-                else
+                if (toupper(args[0][1]) == 'D') {
+                    if (siteWorkingDirectorySet(siteArrayActiveGet(), args[1]))
+                        puts(strerror(errno));
+                } else
                     goto processCommand_notFound;
                 break;
             case 'M':
