@@ -7,6 +7,7 @@
 #ifdef DJGPP
 #include <limits.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #endif
 
 #define MAX_LISTEN 2
@@ -113,6 +114,14 @@ char platformGetTimeStruct(void *clock, PlatformTimeStruct *timeStructure) {
         return 0;
     }
     return 1;
+}
+
+void platformSleep(unsigned int ms) {
+#ifdef DJGPP
+    usleep((ms) * 1000);
+#else /* Watcom */
+    delay(ms);
+#endif
 }
 
 int platformTimeStructEquals(PlatformTimeStruct *t1, PlatformTimeStruct *t2) {

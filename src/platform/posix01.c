@@ -594,6 +594,12 @@ size_t platformFileRead(void *buffer, size_t size, size_t n, PlatformFile stream
     return fread(buffer, size, n, stream);
 }
 
+void platformSleep(unsigned int ms) {
+    struct timespec ts;
+    ts.tv_sec = (ms) / 1000, ts.tv_nsec = ((ms) % 1000) * 1000000;
+    nanosleep(&ts, NULL);
+}
+
 int platformSocketSetBlock(SOCKET socket, char blocking) {
     int flags = fcntl(socket, F_GETFL, 0);
 

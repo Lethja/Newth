@@ -892,6 +892,10 @@ int platformPathSystemChangeWorkingDirectory(const char *path) {
     return chdir(path);
 }
 
+void platformSleep(unsigned int ms) {
+    Sleep(ms);
+}
+
 int platformSocketSetBlock(SOCKET socket, char blocking) {
     unsigned long mode = (unsigned char) blocking;
     return ioctlsocket(socket, FIONBIO, &mode);

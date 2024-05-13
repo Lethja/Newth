@@ -471,6 +471,12 @@ int platformMemoryStreamSeek(FILE *stream, long offset, int origin);
 long platformMemoryStreamTell(FILE *stream);
 
 /**
+ * Wait for a some time
+ * @param ms The time to wait in milliseconds (1000 milliseconds = 1 second)
+ */
+void platformSleep(unsigned int ms);
+
+/**
  * Set the socket to be blocking or non-blocking in a platform agnostic way
  * @param socket In: The socket to set blocking to
  * @param blocking In: Should the socket block? 0 for non-blocking other for blocking

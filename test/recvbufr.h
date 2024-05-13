@@ -497,7 +497,6 @@ static void ReceiveFetchChunkOverflowMalformed(void **state) {
 
 static void ReceiveFetchNonBlocking(void **state) {
     RecvBuffer socketBuffer = {0};
-    const char *e;
     char buf[11] = {0};
 
     mockReset(), mockOptions = MOCK_CONNECT | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
