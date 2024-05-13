@@ -3,6 +3,7 @@
 
 #include "../src/client/recvbufr.h"
 #include <errno.h>
+#include <limits.h>
 #include <string.h>
 
 #pragma clang diagnostic push

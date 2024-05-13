@@ -197,7 +197,7 @@ static void UriSetAddressAndPort(void **state) {
 static void UriConvertToSocketAddress(void **state) {
     SocketAddress address;
     UriDetails details = uriDetailsNewFrom("http://localhost");
-    assert_false(uriDetailsCreateSocketAddress(&details, &address, SCHEME_UNKNOWN));
+    assert_null(uriDetailsCreateSocketAddress(&details, &address, SCHEME_UNKNOWN));
     assert_int_equal(address.scheme, SCHEME_HTTP);
     assert_int_equal(address.address.sock.sa_family, AF_INET);
     assert_int_equal(address.address.ipv4.sin_port, htons(SCHEME_HTTP));
@@ -208,7 +208,7 @@ static void UriConvertToSocketAddress(void **state) {
 static void UriConvertToSocketAddressWithScheme(void **state) {
     SocketAddress address;
     UriDetails details = uriDetailsNewFrom("localhost");
-    assert_false(uriDetailsCreateSocketAddress(&details, &address, SCHEME_HTTPS));
+    assert_null(uriDetailsCreateSocketAddress(&details, &address, SCHEME_HTTPS));
     assert_int_equal(address.scheme, SCHEME_HTTPS);
     assert_int_equal(address.address.sock.sa_family, AF_INET);
     assert_int_equal(address.address.ipv4.sin_port, htons(SCHEME_HTTPS));
@@ -222,7 +222,7 @@ static void UriConvertToSocketAddressWithPort(void **state) {
     assert_string_equal(details.host, "localhost");
     assert_string_equal(details.port, "1");
 
-    assert_false(uriDetailsCreateSocketAddress(&details, &address, SCHEME_FTPS));
+    assert_null(uriDetailsCreateSocketAddress(&details, &address, SCHEME_FTPS));
     assert_int_equal(address.scheme, SCHEME_FTPS);
     assert_int_equal(address.address.sock.sa_family, AF_INET);
     assert_int_equal(address.address.ipv4.sin_port, htons(1));

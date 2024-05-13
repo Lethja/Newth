@@ -27,7 +27,7 @@ static void QueueClear(void **state) {
     addressQueueClear(); /* Test early return when already cleared */
     assert_int_equal(addressQueueGetNth(), 0);
 
-    assert_false(uriDetailsCreateSocketAddress(&details, &address, SCHEME_UNKNOWN));
+    assert_null(uriDetailsCreateSocketAddress(&details, &address, SCHEME_UNKNOWN));
     assert_null(pathQueueAppendOrCreate(&address, details.path));
     uriDetailsFree(&details);
 
@@ -43,7 +43,7 @@ static void QueueCreate(void **state) {
 
     memset(&address, 0, sizeof(SocketAddress));
 
-    assert_false(uriDetailsCreateSocketAddress(&details, &address, SCHEME_UNKNOWN));
+    assert_null(uriDetailsCreateSocketAddress(&details, &address, SCHEME_UNKNOWN));
 
     assert_null(pathQueueAppendOrCreate(&address, details.path));
     assert_int_equal(addressQueueGetNth(), 1);
@@ -66,8 +66,8 @@ static void QueueFind(void **state) {
 
     memset(&address1, 0, sizeof(SocketAddress)), memset(&address2, 0, sizeof(SocketAddress));
 
-    assert_false(uriDetailsCreateSocketAddress(&details1, &address1, SCHEME_UNKNOWN));
-    assert_false(uriDetailsCreateSocketAddress(&details2, &address2, SCHEME_UNKNOWN));
+    assert_null(uriDetailsCreateSocketAddress(&details1, &address1, SCHEME_UNKNOWN));
+    assert_null(uriDetailsCreateSocketAddress(&details2, &address2, SCHEME_UNKNOWN));
 
     assert_null(pathQueueAppendOrCreate(&address1, details1.path));
     assert_null(pathQueueAppendOrCreate(&address2, details2.path));
@@ -92,8 +92,8 @@ static void QueueRemove(void **state) {
     memset(&address1, 0, sizeof(SocketAddress)), memset(&address2, 0, sizeof(SocketAddress)), memset(&address3, 0,
                                                                                                      sizeof(SocketAddress));
 
-    assert_false(uriDetailsCreateSocketAddress(&details1, &address1, SCHEME_UNKNOWN));
-    assert_false(uriDetailsCreateSocketAddress(&details2, &address2, SCHEME_UNKNOWN));
+    assert_null(uriDetailsCreateSocketAddress(&details1, &address1, SCHEME_UNKNOWN));
+    assert_null(uriDetailsCreateSocketAddress(&details2, &address2, SCHEME_UNKNOWN));
 
     assert_null(pathQueueAppendOrCreate(&address1, details1.path));
     assert_null(pathQueueAppendOrCreate(&address2, details2.path));
@@ -129,7 +129,7 @@ static void QueueRemove(void **state) {
     assert_null(pathQueueFind(&address1, details1.path, NULL, NULL));
     assert_non_null(pathQueueFind(&address2, details2.path, NULL, NULL));
 
-    assert_false(uriDetailsCreateSocketAddress(&details3, &address3, SCHEME_UNKNOWN));
+    assert_null(uriDetailsCreateSocketAddress(&details3, &address3, SCHEME_UNKNOWN));
     assert_null(pathQueueAppendOrCreate(&address3, details3.path));
 
     assert_int_equal(addressQueueGetNth(), 1);
