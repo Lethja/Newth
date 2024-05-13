@@ -218,11 +218,14 @@ SOCKET *platformServerStartup(sa_family_t family, char *ports, char **err) {
 #pragma endregion
 
 void platformConnectSignals(void(*noAction)(int), void(*shutdownCrash)(int), void(*shutdownProgram)(int)) {
-    signal(SIGPIPE, noAction);
-    signal(SIGSEGV, shutdownCrash);
-    signal(SIGHUP, shutdownProgram);
-    signal(SIGINT, shutdownProgram);
-    signal(SIGTERM, shutdownProgram);
+    if (noAction)
+        signal(SIGPIPE, noAction);
+
+    if (shutdownCrash)
+        signal(SIGSEGV, shutdownCrash);
+
+    if (shutdownProgram)
+        signal(SIGHUP, shutdownProgram), signal(SIGINT, shutdownProgram), signal(SIGTERM, shutdownProgram);
 }
 
 void platformGetIpString(struct sockaddr *addr, char ipStr[INET6_ADDRSTRLEN], sa_family_t *family) {

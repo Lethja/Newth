@@ -288,8 +288,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    /* TODO: Use PlatformConnectSignals() instead */
-    signal(SIGPIPE, signalNoAction);
+    platformConnectSignals(signalNoAction, NULL, NULL);
 
     switch (addressQueueGetTotalPathRequests()) {
         case 0:

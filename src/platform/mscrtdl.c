@@ -278,10 +278,11 @@ int platformOfficiallySupportsIpv6(void) {
 
 void platformConnectSignals(void(*noAction)(int), void(*shutdownCrash)(int), void(*shutdownProgram)(int)) {
 #pragma clang diagnostic pop
-    signal(SIGSEGV, shutdownCrash);
-    signal(SIGBREAK, shutdownProgram);
-    signal(SIGINT, shutdownProgram);
-    signal(SIGTERM, shutdownProgram);
+    if (shutdownCrash)
+        signal(SIGSEGV, shutdownCrash);
+
+    if (shutdownProgram)
+        signal(SIGBREAK, shutdownProgram), signal(SIGINT, shutdownProgram), signal(SIGTERM, shutdownProgram);
 }
 
 void ipv6NTop(const void *inAddr6, char *ipStr) {
