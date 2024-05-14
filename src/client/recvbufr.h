@@ -20,12 +20,12 @@ typedef struct RecvBufferLengthKnown {
 } RecvBufferLengthKnown;
 
 typedef struct RecvBufferLengthUnknown {
-    size_t escape, limit;
+    PlatformFileOffset escape, limit;
 } RecvBufferLengthUnknown;
 
 typedef struct RecvBufferLengthToken {
     const char *token;
-    size_t length;
+    PlatformFileOffset length;
 } RecvBufferLengthToken;
 
 typedef union RecvBufferLength {

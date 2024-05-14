@@ -31,18 +31,18 @@ static inline char *BufferAppend(RecvBuffer *self, char *buf, size_t len) {
  * @param added In: The amount of data added to the end of the buffer
  * @return zero when the data transmission should keep going, other on transmission finished or error
  */
-static inline char DataIncrement(RecvBuffer *self, PlatformFileOffset added) {
+static inline char DataIncrement(RecvBuffer *self, size_t added) {
     if (self->options & RECV_BUFFER_DATA_LENGTH_KNOWN) {
-        self->length.known.escape += added;
+        self->length.known.escape += (PlatformFileOffset) added;
         if (self->length.known.escape >= self->length.known.total)
             goto DataIncrement_complete;
     } else if (self->options & RECV_BUFFER_DATA_LENGTH_TOKEN) {
-        self->length.token.length += added;
+        self->length.token.length += (PlatformFileOffset) added;
         if (platformStringFindNeedleRaw(self->buffer, self->length.token.token, self->len,
                                         strlen(self->length.token.token)))
             goto DataIncrement_complete;
     } else {
-        self->length.unknown.escape += added;
+        self->length.unknown.escape += (PlatformFileOffset) added;
         if (self->length.unknown.escape >= self->length.unknown.limit)
             goto DataIncrement_complete;
     }
@@ -69,9 +69,8 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
     /* Iterate over the data until the next chunk */
     recvBufferAppendChunk_iterate:
     while (i < len && i < self->length.chunk.next) {
-        SOCK_BUF_TYPE l;
+        SOCK_BUF_TYPE l, s = (SOCK_BUF_TYPE) (self->length.chunk.next < len ? self->length.chunk.next : len);
         char buf[SB_DATA_SIZE];
-        size_t s = self->length.chunk.next < len ? self->length.chunk.next : len;
 
         if (s > SB_DATA_SIZE)
             s = SB_DATA_SIZE;
@@ -95,7 +94,7 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
                 return strerror(errno);
 
             self->length.chunk.next -= self->length.chunk.next, len -= l;
-            if (recv(self->serverSocket, buf, self->length.chunk.next, 0) == -1)
+            if (recv(self->serverSocket, buf, (SOCK_BUF_TYPE) self->length.chunk.next, 0) == -1)
                 goto recvBufferAppendChunk_socketError;
         }
 
@@ -111,7 +110,7 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
     {
         const char *e;
         char b[20] = {0}, *finish, *hex;
-        size_t l, j, k;
+        SOCK_BUF_TYPE l, j, k;
 
         if ((k = recv(self->serverSocket, b, 19, MSG_PEEK)) == -1)
             goto recvBufferAppendChunk_socketError;
@@ -131,7 +130,7 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
             hex = b, finish = strstr(b, HTTP_EOL);
 
         finish[0] = '\0';
-        if ((e = ioHttpBodyChunkHexToSize(hex, &l)))
+        if ((e = ioHttpBodyChunkHexToSize(hex, (size_t *) &l)))
             return e;
 
         j = (&finish[2] - b);
@@ -185,7 +184,7 @@ const char *recvBufferAppend(RecvBuffer *self, size_t len) {
 
     while (i < len) {
         char buf[SB_DATA_SIZE];
-        PlatformFileOffset l;
+        SOCK_BUF_TYPE l;
         size_t s = len - i;
 
         if (s > SB_DATA_SIZE)
@@ -232,23 +231,23 @@ void recvBufferClear(RecvBuffer *self) {
 
 char *recvBufferCopyBetween(RecvBuffer *self, PlatformFileOffset start, PlatformFileOffset end) {
     char *newCopy;
-    size_t len = end - start;
+    PlatformFileOffset len = end - start;
 
     if (start + len > end)
         return NULL;
 
     if (start + len > self->len) {
-        len = self->len - start;
+        len = (PlatformFileOffset) self->len - start;
 
-        if (!(newCopy = calloc(len + 1, 1)))
+        if (!(newCopy = calloc((size_t) len + 1, 1)))
             return NULL;
 
-        memcpy(newCopy, &self->buffer[start], len + 1);
+        memcpy(newCopy, &self->buffer[start], (size_t) len + 1);
     } else {
-        if (!(newCopy = calloc(len, 1)))
+        if (!(newCopy = calloc((size_t) len, 1)))
             return NULL;
 
-        memcpy(newCopy, &self->buffer[start], len - 1);
+        memcpy(newCopy, &self->buffer[start], (size_t) len - 1);
     }
 
     return newCopy;
@@ -256,9 +255,10 @@ char *recvBufferCopyBetween(RecvBuffer *self, PlatformFileOffset start, Platform
 
 void recvBufferDitch(RecvBuffer *self, PlatformFileOffset len) {
     if (len) {
-        if (len < self->len)
-            memmove(self->buffer, &self->buffer[len], self->len - len), self->len -= len;
-        else
+        if (len < self->len) {
+			size_t diff = self->len - (size_t) len;
+            memmove(self->buffer, &self->buffer[len], diff), self->len -= (size_t) len;
+		} else
             free(self->buffer), self->buffer = NULL;
     }
 }
@@ -270,7 +270,7 @@ void recvBufferFailFree(RecvBuffer *self) {
 
 const char *recvBufferFetch(RecvBuffer *self, char *buf, PlatformFileOffset pos, size_t len) {
     if (self->buffer) {
-        size_t l = (self->len - pos);
+        size_t l = (size_t)(self->len - pos);
         if (l < len)
             memcpy(buf, &self->buffer[pos], l), buf[l] = '\0';
         else
@@ -290,7 +290,7 @@ PlatformFileOffset recvBufferFind(RecvBuffer *self, PlatformFileOffset pos, cons
     if (!self->buffer || pos > self->len)
         return -1;
 
-    p = &self->buffer[pos], l = self->len - pos - 1;
+    p = &self->buffer[pos], l = (size_t) (self->len - pos - 1);
 
     for (i = 0; i < l; ++i) {
         if (toupper(p[i]) == toupper(token[0])) {
@@ -338,14 +338,14 @@ const char *recvBufferFindAndDitch(RecvBuffer *self, const char *token, size_t l
                 /* Overlapping the old buffer with the new by length of token prevents missing a potential match */
                 PlatformFileOffset ditch = (PlatformFileOffset) (self->len - len);
                 recvBufferDitch(self, ditch);
-                d += ditch;
+                d += (SOCK_BUF_TYPE) ditch;
             }
         } else
             return e;
     }
 
     if (o > 1)
-        recvBufferDitch(self, o), d += o;
+        recvBufferDitch(self, o), d += (SOCK_BUF_TYPE) o;
 
     if (ditched)
         *ditched = d;
@@ -420,7 +420,7 @@ const char *recvBufferNewFromUriDetails(RecvBuffer *self, void *details, int opt
     SocketAddress a;
     UriDetails *d = details;
 
-    if ((e = uriDetailsCreateSocketAddress(d, &a, uriDetailsGetScheme(d))))
+    if ((e = uriDetailsCreateSocketAddress(d, &a, (unsigned short) uriDetailsGetScheme(d))))
         return e;
 
     if ((e = recvBufferNewFromSocketAddress(self, a, options)))
@@ -501,7 +501,7 @@ const char *recvBufferSend(RecvBuffer *self, const void *data, size_t n, int fla
             goto recvBufferSend_reattempt;
         default:
             sent += s;
-            if (sent == n)
+            if ((size_t) sent == n)
                 break;
 
             goto recvBufferSend_keepSending;
@@ -558,12 +558,12 @@ void recvBufferSetLengthKnown(RecvBuffer *self, PlatformFileOffset length) {
 void recvBufferSetLengthUnknown(RecvBuffer *self, size_t limit) {
     self->options &= ~(RECV_BUFFER_DATA_LENGTH_CHUNK | RECV_BUFFER_DATA_LENGTH_KNOWN | RECV_BUFFER_DATA_LENGTH_TOKEN |
                        RECV_BUFFER_DATA_LENGTH_COMPLETE);
-    self->length.unknown.limit = limit, self->length.unknown.escape = 0;
+    self->length.unknown.limit = (PlatformFileOffset) limit, self->length.unknown.escape = 0;
 }
 
 void recvBufferSetLengthToken(RecvBuffer *self, const char *token, size_t length) {
     self->options &= ~(RECV_BUFFER_DATA_LENGTH_CHUNK | RECV_BUFFER_DATA_LENGTH_KNOWN |
                        RECV_BUFFER_DATA_LENGTH_COMPLETE);
     self->options |= RECV_BUFFER_DATA_LENGTH_TOKEN;
-    self->length.token.token = token, self->length.token.length = length;
+    self->length.token.token = token, self->length.token.length = (PlatformFileOffset) length;
 }

@@ -1,6 +1,8 @@
 #ifndef NEW_TH_SIGNAL_H
 #define NEW_TH_SIGNAL_H
 
+#include "../platform/platform.h"
+
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "UnusedParameter"
 

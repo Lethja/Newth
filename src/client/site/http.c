@@ -455,7 +455,7 @@ static inline void HeadersPopulate(const char *header, HttpResponseHeader *heade
 static inline void HeadersCompute(HttpSite *self, HttpResponseHeader *headerResponse, const char *mode) {
     /* TODO: Check filename if exists, extract from url otherwise */
     /* TODO: Check modification date against local file if exists */
-    if (!strcasecmp(mode, "GET")) {
+    if (toupper(mode[0]) == 'G' && toupper(mode[1]) == 'E' && toupper(mode[2]) == 'T') {
         if (headerResponse->options & SA_PROTOCOL_ALT_MODE)
             recvBufferSetLengthChunk(&self->socket);
         else {

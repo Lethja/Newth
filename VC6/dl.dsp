@@ -91,6 +91,10 @@ SOURCE=..\src\cli\dl.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\src\client\err.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\client\site\file.c
 # End Source File
 # Begin Source File
@@ -119,6 +123,14 @@ SOURCE=..\src\client\queue.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\src\client\recvbufr.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\common\signal.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\client\site.c
 # End Source File
 # Begin Source File
@@ -133,6 +145,10 @@ SOURCE=..\src\client\xml.c
 # Begin Group "Header Files"
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
+# Begin Source File
+
+SOURCE=..\src\client\err.h
+# End Source File
 # Begin Source File
 
 SOURCE=..\src\client\site\file.h
@@ -164,6 +180,14 @@ SOURCE=..\src\platform\platform.h
 # Begin Source File
 
 SOURCE=..\src\client\queue.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\client\recvbufr.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\common\signal.h
 # End Source File
 # Begin Source File
 

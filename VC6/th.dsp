@@ -115,11 +115,15 @@ SOURCE=..\src\server\mltiplex\select.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\src\server\sendbufr.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\server\server.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\server\sendbufr.c
+SOURCE=..\src\common\signal.c
 # End Source File
 # Begin Source File
 
@@ -167,11 +171,15 @@ SOURCE=..\src\server\routine.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\src\server\sendbufr.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\server\server.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\server\sendbufr.h
+SOURCE=..\src\common\signal.h
 # End Source File
 # Begin Source File
 
