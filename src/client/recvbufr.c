@@ -492,7 +492,9 @@ const char *recvBufferSend(RecvBuffer *self, const void *data, size_t n, int fla
 #if SOCKET_TRY_AGAIN != SOCKET_WOULD_BLOCK
                     case SOCKET_WOULD_BLOCK:
 #endif
+#ifndef MOCK
                     platformSleep(500);
+#endif
                     goto recvBufferSend_reattempt;
             }
         case 0:
@@ -519,7 +521,9 @@ const char *recvBufferSend(RecvBuffer *self, const void *data, size_t n, int fla
 #if SOCKET_TRY_AGAIN != SOCKET_WOULD_BLOCK
                     case SOCKET_WOULD_BLOCK:
 #endif
+#ifndef MOCK
                     platformSleep(500);
+#endif
                     goto recvBufferSend_reply;
             }
         case 0:
