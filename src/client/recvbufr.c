@@ -155,7 +155,7 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
         switch ((e = platformSocketGetLastError())) {
             case SOCKET_TRY_AGAIN:
 #if SOCKET_TRY_AGAIN != SOCKET_WOULD_BLOCK
-                case SOCKET_WOULD_BLOCK:
+            case SOCKET_WOULD_BLOCK:
 #endif
                 return ErrTryAgain;
             default:
@@ -198,7 +198,7 @@ const char *recvBufferAppend(RecvBuffer *self, size_t len) {
 #pragma region Handle socket error
                     case SOCKET_TRY_AGAIN:
 #if SOCKET_TRY_AGAIN != SOCKET_WOULD_BLOCK
-                        case SOCKET_WOULD_BLOCK:
+                    case SOCKET_WOULD_BLOCK:
 #endif
                         goto recvBufferAppend_tryAgain;
                     default:
@@ -256,9 +256,9 @@ char *recvBufferCopyBetween(RecvBuffer *self, PlatformFileOffset start, Platform
 void recvBufferDitch(RecvBuffer *self, PlatformFileOffset len) {
     if (len) {
         if (len < self->len) {
-			size_t diff = self->len - (size_t) len;
+            size_t diff = self->len - (size_t) len;
             memmove(self->buffer, &self->buffer[len], diff), self->len -= (size_t) len;
-		} else
+        } else
             free(self->buffer), self->buffer = NULL;
     }
 }
@@ -270,7 +270,7 @@ void recvBufferFailFree(RecvBuffer *self) {
 
 const char *recvBufferFetch(RecvBuffer *self, char *buf, PlatformFileOffset pos, size_t len) {
     if (self->buffer) {
-        size_t l = (size_t)(self->len - pos);
+        size_t l = (size_t) (self->len - pos);
         if (l < len)
             memcpy(buf, &self->buffer[pos], l), buf[l] = '\0';
         else
@@ -477,8 +477,7 @@ const char *recvBufferSend(RecvBuffer *self, const void *data, size_t n, int fla
 #pragma region Limit the amount of reattempts at establishing a connection there can be
 
     recvBufferSend_reattempt:
-    if (attempt++ >= 3)
-        return e;
+    ++attempt;
 
 #pragma endregion
 
@@ -490,17 +489,19 @@ const char *recvBufferSend(RecvBuffer *self, const void *data, size_t n, int fla
             switch (platformSocketGetLastError()) {
                 case SOCKET_TRY_AGAIN:
 #if SOCKET_TRY_AGAIN != SOCKET_WOULD_BLOCK
-                    case SOCKET_WOULD_BLOCK:
+                case SOCKET_WOULD_BLOCK:
 #endif
-#ifndef MOCK
-                    platformSleep(500 * attempt);
-#endif
+                    goto recvBufferSend_keepSending;
+                default:
+                recvBufferSend_reconnect:
+                    if (attempt >= 3)
+                        return e;
+
+                    e = recvBufferReconnect(self);
                     goto recvBufferSend_reattempt;
             }
         case 0:
-        recvBufferSend_reconnect:
-            e = recvBufferReconnect(self);
-            goto recvBufferSend_reattempt;
+            goto recvBufferSend_keepSending;
         default:
             sent += s;
             if ((size_t) sent == n)
@@ -519,7 +520,7 @@ const char *recvBufferSend(RecvBuffer *self, const void *data, size_t n, int fla
             switch (platformSocketGetLastError()) {
                 case SOCKET_TRY_AGAIN:
 #if SOCKET_TRY_AGAIN != SOCKET_WOULD_BLOCK
-                    case SOCKET_WOULD_BLOCK:
+                case SOCKET_WOULD_BLOCK:
 #endif
                     goto recvBufferSend_reply;
             }

@@ -612,7 +612,7 @@ static void ReceiveSendReconnect(void **state) {
     RecvBuffer socketBuffer;
     const char *data = "The quick brown fox jumps over the lazy dog", *e;
 
-    mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND;
+    mockReset(), mockOptions = MOCK_CONNECT | MOCK_RECEIVE | MOCK_SEND, mockReceiveMaxBuf = mockSendMaxBuf = 1024;
     /* Initial connection establishment */
     assert_null(recvBufferNewFromUri(&socketBuffer, "http://127.0.0.1", 0));
     assert_null(recvBufferSend(&socketBuffer, data, strlen(data), 0));
@@ -625,7 +625,7 @@ static void ReceiveSendReconnect(void **state) {
     mockConnectError = ECONNREFUSED, mockSendError = ECONNRESET, mockErrorReset = 10;
     assert_non_null(e = recvBufferSend(&socketBuffer, data, strlen(data), 0));
     assert_string_equal(e, strerror(ECONNREFUSED));
-    assert_int_equal(mockErrorReset, 4);
+    assert_int_equal(mockErrorReset, 5);
 }
 
 static void ReceiveUpdateSocket(void **state) {
