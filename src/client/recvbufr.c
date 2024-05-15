@@ -75,6 +75,7 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
         if (s > SB_DATA_SIZE)
             s = SB_DATA_SIZE;
 
+        /* TODO: Handle non-blocking sockets */
         if ((l = recv(self->serverSocket, buf, s, MSG_PEEK)) == -1)
             goto recvBufferAppendChunk_socketError;
 
@@ -83,6 +84,7 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
                 return strerror(errno);
 
             self->length.chunk.next -= (PlatformFileOffset) l, len -= l;
+            /* TODO: Handle non-blocking sockets */
             if (recv(self->serverSocket, buf, l, 0) == -1)
                 goto recvBufferAppendChunk_socketError;
         } else {
@@ -94,6 +96,7 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
                 return strerror(errno);
 
             self->length.chunk.next -= self->length.chunk.next, len -= l;
+            /* TODO: Handle non-blocking sockets */
             if (recv(self->serverSocket, buf, (SOCK_BUF_TYPE) self->length.chunk.next, 0) == -1)
                 goto recvBufferAppendChunk_socketError;
         }
@@ -112,6 +115,7 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
         char b[20] = {0}, *finish, *hex;
         SOCK_BUF_TYPE l, j, k;
 
+        /* TODO: Handle non-blocking sockets */
         if ((k = recv(self->serverSocket, b, 19, MSG_PEEK)) == -1)
             goto recvBufferAppendChunk_socketError;
 
@@ -135,6 +139,7 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
 
         j = (&finish[2] - b);
 
+        /* TODO: Handle non-blocking sockets */
         if (recv(self->serverSocket, b, j, 0) == -1)
             goto recvBufferAppendChunk_socketError;
 
