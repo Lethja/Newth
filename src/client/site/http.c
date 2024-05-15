@@ -712,11 +712,14 @@ const char *httpSiteSchemeDirectoryListingEntryStat(void *listing, void *entry, 
     HeadersPopulate(response, &header);
 
 
+    /* Assuming a HTTP path without a Content-Disposition filename isn't intended to be a downloadable file */
+    st->st_mode = header.fileName ? S_IFREG : S_IFDIR;
     st->st_size = header.length;
-    st->st_mode = e->isDirectory ? S_IFDIR : S_IFREG;
 
     if (header.modifiedDate)
-        memcpy(&st->st_mtime, header.modifiedDate, sizeof(PlatformTimeStruct)), free(header.modifiedDate);
+        st->st_mtime = mktime(header.modifiedDate), free(header.modifiedDate);
+    else
+        st->st_mtime = 0;
 
     if (header.fileName)
         free(header.fileName);
@@ -854,6 +857,7 @@ void *httpSiteSchemeDirectoryListingRead(void *listing) {
             }
 
             strcpy(n, l->entry[l->idx].name);
+            e->isDirectory = -1, e->modifiedDate = 0;
             memcpy(e, &l->entry[l->idx], sizeof(SiteDirectoryEntry)), ++l->idx, e->name = n;
             return e;
         }
