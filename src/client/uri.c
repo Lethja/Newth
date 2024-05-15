@@ -414,13 +414,25 @@ char *uriPathAbsoluteAppend(const char *currentPath, const char *append) {
             strcpy(r, append);
             return r;
         case '.':
-            if (append[1] == '\0') {
-                /* Quick return for '.' */
-                if (!(r = malloc(strlen(currentPath) + 1)))
-                    return NULL;
+            switch (append[1]) {
+                case '\0': /* Quick return for '.' */
+                    if (!(r = malloc(strlen(currentPath) + 1)))
+                        return NULL;
 
-                strcpy(r, currentPath);
-                return r;
+                    strcpy(r, currentPath);
+                    return r;
+                case '.': /* Explicit return if trying to go up a directory while already at trunk */
+                    switch (append[3]) {
+                        case '\0':
+                        case '/':
+                            if (currentPath[0] == '/' && currentPath[1] == '\0') {
+                                if (!(r = malloc(2)))
+                                    return NULL;
+
+                                r[0] = '/', r[1] = '\0';
+                                return r;
+                            }
+                    }
             }
     }
 
