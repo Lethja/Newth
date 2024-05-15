@@ -106,11 +106,10 @@ static inline void PrintDirectoryFilesUnixLike(Site *site) {
 
     putc(' ', stdout);
     while ((entry = siteDirectoryListingRead(site, dir))) {
-        char *folder = entry->isDirectory ? "/" : "";
         if (strchr(entry->name, ' '))
-            printf("'%s%s'   ", entry->name, folder);
+            printf("'%s'   ", entry->name);
         else
-            printf("%s%s   ", entry->name, folder);
+            printf("%s   ", entry->name);
         siteDirectoryEntryFree(entry);
     }
 
