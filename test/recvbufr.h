@@ -368,7 +368,6 @@ static void ReceiveFetchChunkIterateUnaligned(void **state) {
 
 static void ReceiveFetchChunkMalformed(void **state) {
     RecvBuffer socketBuffer;
-    const char *e;
 
     char sample[] = "4" HTTP_EOL "This" HTTP_EOL "3" HTTP_EOL " is" HTTP_EOL "3" HTTP_EOL" a" HTTP_EOL "4" HTTP_EOL " test" HTTP_EOL "0" HTTP_EOL HTTP_EOL;
     size_t max = strlen(sample);
@@ -379,7 +378,7 @@ static void ReceiveFetchChunkMalformed(void **state) {
     assert_null(recvBufferNewFromUri(&socketBuffer, "http://127.0.0.1:8080", 0));
     recvBufferSetLengthChunk(&socketBuffer);
 
-    assert_ptr_equal(e = recvBufferAppend(&socketBuffer, 512), ErrIllegalHexCharacter);
+    assert_ptr_equal(recvBufferAppend(&socketBuffer, 512), ErrIllegalHexCharacter);
     recvBufferClear(&socketBuffer);
 }
 
@@ -401,7 +400,6 @@ static void ReceiveFetchChunkMalformedStart(void **state) {
 
 static void ReceiveFetchChuckNonBlocking(void **state) {
     RecvBuffer socketBuffer = {0};
-    const char *e;
     char sample[] = "4" HTTP_EOL "This" HTTP_EOL "3" HTTP_EOL " is" HTTP_EOL "2" HTTP_EOL" a" HTTP_EOL "5" HTTP_EOL " test" HTTP_EOL "0" HTTP_EOL HTTP_EOL;
     char output[sizeof(sample)] = {0};
     size_t max = strlen(sample);
@@ -423,23 +421,11 @@ static void ReceiveFetchChuckNonBlocking(void **state) {
     mockReceiveError = EAGAIN, mockErrorReset = 2;
     recvBufferClear(&socketBuffer);
 
-    assert_ptr_equal(e = recvBufferAppend(&socketBuffer, 10), ErrTryAgain);
-    assert_null(recvBufferFetch(&socketBuffer, output, 1, 5));
-    assert_string_equal("", output);
-
-    assert_ptr_equal(e = recvBufferAppend(&socketBuffer, 10), ErrTryAgain);
-    assert_null(recvBufferFetch(&socketBuffer, output, 5, 5));
-    assert_string_equal("", output);
-
-#pragma region The transmission has caught up
-
     assert_null(recvBufferAppend(&socketBuffer, 10));
     assert_null(recvBufferFetch(&socketBuffer, output, 0, 11));
     assert_string_equal("test", output);
 
-#pragma endregion /* The transmission has caught up */
-
-#pragma endregion /* Client is too quick, no packets received */
+#pragma endregion
 
     recvBufferFailFree(&socketBuffer);
 }

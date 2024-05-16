@@ -5,6 +5,33 @@
 #pragma region Static Helper Functions
 
 /**
+ * recv() wrapper that automatically blocks until either 1 byte or a non-blocking error is returned
+ * @param fd In: The socket to read from
+ * @param buf Out: The buffer write to
+ * @param n In: The size in bytes to read
+ * @param flags In: The recv() flags to pass
+ * @return The number of bytes eventually (including 0 to indicate socket shutdown) or -1 on recv error
+ */
+static inline SOCK_BUF_TYPE AppendWait(int fd, void *buf, size_t n, int flags) {
+    SOCK_BUF_TYPE s;
+    BlockAppend_keepGoing:
+    switch ((s = recv(fd, buf, n, flags))) {
+        case -1:
+            switch (platformSocketGetLastError()) {
+#pragma region Handle socket error
+                case SOCKET_TRY_AGAIN:
+#if SOCKET_TRY_AGAIN != SOCKET_WOULD_BLOCK
+                case SOCKET_WOULD_BLOCK:
+#endif
+                    goto BlockAppend_keepGoing;
+            }
+        /* Fallthrough */
+        default:
+            return s;
+    }
+}
+
+/**
  * Append data from a buffer to the end of the RecvBuffer, increase heap allocation if necessary
  * @param self In: The RecvBuffer to append to
  * @param buf In: The buffer to append from
@@ -75,8 +102,7 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
         if (s > SB_DATA_SIZE)
             s = SB_DATA_SIZE;
 
-        /* TODO: Handle non-blocking sockets */
-        if ((l = recv(self->serverSocket, buf, s, MSG_PEEK)) == -1)
+        if ((l = AppendWait(self->serverSocket, buf, s, MSG_PEEK)) == -1)
             goto recvBufferAppendChunk_socketError;
 
         if (self->length.chunk.next >= l) {
@@ -84,8 +110,7 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
                 return strerror(errno);
 
             self->length.chunk.next -= (PlatformFileOffset) l, len -= l;
-            /* TODO: Handle non-blocking sockets */
-            if (recv(self->serverSocket, buf, l, 0) == -1)
+            if (AppendWait(self->serverSocket, buf, l, 0) == -1)
                 goto recvBufferAppendChunk_socketError;
         } else {
             char *p = &buf[self->length.chunk.next];
@@ -96,8 +121,7 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
                 return strerror(errno);
 
             self->length.chunk.next -= self->length.chunk.next, len -= l;
-            /* TODO: Handle non-blocking sockets */
-            if (recv(self->serverSocket, buf, (SOCK_BUF_TYPE) self->length.chunk.next, 0) == -1)
+            if (AppendWait(self->serverSocket, buf, (SOCK_BUF_TYPE) self->length.chunk.next, 0) == -1)
                 goto recvBufferAppendChunk_socketError;
         }
 
@@ -115,8 +139,7 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
         char b[20] = {0}, *finish, *hex;
         SOCK_BUF_TYPE l, j, k;
 
-        /* TODO: Handle non-blocking sockets */
-        if ((k = recv(self->serverSocket, b, 19, MSG_PEEK)) == -1)
+        if ((k = AppendWait(self->serverSocket, b, 19, MSG_PEEK)) == -1)
             goto recvBufferAppendChunk_socketError;
 
         else if (k < (self->length.chunk.next == -1 ? 3 : 5))
@@ -139,8 +162,7 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
 
         j = (&finish[2] - b);
 
-        /* TODO: Handle non-blocking sockets */
-        if (recv(self->serverSocket, b, j, 0) == -1)
+        if (AppendWait(self->serverSocket, b, j, 0) == -1)
             goto recvBufferAppendChunk_socketError;
 
         if (l > 0) {
@@ -155,18 +177,7 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
     return NULL;
 
     recvBufferAppendChunk_socketError:
-    {
-        int e;
-        switch ((e = platformSocketGetLastError())) {
-            case SOCKET_TRY_AGAIN:
-#if SOCKET_TRY_AGAIN != SOCKET_WOULD_BLOCK
-            case SOCKET_WOULD_BLOCK:
-#endif
-                return ErrTryAgain;
-            default:
-                return strerror(e);
-        }
-    }
+    return strerror(platformSocketGetLastError());
 }
 
 #pragma endregion
