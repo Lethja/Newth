@@ -1,0 +1,15 @@
+# Run `astyle --options=astyleo *.h,*.c` to format code automatically
+
+-A2     # Attach style braces
+-c      # Convert tabs to spaces
+-H      # Pad an if/for statement with one space
+-m0     # Minimum conditional intending
+-n      # Do not create a .orig file
+-p      # Padding around operators
+-Q      # Only print out file names that are actually changed
+-r      # Recursive
+-S      # Indent switches
+-s      # Indent with spaces
+-xg     # Padding after comma
+-xj     # Remove braces from single arguments
+-xt0    # Don't indent multi-line conditionals
