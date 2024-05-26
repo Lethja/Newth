@@ -150,9 +150,8 @@ static char *nicFind(ULONG index) {
 
 static void nicFree(void) {
     size_t i;
-    for (i = 0; i < networkInterfacesSize; ++i) {
+    for (i = 0; i < networkInterfacesSize; ++i)
         free(networkInterfaces[i].desc);
-    }
     if (networkInterfaces)
         free(networkInterfaces), networkInterfaces = NULL;
     networkInterfacesSize = 0;

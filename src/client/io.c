@@ -111,7 +111,7 @@ char *ioHttpResponseHeaderEssential(const char *headerFile, char **scheme, char 
         return NULL;
     }
 
-    HttpGetEssentialResponse_Invalid:
+HttpGetEssentialResponse_Invalid:
     if (s)
         free(s);
 
@@ -160,10 +160,10 @@ const char *ioHttpResponseHeaderRead(RecvBuffer *socket, char **header) {
 
     return NULL;
 
-    ioHttpResponseHeaderRead_abort1:
+ioHttpResponseHeaderRead_abort1:
     free(*header), *header = NULL;
 
-    ioHttpResponseHeaderRead_abort:
+ioHttpResponseHeaderRead_abort:
     return e;
 }
 

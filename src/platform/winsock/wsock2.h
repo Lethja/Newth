@@ -37,9 +37,9 @@ typedef __int64 __time64_t;
 #ifndef MSVC89
 typedef unsigned long ULONG, *PULONG;
 #else
-typedef unsigned char UINT8,*PUINT8;
-typedef unsigned short UINT16,*PUINT16;
-typedef unsigned int UINT32,*PUINT32;
+typedef unsigned char UINT8, *PUINT8;
+typedef unsigned short UINT16, *PUINT16;
+typedef unsigned int UINT32, *PUINT32;
 typedef int socklen_t;
 #endif /* !MSVC89 */
 
@@ -385,7 +385,7 @@ typedef IP_ADAPTER_ADDRESSES_LH IP_ADAPTER_ADDRESSES;
 typedef IP_ADAPTER_ADDRESSES_LH *PIP_ADAPTER_ADDRESSES;
 #else /* _WIN32_WINNT >= 0x0501 */
 typedef IP_ADAPTER_ADDRESSES_XP   IP_ADAPTER_ADDRESSES;
-  typedef IP_ADAPTER_ADDRESSES_XP *PIP_ADAPTER_ADDRESSES;
+typedef IP_ADAPTER_ADDRESSES_XP *PIP_ADAPTER_ADDRESSES;
 #endif
 
 typedef struct {

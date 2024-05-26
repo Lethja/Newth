@@ -52,7 +52,7 @@ char handleDir(SOCKET clientSocket, char *webPath, char *absolutePath, char type
 
     return 0;
 
-    handleDirAbort:
+handleDirAbort:
     if (buf)
         free(buf);
 
@@ -141,8 +141,7 @@ char handlePath(SOCKET clientSocket, const char *header, char *webPath) {
 
     return e;
 
-    handlePathNotFound:
-    {
+handlePathNotFound: {
         SendBuffer socketBuffer = sendBufferNew(clientSocket, 0);
         return httpHeaderHandleError(&socketBuffer, webPath, e, 404);
     }
@@ -165,7 +164,7 @@ char handleConnection(SOCKET clientSocket) {
                     break;
                 }
 
-                /* Fall through */
+            /* Fall through */
             case -1:
                 err = platformSocketGetLastError();
                 switch (err) {
@@ -244,8 +243,8 @@ void serverPoke(void) {
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
         return;
 
-    ipv4.sin_addr.s_addr = inet_addr("127.0.0.1"), ipv4.sin_family = AF_INET, ipv4.sin_port = htons(
-            getPort(&serverListenSocket[1]));
+    ipv4.sin_addr.s_addr = inet_addr("127.0.0.1"), ipv4.sin_family = AF_INET;
+    ipv4.sin_port = htons(getPort(&serverListenSocket[1]));
 
     connect(sock, (struct sockaddr *) &ipv4, sizeof(ipv4)); /* NOLINT(*-unused-return-value) */
     CLOSE_SOCKET(sock);

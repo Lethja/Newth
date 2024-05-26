@@ -164,9 +164,9 @@ static inline void processCommand(char **args) {
         const char *str;
         switch (toupper(args[0][0])) {
             case 'D':
-                if (toupper(args[0][1]) == 'I' && toupper(args[0][2]) == 'R') {
+                if (toupper(args[0][1]) == 'I' && toupper(args[0][2]) == 'R')
                     PrintDirectoryFilesDosLike(siteArrayActiveGet());
-                } else
+                else
                     goto processCommand_notFound;
                 break;
             case 'E':
@@ -250,7 +250,7 @@ static inline void processCommand(char **args) {
     }
     return;
 
-    processCommand_notFound:
+processCommand_notFound:
     puts("Command not found");
 }
 

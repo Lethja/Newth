@@ -32,16 +32,14 @@ wSock2GetAdapterInformation(void (arrayAdd)(AdapterAddressArray *, const char *,
         LINEDBG;
 
         pAdapterInfo = (IP_ADAPTER_INFO *) malloc(sizeof(IP_ADAPTER_INFO));
-        if (pAdapterInfo == NULL) {
+        if (pAdapterInfo == NULL)
             printf("Error fetching 'GetAdaptersInfo'\n");
-        }
 
         if (AdapterInfoFunc(pAdapterInfo, &ulOutBufLen) == ERROR_BUFFER_OVERFLOW) {
             free(pAdapterInfo);
             pAdapterInfo = (IP_ADAPTER_INFO *) malloc(ulOutBufLen);
-            if (pAdapterInfo == NULL) {
+            if (pAdapterInfo == NULL)
                 printf("Error fetching 'GetAdaptersInfo'\n");
-            }
         }
 
         if ((dwRetVal = AdapterInfoFunc(pAdapterInfo, &ulOutBufLen)) == NO_ERROR) {

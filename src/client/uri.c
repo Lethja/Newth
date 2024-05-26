@@ -14,7 +14,7 @@ char isValidIpv4Str(const char *str) {
 
 #else
 
-    static inline char isValidIpv4Str(const char *str) {
+static inline char isValidIpv4Str(const char *str) {
 
 #endif
     unsigned int i, j, k;
@@ -127,11 +127,11 @@ char *uriDetailsGetHostAddr(UriDetails *details) {
             return r;
         }
 #ifdef ENABLE_IPV6
-            case AF_INET6: {
-                char *addr = malloc(INET6_ADDRSTRLEN + 1);
-                inet_ntop(AF_INET6, ent->h_addr, addr, INET6_ADDRSTRLEN);
-                return addr;
-            }
+        case AF_INET6: {
+            char *addr = malloc(INET6_ADDRSTRLEN + 1);
+            inet_ntop(AF_INET6, ent->h_addr, addr, INET6_ADDRSTRLEN);
+            return addr;
+        }
 #endif
         default:
             return NULL;
@@ -213,7 +213,7 @@ const char *uriDetailsCreateSocketAddress(UriDetails *self, SocketAddress *socke
                 break;
             }
 #ifdef ENABLE_IPV6
-            uriDetailsCreateSocketAddress_abort:
+uriDetailsCreateSocketAddress_abort:
 #endif
         default:
             socketAddress->state = SA_STATE_FAILED, free(address);
@@ -474,7 +474,8 @@ char *uriPathAbsoluteAppend(const char *currentPath, const char *append) {
                                     case '\0':
                                         i += 3;
                                         if (j)
-                                            do --j; while (j && r[j] != '/');
+                                            do --j;
+                                            while (j && r[j] != '/');
 
                                         if (!j) {
                                             ++j;
@@ -502,7 +503,7 @@ char *uriPathAbsoluteAppend(const char *currentPath, const char *append) {
         }
     }
 
-    uriPathAbsoluteAppend_finished:
+uriPathAbsoluteAppend_finished:
     r[j] = '\0', free(c);
     if (!(c = realloc(r, j + 1))) {
         free(r);

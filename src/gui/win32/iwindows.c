@@ -17,9 +17,8 @@ BOOL CALLBACK iWindowSetSystemFontEnumerator(HWND hWnd, LPARAM lParam) {
 }
 
 static int CALLBACK iWindowBrowseFolderCallback(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData) {
-    if (uMsg == BFFM_INITIALIZED) {
+    if (uMsg == BFFM_INITIALIZED)
         SendMessage(hwnd, BFFM_SETSELECTION, TRUE, lpData);
-    }
 
     return 0;
 }

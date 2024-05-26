@@ -42,7 +42,7 @@ typedef int ssize_t;
 
 #define INVALID_FILE_ATTRIBUTES ((DWORD)-1)
 
-typedef unsigned long ULONG_PTR,*PULONG_PTR;
+typedef unsigned long ULONG_PTR, *PULONG_PTR;
 
 typedef int socklen_t;
 
@@ -70,10 +70,10 @@ struct sockaddr_storage {
 
 typedef struct _SCOPE_ID {
     union {
-            struct {
-                unsigned long Zone : 28;
-                unsigned long Level : 4;
-            };
+        struct {
+            unsigned long Zone : 28;
+            unsigned long Level : 4;
+        };
         unsigned long Value;
     };
 } SCOPE_ID, *PSCOPE_ID;

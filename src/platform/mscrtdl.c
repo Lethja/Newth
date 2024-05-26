@@ -24,12 +24,12 @@
 #ifdef PLATFORM_NET_ADAPTER
 
 typedef AdapterAddressArray *(*adapterInformationIpv6)(sa_family_t family,
-                                                       void (*arrayAdd)(AdapterAddressArray *, const char *,
-                                                                        sa_family_t, char *),
-                                                       void (*nTop)(const void *, char *));
+        void (*arrayAdd)(AdapterAddressArray *, const char *,
+                         sa_family_t, char *),
+        void (*nTop)(const void *, char *));
 
 typedef AdapterAddressArray *(*adapterInformationIpv4)(
-        void (*arrayAdd)(AdapterAddressArray *, const char *, sa_family_t, char *));
+void (*arrayAdd)(AdapterAddressArray *, const char *, sa_family_t, char *));
 
 adapterInformationIpv4 getAdapterInformationIpv4 = NULL;
 adapterInformationIpv6 getAdapterInformationIpv6 = NULL;
@@ -171,7 +171,7 @@ void platformPathCombine(char *output, const char *path1, const char *path2) {
     if (idx || (output[0] == '.' && output[1] == '\0'))
         output[idx + 1] = '\0', strcat(output, &pathDivider[1]);
     else if ((output[0] == pathDivider[0] || output[idx] == pathDivider[1]) &&
-               (output[1] == pathDivider[0] || output[1] == pathDivider[1]))
+             (output[1] == pathDivider[0] || output[1] == pathDivider[1]))
         output[1] = '\0';
 
     /* Jump over any leading dividers in the second path then concatenate it */
@@ -329,9 +329,8 @@ void platformGetIpString(struct sockaddr *addr, char ipStr[INET6_ADDRSTRLEN], sa
             *family = AF_INET;
         } else
             *family = AF_INET6;
-    } else {
+    } else
         strcpy(ipStr, "???");
-    }
 }
 
 unsigned short platformGetPort(struct sockaddr *addr) {
@@ -354,8 +353,8 @@ AdapterAddressArray *platformGetAdapterInformation(sa_family_t family) {
     switch (family) {
         case AF_UNSPEC:
             if (getAdapterInformationIpv6)
-                case AF_INET6:
-                    return getAdapterInformationIpv6(family, platformFindOrCreateAdapterIp, ipv6NTop);
+            case AF_INET6:
+            return getAdapterInformationIpv6(family, platformFindOrCreateAdapterIp, ipv6NTop);
         default:
         case AF_INET:
             return getAdapterInformationIpv4(platformFindOrCreateAdapterIp);
@@ -506,7 +505,7 @@ int platformFileStat(const char *path, PlatformFileStat *stat) {
 
             li.LowPart = fad.nFileSizeLow, li.HighPart = fad.nFileSizeHigh, stat->st_size = li.QuadPart;
             stat->st_mode =
-                    fad.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL;
+            fad.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL;
 
             return 0;
         } else if (fad.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) { /* Might be a FAT partition directory */
@@ -543,9 +542,8 @@ platformFileOpenModeConfigure(const char *fileMode, DWORD *desiredAccess, DWORD 
                     *desiredAccess |= GENERIC_READ;
                     *shareMode |= GENERIC_READ;
                     *creationDisposition = OPEN_EXISTING;
-                } else {
+                } else
                     *creationDisposition |= CREATE_ALWAYS;
-                }
                 break;
             case 'a':
                 *openFlags |= _O_APPEND;

@@ -108,8 +108,8 @@ ssize_t __wrap_recv(int fd, void *buf, size_t len, int flags) {
         if (mockReceiveError) {
             errno = mockReceiveError;
 
-            if(mockErrorReset)
-                if(!--mockErrorReset)
+            if (mockErrorReset)
+                if (!--mockErrorReset)
                     mockReceiveError = ENOERR;
 
             return -1;
@@ -134,7 +134,7 @@ ssize_t __wrap_recv(int fd, void *buf, size_t len, int flags) {
         if (mockReceiveStream) {
             size_t s = fread(buf, sizeof(char), r, mockReceiveStream);
             if (flags & MSG_PEEK) {
-                fseek(mockReceiveStream, (long) -s, SEEK_CUR);
+                fseek(mockReceiveStream, (long) - s, SEEK_CUR);
                 mockReceiveCountBuf -= s;
             }
 
@@ -160,8 +160,8 @@ ssize_t __wrap_send(int fd, const void *buf, size_t n, int flags) {
         if (mockSendError) {
             errno = mockSendError;
 
-            if(mockErrorReset)
-                if(!--mockErrorReset)
+            if (mockErrorReset)
+                if (!--mockErrorReset)
                     mockSendError = ENOERR;
 
             return -1;

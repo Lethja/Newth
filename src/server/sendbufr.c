@@ -28,9 +28,9 @@ size_t sendBufferFlush(SendBuffer *self) {
         read = fread(data, 1, SB_DATA_SIZE, self->buffer);
 
         if (read == 0) {
-#pragma region Handle end of memory stream
+            #pragma region Handle end of memory stream
             platformMemoryStreamFree(self->buffer), self->buffer = NULL, self->idx = 0;
-#pragma endregion
+            #pragma endregion
             return bytesFlushed;
         }
 
@@ -38,13 +38,13 @@ size_t sendBufferFlush(SendBuffer *self) {
         if (flush == -1) {
             int error = platformSocketGetLastError();
             switch (error) { /* NOLINT(*-multiway-paths-covered) */
-#pragma region Handle socket error
+                    #pragma region Handle socket error
                 case SOCKET_TRY_AGAIN:
 #if SOCKET_TRY_AGAIN != SOCKET_WOULD_BLOCK
                 case SOCKET_WOULD_BLOCK:
 #endif
                     return bytesFlushed;
-#pragma endregion
+                    #pragma endregion
                 default:
                     self->options = SOC_BUF_ERR_FAIL;
                     return 0;
@@ -67,39 +67,39 @@ size_t sendBufferWriteData(SendBuffer *self, const char *data, size_t len) {
     size_t bytesSent = 0;
 
     if (!self->buffer) {
-#pragma region Attempt a direct send to the socket
+        #pragma region Attempt a direct send to the socket
         sent = send(self->clientSocket, data, len, 0);
 
         if (sent == -1) {
             int error = platformSocketGetLastError();
             switch (error) { /* NOLINT(*-multiway-paths-covered) */
-#pragma region Handle socket error
+                    #pragma region Handle socket error
                 case SOCKET_TRY_AGAIN:
 #if SOCKET_TRY_AGAIN != SOCKET_WOULD_BLOCK
                 case SOCKET_WOULD_BLOCK:
 #endif
                     break;
-#pragma endregion
+                    #pragma endregion
                 default:
                     self->options = SOC_BUF_ERR_FAIL;
                     return 0;
             }
         } else
             bytesSent = sent;
-#pragma endregion
+        #pragma endregion
 
         if (bytesSent < len) {
-#pragma region Write what does not fit into a memory stream
+            #pragma region Write what does not fit into a memory stream
             self->buffer = platformMemoryStreamNew();
             bytesSent += fwrite(&data[len - (len - bytesSent)], 1, len - bytesSent, self->buffer);
-#pragma endregion
+            #pragma endregion
         }
         return bytesSent;
     } else {
-#pragma region Append onto the end of the memory stream
+        #pragma region Append onto the end of the memory stream
         platformMemoryStreamSeek(self->buffer, 0, SEEK_END);
         bytesSent = fwrite(data, 1, len, self->buffer);
-#pragma endregion
+        #pragma endregion
         return bytesSent;
     }
 }

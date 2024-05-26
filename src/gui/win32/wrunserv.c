@@ -391,7 +391,7 @@ LRESULT CALLBACK runServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam,
 
         case WM_CLOSE:
             DestroyWindow(sConnectionWin);
-            /* Fall through */
+        /* Fall through */
         default:
             return DefWindowProc(hwnd, message, wParam, lParam);
     }
@@ -401,8 +401,8 @@ LRESULT CALLBACK runServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam,
 void connectionsWindowCreate(WNDCLASSEX *class, HINSTANCE inst, int show) {
     RECT rect;
     HWND window = sConnectionWin = CreateWindow(class->lpszClassName, _T("Connection Details - Newth"), WS_OVERLAPPED,
-                                                CW_USEDEFAULT, CW_USEDEFAULT, 320 + GetSystemMetrics(SM_CXBORDER),
-                                                240 + GetSystemMetrics(SM_CYCAPTION), HWND_DESKTOP, NULL, inst, NULL);
+                                   CW_USEDEFAULT, CW_USEDEFAULT, 320 + GetSystemMetrics(SM_CXBORDER),
+                                   240 + GetSystemMetrics(SM_CYCAPTION), HWND_DESKTOP, NULL, inst, NULL);
 
     GetClientRect(window, &rect);
 
@@ -427,7 +427,7 @@ void runServerWindowCreate(WNDCLASSEX *class, HINSTANCE inst, int show) {
                           NULL,                                             /* No menu */
                           inst,                                             /* Program Instance handler */
                           NULL                                              /* No Window Creation data */
-    );
+                         );
 
     GetClientRect(window, &winRect);
 

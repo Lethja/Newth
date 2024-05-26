@@ -278,9 +278,8 @@ void httpHeaderWriteLastModified(SendBuffer *socketBuffer, PlatformFileStat *st)
 
 void httpHeaderWriteContentType(SendBuffer *socketBuffer, char *type, char *charSet) {
     size_t len = strlen(type) + strlen(charSet) + strlen("Content-Type: ;" HTTP_EOL) + 1;
-    if (len < SB_DATA_SIZE) {
+    if (len < SB_DATA_SIZE)
         sendBufferPrintf(socketBuffer, len, "Content-Type: %s; %s" HTTP_EOL, type, charSet);
-    }
 }
 
 char *httpHeaderGetResponse(short response) {

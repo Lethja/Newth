@@ -268,9 +268,8 @@ AdapterAddressArray *platformGetAdapterInformation(sa_family_t family) {
     struct ifaddrs *ifap, *ifa;
     char address[INET6_ADDRSTRLEN];
 
-    if (getifaddrs(&ifap)) {
+    if (getifaddrs(&ifap))
         return NULL;
-    }
 
     array = malloc(sizeof(AdapterAddressArray));
 

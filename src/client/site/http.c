@@ -33,12 +33,12 @@ static inline char HttpResponseOk(const char *response) {
  * @return A system error or -1 if there isn't a good match
  */
 static inline int HttpResponseToSystemError(const char *response) {
-    switch(response[0]) {
+    switch (response[0]) {
         case '1':
         case '2':
             return 0;
         case '4':
-            switch(response[1]) {
+            switch (response[1]) {
                 case '0':
                     switch (response[2]) {
                         case '0':
@@ -598,8 +598,8 @@ const char *httpSiteSchemeNew(HttpSite *self, const char *path) {
     char *header, *scheme, *response, *send;
 
     if (!path) {
-        self->socket.serverSocket = INVALID_SOCKET, self->fullUri = NULL, memset(&self->address, 0,
-                                                                                 sizeof(SocketAddress));
+        self->socket.serverSocket = INVALID_SOCKET, self->fullUri = NULL;
+        memset(&self->address, 0, sizeof(SocketAddress));
         return ErrNoUriSpecified;
     }
 
@@ -653,7 +653,7 @@ const char *httpSiteSchemeNew(HttpSite *self, const char *path) {
 
     return NULL;
 
-    httpSiteSchemeNew_closeSocketAndAbort:
+httpSiteSchemeNew_closeSocketAndAbort:
     if (self->socket.serverSocket == INVALID_SOCKET)
         CLOSE_SOCKET(self->socket.serverSocket);
 
@@ -663,7 +663,7 @@ const char *httpSiteSchemeNew(HttpSite *self, const char *path) {
     if (scheme)
         free(scheme);
 
-    httpSiteSchemeNew_abort:
+httpSiteSchemeNew_abort:
     uriDetailsFree(&details);
 
     return err;
@@ -826,18 +826,18 @@ void *httpSiteSchemeDirectoryListingOpen(HttpSite *self, char *path) {
 
     return directoryListing;
 
-    httpSiteOpenDirectoryListing_abort3:
+httpSiteOpenDirectoryListing_abort3:
     if (scheme)
         free(scheme);
 
     free(header);
-    httpSiteOpenDirectoryListing_abort2:
+httpSiteOpenDirectoryListing_abort2:
     if (request)
         free(request);
 
     free(absPath);
 
-    httpSiteOpenDirectoryListing_abort1:
+httpSiteOpenDirectoryListing_abort1:
     uriDetailsFree(&details);
     recvBufferClear(&self->socket);
 

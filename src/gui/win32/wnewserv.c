@@ -115,7 +115,7 @@ LRESULT CALLBACK newServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam,
                         HINSTANCE hThisInstance = (HINSTANCE) GetWindowLong(hwnd, -6 /* GWL_INSTANCE */);
 #endif
                         WNDCLASSEX runWindowClass = iWindowCreateClass(hThisInstance, _T("ThRunServer"),
-                                                                       runServerWindowCallback);
+                                                    runServerWindowCallback);
                         forkServerProcess(hwnd);
                         runServerWindowCreate(&runWindowClass, hThisInstance, SW_SHOW);
                         DestroyWindow(hwnd);
@@ -129,9 +129,8 @@ LRESULT CALLBACK newServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam,
                         GetWindowText(rootPathEntry, browsePath, MAX_PATH);
                         iWindowBrowseFolder(browsePath, browsePath, "Browse for root path...");
 
-                        if (strlen(browsePath)) {
+                        if (strlen(browsePath))
                             SetWindowText(rootPathEntry, browsePath);
-                        }
                     }
                     break;
                 }
@@ -154,9 +153,9 @@ LRESULT CALLBACK newServerWindowCallback(HWND hwnd, UINT message, WPARAM wParam,
             if (!globalRootPath)
                 PostQuitMessage(0);
             else
-                /* Fall through */
-                default:
-                    return DefWindowProc(hwnd, message, wParam, lParam);
+            /* Fall through */
+            default:
+            return DefWindowProc(hwnd, message, wParam, lParam);
     }
 
     return 0;
@@ -195,7 +194,7 @@ static void SetRootStartUpPath(HWND window) {
     LPSTR path = NULL;
     HMODULE module;
 
-#pragma region Check For Argv Path Argument
+    #pragma region Check For Argv Path Argument
 
     path = getDirectoryPathArg();
 
@@ -205,9 +204,9 @@ static void SetRootStartUpPath(HWND window) {
         return;
     }
 
-#pragma endregion
+    #pragma endregion
 
-#pragma region Modern System Function Call To Get Desktop Path
+    #pragma region Modern System Function Call To Get Desktop Path
 
     module = LoadLibrary("shell32.dll");
     if (module) {
@@ -227,9 +226,9 @@ static void SetRootStartUpPath(HWND window) {
         FreeLibrary(module);
     }
 
-#pragma endregion
+    #pragma endregion
 
-#pragma region Fallback For DOS based Windows To Get Desktop Path
+    #pragma region Fallback For DOS based Windows To Get Desktop Path
 
     path = malloc(MAX_PATH);
     if (path) {
@@ -240,7 +239,7 @@ static void SetRootStartUpPath(HWND window) {
         free(path);
     }
 
-#pragma endregion
+    #pragma endregion
 }
 
 void newServerWindowCreate(WNDCLASSEX *class, HINSTANCE inst, int show) {
@@ -258,7 +257,7 @@ void newServerWindowCreate(WNDCLASSEX *class, HINSTANCE inst, int show) {
                           NULL,                                             /* No menu */
                           inst,                                             /* Program Instance handler */
                           NULL                                              /* No Window Creation data */
-    );
+                         );
 
     /* Create the path entry & button widgets */
     CreateWindow(_T("BUTTON"), _T("Root Path:"), NORMAL_GROUPBOX, 5, 5, 305, 53, window, 0, inst, 0);

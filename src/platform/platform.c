@@ -26,8 +26,8 @@ void platformFindOrCreateAdapterIp(AdapterAddressArray *array, const char *adapt
     }
 
     if (i == array->size) {
-        array->adapter = array->size ? realloc(array->adapter, sizeof(NetworkAdapter) * (array->size + 1)) : malloc(
-                sizeof(NetworkAdapter));
+        array->adapter = array->size ?
+                         realloc(array->adapter, sizeof(NetworkAdapter) * (array->size + 1)) : malloc(sizeof(NetworkAdapter));
 
         if (!array->adapter)
             return;
@@ -39,9 +39,9 @@ void platformFindOrCreateAdapterIp(AdapterAddressArray *array, const char *adapt
     }
 
     array->adapter[i].addresses.array = array->adapter[i].addresses.size ? realloc(array->adapter[i].addresses.array,
-                                                                                   sizeof(Address) *
-                                                                                   (array->adapter[i].addresses.size +
-                                                                                    1)) : malloc(sizeof(Address));
+                                        sizeof(Address) *
+                                        (array->adapter[i].addresses.size +
+                                         1)) : malloc(sizeof(Address));
     if (!array->adapter[i].addresses.array)
         return;
 

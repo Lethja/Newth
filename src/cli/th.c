@@ -11,7 +11,7 @@ static void shutdownCrash(int signal) {
             serverFreeResources();
             platformIpStackExit();
             printf("Emergency shutdown: %d\n", signal);
-            /* Fallthrough */
+        /* Fallthrough */
         case SIGABRT:
         case SIGSEGV:
             exit(1);
@@ -174,9 +174,9 @@ static int setup(int argc, char **argv) {
 int main(int argc, char **argv) {
     platformConnectSignals(signalNoAction, shutdownCrash, shutdownProgram);
 
-    if (argc > 1) {
+    if (argc > 1)
         globalRootPath = platformGetDiskPath(argv[1]);
-    } else {
+    else {
         char *buf = malloc(BUFSIZ + 1), *test = platformGetWorkingDirectory(buf, BUFSIZ);
 
         if (buf) {

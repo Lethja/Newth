@@ -28,7 +28,7 @@ void eventHttpRespondInvoke(SOCKET *clientSocket, const char *path, char type, s
     if (eventHttpRespondCallback) {
         eventHttpRespond st;
         st.clientSocket = clientSocket, st.type = &type, st.response = &respond, st.path =
-                path[0] == '/' ? path + 1 : path;
+                          path[0] == '/' ? path + 1 : path;
         eventHttpRespondCallback(&st);
     }
 }
@@ -37,7 +37,7 @@ void eventHttpFinishInvoke(SOCKET *clientSocket, const char *path, char type, sh
     if (eventHttpFinishCallback) {
         eventHttpRespond st;
         st.clientSocket = clientSocket, st.type = &type, st.response = &respond, st.path =
-                path[0] == '/' ? path + 1 : path;
+                          path[0] == '/' ? path + 1 : path;
         eventHttpFinishCallback(&st);
     }
 #ifdef TH_TCP_NEVER_REUSE

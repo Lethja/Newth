@@ -106,8 +106,8 @@ Routine FileRoutineNew(SendBuffer socketBuffer, FILE *file, PlatformFileOffset s
                        char webPath[FILENAME_MAX]) {
     Routine self;
 
-    self.type.file.file = file, self.type.file.start = start, self.type.file.end = end, self.state =
-            TYPE_ROUTINE_FILE | STATE_FLUSH;
+    self.type.file.file = file, self.type.file.start = start, self.type.file.end = end;
+    self.state = TYPE_ROUTINE_FILE | STATE_FLUSH;
     self.socketBuffer = socketBuffer;
 
     strncpy(self.webPath, webPath, FILENAME_MAX - 1);
@@ -128,12 +128,12 @@ size_t FileRoutineContinue(Routine *self) {
     if (bytesRead > 0) {
         bytesWrite = sendBufferWriteData(&self->socketBuffer, buffer, bytesRead);
 
-#pragma region Rewind file descriptor when socket buffer can not send all data
+        #pragma region Rewind file descriptor when socket buffer can not send all data
 
         if (bytesWrite < bytesRead)
             platformFileSeek(self->type.file.file, (PlatformFileOffset) (currentPosition + bytesWrite), SEEK_SET);
 
-#pragma endregion
+        #pragma endregion
     } else
         bytesWrite = 0, self->state &= ~STATE_CONTINUE, self->state |= STATE_FLUSH;
 
@@ -232,17 +232,17 @@ void RoutineTick(RoutineArray *routineArray) {
     for (i = 0; i < routineArray->size; ++i) {
         Routine *routine = &routines[i];
 
-#pragma region Routine State Machine
+        #pragma region Routine State Machine
         switch (routine->state) {
             case STATE_DEFER | TYPE_ROUTINE:
             case STATE_DEFER | TYPE_ROUTINE_FILE:
             case STATE_DEFER | TYPE_ROUTINE_DIR:
-                if (serverDeferredSocketExists(routine->socketBuffer.clientSocket)) {
+                if (serverDeferredSocketExists(routine->socketBuffer.clientSocket))
                     continue;
-                } else {
-                    if (routine->socketBuffer.options & SOC_BUF_ERR_FAIL) {
+                else {
+                    if (routine->socketBuffer.options & SOC_BUF_ERR_FAIL)
                         routine->state |= STATE_FAIL;
-                    } else {
+                    else {
                         size_t sent = sendBufferFlush(&routine->socketBuffer);
                         if (sent == 0 || routine->socketBuffer.options & SOC_BUF_ERR_FAIL)
                             routine->state |= STATE_FAIL;
@@ -263,9 +263,8 @@ void RoutineTick(RoutineArray *routineArray) {
                     size_t sent = sendBufferFlush(&routine->socketBuffer);
                     if (sent == 0 && (routine->socketBuffer.options & SOC_BUF_ERR_FAIL))
                         routine->state |= STATE_FAIL, routine->state &= ~STATE_FLUSH;
-                } else {
+                } else
                     routine->state |= STATE_CONTINUE, routine->state &= ~STATE_FLUSH;
-                }
                 break;
 
             case STATE_CONTINUE | TYPE_ROUTINE:
@@ -306,7 +305,7 @@ void RoutineTick(RoutineArray *routineArray) {
             case STATE_CONTINUE | TYPE_ROUTINE_DIR:
                 if (DirectoryRoutineContinue(routine))
                     break;
-                /* Fall through */
+            /* Fall through */
             case STATE_FINISH | TYPE_ROUTINE_DIR:
             case STATE_FAIL | TYPE_ROUTINE_DIR:
                 serverDeferredSocketRemove(routine->socketBuffer.clientSocket);
@@ -323,7 +322,7 @@ void RoutineTick(RoutineArray *routineArray) {
                 RoutineArrayDel(routineArray, routine);
                 break;
         }
-#pragma endregion
+        #pragma endregion
 
     }
 }

@@ -73,7 +73,7 @@ const char *pathQueueAppendOrCreate(SocketAddress *address, const char *path) {
                 goto downloadQueueAppendOrCreate_Found;
         }
 
-        downloadQueueAppendOrCreate_Found:
+downloadQueueAppendOrCreate_Found:
 
         if (i == addressQueue->queueLen) {
             PathQueue *q;
@@ -113,7 +113,7 @@ const char *pathQueueAppendOrCreate(SocketAddress *address, const char *path) {
 
         return PathAppendOrCreate(addressQueue->queue[0], path);
 
-        downloadQueueAppendOrCreate_AbortNew:
+downloadQueueAppendOrCreate_AbortNew:
         free(addressQueue), addressQueue = NULL;
         return strerror(errno);
     }
@@ -131,7 +131,7 @@ void *pathQueueFind(SocketAddress *address, const char *path, size_t *addressIdx
             goto downloadQueueFind_AddressFound;
     }
 
-    downloadQueueFind_AddressFound:
+downloadQueueFind_AddressFound:
 
     if (i == addressQueue->queueLen || !addressQueue->queue[0]->paths)
         return NULL;
@@ -211,9 +211,8 @@ void addressQueueClear(void) {
         return;
 
     for (i = 0; i < addressQueue->queueLen; ++i) {
-        for (j = 0; j < addressQueue->queue[i]->pathsLen; ++j) {
+        for (j = 0; j < addressQueue->queue[i]->pathsLen; ++j)
             free(addressQueue->queue[i]->paths[j]);
-        }
 
         free(addressQueue->queue[i]->paths), free(addressQueue->queue[i]);
     }

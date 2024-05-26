@@ -14,11 +14,11 @@
  */
 static inline SOCK_BUF_TYPE AppendWait(int fd, void *buf, size_t n, int flags) {
     SOCK_BUF_TYPE s;
-    BlockAppend_keepGoing:
+BlockAppend_keepGoing:
     switch ((s = recv(fd, buf, n, flags))) {
         case -1:
             switch (platformSocketGetLastError()) {
-#pragma region Handle socket error
+                    #pragma region Handle socket error
                 case SOCKET_TRY_AGAIN:
 #if SOCKET_TRY_AGAIN != SOCKET_WOULD_BLOCK
                 case SOCKET_WOULD_BLOCK:
@@ -75,7 +75,7 @@ static inline char DataIncrement(RecvBuffer *self, size_t added) {
     }
     return 0;
 
-    DataIncrement_complete:
+DataIncrement_complete:
     /* TODO: Use `recvBufferSetLengthComplete()` to indicate the data is completed */
     return 1;
 }
@@ -94,7 +94,7 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
         goto recvBufferAppendChunk_parse;
 
     /* Iterate over the data until the next chunk */
-    recvBufferAppendChunk_iterate:
+recvBufferAppendChunk_iterate:
     while (i < len && i < self->length.chunk.next) {
         SOCK_BUF_TYPE l, s = (SOCK_BUF_TYPE) (self->length.chunk.next < len ? self->length.chunk.next : len);
         char buf[SB_DATA_SIZE];
@@ -133,8 +133,7 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
         return NULL;
 
     /* Parse the next chunk encoding */
-    recvBufferAppendChunk_parse:
-    {
+recvBufferAppendChunk_parse: {
         const char *e;
         char b[20] = {0}, *finish, *hex;
         SOCK_BUF_TYPE l, j, k;
@@ -176,7 +175,7 @@ static inline const char *recvBufferAppendChunk(RecvBuffer *self, size_t len) {
 
     return NULL;
 
-    recvBufferAppendChunk_socketError:
+recvBufferAppendChunk_socketError:
     return strerror(platformSocketGetLastError());
 }
 
@@ -206,12 +205,12 @@ const char *recvBufferAppend(RecvBuffer *self, size_t len) {
         if (s > SB_DATA_SIZE)
             s = SB_DATA_SIZE;
 
-        recvBufferAppend_tryAgain:
+recvBufferAppend_tryAgain:
         /* TODO: Add callback call here so progress can be reported and a stuck connection can be cancelled by a user */
         switch ((l = recv(self->serverSocket, buf, s, 0))) {
             case -1:
                 switch (platformSocketGetLastError()) {
-#pragma region Handle socket error
+                        #pragma region Handle socket error
                     case SOCKET_TRY_AGAIN:
 #if SOCKET_TRY_AGAIN != SOCKET_WOULD_BLOCK
                     case SOCKET_WOULD_BLOCK:
@@ -490,16 +489,16 @@ const char *recvBufferSend(RecvBuffer *self, const void *data, size_t n, int fla
     unsigned int attempt = 0;
     char dump[SB_DATA_SIZE];
 
-#pragma region Limit the amount of reattempts at establishing a connection there can be
+    #pragma region Limit the amount of reattempts at establishing a connection there can be
 
-    recvBufferSend_reattempt:
+recvBufferSend_reattempt:
     ++attempt;
 
-#pragma endregion
+    #pragma endregion
 
-#pragma region Make sure the entirity of the data is sent on a non-blocking socket
+    #pragma region Make sure the entirity of the data is sent on a non-blocking socket
 
-    recvBufferSend_keepSending:
+recvBufferSend_keepSending:
     switch ((s = send(self->serverSocket, &d[sent], n - sent, flags))) {
         case -1:
             switch (platformSocketGetLastError()) {
@@ -509,7 +508,7 @@ const char *recvBufferSend(RecvBuffer *self, const void *data, size_t n, int fla
 #endif
                     goto recvBufferSend_keepSending;
                 default:
-                recvBufferSend_reconnect:
+recvBufferSend_reconnect:
                     if (attempt >= 3)
                         return e;
 
@@ -526,11 +525,11 @@ const char *recvBufferSend(RecvBuffer *self, const void *data, size_t n, int fla
             goto recvBufferSend_keepSending;
     }
 
-#pragma endregion
+    #pragma endregion
 
-#pragma region Check the remote is alive and responding otherwise reattempt
+    #pragma region Check the remote is alive and responding otherwise reattempt
 
-    recvBufferSend_reply:
+recvBufferSend_reply:
     switch (recv(self->serverSocket, dump, SB_DATA_SIZE, MSG_PEEK)) {
         case -1:
             switch (platformSocketGetLastError()) {
@@ -547,7 +546,7 @@ const char *recvBufferSend(RecvBuffer *self, const void *data, size_t n, int fla
             break;
     }
 
-#pragma endregion
+    #pragma endregion
 
     return NULL;
 }

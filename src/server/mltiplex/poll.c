@@ -121,7 +121,7 @@ static inline SOCKET *pollFdToSocketArray(struct pollfd *poll, const nfds_t *cou
     if (!r)
         return NULL;
 
-    r[0] = (SOCKET) *count;
+    r[0] = (SOCKET) * count;
     for (i = 0, j = 1; i < *count; ++i, ++j)
         r[j] = poll[i].fd;
 
@@ -168,7 +168,7 @@ void serverTick(void) {
     while (serverRun) {
         nfds_t i;
 
-#pragma region Deferred sockets
+        #pragma region Deferred sockets
 
         if (deferredPoll) {
             poll(deferredPoll, deferredPollCount, 0);
@@ -179,24 +179,24 @@ void serverTick(void) {
         if (globalRoutineArray.size)
             RoutineTick(&globalRoutineArray);
 
-#pragma endregion
+        #pragma endregion
 
-#pragma region New socket handling
+        #pragma region New socket handling
         if (servePoll) {
             poll(servePoll, servePollCount, 0);
             for (i = 0; i < servePollCount; ++i)
                 ProcessServePoll(&servePoll[i]);
         }
 
-#pragma endregion
+        #pragma endregion
 
-#pragma region Listen sockets
+        #pragma region Listen sockets
 
         poll(listenPoll, listenPollCount, globalRoutineArray.size ? 0 : servePollCount ? 1000 : POLL_MAX_TIMEOUT);
         for (i = 0; i < listenPollCount; ++i)
             ProcessListeningPoll(&listenPoll[i]);
 
-#pragma endregion
+        #pragma endregion
 
 #ifdef PLATFORM_SHOULD_EXIT
         serverRun = PLATFORM_SHOULD_EXIT();

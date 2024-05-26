@@ -27,8 +27,8 @@ void *wSockIpv6Available(void) {
 #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 
 AdapterAddressArray *wSockIpv6GetAdapterInformation(sa_family_t family,
-                                                    void (arrayAdd)(AdapterAddressArray *, const char *, sa_family_t,
-                                                                    char *), void (nTop)(const void *, char *)) {
+        void (arrayAdd)(AdapterAddressArray *, const char *, sa_family_t,
+                        char *), void (nTop)(const void *, char *)) {
     struct AdapterAddressArray *array;
     DWORD rv;
     ULONG size = 15000, it = 0;

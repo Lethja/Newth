@@ -121,9 +121,8 @@ void serverTick(void) {
                 }
             }
 
-            if (FD_ISSET(i, &readyToWriteSockets)) {
+            if (FD_ISSET(i, &readyToWriteSockets))
                 FD_CLR(i, &serverWriteSockets);
-            }
         }
 #ifdef PLATFORM_SHOULD_EXIT
         serverRun = PLATFORM_SHOULD_EXIT();
