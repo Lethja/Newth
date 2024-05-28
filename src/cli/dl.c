@@ -192,6 +192,13 @@ static inline void processCommand(char **args) {
                 else
                     goto processCommand_notFound;
                 break;
+            case 'Q':
+                if (toupper(args[0][1]) == 'U' && toupper(args[0][2]) == 'E' && toupper(args[0][3]) == 'U' &&
+                    toupper(args[0][4]) == 'E')
+                    puts("QUEUE not yet implemented"); /* TODO: Implement */
+                else
+                    goto processCommand_notFound;
+                break;
             case 'U':
                 if (toupper(args[0][1]) == 'M' && toupper(args[0][2]) == 'O' && toupper(args[0][3]) == 'U' &&
                     toupper(args[0][4]) == 'N' && toupper(args[0][5]) == 'T') {
@@ -226,10 +233,13 @@ static inline void processCommand(char **args) {
     } else if (args[2] == NULL || args[2][0] == '-') {
         switch (toupper(args[0][0])) {
             case 'C':
-                if (toupper(args[0][1]) == 'D') {
+                if (toupper(args[0][1]) == 'D') { /* CD */
                     if (siteWorkingDirectorySet(siteArrayActiveGet(), args[1]))
                         puts(strerror(errno));
-                } else
+                } else if (toupper(args[0][1]) == 'P' ||
+                           (toupper(args[0][1]) == 'O' && toupper(args[0][2]) == 'P' && toupper(args[0][3]) == 'Y'))
+                    puts("COPY from not yet implemented"); /* TODO: Implement */
+                else
                     goto processCommand_notFound;
                 break;
             case 'M':
@@ -243,10 +253,35 @@ static inline void processCommand(char **args) {
                 } else
                     goto processCommand_notFound;
                 break;
+            case 'X':
+                if (toupper(args[0][1]) == 'C' ||
+                    (toupper(args[0][2]) == 'O' && toupper(args[0][3]) == 'P' && toupper(args[0][4]) == 'Y'))
+                    puts("XCOPY from not yet implemented"); /* TODO: Implement */
+                else
+                    goto processCommand_notFound;
+                break;
             default:
                 goto processCommand_notFound;
         }
-
+    } else { /* Infinite commands */
+        switch (toupper(args[0][0])) {
+            case 'C':
+                if (toupper(args[0][1]) == 'P' ||
+                    (toupper(args[0][1]) == 'O' && toupper(args[0][2]) == 'P' && toupper(args[0][3]) == 'Y'))
+                    puts("COPY from/to not yet implemented"); /* TODO: Implement */
+                else
+                    goto processCommand_notFound;
+                break;
+            case 'X':
+                if (toupper(args[0][1]) == 'C' ||
+                    (toupper(args[0][2]) == 'O' && toupper(args[0][3]) == 'P' && toupper(args[0][4]) == 'Y'))
+                    puts("XCOPY from/to not yet implemented"); /* TODO: Implement */
+                else
+                    goto processCommand_notFound;
+                break;
+            default:
+                goto processCommand_notFound;
+        }
     }
     return;
 
