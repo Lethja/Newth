@@ -66,16 +66,37 @@ static inline void processInput(char *input, char **args) {
     args[i] = NULL;
 }
 
-static inline void PrintDirectoryFilesDosLike(Site *site) {
+static inline void PrintDirectoryFilesDosLike(Site *site, char *path) {
     void *dir;
+    char *pathRes = NULL, *unknownPath = "Unknown";
     SiteDirectoryEntry *entry;
+    UriDetails details;
 
-    /* TODO: Allow parameters to determine path directory */
-    if (!(dir = siteDirectoryListingOpen(site, ".")))
+    if (!path)
+        path = ".";
+
+    if (!(dir = siteDirectoryListingOpen(site, path)))
         return;
 
-    printf(" Site number is %ld\n Working directory is '%s'\n\n", siteArrayActiveGetNth(),
-           siteWorkingDirectoryGet(site));
+    details = uriDetailsNewFrom(siteWorkingDirectoryGet(site));
+
+    if (details.path) {
+        char *tmp = uriPathAbsoluteAppend(details.path, path);
+        if (tmp)
+            free(details.path), details.path = tmp;
+
+        pathRes = uriDetailsCreateString(&details);
+    }
+
+    uriDetailsFree(&details);
+
+    if (!pathRes)
+        pathRes = unknownPath;
+
+    printf(" Sid: %ld\n Uri: '%s'\n\n", siteArrayActiveGetNth(), pathRes);
+
+    if (pathRes != unknownPath)
+        free(pathRes);
 
     while ((entry = siteDirectoryListingRead(site, dir))) {
         PlatformFileStat st;
@@ -96,12 +117,14 @@ static inline void PrintDirectoryFilesDosLike(Site *site) {
     siteDirectoryListingClose(site, dir), putc('\n', stdout);
 }
 
-static inline void PrintDirectoryFilesUnixLike(Site *site) {
+static inline void PrintDirectoryFilesUnixLike(Site *site, char *path) {
     void *dir;
     SiteDirectoryEntry *entry;
 
-    /* TODO: Allow parameters to determine path directory */
-    if (!(dir = siteDirectoryListingOpen(site, ".")))
+    if (!path)
+        path = ".";
+
+    if (!(dir = siteDirectoryListingOpen(site, path)))
         return;
 
     putc(' ', stdout);
@@ -165,7 +188,7 @@ static inline void processCommand(char **args) {
         switch (toupper(args[0][0])) {
             case 'D':
                 if (toupper(args[0][1]) == 'I' && toupper(args[0][2]) == 'R')
-                    PrintDirectoryFilesDosLike(siteArrayActiveGet());
+                    PrintDirectoryFilesDosLike(siteArrayActiveGet(), NULL);
                 else
                     goto processCommand_notFound;
                 break;
@@ -177,7 +200,7 @@ static inline void processCommand(char **args) {
                     goto processCommand_notFound;
             case 'L':
                 if (toupper(args[0][1]) == 'S')
-                    PrintDirectoryFilesUnixLike(siteArrayActiveGet());
+                    PrintDirectoryFilesUnixLike(siteArrayActiveGet(), NULL);
                 else
                     goto processCommand_notFound;
                 break;
@@ -239,6 +262,18 @@ static inline void processCommand(char **args) {
                 } else if (toupper(args[0][1]) == 'P' ||
                            (toupper(args[0][1]) == 'O' && toupper(args[0][2]) == 'P' && toupper(args[0][3]) == 'Y'))
                     puts("COPY from not yet implemented"); /* TODO: Implement */
+                else
+                    goto processCommand_notFound;
+                break;
+            case 'D':
+                if (toupper(args[0][1]) == 'I' && toupper(args[0][2]) == 'R')
+                    PrintDirectoryFilesDosLike(siteArrayActiveGet(), args[1]);
+                else
+                    goto processCommand_notFound;
+                break;
+            case 'L':
+                if (toupper(args[0][1]) == 'S')
+                    PrintDirectoryFilesUnixLike(siteArrayActiveGet(), args[1]);
                 else
                     goto processCommand_notFound;
                 break;
