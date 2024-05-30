@@ -286,6 +286,23 @@ static inline void processCommand(char **args) {
                 } else
                     goto processCommand_notFound;
                 break;
+            case 'P':
+                if (toupper(args[0][1]) == 'W' && toupper(args[0][2]) == 'D') {
+                    long id;
+                    if (args[1][0] == '0' && args[1][1] == '\0')
+                        id = 0;
+                    else if (!(id = atol(args[1]))) { /* NOLINT(*-err34-c) */
+                        puts("Invalid Mount ID");
+                        return;
+                    }
+
+                    if (siteArrayNthMounted(id))
+                        puts(siteWorkingDirectoryGet(&siteArrayPtr(NULL)[id]));
+                    else
+                        puts("Invalid Mount ID");
+                } else
+                    goto processCommand_notFound;
+                break;
             case 'X':
                 if (toupper(args[0][1]) == 'C' ||
                     (toupper(args[0][2]) == 'O' && toupper(args[0][3]) == 'P' && toupper(args[0][4]) == 'Y'))

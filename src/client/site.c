@@ -67,6 +67,12 @@ const char *siteArrayActiveSetNth(long siteNumber) {
     return NULL;
 }
 
+char siteArrayNthMounted(long siteNumber) {
+    if (siteNumber < 0 || siteNumber >= Sites.len)
+        return 0;
+    return 1;
+}
+
 char *siteArrayInit(void) {
     Site file;
     siteNew(&file, SITE_FILE, NULL);

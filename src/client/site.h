@@ -52,6 +52,13 @@ void siteArrayActiveSet(Site *site);
 const char *siteArrayActiveSetNth(long siteNumber);
 
 /**
+ * Is the site id valid
+ * @param siteNumber The site number to check
+ * @return Non-zero when site number is valid
+ */
+char siteArrayNthMounted(long siteNumber);
+
+/**
  * Add a site to the list of mounted devices
  * @param site The site to be added
  * @return NULL on success, user friendly error message on failure
