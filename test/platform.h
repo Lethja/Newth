@@ -107,6 +107,58 @@ static void HaystackAndNeedle(void **state) {
     assert_ptr_equal(platformStringFindNeedle(msg3, MSG2), &msg3[3]);
 }
 
+static void StringToArgv(void **state) {
+    const char *str = "This is a test";
+    char **argv = platformArgvConvertString(str);
+
+    assert_string_equal(argv[0], "This");
+    assert_string_equal(argv[1], "is");
+    assert_string_equal(argv[2], "a");
+    assert_string_equal(argv[3], "test");
+    assert_null(argv[4]);
+
+    platformArgvFree(argv);
+}
+
+static void StringToArgvPaddingStart(void **state) {
+    const char *str = "                  This is a test";
+    char **argv = platformArgvConvertString(str);
+
+    assert_string_equal(argv[0], "This");
+    assert_string_equal(argv[1], "is");
+    assert_string_equal(argv[2], "a");
+    assert_string_equal(argv[3], "test");
+    assert_null(argv[4]);
+
+    platformArgvFree(argv);
+}
+
+static void StringToArgvPaddingMiddle(void **state) {
+    const char *str = "This is                   a test";
+    char **argv = platformArgvConvertString(str);
+
+    assert_string_equal(argv[0], "This");
+    assert_string_equal(argv[1], "is");
+    assert_string_equal(argv[2], "a");
+    assert_string_equal(argv[3], "test");
+    assert_null(argv[4]);
+
+    platformArgvFree(argv);
+}
+
+static void StringToArgvPaddingEnd(void **state) {
+    const char *str = "This is a test                  ";
+    char **argv = platformArgvConvertString(str);
+
+    assert_string_equal(argv[0], "This");
+    assert_string_equal(argv[1], "is");
+    assert_string_equal(argv[2], "a");
+    assert_string_equal(argv[3], "test");
+    assert_null(argv[4]);
+
+    platformArgvFree(argv);
+}
+
 #ifdef DOS_DIVIDER
 
 static void PathCombineStringUnixDividers(void **state) {
@@ -128,10 +180,13 @@ const struct CMUnitTest platformTest[] = {cmocka_unit_test(HaystackAndNeedle), c
                                           cmocka_unit_test(PathCombineStringLeadingDivider),
                                           cmocka_unit_test(PathCombineStringNoDivider),
                                           cmocka_unit_test(PathCombineStringRelativeInput),
-                                          cmocka_unit_test(PathCombineStringTrailingDivider)
+                                          cmocka_unit_test(PathCombineStringTrailingDivider),
 #ifdef BACKSLASH_PATH_DIVIDER
-        ,cmocka_unit_test(PathCombineStringUnixDividers)
+        cmocka_unit_test(PathCombineStringUnixDividers),
 #endif
+                                          cmocka_unit_test(StringToArgv), cmocka_unit_test(StringToArgvPaddingEnd),
+                                          cmocka_unit_test(StringToArgvPaddingMiddle),
+                                          cmocka_unit_test(StringToArgvPaddingStart)
 };
 
 #endif /* NEW_TH_TEST_PLATFORM_H */

@@ -139,6 +139,17 @@ SOCKET *platformServerStartup(sa_family_t family, char *ports, char **err);
 
 #pragma endregion
 
+#pragma region Argv & System Execution Call
+
+#ifdef PLATFORM_SYS_EXEC
+
+/**
+ * Interpret a string as a command prompt and convert it into a argv array
+ * @param str The string to be converted
+ * @return NULL on error, otherwise a NULL terminated argv array
+ */
+char **platformArgvConvertString(const char *str);
+
 /**
  * Get the argv position of the flag parameter (and optionally the argument)
  * @param argc In: argc from main()
@@ -149,6 +160,23 @@ SOCKET *platformServerStartup(sa_family_t family, char *ports, char **err);
  * @return The position of the flag in argv or 0 if the flag couldn't be found
  */
 int platformArgvGetFlag(int argc, char **argv, char shortFlag, char *longFlag, char **optArg);
+
+/**
+ * Free a argv array made by platformArgvConvertString
+ * @param argv The string to free
+ */
+void platformArgvFree(char **argv);
+
+/**
+ * Run a program and suspend until it has finished
+ * @param args The arguments to run, use 'platformArgvConvertString' to convert from string if required
+ * @return NULL on success, user friendly error message otherwise
+ */
+char *platformExecRunWait(const char** args);
+
+#endif
+
+#pragma endregion
 
 /**
  * Wrapper around reallocation that gracefully hands control back to the caller in the event of a failure

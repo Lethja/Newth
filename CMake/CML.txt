@@ -45,7 +45,7 @@ add_executable(dl ../src/cli/dl.c
         ../src/platform/platform.c ../src/platform/platform.h
         ${PLATFORM_SRC})
 
-target_compile_definitions(dl PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>")
+target_compile_definitions(dl PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>" PLATFORM_SYS_EXEC=1)
 
 # Server
 add_executable(th ../src/cli/th.c ../src/common/defines.h
@@ -95,7 +95,9 @@ if (ENABLE_TEST)
             ../src/server/sendbufr.c ../src/server/sendbufr.h
             ${MULTIPLEX_SRC} ${PLATFORM_SRC} ${WSOCK_SRC} ${MOCK_SRC})
 
-    target_compile_definitions(test PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>" SB_DATA_SIZE=128 EWOULDBLOCK=41 PLATFORM_NET_LISTEN=1)
+    target_compile_definitions(test PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>"
+            SB_DATA_SIZE=128 EWOULDBLOCK=41 PLATFORM_NET_LISTEN=1 PLATFORM_SYS_EXEC=1
+    )
     target_link_libraries(test cmocka)
 
     if (ENABLE_MOCK)

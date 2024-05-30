@@ -138,6 +138,78 @@ char platformBindPort(const SOCKET *listenSocket, struct sockaddr *socketAddress
 
 #pragma endregion
 
+#pragma region Argv & System Execution Call
+
+#ifdef PLATFORM_SYS_EXEC
+
+char **platformArgvConvertString(const char *str) {
+    char **r = NULL, *a, *p;
+    size_t s;
+
+    if (!str || str[0] == '\0')
+        return NULL;
+
+    s = strlen(str);
+    if (!(a = malloc(s + 1)))
+        return NULL;
+
+    strcpy(a, str);
+    p = a, s = 0;
+    while (*p != '\0') {
+        if (*p == ' ') {
+            size_t amt = 0;
+
+            ++s;
+            while (p[amt] == ' ')
+                ++amt;
+
+            if (p[amt] != '\0') {
+                char *d = p != a ? &p[1] : p;
+                memmove(d, &p[amt], strlen(&p[amt]) + 1);
+            } else {
+                *p = '\0';
+                break;
+            }
+        }
+        ++p;
+    }
+
+    if (!(r = malloc(sizeof(char *) * (s + 2)))) {
+        free(a);
+        return NULL;
+    }
+
+    r[s + 1] = NULL, s = strlen(a);
+    if (platformHeapResize((void **) &a, sizeof(char), s + 1)) {
+        free(a), free(r);
+        return NULL;
+    }
+
+    r[0] = p = a, s = 1;
+    while (*p != '\0') {
+        if (*p == ' ') {
+            r[s] = p[1] != '\0' ? &p[1] : NULL;
+            *p = '\0';
+            ++s, ++p;
+        }
+        ++p;
+    }
+
+    return r;
+}
+
+void platformArgvFree(char **argv) {
+    const char *str = *argv;
+    if (str)
+        free((void *) str);
+
+    free(argv);
+}
+
+#endif
+
+#pragma endregion
+
 int platformArgvGetFlag(int argc, char **argv, char shortFlag, char *longFlag, char **optArg) {
     int i;
     for (i = 1; i < argc; ++i) {
