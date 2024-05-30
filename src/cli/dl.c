@@ -125,6 +125,20 @@ static inline void PrintDirectoryFilesUnixLike(Site *site, char *path) {
     siteDirectoryListingClose(site, dir), putc('\n', stdout);
 }
 
+static inline void PrintHelp(void) {
+    const char *legend =
+    " # = id, ... = parameter(s), () = parameter is optional."
+    " All commands are case-insensitive.\n";
+    const char *help =
+    " ?            - Show this printout       #           - Change active site\n"
+    " ! ...        - Run system command       COPY ...    - Queue file(s) for download\n"
+    " DIR (...)    - Full directory info      EXIT        - Close the program\n"
+    " LS (...)     - Slim directory info      MOUNT (...) - Mount URI as site\n"
+    " PWD (#)      - Print site current path  QUEUE       - List enqueued tasks\n"
+    " UMOUNT #     - Unmount site             XCOPY ...   - Queue subdirectorie(s) for download\n";
+    puts(help), puts(legend);
+}
+
 static inline const char *mountSite(const char *parameter) {
     UriDetails details = uriDetailsNewFrom(parameter);
     enum SiteType type;
@@ -178,6 +192,9 @@ static inline void processCommand(char **args) {
                 str = platformExecRunWait((const char **) args);
                 if (str)
                     puts(str);
+                break;
+            case '?':
+                PrintHelp();
                 break;
             case 'D':
                 if (toupper(args[0][1]) == 'I' && toupper(args[0][2]) == 'R')
@@ -341,7 +358,7 @@ static inline void processCommand(char **args) {
     return;
 
 processCommand_notFound:
-    puts("Command not found");
+    puts("Command not found. See valid commands with '?'");
 }
 
 # if __STDC_VERSION__ >= 201112L
