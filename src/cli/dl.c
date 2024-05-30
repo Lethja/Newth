@@ -48,7 +48,7 @@ static inline void parseUris(int argc, char **argv) {
 
 static inline void CleanInput(char *input) {
     char *newline = strchr(input, '\n');
-    if(newline)
+    if (newline)
         *newline = '\0';
 }
 
@@ -79,7 +79,7 @@ static inline void PrintDirectoryFilesDosLike(Site *site, char *path) {
     if (!pathRes)
         pathRes = unknownPath;
 
-    printf(" Sid: %ld\n Uri: '%s'\n\n", siteArrayActiveGetNth(), pathRes);
+    printf(" Site: %ld\n Path: '%s'\n\n", siteArrayActiveGetNth(), pathRes);
 
     if (pathRes != unknownPath)
         free(pathRes);
