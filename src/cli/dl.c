@@ -46,24 +46,10 @@ static inline void parseUris(int argc, char **argv) {
         printf("WARN: %u addresses couldn't be parsed", e);
 }
 
-static inline void processInput(char *input, char **args) {
-    const char *delimiters = " \t\n";
-    int i = 0;
-
-    while (*input != '\0') {
-        if (i >= 4)
-            break;
-
-        args[i++] = input;
-
-        while (*input != '\0' && strchr(delimiters, *input) == NULL)
-            ++input;
-
-        if (*input != '\0')
-            *input = '\0', ++input;
-    }
-
-    args[i] = NULL;
+static inline void CleanInput(char *input) {
+    char *newline = strchr(input, '\n');
+    if(newline)
+        *newline = '\0';
 }
 
 static inline void PrintDirectoryFilesDosLike(Site *site, char *path) {
@@ -179,13 +165,20 @@ static inline void mountList(void) {
 }
 
 static inline void processCommand(char **args) {
+    const char *str;
+
     if (args[0] == NULL)
         return;
 
-    if (args[1] == NULL || args[1][0] == '-') {
+    if (args[1] == NULL) { /* No parameter commands */
         long l;
-        const char *str;
         switch (toupper(args[0][0])) {
+            case '!':
+                memmove(&args[0][0], &args[0][1], strlen(&args[0][1]) + 1);
+                str = platformExecRunWait((const char **) args);
+                if (str)
+                    puts(str);
+                break;
             case 'D':
                 if (toupper(args[0][1]) == 'I' && toupper(args[0][2]) == 'R')
                     PrintDirectoryFilesDosLike(siteArrayActiveGet(), NULL);
@@ -255,6 +248,11 @@ static inline void processCommand(char **args) {
         }
     } else if (args[2] == NULL || args[2][0] == '-') {
         switch (toupper(args[0][0])) {
+            case '!':
+                str = platformExecRunWait((const char **) &args[1]);
+                if (str)
+                    puts(str);
+                break;
             case 'C':
                 if (toupper(args[0][1]) == 'D') { /* CD */
                     if (siteWorkingDirectorySet(siteArrayActiveGet(), args[1]))
@@ -300,6 +298,11 @@ static inline void processCommand(char **args) {
         }
     } else { /* Infinite commands */
         switch (toupper(args[0][0])) {
+            case '!':
+                str = platformExecRunWait((const char **) &args[1]);
+                if (str)
+                    puts(str);
+                break;
             case 'C':
                 if (toupper(args[0][1]) == 'P' ||
                     (toupper(args[0][1]) == 'O' && toupper(args[0][2]) == 'P' && toupper(args[0][3]) == 'Y'))
@@ -330,7 +333,7 @@ _Noreturn
 
 static inline void interactiveMode(void) {
     char input[BUFSIZ];
-    char *args[5];
+    char **args;
 
     siteArrayInit();
 
@@ -339,8 +342,11 @@ static inline void interactiveMode(void) {
     while (1) {
         printf(SHELL_PS1, siteArrayActiveGetNth());
         if (fgets(input, sizeof(input), stdin)) {
-            processInput(input, (char **) args);
-            processCommand(args);
+            CleanInput(input);
+            if ((args = platformArgvConvertString(input))) {
+                processCommand(args);
+                platformArgvFree(args);
+            }
         }
     }
 #pragma clang diagnostic pop

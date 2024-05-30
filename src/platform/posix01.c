@@ -302,6 +302,31 @@ AdapterAddressArray *platformGetAdapterInformation(sa_family_t family) {
 
 #pragma endregion
 
+#ifdef PLATFORM_SYS_EXEC
+
+#include <sys/wait.h>
+
+char *platformExecRunWait(const char **args) {
+    pid_t pid;
+    fflush(stderr), fflush(stdin), fflush(stdout);
+    pid = fork();
+
+    switch (pid) {
+        case -1: /* Oh no it's a forking error! */
+            return strerror(errno);
+        case 0: /* Child */
+            execvp(args[0], (char *const *) args);
+            puts(strerror(errno));
+            exit(EXIT_FAILURE);
+        default: /* Parent */
+            waitpid(pid, NULL, 0);
+    }
+
+    return NULL;
+}
+
+#endif
+
 char *platformRealPath(char *path) {
     return realpath(path, NULL);
 }
