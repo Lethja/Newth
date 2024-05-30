@@ -153,6 +153,9 @@ static inline const char *mountSite(const char *parameter) {
         case SCHEME_HTTPS:
             type = SITE_HTTP;
             break;
+        case SCHEME_FILE:
+            type = SITE_FILE;
+            break;
         default:
         case SCHEME_UNKNOWN:
             return ErrSchemeNotRecognized;

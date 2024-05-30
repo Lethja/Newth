@@ -45,6 +45,9 @@ char *fileSiteSchemeNew(FileSite *self, const char *path) {
 
     self->fullUri = NULL;
     if (path) {
+        if (platformStringFindNeedle(path, "file://") == path)
+            memmove((char *) path, &path[7], strlen(&path[7]) + 1);
+
         if (!(wd = platformRealPath((char *) path)))
             return "Unable to resolve absolute path";
 

@@ -74,9 +74,14 @@ UriScheme uriDetailsGetScheme(const UriDetails *details) {
         case 4:
             switch (toupper(details->scheme[0])) {
                 case 'F':
-                    if (toupper(details->scheme[1]) == 'T' && toupper(details->scheme[2]) == 'P' &&
-                        toupper(details->scheme[3]) == 'S')
-                        return SCHEME_FTPS;
+                    switch(toupper(details->scheme[1])) {
+                        case 'I':
+                            if (toupper(details->scheme[2]) == 'L' && toupper(details->scheme[3]) == 'E')
+                                return SCHEME_FILE;
+                        case 'T':
+                            if (toupper(details->scheme[2]) == 'P' && toupper(details->scheme[3]) == 'S')
+                                return SCHEME_FTPS;
+                    }
                 case 'H':
                     if (toupper(details->scheme[1]) == 'T' && toupper(details->scheme[2]) == 'T' &&
                         toupper(details->scheme[3]) == 'P')
