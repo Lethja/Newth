@@ -173,6 +173,10 @@ static inline const char *mountSite(const char *parameter) {
 static inline void mountList(void) {
     long a, i, len;
     Site *sites = siteArrayPtr(&len);
+
+    if (!len)
+        siteArrayInit();
+
     a = siteArrayActiveGetNth();
     for (i = 0; i < len; ++i) {
         printf("%c%ld:\t%s\n", i == a ? '>' : ' ', i,

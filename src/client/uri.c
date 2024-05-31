@@ -74,7 +74,7 @@ UriScheme uriDetailsGetScheme(const UriDetails *details) {
         case 4:
             switch (toupper(details->scheme[0])) {
                 case 'F':
-                    switch(toupper(details->scheme[1])) {
+                    switch (toupper(details->scheme[1])) {
                         case 'I':
                             if (toupper(details->scheme[2]) == 'L' && toupper(details->scheme[3]) == 'E')
                                 return SCHEME_FILE;
