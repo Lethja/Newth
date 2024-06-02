@@ -13,6 +13,34 @@
 #define SHELL_PS1 "%ld # "
 #endif /* defined(WATT32) || defined(WIN32) */
 
+static inline void Copy(const char **argv) {
+    size_t i = 0;
+    while (argv[i])
+        ++i;
+
+    /* TODO: Implement adding to the queue */
+    if (i > 2)
+        puts("COPY from/to not yet implemented");
+    else
+        puts("COPY from not yet implemented");
+}
+
+static inline void XCopy(const char **argv) {
+    size_t i = 0;
+    while (argv[i])
+        ++i;
+
+    /* TODO: Implement adding to the queue */
+    if (i > 2)
+        puts("XCOPY from/to not yet implemented");
+    else
+        puts("XCOPY from not yet implemented");
+}
+
+static inline void ListQueue(void) {
+    puts("QUEUE not yet implemented"); /* TODO: Implement */
+}
+
 static inline SocketAddress *ParseUri(const char *uri, UriDetails *uriDetails) {
     UriDetails details = uriDetailsNewFrom(uri);
     SocketAddress *address = calloc(1, sizeof(SocketAddress));
@@ -235,7 +263,7 @@ static inline void ProcessCommand(char **args) {
             case 'Q':
                 if (toupper(args[0][1]) == 'U' && toupper(args[0][2]) == 'E' && toupper(args[0][3]) == 'U' &&
                     toupper(args[0][4]) == 'E')
-                    puts("QUEUE not yet implemented"); /* TODO: Implement */
+                    ListQueue();
                 else
                     goto processCommand_notFound;
                 break;
@@ -283,7 +311,7 @@ static inline void ProcessCommand(char **args) {
                         puts(strerror(errno));
                 } else if (toupper(args[0][1]) == 'P' ||
                            (toupper(args[0][1]) == 'O' && toupper(args[0][2]) == 'P' && toupper(args[0][3]) == 'Y'))
-                    puts("COPY from not yet implemented"); /* TODO: Implement */
+                    Copy((const char **) args);
                 else
                     goto processCommand_notFound;
                 break;
@@ -330,7 +358,7 @@ static inline void ProcessCommand(char **args) {
             case 'X':
                 if (toupper(args[0][1]) == 'C' ||
                     (toupper(args[0][2]) == 'O' && toupper(args[0][3]) == 'P' && toupper(args[0][4]) == 'Y'))
-                    puts("XCOPY from not yet implemented"); /* TODO: Implement */
+                    XCopy((const char **) args);
                 else
                     goto processCommand_notFound;
                 break;
@@ -347,14 +375,14 @@ static inline void ProcessCommand(char **args) {
             case 'C':
                 if (toupper(args[0][1]) == 'P' ||
                     (toupper(args[0][1]) == 'O' && toupper(args[0][2]) == 'P' && toupper(args[0][3]) == 'Y'))
-                    puts("COPY from/to not yet implemented"); /* TODO: Implement */
+                    Copy((const char **) args);
                 else
                     goto processCommand_notFound;
                 break;
             case 'X':
                 if (toupper(args[0][1]) == 'C' ||
                     (toupper(args[0][2]) == 'O' && toupper(args[0][3]) == 'P' && toupper(args[0][4]) == 'Y'))
-                    puts("XCOPY from/to not yet implemented"); /* TODO: Implement */
+                    XCopy((const char **) args);
                 else
                     goto processCommand_notFound;
                 break;
