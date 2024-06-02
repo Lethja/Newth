@@ -13,7 +13,7 @@
 #define SHELL_PS1 "%ld # "
 #endif /* defined(WATT32) || defined(WIN32) */
 
-static inline SocketAddress *parseUri(const char *uri, UriDetails *uriDetails) {
+static inline SocketAddress *ParseUri(const char *uri, UriDetails *uriDetails) {
     UriDetails details = uriDetailsNewFrom(uri);
     SocketAddress *address = calloc(1, sizeof(SocketAddress));
 
@@ -26,12 +26,12 @@ static inline SocketAddress *parseUri(const char *uri, UriDetails *uriDetails) {
     return address;
 }
 
-static inline void parseUris(int argc, char **argv) {
+static inline void ParseUris(int argc, char **argv) {
     int i;
     unsigned int e;
     for (e = 0, i = 1; i < argc; ++i) {
         UriDetails details;
-        SocketAddress *address = parseUri(argv[i], &details);
+        SocketAddress *address = ParseUri(argv[i], &details);
         if (address) {
             const char *err;
             if ((err = pathQueueAppendOrCreate(address, details.path ? details.path : "/")))
@@ -139,7 +139,7 @@ static inline void PrintHelp(void) {
     puts(help), puts(legend);
 }
 
-static inline const char *mountSite(const char *parameter) {
+static inline const char *MountSite(const char *parameter) {
     UriDetails details = uriDetailsNewFrom(parameter);
     enum SiteType type;
     Site site;
@@ -170,7 +170,7 @@ static inline const char *mountSite(const char *parameter) {
     return NULL;
 }
 
-static inline void mountList(void) {
+static inline void MountList(void) {
     long a, i, len;
     Site *sites = siteArrayPtr(&len);
 
@@ -185,7 +185,7 @@ static inline void mountList(void) {
     }
 }
 
-static inline void processCommand(char **args) {
+static inline void ProcessCommand(char **args) {
     const char *str;
 
     if (args[0] == NULL)
@@ -224,7 +224,7 @@ static inline void processCommand(char **args) {
             case 'M':
                 if (toupper(args[0][1]) == 'O' && toupper(args[0][2]) == 'U' && toupper(args[0][3]) == 'N' &&
                     toupper(args[0][4]) == 'T')
-                    mountList();
+                    MountList();
                 break;
             case 'P':
                 if (toupper(args[0][1]) == 'W' && toupper(args[0][2]) == 'D')
@@ -303,7 +303,7 @@ static inline void processCommand(char **args) {
                 if (toupper(args[0][1]) == 'O' && toupper(args[0][2]) == 'U' && toupper(args[0][3]) == 'N' &&
                     toupper(args[0][4]) == 'T') {
                     const char *err;
-                    if ((err = mountSite(args[1]))) {
+                    if ((err = MountSite(args[1]))) {
                         puts(err);
                         return;
                     }
@@ -372,7 +372,7 @@ processCommand_notFound:
 _Noreturn
 #endif
 
-static inline void interactiveMode(void) {
+static inline void InteractiveMode(void) {
     char input[BUFSIZ];
     char **args;
 
@@ -385,7 +385,7 @@ static inline void interactiveMode(void) {
         if (fgets(input, sizeof(input), stdin)) {
             CleanInput(input);
             if ((args = platformArgvConvertString(input))) {
-                processCommand(args);
+                ProcessCommand(args);
                 platformArgvFree(args);
             }
         }
@@ -396,7 +396,7 @@ static inline void interactiveMode(void) {
 int main(int argc, char **argv) {
     char *err;
 
-    parseUris(argc, argv);
+    ParseUris(argc, argv);
 
     err = platformIpStackInit();
     if (err) {
@@ -411,7 +411,7 @@ int main(int argc, char **argv) {
 #ifndef _WIN32
             if (isatty(fileno(stdout)))
 #endif /* _WIN32 */
-                interactiveMode();
+                InteractiveMode();
 #ifndef _WIN32
             else
                 puts("Nothing queued for download");
