@@ -33,4 +33,14 @@ char *httpSiteSchemeWorkingDirectoryGet(HttpSite *self);
 
 int httpSiteSchemeWorkingDirectorySet(HttpSite *self, const char *path);
 
+void httpSiteSchemeFileClose(HttpSite *self);
+
+SOCK_BUF_TYPE httpSiteSchemeFileRead(HttpSite *self, char *buffer, SOCK_BUF_TYPE size);
+
+const char *httpSiteSchemeFileOpenRead(HttpSite *self, const char *path);
+
+const char *httpSiteSchemeFileOpenWrite(HttpSite *self, const char *path);
+
+SOCK_BUF_TYPE httpSiteSchemeFileWrite(HttpSite *self, char *buffer, SOCK_BUF_TYPE size);
+
 #endif /* NEW_DL_HTTP_H */

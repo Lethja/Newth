@@ -234,4 +234,57 @@ void siteDirectoryListingClose(Site *self, void *listing) {
     }
 }
 
+void siteFileClose(Site *self) {
+    switch (self->type) {
+        case SITE_FILE:
+            fileSiteSchemeFileClose(&self->site.file);
+        case SITE_HTTP:
+            httpSiteSchemeFileClose(&self->site.http);
+    }
+}
+
+SOCK_BUF_TYPE siteFileRead(Site *self, char *buffer, SOCK_BUF_TYPE size) {
+    switch (self->type) {
+        case SITE_FILE:
+            return fileSiteSchemeFileRead(&self->site.file, buffer, size);
+        case SITE_HTTP:
+            return httpSiteSchemeFileRead(&self->site.http, buffer, size);
+        default:
+            return -1;
+    }
+}
+
+const char *siteFileOpenRead(Site *self, const char *path) {
+    switch (self->type) {
+        case SITE_FILE:
+            return fileSiteSchemeFileOpenRead(&self->site.file, path);
+        case SITE_HTTP:
+            return httpSiteSchemeFileOpenRead(&self->site.http, path);
+        default:
+            return "Not Implemented";
+    }
+}
+
+const char *siteFileOpenWrite(Site *self, const char *path) {
+    switch (self->type) {
+        case SITE_FILE:
+            return fileSiteSchemeFileOpenWrite(&self->site.file, path);
+        case SITE_HTTP:
+            return httpSiteSchemeFileOpenWrite(&self->site.http, path);
+        default:
+            return "Not Implemented";
+    }
+}
+
+SOCK_BUF_TYPE siteFileWrite(Site *self, char *buffer, SOCK_BUF_TYPE size) {
+    switch (self->type) {
+        case SITE_FILE:
+            return fileSiteSchemeFileWrite(&self->site.file, buffer, size);
+        case SITE_HTTP:
+            return httpSiteSchemeFileWrite(&self->site.http, buffer, size);
+        default:
+            return -1;
+    }
+}
+
 #pragma endregion

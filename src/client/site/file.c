@@ -132,3 +132,34 @@ fileSiteReadDirectoryListing_skip:
     siteEntry->modifiedDate = 0, siteEntry->isDirectory = platformDirEntryIsDirectory(entry, listing, NULL);
     return siteEntry;
 }
+
+void fileSiteSchemeFileClose(FileSite *self) {
+    if (self->file)
+        platformFileClose(self->file), self->file = NULL;
+}
+
+SOCK_BUF_TYPE fileSiteSchemeFileRead(FileSite *self, char *buffer, SOCK_BUF_TYPE size) {
+    return platformFileRead(buffer, size, 1, self->file);
+}
+
+const char *fileSiteSchemeFileOpenRead(FileSite *self, const char *path) {
+    fileSiteSchemeFileClose(self);
+
+    if (!(self->file = platformFileOpen(path, "rb")))
+        return strerror(errno);
+
+    return NULL;
+}
+
+const char *fileSiteSchemeFileOpenWrite(FileSite *self, const char *path) {
+    fileSiteSchemeFileClose(self);
+
+    if (!(self->file = fopen(path, "wb")))
+        return strerror(errno);
+
+    return NULL;
+}
+
+SOCK_BUF_TYPE fileSiteSchemeFileWrite(FileSite *self, char *buffer, SOCK_BUF_TYPE size) {
+    return fwrite(buffer, size, 1, self->file);
+}

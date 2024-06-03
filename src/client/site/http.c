@@ -865,3 +865,23 @@ void *httpSiteSchemeDirectoryListingRead(void *listing) {
 
     return NULL;
 }
+
+void httpSiteSchemeFileClose(HttpSite *self) {
+    /* TODO: Implement HTTP protocol file commands */
+}
+
+SOCK_BUF_TYPE httpSiteSchemeFileRead(HttpSite *self, char *buffer, SOCK_BUF_TYPE size) {
+    return -1;
+}
+
+const char *httpSiteSchemeFileOpenRead(HttpSite *self, const char *path) {
+    return "Not Implemented";
+}
+
+const char *httpSiteSchemeFileOpenWrite(HttpSite *self, const char *path) {
+    return "Not Implemented";
+}
+
+SOCK_BUF_TYPE httpSiteSchemeFileWrite(HttpSite *self, char *buffer, SOCK_BUF_TYPE size) {
+    return -1;
+}

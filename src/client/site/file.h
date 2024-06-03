@@ -3,6 +3,7 @@
 
 typedef struct FileSite {
     char *fullUri;
+    PlatformFile file;
 } FileSite;
 
 void fileSiteSchemeFree(FileSite *self);
@@ -20,5 +21,15 @@ void *fileSiteSchemeDirectoryListingRead(void *listing);
 char *fileSiteSchemeWorkingDirectoryGet(FileSite *self);
 
 int fileSiteSchemeWorkingDirectorySet(FileSite *self, const char *path);
+
+void fileSiteSchemeFileClose(FileSite *self);
+
+SOCK_BUF_TYPE fileSiteSchemeFileRead(FileSite *self, char *buffer, SOCK_BUF_TYPE size);
+
+const char *fileSiteSchemeFileOpenRead(FileSite *self, const char *path);
+
+const char *fileSiteSchemeFileOpenWrite(FileSite *self, const char *path);
+
+SOCK_BUF_TYPE fileSiteSchemeFileWrite(FileSite *self, char *buffer, SOCK_BUF_TYPE size);
 
 #endif /* NEW_DL_FILE_H */

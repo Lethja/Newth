@@ -176,6 +176,16 @@ void siteFree(Site *self);
  */
 const char *siteNew(Site *site, enum SiteType type, const char *path);
 
+void siteFileClose(Site *self);
+
+SOCK_BUF_TYPE siteFileRead(Site *self, char *buffer, SOCK_BUF_TYPE size);
+
+const char *siteFileOpenRead(Site *self, const char *path);
+
+const char *siteFileOpenWrite(Site *self, const char *path);
+
+SOCK_BUF_TYPE siteFileWrite(Site *self, char *buffer, SOCK_BUF_TYPE size);
+
 #pragma endregion
 
 #endif /* NEW_DL_SITE_H */
