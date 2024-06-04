@@ -176,14 +176,48 @@ void siteFree(Site *self);
  */
 const char *siteNew(Site *site, enum SiteType type, const char *path);
 
+/**
+ * Close the currently open file if any
+ * @param self The site to close the file on
+ */
 void siteFileClose(Site *self);
 
+/**
+ * Read from the open file
+ * @param self The site to read the open file from
+ * @param buffer The buffer to write the file streams data to
+ * @param size The size of data in bytes to transfer into the buffer
+ * @return Amount of bytes transferred or -1 on error
+ */
 SOCK_BUF_TYPE siteFileRead(Site *self, char *buffer, SOCK_BUF_TYPE size);
 
+/**
+ * Read to a open file on the site
+ * @param self The site to read a file on
+ * @param path The path (relative or absolute to the path of the URI)
+ * @return NULL on success, user friendly error message otherwise
+ * @remark By design sites can only have one file open at a time and it can only be opened to read or write, not both.
+ * Opening another file will close the first.
+ */
 const char *siteFileOpenRead(Site *self, const char *path);
 
+/**
+ * Open a file on the site for writing
+ * @param self The site to write a file on
+ * @param path The path (relative or absolute to the path of the URI)
+ * @return NULL on success, user friendly error message otherwise
+ * @remark By design sites can only have one file open at a time and it can only be opened to read or write, not both.
+ * Opening another file will close the first.
+ */
 const char *siteFileOpenWrite(Site *self, const char *path);
 
+/**
+ * Write to the open file of a site
+ * @param self The site to write the open file to
+ * @param buffer The buffer to write into the sites file stream
+ * @param size The size of data in bytes to transfer into the buffer
+ * @return Amount of bytes transferred or -1 on error
+ */
 SOCK_BUF_TYPE siteFileWrite(Site *self, char *buffer, SOCK_BUF_TYPE size);
 
 #pragma endregion
