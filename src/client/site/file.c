@@ -1,5 +1,6 @@
 #include "../site.h"
 #include "file.h"
+#include "../uri.h"
 
 #include <sys/stat.h>
 
@@ -9,6 +10,24 @@ static void UpdateFileUri(FileSite *self, char *path) {
     if (self->fullUri)
         free(self->fullUri);
     self->fullUri = platformPathSystemToFileScheme(path);
+}
+
+static inline const char *FileOpen(FileSite *self, const char *path, const char *mode) {
+    fileSiteSchemeFileClose(self);
+    if (path[0] == '/') {
+        if (!(self->file = platformFileOpen(path, mode)))
+            return strerror(errno);
+    } else {
+        /* TODO: Make a more elegant check on file schemes current path */
+        char *osPath = &self->fullUri[7], *fullPath = malloc(strlen(osPath) + strlen(path) + 2);
+        uriPathCombine(fullPath, osPath, path);
+        self->file = platformFileOpen(fullPath, mode);
+        free(fullPath);
+        if (!self->file)
+            return strerror(errno);
+    }
+
+    return NULL;
 }
 
 #pragma endregion
@@ -34,6 +53,9 @@ int fileSiteSchemeWorkingDirectorySet(FileSite *self, const char *path) {
 void fileSiteSchemeFree(FileSite *self) {
     if (self->fullUri)
         free(self->fullUri);
+
+    if (self->file)
+        fclose(self->file);
 }
 
 char *fileSiteSchemeWorkingDirectoryGet(FileSite *self) {
@@ -139,27 +161,18 @@ void fileSiteSchemeFileClose(FileSite *self) {
 }
 
 SOCK_BUF_TYPE fileSiteSchemeFileRead(FileSite *self, char *buffer, SOCK_BUF_TYPE size) {
-    return platformFileRead(buffer, size, 1, self->file);
+    return platformFileRead(buffer, 1, size, self->file);
 }
 
 const char *fileSiteSchemeFileOpenRead(FileSite *self, const char *path) {
-    fileSiteSchemeFileClose(self);
-
-    if (!(self->file = platformFileOpen(path, "rb")))
-        return strerror(errno);
-
-    return NULL;
+    return FileOpen(self, path, "rb");
 }
 
 const char *fileSiteSchemeFileOpenWrite(FileSite *self, const char *path) {
-    fileSiteSchemeFileClose(self);
-
-    if (!(self->file = fopen(path, "wb")))
-        return strerror(errno);
-
-    return NULL;
+    return FileOpen(self, path, "wb");
 }
 
 SOCK_BUF_TYPE fileSiteSchemeFileWrite(FileSite *self, char *buffer, SOCK_BUF_TYPE size) {
-    return fwrite(buffer, size, 1, self->file);
+    /* TODO: implement platformFileWrite() */
+    return fwrite(buffer, 1, size, self->file);
 }
