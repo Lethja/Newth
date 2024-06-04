@@ -120,6 +120,16 @@ static void StringToArgv(void **state) {
     platformArgvFree(argv);
 }
 
+static void StringToArgvOneWord(void **state) {
+    const char *str = "Supercalifragilisticexpialidocious";
+    char **argv = platformArgvConvertString(str);
+
+    assert_string_equal(argv[0], str);
+    assert_null(argv[1]);
+
+    platformArgvFree(argv);
+}
+
 static void StringToArgvPaddingStart(void **state) {
     const char *str = "                  This is a test";
     char **argv = platformArgvConvertString(str);
@@ -184,7 +194,8 @@ const struct CMUnitTest platformTest[] = {cmocka_unit_test(HaystackAndNeedle), c
 #ifdef BACKSLASH_PATH_DIVIDER
         cmocka_unit_test(PathCombineStringUnixDividers),
 #endif
-                                          cmocka_unit_test(StringToArgv), cmocka_unit_test(StringToArgvPaddingEnd),
+                                          cmocka_unit_test(StringToArgv), cmocka_unit_test(StringToArgvOneWord),
+                                          cmocka_unit_test(StringToArgvPaddingEnd),
                                           cmocka_unit_test(StringToArgvPaddingMiddle),
                                           cmocka_unit_test(StringToArgvPaddingStart)
 };
