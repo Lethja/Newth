@@ -153,6 +153,7 @@ char **platformArgvConvertString(const char *str) {
     if (!(a = malloc(s + 1)))
         return NULL;
 
+    #pragma region Count amount of arguments, strip any excessive whitespace
     strcpy(a, str);
     p = a, s = 0;
     while (*p != '\0') {
@@ -173,18 +174,24 @@ char **platformArgvConvertString(const char *str) {
         }
         ++p;
     }
+    #pragma endregion
 
+    #pragma region Allocate a pointer array
     if (!(r = malloc(sizeof(char *) * (s + 2)))) {
         free(a);
         return NULL;
     }
+    #pragma endregion
 
-    r[s + 1] = NULL, s = strlen(a);
+    #pragma region Shrink string to save memory when possible
+    s = strlen(a);
     if (platformHeapResize((void **) &a, sizeof(char), s + 1)) {
         free(a), free(r);
         return NULL;
     }
+    #pragma endregion
 
+    #pragma region Set pointers
     r[0] = p = a, s = 1;
     while (*p != '\0') {
         if (*p == ' ') {
@@ -194,8 +201,9 @@ char **platformArgvConvertString(const char *str) {
         }
         ++p;
     }
-
     r[s] = NULL;
+
+    #pragma endregion
     return r;
 }
 
