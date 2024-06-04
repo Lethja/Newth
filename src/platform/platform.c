@@ -195,6 +195,7 @@ char **platformArgvConvertString(const char *str) {
         ++p;
     }
 
+    r[s] = NULL;
     return r;
 }
 
