@@ -867,18 +867,84 @@ void *httpSiteSchemeDirectoryListingRead(void *listing) {
 }
 
 void httpSiteSchemeFileClose(HttpSite *self) {
-    /* TODO: Implement HTTP protocol file commands */
+    if (self->file) {
+        if (self->file->fullUri)
+            free(self->file->fullUri);
+
+        free(self->file), self->file = NULL;
+    }
 }
 
 SOCK_BUF_TYPE httpSiteSchemeFileRead(HttpSite *self, char *buffer, SOCK_BUF_TYPE size) {
     return -1;
 }
 
-const char *httpSiteSchemeFileOpenRead(HttpSite *self, const char *path) {
-    return "Not Implemented";
+const char *httpSiteSchemeFileOpenRead(HttpSite *self, const char *path, PlatformFileOffset start, PlatformFileOffset end) {
+    const char *e;
+    UriDetails d = uriDetailsNewFrom(self->fullUri);
+    HttpResponseHeader headerResponse = {0};
+    char *resolvedPath, *request, *response, *scheme, *header;
+
+    if (d.path) {
+        resolvedPath = uriPathAbsoluteAppend(d.path, path);
+        scheme = NULL, GenerateHostHeader(&scheme, &d);
+        uriDetailsFree(&d);
+    } else {
+        uriDetailsFree(&d);
+        return ErrUriWasNotUnderstood;
+    }
+
+    GenerateConnectionHeader(&scheme);
+
+    /* TODO: byte range code when `if (start != -1 || end != -1)` is true */
+
+    if (!(request = ioHttpRequestGenerateGet(resolvedPath, scheme))) {
+        free(resolvedPath), free(scheme);
+        return strerror(errno);
+    }
+
+    free(scheme);
+    recvBufferClear(&self->socket);
+
+    if ((e = recvBufferSend(&self->socket, request, strlen(request), 0))) {
+        free(request), free(resolvedPath);
+        return e;
+    }
+
+    free(request), request = NULL, scheme = NULL;
+
+    if ((e = ioHttpResponseHeaderRead(&self->socket, &header))) {
+        free(resolvedPath);
+        return e;
+    }
+
+    if ((e = ioHttpResponseHeaderEssential(header, &scheme, &response))) {
+        free(header), free(resolvedPath);
+        return e;
+    }
+
+    if ((e = ioHttpResponseHeaderRead(&self->socket, &header))) {
+        free(resolvedPath);
+        return e;
+    }
+
+    /* TCP stream is now an the beginning of the HTTP body */
+
+    HeadersPopulate(header, &headerResponse);
+    HeadersCompute(self, &headerResponse, "GET");
+
+    httpSiteSchemeFileClose(self);
+    self->file = malloc(sizeof(HttpSiteOpenFile));
+    self->file->fullUri = resolvedPath;
+    self->file->start = start;
+    self->file->end = end;
+
+    HeadersFree(&headerResponse);
+
+    return NULL;
 }
 
-const char *httpSiteSchemeFileOpenWrite(HttpSite *self, const char *path) {
+const char *httpSiteSchemeFileOpenWrite(HttpSite *self, const char *path, PlatformFileOffset start, PlatformFileOffset end) {
     return "Not Implemented";
 }
 

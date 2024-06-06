@@ -254,23 +254,23 @@ SOCK_BUF_TYPE siteFileRead(Site *self, char *buffer, SOCK_BUF_TYPE size) {
     }
 }
 
-const char *siteFileOpenRead(Site *self, const char *path) {
+const char *siteFileOpenRead(Site *self, const char *path, PlatformFileOffset start, PlatformFileOffset end) {
     switch (self->type) {
         case SITE_FILE:
-            return fileSiteSchemeFileOpenRead(&self->site.file, path);
+            return fileSiteSchemeFileOpenRead(&self->site.file, path, start, end);
         case SITE_HTTP:
-            return httpSiteSchemeFileOpenRead(&self->site.http, path);
+            return httpSiteSchemeFileOpenRead(&self->site.http, path, start, end);
         default:
             return "Not Implemented";
     }
 }
 
-const char *siteFileOpenWrite(Site *self, const char *path) {
+const char *siteFileOpenWrite(Site *self, const char *path, PlatformFileOffset start, PlatformFileOffset end) {
     switch (self->type) {
         case SITE_FILE:
-            return fileSiteSchemeFileOpenWrite(&self->site.file, path);
+            return fileSiteSchemeFileOpenWrite(&self->site.file, path, start, end);
         case SITE_HTTP:
-            return httpSiteSchemeFileOpenWrite(&self->site.http, path);
+            return httpSiteSchemeFileOpenWrite(&self->site.http, path, start, end);
         default:
             return "Not Implemented";
     }

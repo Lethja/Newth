@@ -195,21 +195,27 @@ SOCK_BUF_TYPE siteFileRead(Site *self, char *buffer, SOCK_BUF_TYPE size);
  * Read to a open file on the site
  * @param self The site to read a file on
  * @param path The path (relative or absolute to the path of the URI)
+ * @param start Number of bytes to start writing at or -1 for default
+ * @param end Number of bytes to end writing at or -1 for default
  * @return NULL on success, user friendly error message otherwise
  * @remark By design sites can only have one file open at a time and it can only be opened to read or write, not both.
  * Opening another file will close the first.
+ * @remark Some types of sites are more strict than others with the start and/or finish byte requested
  */
-const char *siteFileOpenRead(Site *self, const char *path);
+const char *siteFileOpenRead(Site *self, const char *path, PlatformFileOffset start, PlatformFileOffset end);
 
 /**
  * Open a file on the site for writing
  * @param self The site to write a file on
  * @param path The path (relative or absolute to the path of the URI)
+ * @param start Number of bytes to start writing at or -1 for default
+ * @param end Number of bytes to end writing at or -1 for default
  * @return NULL on success, user friendly error message otherwise
  * @remark By design sites can only have one file open at a time and it can only be opened to read or write, not both.
  * Opening another file will close the first.
+ * @remark Some types of sites are more strict than others with the start and/or finish byte requested
  */
-const char *siteFileOpenWrite(Site *self, const char *path);
+const char *siteFileOpenWrite(Site *self, const char *path, PlatformFileOffset start, PlatformFileOffset end);
 
 /**
  * Write to the open file of a site

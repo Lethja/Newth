@@ -6,12 +6,24 @@
 
 #pragma region Static Helper Functions
 
+/**
+ * Update the full working directory URI
+ * @param self The FileSite to update
+ * @param path The current path to update the FileSite to
+ */
 static void UpdateFileUri(FileSite *self, char *path) {
     if (self->fullUri)
         free(self->fullUri);
     self->fullUri = platformPathSystemToFileScheme(path);
 }
 
+/**
+ * Open a file for reading or writing
+ * @param self The site to open a file on
+ * @param path The absolute or relative path to open in regards to the site
+ * @param mode The mode to 'fopen()' mode to open file in
+ * @return NULL on success, user friendly error message otherwise
+ */
 static inline const char *FileOpen(FileSite *self, const char *path, const char *mode) {
     fileSiteSchemeFileClose(self);
     if (path[0] == '/') {
@@ -164,12 +176,26 @@ SOCK_BUF_TYPE fileSiteSchemeFileRead(FileSite *self, char *buffer, SOCK_BUF_TYPE
     return platformFileRead(buffer, 1, size, self->file);
 }
 
-const char *fileSiteSchemeFileOpenRead(FileSite *self, const char *path) {
-    return FileOpen(self, path, "rb");
+const char *fileSiteSchemeFileOpenRead(FileSite *self, const char *path, PlatformFileOffset start, PlatformFileOffset end) {
+    const char *e = FileOpen(self, path, "rb");
+
+    if (!e && start != -1)
+        fseek(self->file, start, SEEK_SET);
+
+    return e;
 }
 
-const char *fileSiteSchemeFileOpenWrite(FileSite *self, const char *path) {
-    return FileOpen(self, path, "wb");
+const char *fileSiteSchemeFileOpenWrite(FileSite *self, const char *path, PlatformFileOffset start, PlatformFileOffset end) {
+    const char *e = FileOpen(self, path, "ab");
+
+    if (!e) {
+        if (start == -1)
+            start = 0;
+
+        fseek(self->file, start, SEEK_SET);
+    }
+
+    return e;
 }
 
 SOCK_BUF_TYPE fileSiteSchemeFileWrite(FileSite *self, char *buffer, SOCK_BUF_TYPE size) {
