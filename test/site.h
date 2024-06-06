@@ -137,13 +137,13 @@ static void SiteFileTransferToFile(void **state) {
 
     assert_non_null(f = fopen("/tmp/nt_f1", "wb"));
     assert_int_equal(fwrite(data, 1, strlen(data), f), strlen(data));
-    fclose(f);
+    fclose(f), f = fopen("/tmp/nt_f2", "wb"), fclose(f);
 
     assert_null(siteNew(&site1, SITE_FILE, "/tmp"));
     assert_null(siteNew(&site2, SITE_FILE, "/tmp"));
 
-    assert_null(siteFileOpenRead(&site1, "nt_f1"));
-    assert_null(siteFileOpenWrite(&site2, "nt_f2"));
+    assert_null(siteFileOpenRead(&site1, "nt_f1", -1, -1));
+    assert_null(siteFileOpenWrite(&site2, "nt_f2", -1, -1));
 
     assert_int_equal(siteFileRead(&site1, (char *) buf, 22), 22);
     assert_int_equal(siteFileWrite(&site2, (char *) buf, 22), 22);
@@ -153,9 +153,35 @@ static void SiteFileTransferToFile(void **state) {
 
     siteFree(&site1), siteFree(&site2); /* siteFree() should close the files if required */
 
-    assert_non_null(f = fopen("/tmp/nt_f1", "rb"));
+    assert_non_null(f = fopen("/tmp/nt_f2", "rb"));
     assert_int_equal(fread((char*) buf, 1, strlen(data), f), strlen(data));
     assert_string_equal(data, buf);
+    fclose(f);
+}
+
+static void SiteFileTransferToFileContinue(void **state) {
+    FILE *f;
+    const char *data = "The quick brown fox jumps over the lazy dog", buf[44] = {0};
+    Site site1, site2;
+
+    assert_non_null(f = fopen("/tmp/nt_f1", "wb"));
+    assert_int_equal(fwrite(data, 1, strlen(data), f), strlen(data));
+    fclose(f), f = fopen("/tmp/nt_f2", "wb"), fclose(f);
+
+    assert_null(siteNew(&site1, SITE_FILE, "/tmp"));
+    assert_null(siteNew(&site2, SITE_FILE, "/tmp"));
+
+    assert_null(siteFileOpenRead(&site1, "nt_f1", 35, -1));
+    assert_null(siteFileOpenWrite(&site2, "nt_f2", -1, -1));
+
+    assert_int_equal(siteFileRead(&site1, (char *) buf, 22), 8);
+    assert_int_equal(siteFileWrite(&site2, (char *) buf, 8), 8);
+
+    siteFree(&site1), siteFree(&site2); /* siteFree() should close the files if required */
+
+    assert_non_null(f = fopen("/tmp/nt_f2", "rb"));
+    assert_int_equal(fread((char*) buf, 1, strlen(data), f), strlen(&data[35]));
+    assert_string_equal(&data[35], buf);
     fclose(f);
 }
 
@@ -558,7 +584,7 @@ static void SiteHttpDirEntryNginx(void **state) {
 const struct CMUnitTest siteTest[] = {cmocka_unit_test(SiteArrayFunctions), cmocka_unit_test(SiteFileNew),
                                       cmocka_unit_test(SiteFileNewWithPath), cmocka_unit_test(SiteFileGetDirectory),
                                       cmocka_unit_test(SiteFileSetDirectory), cmocka_unit_test(SiteFileDirEntry),
-                                      cmocka_unit_test(SiteFileTransferToFile)
+                                      cmocka_unit_test(SiteFileTransferToFile), cmocka_unit_test(SiteFileTransferToFileContinue)
 #ifdef MOCK
         , cmocka_unit_test(SiteHttpNew), cmocka_unit_test(SiteHttpNewWithPath), cmocka_unit_test(SiteHttpGetDirectory),
                                       cmocka_unit_test(SiteHttpSetDirectory),
