@@ -876,6 +876,7 @@ void httpSiteSchemeFileClose(HttpSite *self) {
 }
 
 SOCK_BUF_TYPE httpSiteSchemeFileRead(HttpSite *self, char *buffer, SOCK_BUF_TYPE size) {
+    /* TODO: Implement */
     return -1;
 }
 
@@ -923,11 +924,6 @@ const char *httpSiteSchemeFileOpenRead(HttpSite *self, const char *path, Platfor
         return e;
     }
 
-    if ((e = ioHttpResponseHeaderRead(&self->socket, &header))) {
-        free(resolvedPath);
-        return e;
-    }
-
     /* TCP stream is now an the beginning of the HTTP body */
 
     HeadersPopulate(header, &headerResponse);
@@ -945,9 +941,11 @@ const char *httpSiteSchemeFileOpenRead(HttpSite *self, const char *path, Platfor
 }
 
 const char *httpSiteSchemeFileOpenWrite(HttpSite *self, const char *path, PlatformFileOffset start, PlatformFileOffset end) {
-    return "Not Implemented";
+    /* HTTP implementation is read only */
+    return strerror(EACCES);
 }
 
 SOCK_BUF_TYPE httpSiteSchemeFileWrite(HttpSite *self, char *buffer, SOCK_BUF_TYPE size) {
+    errno = EBADF;
     return -1;
 }

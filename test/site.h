@@ -575,6 +575,51 @@ static void SiteHttpDirEntryNginx(void **state) {
     siteFree(&site);
 }
 
+static void SiteHttpTransferToFile(void **state) {
+    const char *data = "The quick brown fox jumps over the lazy dog", buf[44] = {0};
+    const char *head = "HTTP/1.1 200 OK" HTTP_EOL
+                       "Content-Type: text/html; charset=ISO-8859-1" HTTP_EOL
+                       "Date: Thu, 1 Jan 1970 00:00:00 GMT" HTTP_EOL
+                       "Length: 0" HTTP_EOL HTTP_EOL;
+
+    const char *headFile = "HTTP/1.1 200 OK" HTTP_EOL
+                           "Content-Type: text/html; charset=ISO-8859-1" HTTP_EOL
+                           "Content-Disposition: attachment" HTTP_EOL
+                           "Date: Thu, 1 Jan 1970 00:00:00 GMT" HTTP_EOL
+                           "Length: 43" HTTP_EOL HTTP_EOL;
+    Site site1, site2;
+
+    mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
+    assert_non_null(mockReceiveStream = fopen("/tmp/nt_f1", "wb+"));
+    assert_int_equal(fwrite(head, 1, strlen(head), mockReceiveStream), strlen(head));
+    rewind(mockReceiveStream);
+
+    assert_null(siteNew(&site1, SITE_HTTP, "http://127.0.0.1"));
+    assert_null(siteNew(&site2, SITE_FILE, "/tmp"));
+
+    rewind(mockReceiveStream);
+    assert_int_equal(fwrite(headFile, 1, strlen(headFile), mockReceiveStream), strlen(headFile));
+    assert_int_equal(fwrite(data, 1, strlen(data), mockReceiveStream), strlen(data));
+    rewind(mockReceiveStream);
+
+    assert_null(siteFileOpenRead(&site1, "foo", -1, -1));
+    assert_null(siteFileOpenWrite(&site2, "nt_f2", -1, -1));
+
+    assert_int_equal(siteFileRead(&site1, (char *) buf, 22), 22);
+    assert_int_equal(siteFileWrite(&site2, (char *) buf, 22), 22);
+
+    assert_int_equal(siteFileRead(&site1, (char *) buf, 22), 21);
+    assert_int_equal(siteFileWrite(&site2, (char *) buf, 21), 21);
+
+    siteFree(&site1), siteFree(&site2); /* siteFree() should close the files if required */
+
+    fclose(mockReceiveStream);
+    assert_non_null(mockReceiveStream = fopen("/tmp/nt_f2", "rb"));
+    assert_int_equal(fread((char*) buf, 1, strlen(data) + 5, mockReceiveStream), strlen(data));
+    assert_string_equal(data, buf);
+    fclose(mockReceiveStream), mockReceiveStream = NULL;
+}
+
 #endif /* MOCK */
 
 #pragma endregion
@@ -592,7 +637,8 @@ const struct CMUnitTest siteTest[] = {cmocka_unit_test(SiteArrayFunctions), cmoc
                                       cmocka_unit_test(SiteHttpDirEntryBad), cmocka_unit_test(SiteHttpDirEntryGood),
                                       cmocka_unit_test(SiteHttpDirEntryApache),
                                       cmocka_unit_test(SiteHttpDirEntryLighttpd),
-                                      cmocka_unit_test(SiteHttpDirEntryNewth), cmocka_unit_test(SiteHttpDirEntryNginx)
+                                      cmocka_unit_test(SiteHttpDirEntryNewth), cmocka_unit_test(SiteHttpDirEntryNginx),
+                                      cmocka_unit_test(SiteHttpTransferToFile)
 #endif
 };
 
