@@ -590,9 +590,9 @@ static void SiteHttpTransferToFile(void **state) {
     Site site1, site2;
 
     mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
+    assert_non_null(mockReceiveStream = fopen("/tmp/nt_f2", "wb+")), fclose(mockReceiveStream);
     assert_non_null(mockReceiveStream = fopen("/tmp/nt_f1", "wb+"));
-    assert_int_equal(fwrite(head, 1, strlen(head), mockReceiveStream), strlen(head));
-    rewind(mockReceiveStream);
+    assert_int_equal(fwrite(head, 1, strlen(head), mockReceiveStream), strlen(head)), rewind(mockReceiveStream);
 
     assert_null(siteNew(&site1, SITE_HTTP, "http://127.0.0.1"));
     assert_null(siteNew(&site2, SITE_FILE, "/tmp"));
