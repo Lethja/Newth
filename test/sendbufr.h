@@ -40,8 +40,9 @@ static void SendBufferMemoryFree(void **state) {
 static void SendBufferTextWrite(void **state) {
     const char *text = "Hello Socket Buffer Text";
     const size_t textLen = strlen(text);
+    char *path = platformTempFilePath("nt_SocketTextWrite_Send.txt");
     SendBuffer socketBuffer = sendBufferNew(0, 0);
-    mockOptions = MOCK_SEND, mockSendMaxBuf = BUFSIZ, mockSendStream = fopen("/tmp/nt_SocketTextWrite_Send.txt", "wb");
+    mockOptions = MOCK_SEND, mockSendMaxBuf = BUFSIZ, mockSendStream = fopen(path, "wb"), free(path);
     assert_int_equal(textLen, sendBufferWriteText(&socketBuffer, text));
     assert_int_equal(textLen, platformFileTell(mockSendStream));
     mockReset();
@@ -50,8 +51,9 @@ static void SendBufferTextWrite(void **state) {
 static void SendBufferDataWrite(void **state) {
     const char *data = "Hello Socket Buffer Data";
     const size_t dataLen = strlen(data);
+    char *path = platformTempFilePath("nt_SocketDataWrite_Send.txt");
     SendBuffer socketBuffer = sendBufferNew(0, 0);
-    mockOptions = MOCK_SEND, mockSendMaxBuf = BUFSIZ, mockSendStream = fopen("/tmp/nt_SocketDataWrite_Send.txt", "wb");
+    mockOptions = MOCK_SEND, mockSendMaxBuf = BUFSIZ, mockSendStream = fopen(path, "wb"), free(path);
     assert_int_equal(dataLen, sendBufferWriteData(&socketBuffer, data, dataLen));
     assert_int_equal(dataLen, platformFileTell(mockSendStream));
     mockReset();
@@ -60,8 +62,9 @@ static void SendBufferDataWrite(void **state) {
 static void SendBufferSocketFlush(void **state) {
     const char *text = "Hello Socket Buffer Flush";
     const size_t textLen = strlen(text), bufSize = 5;
+    char *path = platformTempFilePath("nt_SocketFlush_Send.txt");
     SendBuffer socketBuffer = sendBufferNew(0, 0);
-    mockOptions = MOCK_SEND, mockSendMaxBuf = bufSize, mockSendStream = fopen("/tmp/nt_SocketFlush_Send.txt", "wb");
+    mockOptions = MOCK_SEND, mockSendMaxBuf = bufSize, mockSendStream = fopen(path, "wb"), free(path);
 
 #pragma region Write some text that will overflow
     assert_int_equal(textLen, sendBufferWriteText(&socketBuffer, text));

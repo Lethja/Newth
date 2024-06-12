@@ -71,7 +71,7 @@ static void SiteFileNew(void **state) {
 }
 
 static void SiteFileNewWithPath(void **state) {
-    const char *testPath = "/tmp";
+    const char *testPath = platformTempDirectoryGet();
     Site site;
     assert_null(siteNew(&site, SITE_FILE, testPath));
     assert_int_equal(site.type, SITE_FILE);
@@ -134,13 +134,14 @@ static void SiteFileTransferToFile(void **state) {
     FILE *f;
     const char *data = "The quick brown fox jumps over the lazy dog", buf[44] = {0};
     Site site1, site2;
+    char *p1 = platformTempFilePath("nt_f1"), *p2 = platformTempFilePath("nt_f2");
 
-    assert_non_null(f = fopen("/tmp/nt_f1", "wb"));
+    assert_non_null(f = fopen(p1, "wb")), free(p1);
     assert_int_equal(fwrite(data, 1, strlen(data), f), strlen(data));
-    fclose(f), f = fopen("/tmp/nt_f2", "wb"), fclose(f);
+    fclose(f), f = fopen(p2, "wb"), fclose(f);
 
-    assert_null(siteNew(&site1, SITE_FILE, "/tmp"));
-    assert_null(siteNew(&site2, SITE_FILE, "/tmp"));
+    assert_null(siteNew(&site1, SITE_FILE, platformTempDirectoryGet()));
+    assert_null(siteNew(&site2, SITE_FILE, platformTempDirectoryGet()));
 
     assert_null(siteFileOpenRead(&site1, "nt_f1", -1, -1));
     assert_null(siteFileOpenWrite(&site2, "nt_f2", -1, -1));
@@ -153,7 +154,7 @@ static void SiteFileTransferToFile(void **state) {
 
     siteFree(&site1), siteFree(&site2); /* siteFree() should close the files if required */
 
-    assert_non_null(f = fopen("/tmp/nt_f2", "rb"));
+    assert_non_null(f = fopen(p2, "rb")), free(p2);
     assert_int_equal(fread((char*) buf, 1, strlen(data), f), strlen(data));
     assert_string_equal(data, buf);
     fclose(f);
@@ -163,13 +164,14 @@ static void SiteFileTransferToFileContinue(void **state) {
     FILE *f;
     const char *data = "The quick brown fox jumps over the lazy dog", buf[44] = {0};
     Site site1, site2;
+    char *p1 = platformTempFilePath("nt_f1"), *p2 = platformTempFilePath("nt_f2");
 
-    assert_non_null(f = fopen("/tmp/nt_f1", "wb"));
+    assert_non_null(f = fopen(p1, "wb")), free(p1);
     assert_int_equal(fwrite(data, 1, strlen(data), f), strlen(data));
-    fclose(f), f = fopen("/tmp/nt_f2", "wb"), fclose(f);
+    fclose(f), f = fopen(p2, "wb"), fclose(f);
 
-    assert_null(siteNew(&site1, SITE_FILE, "/tmp"));
-    assert_null(siteNew(&site2, SITE_FILE, "/tmp"));
+    assert_null(siteNew(&site1, SITE_FILE, platformTempDirectoryGet()));
+    assert_null(siteNew(&site2, SITE_FILE, platformTempDirectoryGet()));
 
     assert_null(siteFileOpenRead(&site1, "nt_f1", 35, -1));
     assert_null(siteFileOpenWrite(&site2, "nt_f2", -1, -1));
@@ -179,7 +181,7 @@ static void SiteFileTransferToFileContinue(void **state) {
 
     siteFree(&site1), siteFree(&site2); /* siteFree() should close the files if required */
 
-    assert_non_null(f = fopen("/tmp/nt_f2", "rb"));
+    assert_non_null(f = fopen(p2, "rb")), free(p2);
     assert_int_equal(fread((char*) buf, 1, strlen(data), f), strlen(&data[35]));
     assert_string_equal(&data[35], buf);
     fclose(f);
@@ -589,13 +591,15 @@ static void SiteHttpTransferToFile(void **state) {
                            "Length: 43" HTTP_EOL HTTP_EOL;
     Site site1, site2;
 
+    char *p1 = platformTempFilePath("nt_f1"), *p2 = platformTempFilePath("nt_f2");
+
     mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
-    assert_non_null(mockReceiveStream = fopen("/tmp/nt_f2", "wb+")), fclose(mockReceiveStream);
-    assert_non_null(mockReceiveStream = fopen("/tmp/nt_f1", "wb+"));
+    assert_non_null(mockReceiveStream = fopen(p2, "wb+")), fclose(mockReceiveStream);
+    assert_non_null(mockReceiveStream = fopen(p1, "wb+")), free(p1);
     assert_int_equal(fwrite(head, 1, strlen(head), mockReceiveStream), strlen(head)), rewind(mockReceiveStream);
 
     assert_null(siteNew(&site1, SITE_HTTP, "http://127.0.0.1"));
-    assert_null(siteNew(&site2, SITE_FILE, "/tmp"));
+    assert_null(siteNew(&site2, SITE_FILE, platformTempDirectoryGet()));
 
     rewind(mockReceiveStream);
     assert_int_equal(fwrite(headFile, 1, strlen(headFile), mockReceiveStream), strlen(headFile));
@@ -614,7 +618,7 @@ static void SiteHttpTransferToFile(void **state) {
     siteFree(&site1), siteFree(&site2); /* siteFree() should close the files if required */
 
     fclose(mockReceiveStream);
-    assert_non_null(mockReceiveStream = fopen("/tmp/nt_f2", "rb"));
+    assert_non_null(mockReceiveStream = fopen(p2, "rb")), free(p2);
     assert_int_equal(fread((char*) buf, 1, strlen(data) + 5, mockReceiveStream), strlen(data));
     assert_string_equal(data, buf);
     fclose(mockReceiveStream), mockReceiveStream = NULL;

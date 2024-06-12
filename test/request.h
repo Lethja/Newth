@@ -23,14 +23,14 @@
 
 static void RequestSmallFile(void **state) {
     const char *header = "GET / HTTP/1.1" HTTP_EOL HTTP_EOL;
-    char path[FILENAME_MAX] = "/tmp/nt_RequestSmallFile_File.txt", *fdStr;
-    FILE *read = fopen(path, "w+b");
-    mockSendStream = fopen("/tmp/nt_RequestSmallFile_Send.txt", "w+b");
+    char *p1 = platformTempFilePath("nt_RequestSmallFile_File.txt"), *p2 = platformTempFilePath("nt_RequestSmallFile_Send.txt"), *fdStr;
+    FILE *read = fopen(p1, "w+b");
+    mockSendStream = fopen(p2, "w+b"), free(p2);
 
     mockOptions = MOCK_SEND, mockSendMaxBuf = BUFSIZ, writeSampleFile(read, SB_DATA_SIZE);
 
     assert_non_null(globalRootPath = malloc(FILENAME_MAX));
-    fdStr = strrchr(path, '/'), strncpy(globalRootPath, path, FILENAME_MAX), globalRootPath[fdStr - path] = '\0';
+    fdStr = strrchr(p1, '/'), strncpy(globalRootPath, p1, FILENAME_MAX), globalRootPath[fdStr - p1] = '\0';
     ++fdStr;
 
     assert_false(handlePath(0, header, fdStr));
@@ -43,19 +43,19 @@ static void RequestSmallFile(void **state) {
 
     CompareStreams(state, read, mockSendStream);
 
-    fclose(read), free(globalRootPath), globalRootPath = NULL, mockReset();
+    free(p1), fclose(read), free(globalRootPath), globalRootPath = NULL, mockReset();
 }
 
 static void RequestResumeFile(void **state) {
     const char *header = "GET / HTTP/1.1" HTTP_EOL "Range: bytes=50-" HTTP_EOL HTTP_EOL;
-    char path[FILENAME_MAX] = "/tmp/nt_RequestResumeFile_File.txt", *fdStr;
-    FILE *read = fopen(path, "w+b");
-    mockSendStream = fopen("/tmp/nt_RequestResumeFile_Send.txt", "w+b");
+    char *p1 = platformTempFilePath("nt_RequestResumeFile_File.txt"), *p2 = platformTempFilePath("nt_RequestResumeFile_Send.txt"), *fdStr;
+    FILE *read = fopen(p1, "w+b");
+    mockSendStream = fopen(p2, "w+b"), free(p2);
 
     mockOptions = MOCK_SEND, mockSendMaxBuf = BUFSIZ, writeSampleFile(read, SB_DATA_SIZE);
 
     assert_non_null(globalRootPath = malloc(FILENAME_MAX));
-    fdStr = strrchr(path, '/'), strncpy(globalRootPath, path, FILENAME_MAX), globalRootPath[fdStr - path] = '\0';
+    fdStr = strrchr(p1, '/'), strncpy(globalRootPath, p1, FILENAME_MAX), globalRootPath[fdStr - p1] = '\0';
     ++fdStr;
 
     assert_false(handlePath(0, header, fdStr));
@@ -68,20 +68,20 @@ static void RequestResumeFile(void **state) {
 
     CompareStreams(state, read, mockSendStream);
 
-    fclose(read), free(globalRootPath), globalRootPath = NULL, mockReset();
+    free(p1), fclose(read), free(globalRootPath), globalRootPath = NULL, mockReset();
 }
 
 static void TransferInterruptStart(void **state) {
     const char *header = "GET / HTTP/1.1" HTTP_EOL HTTP_EOL;
-    char path[FILENAME_MAX] = "/tmp/nt_TransferInterruptStart_File.txt", *fdStr;
-    FILE *read = fopen(path, "w+b");
-    mockSendStream = fopen("/tmp/nt_TransferInterruptStart_Send.txt", "w+b");
+    char *p1 = platformTempFilePath("nt_TransferInterruptStart_File.txt"), *p2 = platformTempFilePath("nt_TransferInterruptStart_Send.txt"), *fdStr;
+    FILE *read = fopen(p1, "w+b");
+    mockSendStream = fopen(p2, "w+b"), free(p2);
 
     mockOptions = MOCK_SEND, mockSendMaxBuf = BUFSIZ, writeSampleFile(read, SB_DATA_SIZE), mockSendError = EPIPE;
 
     assert_non_null(read);
     assert_non_null(globalRootPath = malloc(FILENAME_MAX));
-    fdStr = strrchr(path, '/'), strncpy(globalRootPath, path, FILENAME_MAX), globalRootPath[fdStr - path] = '\0';
+    fdStr = strrchr(p1, '/'), strncpy(globalRootPath, p1, FILENAME_MAX), globalRootPath[fdStr - p1] = '\0';
     ++fdStr;
 
     assert_false(handlePath(0, header, fdStr));
@@ -92,21 +92,21 @@ static void TransferInterruptStart(void **state) {
 
     assert_false(platformFileTell(mockSendStream));
 
-    fclose(read), free(globalRootPath), globalRootPath = NULL, mockReset(), mockSendError = ENOERR;
+    free(p1), fclose(read), free(globalRootPath), globalRootPath = NULL, mockReset(), mockSendError = ENOERR;
 }
 
 static void TransferInterruptMiddle(void **state) {
     const char *header = "GET / HTTP/1.1" HTTP_EOL HTTP_EOL;
-    char path[FILENAME_MAX] = "/tmp/nt_TransferInterruptMiddle_File.txt", *fdStr;
-    FILE *read = fopen(path, "w+b");
+    char *p1 = platformTempFilePath("nt_TransferInterruptMiddle_File.txt"), *p2 = platformTempFilePath("nt_TransferInterruptMiddle_Send.txt"), *fdStr;
+    FILE *read = fopen(p1, "w+b");
     int i = 0;
-    mockSendStream = fopen("/tmp/nt_TransferInterruptMiddle_Send.txt", "w+b");
+    mockSendStream = fopen(p2, "w+b"), free(p2);
 
     mockOptions = MOCK_SEND, mockSendMaxBuf = 10, writeSampleFile(read, SB_DATA_SIZE);
 
     assert_non_null(read);
     assert_non_null(globalRootPath = malloc(FILENAME_MAX));
-    fdStr = strrchr(path, '/'), strncpy(globalRootPath, path, FILENAME_MAX), globalRootPath[fdStr - path] = '\0';
+    fdStr = strrchr(p1, '/'), strncpy(globalRootPath, p1, FILENAME_MAX), globalRootPath[fdStr - p1] = '\0';
     ++fdStr;
 
     assert_int_equal(platformFileTell(mockSendStream), 0);
@@ -127,7 +127,7 @@ static void TransferInterruptMiddle(void **state) {
 
     assert_int_equal(platformFileTell(mockSendStream), 50);
 
-    fclose(read), free(globalRootPath), globalRootPath = NULL, mockReset(), mockSendError = ENOERR;
+    free(p1), fclose(read), free(globalRootPath), globalRootPath = NULL, mockReset(), mockSendError = ENOERR;
 }
 
 #pragma clang diagnostic pop
