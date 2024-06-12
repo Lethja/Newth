@@ -169,6 +169,12 @@ static void StringToArgvPaddingEnd(void **state) {
     platformArgvFree(argv);
 }
 
+static void TemporaryPath(void **state) {
+    const char *dir = platformTempDirectoryGet();
+    assert_non_null(dir);
+    printf("[  NOTICE  ] Temporary files stored at '%s'\n", platformTempDirectoryGet());
+}
+
 #ifdef DOS_DIVIDER
 
 static void PathCombineStringUnixDividers(void **state) {
@@ -197,7 +203,8 @@ const struct CMUnitTest platformTest[] = {cmocka_unit_test(HaystackAndNeedle), c
                                           cmocka_unit_test(StringToArgv), cmocka_unit_test(StringToArgvOneWord),
                                           cmocka_unit_test(StringToArgvPaddingEnd),
                                           cmocka_unit_test(StringToArgvPaddingMiddle),
-                                          cmocka_unit_test(StringToArgvPaddingStart)
+                                          cmocka_unit_test(StringToArgvPaddingStart),
+                                          cmocka_unit_test(TemporaryPath)
 };
 
 #endif /* NEW_TH_TEST_PLATFORM_H */
