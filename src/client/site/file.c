@@ -186,13 +186,14 @@ const char *fileSiteSchemeFileOpenRead(FileSite *self, const char *path, Platfor
 }
 
 const char *fileSiteSchemeFileOpenWrite(FileSite *self, const char *path, PlatformFileOffset start, PlatformFileOffset end) {
-    const char *e = FileOpen(self, path, "ab");
+    const char *e;
 
-    if (!e) {
-        if (start == -1)
-            start = 0;
-
-        fseek(self->file, start, SEEK_SET);
+    if (start == -1)
+        e = FileOpen(self, path, "wb");
+    else {
+        if (!(e = FileOpen(self, path, "ab")))
+            if (fseek(self->file, start, SEEK_SET))
+                e = strerror(errno);
     }
 
     return e;
