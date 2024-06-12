@@ -373,3 +373,19 @@ char *platformStringFindWord(const char *haystack, const char *needle) {
 
     return NULL;
 }
+
+char *platformTempFilePath(const char *fileName) {
+    const char *tmp;
+    char *r;
+    size_t len;
+
+    if (!(tmp = platformTempDirectoryGet()))
+        return NULL;
+
+    len = strlen(tmp) + strlen(fileName) + 2;
+    if (!(r = malloc(len)))
+        return NULL;
+
+    platformPathCombine(r, tmp, fileName);
+    return r;
+}

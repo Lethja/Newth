@@ -544,4 +544,19 @@ char *platformStringFindNeedleRaw(const char *haystack, const char *needle, size
  */
 char *platformStringFindWord(const char *haystack, const char *needle);
 
+/**
+ * Get a folder path suitable for writing a temporary file
+ * @return Path to a temporary folder or NULL on error
+ * @remark Do not free returning string
+ */
+const char *platformTempDirectoryGet(void);
+
+/**
+ * Get a file path in a temporary directory
+ * @param fileName The filename to acquire
+ * @return Path to a temporary folder with the filename appended or NULL on error
+ * @remark Free returning string when before leaving scope
+ */
+char *platformTempFilePath(const char *fileName);
+
 #endif /* OPEN_WEB_PLATFORM_H */

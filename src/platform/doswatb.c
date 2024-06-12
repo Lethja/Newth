@@ -396,6 +396,21 @@ size_t platformFileRead(void *buffer, size_t size, size_t n, PlatformFile stream
     return fread(buffer, size, n, stream);
 }
 
+const char *platformTempDirectoryGet(void) {
+    const char *tmp, *fallback = ".";
+    struct stat st;
+
+    if ((tmp = getenv("TEMP")) || (getenv("TMP")) || (tmp = getenv("TMPDIR")))
+        return tmp;
+
+    if (!stat(fallback, &st)) {
+        if (S_ISDIR(st.st_mode))
+            return fallback;
+    }
+
+    return NULL;
+}
+
 #pragma region Watt32 Networking
 
 #pragma region Network Bind & Listen

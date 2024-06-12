@@ -641,3 +641,18 @@ int platformSocketGetLastError(void) {
     return errno;
 }
 
+const char *platformTempDirectoryGet(void) {
+    const char *tmp, *fallback = "/tmp";
+    struct stat st;
+
+    if ((tmp = getenv("TMP")) || (tmp = getenv("TMPDIR")) || (tmp = getenv("TEMP")))
+        return tmp;
+
+    if (!stat(fallback, &st)) {
+        if (S_ISDIR(st.st_mode))
+            return fallback;
+    }
+
+    return NULL;
+}
+

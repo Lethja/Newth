@@ -904,3 +904,17 @@ int platformSocketGetLastError(void) {
     return WSAGetLastError();
 }
 
+const char *platformTempDirectoryGet(void) {
+    const char *tmp, *fallback = "C:\\TEMP";
+    struct stat st;
+
+    if ((tmp = getenv("TEMP")) || (getenv("TMP")) || (tmp = getenv("TMPDIR")))
+        return tmp;
+
+    if (!stat(fallback, &st)) {
+        if (S_ISDIR(st.st_mode))
+            return fallback;
+    }
+
+    return NULL;
+}
