@@ -21,8 +21,38 @@ static inline void Copy(const char **argv) {
     /* TODO: Implement adding to the queue */
     if (i > 2)
         puts("COPY from/to not yet implemented");
-    else
-        puts("COPY from not yet implemented");
+    else {
+        const char *e, *name;
+        Site *from = siteArrayActiveGet(), *to = siteArrayPtr(NULL);
+        char buf[SB_DATA_SIZE];
+
+        if ((e = siteFileOpenRead(siteArrayActiveGet(), argv[1], -1, -1))) {
+            puts(e);
+            return;
+        }
+
+        /* TODO: Design a more foolproof way to get the filename */
+        if (!(name = strrchr(argv[1], '/')))
+            name = argv[1];
+
+        /* TODO: check if file exists already, add logic for overwrite/update */
+        if ((e = siteFileOpenWrite(to, &name[1], -1, -1))) {
+            siteFileClose(from), puts(e);
+            return;
+        }
+
+        while ((i = siteFileRead(from, buf, SB_DATA_SIZE))) {
+            if (i != -1) {
+                siteFileWrite(to, buf, i);
+                continue;
+            }
+
+            puts(strerror(errno));
+            return;
+        }
+
+        siteFileClose(from), siteFileClose(to);
+    }
 }
 
 static inline void XCopy(const char **argv) {
