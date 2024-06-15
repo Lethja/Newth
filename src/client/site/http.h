@@ -6,6 +6,7 @@
 typedef struct HttpSiteOpenFile {
     char *fullUri;
     PlatformFileOffset start, end;
+    SiteFileMeta meta;
 } HttpSiteOpenFile;
 
 typedef struct HttpSite {

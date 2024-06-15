@@ -4,6 +4,7 @@
 typedef struct FileSite {
     char *fullUri;
     PlatformFile file;
+    SiteFileMeta meta;
 } FileSite;
 
 void fileSiteSchemeFree(FileSite *self);

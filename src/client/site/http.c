@@ -676,6 +676,7 @@ void httpSiteSchemeDirectoryListingClose(void *listing) {
     DirectoryListingClear(listing), free(listing);
 }
 
+/* TODO: Use SiteFileMeta instead of PlatformFileStat */
 const char *httpSiteSchemeDirectoryListingEntryStat(void *listing, void *entry, PlatformFileStat *st) {
     HttpSiteDirectoryListing *l = listing;
     SiteDirectoryEntry *e = entry;

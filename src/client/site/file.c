@@ -3,6 +3,7 @@
 #include "../uri.h"
 
 #include <sys/stat.h>
+#include <time.h>
 
 #pragma region Static Helper Functions
 
@@ -11,10 +12,35 @@
  * @param self The FileSite to update
  * @param path The current path to update the FileSite to
  */
-static void UpdateFileUri(FileSite *self, char *path) {
+static inline void UpdateFileUri(FileSite *self, char *path) {
     if (self->fullUri)
         free(self->fullUri);
+
     self->fullUri = platformPathSystemToFileScheme(path);
+}
+
+/**
+ * Convert PlatformFileStat to FileSite
+ * @param stat In: The stat to fill data from
+ * @param siteFileMeta Out: The FileSite to fill to
+ */
+static inline void FillFileMeta(PlatformFileStat *stat, SiteFileMeta *siteFileMeta) {
+    if (siteFileMeta->modifiedDate)
+        free(siteFileMeta->modifiedDate);
+
+    memset(siteFileMeta, 0, sizeof(SiteFileMeta));
+
+    siteFileMeta->length = stat->st_size;
+
+    if (platformFileStatIsFile(stat))
+        siteFileMeta->type = SITE_FILE_TYPE_FILE;
+    else if (platformFileStatIsDirectory(stat))
+        siteFileMeta->type = SITE_FILE_TYPE_DIRECTORY;
+    else
+        siteFileMeta->type = SITE_FILE_TYPE_UNKNOWN;
+
+    if ((siteFileMeta->modifiedDate = malloc(sizeof(PlatformTimeStruct))))
+        platformGetTimeStruct(&stat->st_mtime, siteFileMeta->modifiedDate);
 }
 
 /**
@@ -25,18 +51,31 @@ static void UpdateFileUri(FileSite *self, char *path) {
  * @return NULL on success, user friendly error message otherwise
  */
 static inline const char *FileOpen(FileSite *self, const char *path, const char *mode) {
+    PlatformFileStat st;
+
     fileSiteSchemeFileClose(self);
     if (path[0] == '/') {
         if (!(self->file = platformFileOpen(path, mode)))
             return strerror(errno);
+
+        memset(&self->meta, 0, sizeof(SiteFileMeta));
+        if (!platformFileStat(path, &st))
+            FillFileMeta(&st, &self->meta);
     } else {
         /* TODO: Make a more elegant check on file schemes current path */
         char *osPath = &self->fullUri[7], *fullPath = malloc(strlen(osPath) + strlen(path) + 2);
+
         uriPathCombine(fullPath, osPath, path);
-        self->file = platformFileOpen(fullPath, mode);
-        free(fullPath);
-        if (!self->file)
+        if (!(self->file = platformFileOpen(fullPath, mode))) {
+            free(fullPath);
             return strerror(errno);
+        }
+
+        memset(&self->meta, 0, sizeof(SiteFileMeta));
+        if (!platformFileStat(path, &st))
+            FillFileMeta(&st, &self->meta);
+
+        free(fullPath);
     }
 
     return NULL;
@@ -170,6 +209,11 @@ fileSiteReadDirectoryListing_skip:
 void fileSiteSchemeFileClose(FileSite *self) {
     if (self->file)
         platformFileClose(self->file), self->file = NULL;
+
+    if (self->meta.modifiedDate)
+        free(self->meta.modifiedDate);
+
+    memset(&self->meta, 0, sizeof(SiteFileMeta));
 }
 
 SOCK_BUF_TYPE fileSiteSchemeFileRead(FileSite *self, char *buffer, SOCK_BUF_TYPE size) {
