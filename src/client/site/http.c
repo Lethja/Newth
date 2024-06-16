@@ -854,15 +854,12 @@ void *httpSiteSchemeDirectoryListingRead(void *listing) {
 
     if (l->idx < l->len) {
         if ((e = malloc(sizeof(SiteFileMeta)))) {
-            char *n = malloc(strlen(l->entry[l->idx].name) + 1);
-            if (!n) {
+            if (!(e->name = malloc(strlen(l->entry[l->idx].name) + 1))) {
                 free(e);
                 return NULL;
             }
 
-            strcpy(n, l->entry[l->idx].name);
-            e->type = SITE_FILE_TYPE_UNKNOWN, e->modifiedDate = NULL;
-            ++l->idx, e->name = n;
+            strcpy(e->name, l->entry[l->idx].name), e->type = SITE_FILE_TYPE_UNKNOWN, e->modifiedDate = NULL, ++l->idx;
             return e;
         }
     }
