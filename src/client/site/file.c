@@ -147,7 +147,7 @@ void fileSiteSchemeDirectoryListingClose(void *listing) {
 }
 
 char *fileSiteSchemeDirectoryListingEntryStat(void *listing, void *entry, PlatformFileStat *st) {
-    SiteDirectoryEntry *e = entry;
+    SiteFileMeta *e = entry;
     const char *p = platformDirPath(listing);
     char *entryPath;
 
@@ -184,7 +184,7 @@ void *fileSiteSchemeDirectoryListingRead(void *listing) {
     const char *name;
     size_t nameLen;
     PlatformDirEntry *entry;
-    SiteDirectoryEntry *siteEntry;
+    SiteFileMeta *siteEntry;
 
 fileSiteReadDirectoryListing_skip:
     if (!(entry = platformDirRead(listing)) || !(name = platformDirEntryGetName(entry, &nameLen)) || !nameLen)
@@ -193,7 +193,7 @@ fileSiteReadDirectoryListing_skip:
     if (name[0] == '.')
         goto fileSiteReadDirectoryListing_skip;
 
-    if (!(siteEntry = malloc(sizeof(SiteDirectoryEntry))))
+    if (!(siteEntry = malloc(sizeof(SiteFileMeta))))
         return NULL;
 
     if (!(siteEntry->name = malloc(nameLen + 1))) {
@@ -201,8 +201,8 @@ fileSiteReadDirectoryListing_skip:
         return NULL;
     }
 
-    strcpy(siteEntry->name, name);
-    siteEntry->modifiedDate = 0, siteEntry->isDirectory = platformDirEntryIsDirectory(entry, listing, NULL);
+    strcpy(siteEntry->name, name), siteEntry->modifiedDate = 0;
+    siteEntry->type = platformDirEntryIsDirectory(entry, listing, NULL) ? SITE_FILE_TYPE_DIRECTORY : SITE_FILE_TYPE_FILE;
     return siteEntry;
 }
 

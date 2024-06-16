@@ -162,14 +162,14 @@ static char *DirectoryListingAdd(HttpSiteDirectoryListing *self, const char *nam
 
     strcpy(n, name);
     if (!self->entry) {
-        SiteDirectoryEntry *entry = malloc(sizeof(SiteDirectoryEntry));
+        SiteFileMeta *entry = malloc(sizeof(SiteFileMeta));
         if (!entry) {
             free(n);
             return strerror(errno);
         }
         self->entry = entry;
     } else {
-        void *tmp = realloc(self->entry, sizeof(SiteDirectoryEntry) * (self->len + 1));
+        void *tmp = realloc(self->entry, sizeof(SiteFileMeta) * (self->len + 1));
         if (tmp)
             self->entry = tmp;
         else {
@@ -679,7 +679,7 @@ void httpSiteSchemeDirectoryListingClose(void *listing) {
 /* TODO: Use SiteFileMeta instead of PlatformFileStat */
 const char *httpSiteSchemeDirectoryListingEntryStat(void *listing, void *entry, PlatformFileStat *st) {
     HttpSiteDirectoryListing *l = listing;
-    SiteDirectoryEntry *e = entry;
+    SiteFileMeta *e = entry;
 
     char *entryPath, *request, *response;
     HttpResponseHeader header;
@@ -850,10 +850,10 @@ httpSiteOpenDirectoryListing_abort1:
 
 void *httpSiteSchemeDirectoryListingRead(void *listing) {
     HttpSiteDirectoryListing *l = listing;
-    SiteDirectoryEntry *e;
+    SiteFileMeta *e;
 
     if (l->idx < l->len) {
-        if ((e = malloc(sizeof(SiteDirectoryEntry)))) {
+        if ((e = malloc(sizeof(SiteFileMeta)))) {
             char *n = malloc(strlen(l->entry[l->idx].name) + 1);
             if (!n) {
                 free(e);
@@ -861,8 +861,8 @@ void *httpSiteSchemeDirectoryListingRead(void *listing) {
             }
 
             strcpy(n, l->entry[l->idx].name);
-            e->isDirectory = -1, e->modifiedDate = 0;
-            memcpy(e, &l->entry[l->idx], sizeof(SiteDirectoryEntry)), ++l->idx, e->name = n;
+            e->type = SITE_FILE_TYPE_UNKNOWN, e->modifiedDate = NULL;
+            ++l->idx, e->name = n;
             return e;
         }
     }

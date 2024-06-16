@@ -313,7 +313,7 @@ static void SiteHttpDirEntryGood(void **state) {
                            "\t\t<li><a href=\"foo/\">bar/</a></li>\n"
                            "\t</ul>\n</body>\n</html>";
     Site site;
-    SiteDirectoryEntry *e;
+    SiteFileMeta *e;
     char length[255] = "";
     void *d;
 
@@ -420,7 +420,7 @@ static void SiteHttpDirEntryApache(void **state) {
                              "<a href=\"foo\">foo</a> 1970-01-01 00:00 0 \n"
                              "<hr></pre>\n</body></html>";
     Site site;
-    SiteDirectoryEntry *e;
+    SiteFileMeta *e;
     char length[255] = "";
     void *d;
 
@@ -461,7 +461,7 @@ static void SiteHttpDirEntryLighttpd(void **state) {
                                "</td><td class=\"m\">1970-Jan-01 00:00:00</td>"
                                "<td class=\"s\">0.1K</td><td class=\"t\">application/pgp-signature</td></tr>\n";
     Site site;
-    SiteDirectoryEntry *e;
+    SiteFileMeta *e;
     char length[255] = "";
     void *d;
 
@@ -508,7 +508,7 @@ static void SiteHttpDirEntryNewth(void **state) {
                             "\t\t</UL>\n\t</BODY>\n</HTML>\n"
                             HTTP_EOL "0" HTTP_EOL HTTP_EOL;
     Site site;
-    SiteDirectoryEntry *e;
+    SiteFileMeta *e;
     char length[255] = "";
     void *d;
 
@@ -547,7 +547,7 @@ static void SiteHttpDirEntryNginx(void **state) {
                             "<a href=\"foo\">foo</a>                                                01-Jan-1970 00:00                   0\n"
                             "</pre><hr></body>\n</html>";
     Site site;
-    SiteDirectoryEntry *e;
+    SiteFileMeta *e;
     char length[255] = "";
     void *d;
 

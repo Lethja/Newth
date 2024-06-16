@@ -3,13 +3,6 @@
 
 #include "../platform/platform.h"
 
-/* TODO: Remove SiteDirectoryEntry, consolidate code with SiteFileMeta */
-typedef struct SiteDirectoryEntry {
-    char *name;
-    time_t modifiedDate;
-    char isDirectory;
-} SiteDirectoryEntry;
-
 enum SiteFileType {
     /**
      * @brief A regular file that can be read and written to
@@ -190,7 +183,7 @@ const char *siteDirectoryListingEntryStat(Site *self, void *listing, void *entry
  * @return A SiteDirectoryEntry with the next files information
  * @remark Returned pointer must be freed with siteDirectoryEntryFree()
  */
-SiteDirectoryEntry *siteDirectoryListingRead(Site *self, void *listing);
+SiteFileMeta *siteDirectoryListingRead(Site *self, void *listing);
 
 /**
  * Site-like implementation of POSIX 'closedir()'

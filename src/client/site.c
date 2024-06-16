@@ -132,9 +132,13 @@ Site *siteArrayPtr(long *length) {
 #pragma region Memory Functions
 
 void siteDirectoryEntryFree(void *entry) {
-    SiteDirectoryEntry *e = (SiteDirectoryEntry *) entry;
+    SiteFileMeta *e = (SiteFileMeta *) entry;
     if (e->name)
         free(e->name);
+
+    if (e->modifiedDate)
+        free(e->modifiedDate);
+
     free(e);
 }
 
@@ -210,7 +214,7 @@ const char *siteDirectoryListingEntryStat(Site *self, void *listing, void *entry
     }
 }
 
-SiteDirectoryEntry *siteDirectoryListingRead(Site *self, void *listing) {
+SiteFileMeta *siteDirectoryListingRead(Site *self, void *listing) {
     switch (self->type) {
         case SITE_FILE:
             return fileSiteSchemeDirectoryListingRead(listing);

@@ -19,7 +19,7 @@ typedef struct HttpSite {
 typedef struct HttpSiteDirectoryListing {
     time_t asOf; /* Date & Time of last reload */
     size_t idx, len; /* Position and Length of 'entry' array */
-    SiteDirectoryEntry *entry; /* Array of entries */
+    SiteFileMeta *entry; /* Array of entries */
     char *fullUri; /* uri of current listing in the 'entry' array */
     const HttpSite *site;
 } HttpSiteDirectoryListing;

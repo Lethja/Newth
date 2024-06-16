@@ -113,7 +113,7 @@ static inline void CleanInput(char *input) {
 static inline void PrintDirectoryFilesDosLike(Site *site, char *path) {
     void *dir;
     char *pathRes = NULL, *unknownPath = "Unknown";
-    SiteDirectoryEntry *entry;
+    SiteFileMeta *entry;
     UriDetails details;
 
     if (!path)
@@ -163,7 +163,7 @@ static inline void PrintDirectoryFilesDosLike(Site *site, char *path) {
 
 static inline void PrintDirectoryFilesUnixLike(Site *site, char *path) {
     void *dir;
-    SiteDirectoryEntry *entry;
+    SiteFileMeta *entry;
 
     if (!path)
         path = ".";
