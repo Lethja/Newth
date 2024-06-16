@@ -578,7 +578,7 @@ static void SiteHttpDirEntryNginx(void **state) {
 }
 
 static void SiteHttpTransferToFile(void **state) {
-    const char *data = "The quick brown fox jumps over the lazy dog", buf[44] = {0};
+    const char *data = "The quick brown fox jumps over the lazy dog", buf[49] = {0};
     const char *head = "HTTP/1.1 200 OK" HTTP_EOL
                        "Content-Type: text/html; charset=ISO-8859-1" HTTP_EOL
                        "Date: Thu, 1 Jan 1970 00:00:00 GMT" HTTP_EOL

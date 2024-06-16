@@ -59,7 +59,7 @@ add_executable(th ../src/cli/th.c ../src/common/defines.h
         ../src/server/sendbufr.c ../src/server/sendbufr.h
         ${MULTIPLEX_SRC} ${PLATFORM_SRC} ${WSOCK_SRC})
 
-target_compile_definitions(th PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>" PLATFORM_NET_ADAPTER=1 PLATFORM_NET_LISTEN=1)
+target_compile_definitions(th PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>" PLATFORM_NET_ADAPTER=1 PLATFORM_NET_LISTEN=1 PLATFORM_SYS_EXEC=1)
 
 if (NOT ENABLE_HTTP_CONNECTION_REUSE)
     target_compile_definitions(th PUBLIC HTTP_CONNECTION_NEVER_REUSE=1)
