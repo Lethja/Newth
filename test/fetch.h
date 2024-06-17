@@ -390,6 +390,23 @@ static void UriPathAppendGoSidewaysDouble(void **state) {
     free(r);
 }
 
+static void UriPathLast(void **state) {
+    const char *path = "/animal/dog.png";
+    const char *last = uriPathLast(path);
+    assert_non_null(last);
+    assert_string_equal(last, "dog.png");
+    assert_ptr_equal(last, &path[8]);
+}
+
+static void UriPathLastHeap(void **state) {
+    const char *path = "/animal/cat/";
+    char *last = uriPathLast(path);
+    assert_non_null(last);
+    assert_ptr_not_equal(last, &path[8]);
+    assert_string_equal(last, "cat"), free(last);
+    assert_null(uriPathLast("/")); /* Always return NULL on root path */
+}
+
 #ifdef GETHOSTBYNAME_CANT_IPV4STR
 
 static void Ipv4Validate(void **state) {
@@ -431,6 +448,7 @@ const struct CMUnitTest fetchTest[] = {
         cmocka_unit_test(UriPathAppendGoUpTooFar), cmocka_unit_test(UriPathCombineStringBothDividers),
         cmocka_unit_test(UriPathCombineStringDumbInput), cmocka_unit_test(UriPathCombineStringJustDividers),
         cmocka_unit_test(UriPathCombineStringLeadingDivider), cmocka_unit_test(UriPathCombineStringNoDivider),
-        cmocka_unit_test(UriPathCombineStringTrailingDivider)};
+        cmocka_unit_test(UriPathCombineStringTrailingDivider), cmocka_unit_test(UriPathLast),
+        cmocka_unit_test(UriPathLastHeap)};
 
 #endif /* NEW_DL_TEST_FETCH_H */

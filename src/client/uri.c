@@ -396,6 +396,30 @@ void uriPathCombine(char *output, const char *path1, const char *path2) {
     strcat(output, p2);
 }
 
+char *uriPathLast(const char *path) {
+    const char *p = NULL;
+    size_t i;
+
+    for (i = 0; path[i] != '\0'; ++i) {
+        if (path[i] == '/') {
+            if (path[i + 1] == '\0') {
+                if (i) {
+                    char *a;
+
+                    i = strlen(p);
+                    if ((a = malloc(i)))
+                        --i, memcpy(a, p, i), a[i] = '\0'; /* Remove trailing '/' */
+                    return a;
+                }
+                return NULL; /* Never return "/" */
+            } else
+                p = &path[i + 1];
+        }
+    }
+
+    return p;
+}
+
 static inline size_t JumpOverDotPaths(const char *path) {
     size_t r = 0;
     char skip = '/';

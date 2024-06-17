@@ -77,6 +77,21 @@ extern const char *uriDetailsCreateSocketAddress(UriDetails *self, SocketAddress
 extern void uriPathCombine(char *output, const char *path1, const char *path2);
 
 /**
+ * Get the name on the end of the path
+ * @param path The path to get the end of
+ * @return The end of the path on success or NULL on error
+ * @remark Depending on circumstances returned pointer could be either be a sub-string or it's own heap allocation.
+ * In case of the latter the caller must free the allocation itself. Check for and handle this condition like so:
+ * @code
+ * char *l = uriPathLast(p);
+ * if (l &lt p || l &gt &p[strlen(p) + 1])
+ *     free(l);
+ * @endcode
+ * @note If the last node in the path has a trailing '/' it will be removed from the returned value
+ */
+char *uriPathLast(const char *path);
+
+/**
  * Resolve the absolute path given a current path and a path to append
  * @param currentPath The current absolute path
  * @param append The relative (or absolute) path
