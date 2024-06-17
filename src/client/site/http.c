@@ -9,8 +9,6 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include <sys/stat.h>
-
 #pragma region Static Helper Functions
 
 /**
@@ -162,12 +160,10 @@ static char *DirectoryListingAdd(HttpSiteDirectoryListing *self, const char *nam
 
     strcpy(n, name);
     if (!self->entry) {
-        SiteFileMeta *entry = malloc(sizeof(SiteFileMeta));
-        if (!entry) {
+        if (!(self->entry = malloc(sizeof(SiteFileMeta)))) {
             free(n);
             return strerror(errno);
         }
-        self->entry = entry;
     } else {
         void *tmp = realloc(self->entry, sizeof(SiteFileMeta) * (self->len + 1));
         if (tmp)
@@ -275,7 +271,10 @@ static inline SOCK_BUF_TYPE FastForwardToElement(HttpSite *self, const char *ele
  * @param element The element to find the end tag of
  * @return NULL on success, user friendly error message otherwise
  */
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "ConstantParameter"
 static inline const char *BufferToEndElement(HttpSite *self, const char *element) {
+#pragma clang diagnostic pop
     const char *r;
     char *e;
     size_t s = strlen(element);
@@ -676,8 +675,7 @@ void httpSiteSchemeDirectoryListingClose(void *listing) {
     DirectoryListingClear(listing), free(listing);
 }
 
-/* TODO: Use SiteFileMeta instead of PlatformFileStat */
-const char *httpSiteSchemeDirectoryListingEntryStat(void *listing, void *entry, PlatformFileStat *st) {
+const char *httpSiteSchemeDirectoryListingEntryStat(void *listing, void *entry, SiteFileMeta *meta) {
     HttpSiteDirectoryListing *l = listing;
     SiteFileMeta *e = entry;
 
@@ -696,13 +694,12 @@ const char *httpSiteSchemeDirectoryListingEntryStat(void *listing, void *entry, 
         return strerror(errno);
     }
 
-    platformPathCombine(entryPath, details.path, e->name), uriDetailsFree(&details);
+    uriPathCombine(entryPath, details.path, e->name), uriDetailsFree(&details);
     if (!(request = ioHttpRequestGenerateHead(entryPath, NULL))) {
         free(entryPath);
         return strerror(errno);
     }
 
-    free(entryPath);
     if ((recvBufferSend((RecvBuffer *) &l->site->socket, request, strlen(request), 0))) {
         free(request);
         return strerror(platformSocketGetLastError());
@@ -713,21 +710,25 @@ const char *httpSiteSchemeDirectoryListingEntryStat(void *listing, void *entry, 
         return strerror(platformSocketGetLastError());
 
     memset(&header, 0, sizeof(HttpResponseHeader));
-    HeadersPopulate(response, &header);
-
+    HeadersPopulate(response, &header), free(response);
 
     /* Assuming a HTTP path without a Content-Disposition filename isn't intended to be a downloadable file */
-    st->st_mode = header.fileName ? S_IFREG : S_IFDIR;
-    st->st_size = header.length;
+    meta->type = header.fileName ? SITE_FILE_TYPE_FILE : SITE_FILE_TYPE_DIRECTORY;
+    meta->length = header.length;
+    meta->path = entryPath;
 
-    if (header.modifiedDate)
-        st->st_mtime = mktime(header.modifiedDate), free(header.modifiedDate);
-    else
-        st->st_mtime = 0;
+    if (header.modifiedDate) {
+        if ((meta->modifiedDate = malloc(sizeof(PlatformTimeStruct))))
+            memcpy(meta->modifiedDate, header.modifiedDate, sizeof(PlatformTimeStruct));
+    } else
+        meta->modifiedDate = NULL;
 
     if (header.fileName)
-        free(header.fileName);
+        meta->name = malloc(strlen(header.fileName) + 1), strcpy(meta->name, header.fileName);
+    else
+        meta->name = uriPathLast(entryPath);
 
+    HeadersFree(&header);
     return NULL;
 }
 
@@ -859,7 +860,8 @@ void *httpSiteSchemeDirectoryListingRead(void *listing) {
                 return NULL;
             }
 
-            strcpy(e->name, l->entry[l->idx].name), e->type = SITE_FILE_TYPE_UNKNOWN, e->modifiedDate = NULL, ++l->idx;
+            strcpy(e->name, l->entry[l->idx].name);
+            e->type = SITE_FILE_TYPE_UNKNOWN, e->modifiedDate = NULL, e->path = NULL, ++l->idx;
             return e;
         }
     }
@@ -959,12 +961,16 @@ const char *httpSiteSchemeFileOpenRead(HttpSite *self, const char *path, Platfor
     return NULL;
 }
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnusedParameter"
 const char *httpSiteSchemeFileOpenWrite(HttpSite *self, const char *path, PlatformFileOffset start, PlatformFileOffset end) {
     /* HTTP implementation is read only */
     return strerror(EACCES);
 }
 
 SOCK_BUF_TYPE httpSiteSchemeFileWrite(HttpSite *self, char *buffer, SOCK_BUF_TYPE size) {
+    /* HTTP implementation is read only */
     errno = EBADF;
     return -1;
 }
+#pragma clang diagnostic pop

@@ -146,7 +146,8 @@ void fileSiteSchemeDirectoryListingClose(void *listing) {
     platformDirClose(listing);
 }
 
-char *fileSiteSchemeDirectoryListingEntryStat(void *listing, void *entry, PlatformFileStat *st) {
+char *fileSiteSchemeDirectoryListingEntryStat(void *listing, void *entry, SiteFileMeta *meta) {
+    PlatformFileStat st;
     SiteFileMeta *e = entry;
     const char *p = platformDirPath(listing);
     char *entryPath;
@@ -155,13 +156,22 @@ char *fileSiteSchemeDirectoryListingEntryStat(void *listing, void *entry, Platfo
         return 0;
 
     platformPathCombine(entryPath, p, e->name);
-
-    if (platformFileStat(entryPath, st)) {
+    if (platformFileStat(entryPath, &st)) {
         free(entryPath);
         return strerror(errno);
     }
 
-    free(entryPath);
+    meta->path = entryPath, meta->name = uriPathLast(entryPath), meta->length = st.st_size;
+    if ((meta->modifiedDate = malloc(sizeof(PlatformTimeStruct))))
+        if (platformGetTimeStruct(&st.st_mtime, meta->modifiedDate))
+            free(meta->modifiedDate), meta->modifiedDate = NULL;
+
+    if (platformFileStatIsFile(&st))
+        meta->type = SITE_FILE_TYPE_FILE;
+    else if (platformFileStatIsDirectory(&st))
+        meta->type = SITE_FILE_TYPE_DIRECTORY;
+    else
+        meta->type = SITE_FILE_TYPE_UNKNOWN;
 
     return NULL;
 }
@@ -201,7 +211,7 @@ fileSiteReadDirectoryListing_skip:
         return NULL;
     }
 
-    strcpy(siteEntry->name, name), siteEntry->modifiedDate = 0;
+    strcpy(siteEntry->name, name), siteEntry->modifiedDate = NULL, siteEntry->path = NULL;
     siteEntry->type = platformDirEntryIsDirectory(entry, listing, NULL) ? SITE_FILE_TYPE_DIRECTORY : SITE_FILE_TYPE_FILE;
     return siteEntry;
 }

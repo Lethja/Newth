@@ -131,14 +131,22 @@ Site *siteArrayPtr(long *length) {
 
 #pragma region Memory Functions
 
+void siteFileMetaFree(SiteFileMeta *meta) {
+    if (meta->name) {
+        if (!meta->path || (meta->name < meta->path || meta->name > &meta->path[strlen(meta->path) + 1]))
+            free(meta->name);
+    }
+
+    if (meta->path)
+        free(meta->path);
+
+    if (meta->modifiedDate)
+        free(meta->modifiedDate);
+}
+
 void siteDirectoryEntryFree(void *entry) {
     SiteFileMeta *e = (SiteFileMeta *) entry;
-    if (e->name)
-        free(e->name);
-
-    if (e->modifiedDate)
-        free(e->modifiedDate);
-
+    siteFileMetaFree(e);
     free(e);
 }
 
@@ -203,12 +211,12 @@ void *siteDirectoryListingOpen(Site *self, char *path) {
     }
 }
 
-const char *siteDirectoryListingEntryStat(Site *self, void *listing, void *entry, PlatformFileStat *st) {
+const char *siteDirectoryListingEntryStat(Site *self, void *listing, void *entry, SiteFileMeta *meta) {
     switch (self->type) {
         case SITE_FILE:
-            return fileSiteSchemeDirectoryListingEntryStat(listing, entry, st);
+            return fileSiteSchemeDirectoryListingEntryStat(listing, entry, meta);
         case SITE_HTTP:
-            return httpSiteSchemeDirectoryListingEntryStat(listing, entry, st);
+            return httpSiteSchemeDirectoryListingEntryStat(listing, entry, meta);
         default:
             return NULL;
     }

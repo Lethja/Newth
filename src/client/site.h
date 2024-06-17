@@ -148,6 +148,12 @@ void siteArrayRemoveNth(long n);
 #pragma region Memory Functions
 
 /**
+ * Free internal memory of a SiteFileMeta
+ * @param meta The SiteFileMeta to free internal memory of
+ */
+void siteFileMetaFree(SiteFileMeta *meta);
+
+/**
  * Free internal memory of a SiteDirectoryEntry
  * @param entry The SiteDirectoryEntry to be freed
  */
@@ -171,10 +177,10 @@ void *siteDirectoryListingOpen(Site *self, char *path);
  * @param self In: the site relative to the listing
  * @param listing In: The listing returned from siteDirectoryListingOpen()
  * @param entry In: The entry returned from siteDirectoryListingRead()
- * @param st Out: The file stat structure to populate
+ * @param meta Out: The meta structure to populate
  * @return NULL on success, user friendly error message otherwise
  */
-const char *siteDirectoryListingEntryStat(Site *self, void *listing, void *entry, PlatformFileStat *st);
+const char *siteDirectoryListingEntryStat(Site *self, void *listing, void *entry, SiteFileMeta *meta);
 
 /**
  * Site-like implementation of POSIX 'readdir()'

@@ -6,6 +6,7 @@
 #include "../common/signal.h"
 
 #include <ctype.h>
+#include <time.h>
 
 #if defined(WATT32) || defined(WIN32)
 #define SHELL_PS1 "%ld>"
@@ -143,25 +144,38 @@ static inline void PrintDirectoryFilesDosLike(Site *site, char *path) {
         free(pathRes);
 
     while ((entry = siteDirectoryListingRead(site, dir))) {
-        PlatformFileStat st;
-        if (!siteDirectoryListingEntryStat(site, dir, entry, &st)) {
+        SiteFileMeta meta;
+        if (!siteDirectoryListingEntryStat(site, dir, entry, &meta)) {
             char timeStr[30];
-            platformGetTime(&st.st_mtime, (char *) &timeStr);
+            if (meta.name) {
+                /* There should always be a `meta.name` but in the case there isn't this code is never run */
 
-            if (platformFileStatIsDirectory(&st))
-                printf("%-30s %12s %s\n", timeStr, "<DIR>", entry->name);
-            else
-                printf("%-30s %12" PF_OFFSET" %s\n", timeStr, st.st_size, entry->name);
-        } else
-            printf("%-30s %12s %s\n", "<\?\?\?>", "<\?\?\?>", entry->name);
+                if (meta.modifiedDate)
+                    strftime(timeStr, 30, "%a, %d %b %Y %H:%M:%S GMT", meta.modifiedDate);
+                else
+                    strcpy(timeStr, "???, ?? ??? ???? ??:??:?? GMT");
 
-        siteDirectoryEntryFree(entry);
+                switch (meta.type) {
+                    case SITE_FILE_TYPE_DIRECTORY:
+                        printf("%-30s %12s %s\n", timeStr, "<DIR>", meta.name);
+                        break;
+                    case SITE_FILE_TYPE_FILE:
+                        printf("%-30s %12" PF_OFFSET" %s\n", timeStr, meta.length, meta.name);
+                        break;
+                    default:
+                        printf("%-30s %12s %s\n", "<\?\?\?>", "<\?\?\?>", meta.name);
+                        break;
+                }
+            }
+
+            siteFileMetaFree(&meta);
+            siteDirectoryEntryFree(entry);
+        }
     }
-
     siteDirectoryListingClose(site, dir), putc('\n', stdout);
 }
 
-static inline void PrintDirectoryFilesUnixLike(Site *site, char *path) {
+static inline void PrintDirectoryFilesUnixLike(Site * site, char *path) {
     void *dir;
     SiteFileMeta *entry;
 

@@ -26,7 +26,7 @@ typedef struct HttpSiteDirectoryListing {
 
 void httpSiteSchemeDirectoryListingClose(void *listing);
 
-const char *httpSiteSchemeDirectoryListingEntryStat(void *entry, void *listing, PlatformFileStat *st);
+const char *httpSiteSchemeDirectoryListingEntryStat(void *entry, void *listing, SiteFileMeta *st);
 
 void *httpSiteSchemeDirectoryListingOpen(HttpSite *self, char *path);
 

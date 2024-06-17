@@ -13,7 +13,7 @@ char *fileSiteSchemeNew(FileSite *self, const char *path);
 
 void fileSiteSchemeDirectoryListingClose(void *listing);
 
-char *fileSiteSchemeDirectoryListingEntryStat(void *entry, void *listing, PlatformFileStat *st);
+char *fileSiteSchemeDirectoryListingEntryStat(void *entry, void *listing, SiteFileMeta *meta);
 
 void *fileSiteSchemeDirectoryListingOpen(FileSite *self, char *path);
 
