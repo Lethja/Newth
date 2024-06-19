@@ -25,19 +25,23 @@ static inline void Copy(const char **argv) {
     else {
         const char *e, *name;
         Site *from = siteArrayActiveGet(), *to = siteArrayPtr(NULL);
+        SiteFileMeta *fromMeta;
         char buf[SB_DATA_SIZE];
 
-        if ((e = siteFileOpenRead(siteArrayActiveGet(), argv[1], -1, -1))) {
+        if ((e = siteFileOpenRead(from, argv[1], -1, -1))) {
             puts(e);
             return;
         }
 
-        /* TODO: Design a more foolproof way to get the filename */
-        if (!(name = strrchr(argv[1], '/')))
-            name = argv[1];
+        if (!(fromMeta = siteFileOpenMeta(from)) || fromMeta->type == SITE_FILE_TYPE_UNKNOWN) {
+            siteFileClose(from), puts(ErrHeaderNotFound);
+            return;
+        }
+
+        name = fromMeta->name;
 
         /* TODO: check if file exists already, add logic for overwrite/update */
-        if ((e = siteFileOpenWrite(to, &name[1], -1, -1))) {
+        if ((e = siteFileOpenWrite(to, name, -1, -1))) {
             siteFileClose(from), puts(e);
             return;
         }

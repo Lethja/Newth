@@ -255,6 +255,17 @@ void siteFileClose(Site *self) {
     }
 }
 
+SiteFileMeta *siteFileOpenMeta(Site *self) {
+    switch (self->type) {
+        case SITE_FILE:
+            return self->site.file.file ? &self->site.file.meta : NULL;
+        case SITE_HTTP:
+            return self->site.http.file ? &self->site.http.file->meta : NULL;
+        default:
+            return NULL;
+    }
+}
+
 SOCK_BUF_TYPE siteFileRead(Site *self, char *buffer, SOCK_BUF_TYPE size) {
     switch (self->type) {
         case SITE_FILE:

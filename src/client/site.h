@@ -13,7 +13,7 @@ enum SiteFileType {
      */
     SITE_FILE_TYPE_DIRECTORY,
     /**
-     * @brief The path is not a file or directory (or any other type the system may know about)
+     * @brief The path does not exist
      */
     SITE_FILE_TYPE_NOTHING,
     /**
@@ -243,6 +243,13 @@ void siteFileClose(Site *self);
  * @return Amount of bytes transferred or -1 on error
  */
 SOCK_BUF_TYPE siteFileRead(Site *self, char *buffer, SOCK_BUF_TYPE size);
+
+/**
+ * Get the file meta of the currently open file on a site
+ * @param self The site to the the file meta from
+ * @return A pointer to a SiteFileMeta struct populated with the currently open file or NULL on error
+ */
+SiteFileMeta *siteFileOpenMeta(Site *self);
 
 /**
  * Read to a open file on the site
