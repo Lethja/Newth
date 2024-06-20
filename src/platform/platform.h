@@ -414,8 +414,22 @@ char *platformGetWorkingDirectory(char *buffer, size_t length);
 short platformPathWebToSystem(const char *rootPath, char *webPath, char *absolutePath);
 
 /**
- * Convert a path from a system path to a FILE path.
- * @param path In: The system path to convert to a FILE scheme
+ * Convert a path from a file scheme path to a native system path.
+ * @param path In: The file scheme path to convert to a native system path
+ * @return NULL on failure, allocated memory containing the native system path on success
+ */
+char *platformPathFileSchemePathToSystem(char *path);
+
+/**
+ * Convert a file scheme uri to a native system path.
+ * @param path In: The file scheme uri to convert to a native system path
+ * @return NULL on failure, allocated memory containing the native system path on success
+ */
+char *platformPathFileSchemeToSystem(char *path);
+
+/**
+ * Convert a path from a native system path to a file scheme path.
+ * @param path In: The native system path to convert to a file scheme path
  * @return NULL on failure, allocated memory containing the file scheme on success
  */
 char *platformPathSystemToFileScheme(char *path);

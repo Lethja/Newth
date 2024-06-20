@@ -586,6 +586,23 @@ short platformPathWebToSystem(const char *rootPath, char *webPath, char *absolut
     return 0;
 }
 
+char *platformPathFileSchemePathToSystem(char *path) {
+    char *r;
+
+    if ((r = malloc(strlen(path) + 1)))
+        strcpy(r, path);
+
+    return r;
+}
+
+char *platformPathFileSchemeToSystem(char *path) {
+    if (!(toupper(path[0]) == 'F' && toupper(path[1]) == 'I' && toupper(path[2]) == 'L' && toupper(path[3]) == 'E'
+          && path[4] == ':' && path[5] == '/' && path[6] == '/' && path[7] == '/'))
+        return NULL;
+    else
+        return platformPathFileSchemePathToSystem(&path[7]);
+}
+
 char *platformPathSystemToFileScheme(char *path) {
     char *r, *abs = platformRealPath(path);
     size_t absLen;
