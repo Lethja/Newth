@@ -403,7 +403,7 @@ char *uriPathLast(const char *path) {
     for (i = 0; path[i] != '\0'; ++i) {
         if (path[i] == '/') {
             if (path[i + 1] == '\0') {
-                if (i) {
+                if (p && i) {
                     char *a;
 
                     i = strlen(p);
@@ -417,7 +417,7 @@ char *uriPathLast(const char *path) {
         }
     }
 
-    return p;
+    return (char *) p;
 }
 
 static inline size_t JumpOverDotPaths(const char *path) {

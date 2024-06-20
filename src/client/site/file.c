@@ -84,20 +84,39 @@ static inline const char *FileOpen(FileSite *self, const char *path, const char 
 #pragma endregion
 
 int fileSiteSchemeWorkingDirectorySet(FileSite *self, const char *path) {
-    if (!platformPathSystemChangeWorkingDirectory(path)) {
-        char *wd = malloc(FILENAME_MAX);
-        if (!wd) {
-            free(self->fullUri), self->fullUri = NULL;
-            return -1;
-        }
+    PlatformFileStat stat;
+    char *nativePath, *fullPath = self->fullUri;
 
-        if (platformGetWorkingDirectory(wd, FILENAME_MAX))
-            UpdateFileUri(self, wd);
+    if (!(toupper(fullPath[0]) == 'F' && toupper(fullPath[1]) == 'I' && toupper(fullPath[2]) == 'L' && toupper(fullPath[3]) == 'E'
+          && fullPath[4] == ':' && fullPath[5] == '/' && fullPath[6] == '/' && fullPath[7] == '/'))
+        return -1;
 
-        free(wd);
-        return 0;
+    fullPath = &fullPath[7];
+    if (!(fullPath = uriPathAbsoluteAppend(fullPath, path)))
+        return -1;
+
+    nativePath = platformPathFileSchemePathToSystem(fullPath), free(fullPath);
+    if (!nativePath)
+        return -1;
+
+    if (platformFileStat(nativePath, &stat)) {
+        free(nativePath);
+        errno = ENOENT;
+        return 1;
     }
 
+    if (platformFileStatIsDirectory(&stat)) {
+        fullPath = platformPathSystemToFileScheme(nativePath), free(nativePath);
+        if (fullPath) {
+            free(self->fullUri), self->fullUri = fullPath;
+            return 0;
+        }
+
+        return -1;
+    }
+
+    free(nativePath);
+    errno = ENOTDIR;
     return 1;
 }
 
@@ -179,11 +198,24 @@ char *fileSiteSchemeDirectoryListingEntryStat(void *listing, void *entry, SiteFi
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "UnusedParameter"
 void *fileSiteSchemeDirectoryListingOpen(FileSite *self, char *path) {
-    PlatformFileStat stat;
+    char *fullPath, *nativePath;
 
-    if (!platformFileStat(path, &stat)) {
-        if (platformFileStatIsDirectory(&stat))
-            return platformDirOpen(path);
+    if (!(fullPath = uriPathAbsoluteAppend(self->fullUri, path)))
+        return NULL;
+
+    nativePath = platformPathFileSchemeToSystem(fullPath), free(fullPath);
+    if (nativePath) {
+        PlatformFileStat stat;
+
+        if (!platformFileStat(nativePath, &stat)) {
+            if (platformFileStatIsDirectory(&stat)) {
+                PlatformDir *d = platformDirOpen(nativePath);
+                free(nativePath);
+                return d;
+            }
+        }
+
+        free(nativePath);
     }
 
     return NULL;
