@@ -61,19 +61,28 @@ static inline const char *FileOpen(FileSite *self, const char *path, const char 
         memset(&self->meta, 0, sizeof(SiteFileMeta));
         if (!platformFileStat(path, &st))
             FillFileMeta(&st, &self->meta);
+        else
+            self->meta.type = SITE_FILE_TYPE_UNKNOWN;
     } else {
-        /* TODO: Make a more elegant check on file schemes current path */
-        char *osPath = &self->fullUri[7], *fullPath = malloc(strlen(osPath) + strlen(path) + 2);
+        char *osPath, *fullPath;
 
-        uriPathCombine(fullPath, osPath, path);
+        if (!(osPath = platformPathFileSchemeToSystem(self->fullUri)))
+            return strerror(errno);
+
+        fullPath = uriPathAbsoluteAppend(osPath, path), free(osPath);
+        if (!fullPath)
+            return strerror(errno);
+
         if (!(self->file = platformFileOpen(fullPath, mode))) {
             free(fullPath);
             return strerror(errno);
         }
 
         memset(&self->meta, 0, sizeof(SiteFileMeta));
-        if (!platformFileStat(path, &st))
+        if (!platformFileStat(fullPath, &st))
             FillFileMeta(&st, &self->meta);
+        else
+            self->meta.type = SITE_FILE_TYPE_UNKNOWN;
 
         free(fullPath);
     }
@@ -260,6 +269,18 @@ void fileSiteSchemeFileClose(FileSite *self) {
 
 SOCK_BUF_TYPE fileSiteSchemeFileRead(FileSite *self, char *buffer, SOCK_BUF_TYPE size) {
     return platformFileRead(buffer, 1, size, self->file);
+}
+
+char fileSiteSchemeFileExists(FileSite *self, const char *path) {
+    FILE *f;
+    if (path[0] == '/') {
+        if ((f = platformFileOpen(path, "r"))) {
+            fclose(f);
+            return 1;
+        }
+    }
+
+    return 0;
 }
 
 const char *fileSiteSchemeFileOpenRead(FileSite *self, const char *path, PlatformFileOffset start, PlatformFileOffset end) {
