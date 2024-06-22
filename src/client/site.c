@@ -266,6 +266,17 @@ SiteFileMeta *siteFileOpenMeta(Site *self) {
     }
 }
 
+SiteFileMeta *siteStatOpenMeta(Site *self, const char *path) {
+    switch (self->type) {
+        case SITE_FILE:
+            return fileSiteSchemeStatOpenMeta(&self->site.file, path);
+        case SITE_HTTP:
+            /* TODO: Implement */
+        default:
+            return NULL;
+    }
+}
+
 SOCK_BUF_TYPE siteFileRead(Site *self, char *buffer, SOCK_BUF_TYPE size) {
     switch (self->type) {
         case SITE_FILE:

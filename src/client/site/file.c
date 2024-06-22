@@ -44,6 +44,26 @@ static inline void FillFileMeta(PlatformFileStat *stat, SiteFileMeta *siteFileMe
 }
 
 /**
+ * Resolve a URI to a system path
+ * @param uri
+ * @param path
+ * @return
+ */
+static inline char *ResolvePath(char *uri, char *path) {
+    if (path[0] == '/') /* TODO: this is a UNIX only trick */
+        return path;
+    else {
+        char *osPath, *fullPath;
+
+        if (!(osPath = platformPathFileSchemeToSystem(uri)))
+            return strerror(errno);
+
+        fullPath = uriPathAbsoluteAppend(osPath, path), free(osPath);
+        return fullPath;
+    }
+}
+
+/**
  * Open a file for reading or writing
  * @param self The site to open a file on
  * @param path The absolute or relative path to open in regards to the site
@@ -52,40 +72,27 @@ static inline void FillFileMeta(PlatformFileStat *stat, SiteFileMeta *siteFileMe
  */
 static inline const char *FileOpen(FileSite *self, const char *path, const char *mode) {
     PlatformFileStat st;
-
+    char *fullPath;
     fileSiteSchemeFileClose(self);
-    if (path[0] == '/') {
-        if (!(self->file = platformFileOpen(path, mode)))
-            return strerror(errno);
 
-        memset(&self->meta, 0, sizeof(SiteFileMeta));
-        if (!platformFileStat(path, &st))
-            FillFileMeta(&st, &self->meta);
-        else
-            self->meta.type = SITE_FILE_TYPE_UNKNOWN;
-    } else {
-        char *osPath, *fullPath;
+    if (!(fullPath = ResolvePath(self->fullUri, (char *) path)))
+        return strerror(errno);
 
-        if (!(osPath = platformPathFileSchemeToSystem(self->fullUri)))
-            return strerror(errno);
-
-        fullPath = uriPathAbsoluteAppend(osPath, path), free(osPath);
-        if (!fullPath)
-            return strerror(errno);
-
-        if (!(self->file = platformFileOpen(fullPath, mode))) {
+    if (!(self->file = platformFileOpen(fullPath, mode))) {
+        if (fullPath != path)
             free(fullPath);
-            return strerror(errno);
-        }
 
-        memset(&self->meta, 0, sizeof(SiteFileMeta));
-        if (!platformFileStat(fullPath, &st))
-            FillFileMeta(&st, &self->meta);
-        else
-            self->meta.type = SITE_FILE_TYPE_UNKNOWN;
-
-        free(fullPath);
+        return strerror(errno);
     }
+
+    memset(&self->meta, 0, sizeof(SiteFileMeta));
+    if (!platformFileStat(fullPath, &st))
+        FillFileMeta(&st, &self->meta);
+    else
+        self->meta.type = SITE_FILE_TYPE_UNKNOWN;
+
+    if (fullPath != path)
+        free(fullPath);
 
     return NULL;
 }
@@ -130,6 +137,8 @@ int fileSiteSchemeWorkingDirectorySet(FileSite *self, const char *path) {
 }
 
 void fileSiteSchemeFree(FileSite *self) {
+    fileSiteSchemeFileClose(self);
+
     if (self->fullUri)
         free(self->fullUri);
 
@@ -271,16 +280,30 @@ SOCK_BUF_TYPE fileSiteSchemeFileRead(FileSite *self, char *buffer, SOCK_BUF_TYPE
     return platformFileRead(buffer, 1, size, self->file);
 }
 
-char fileSiteSchemeFileExists(FileSite *self, const char *path) {
-    FILE *f;
-    if (path[0] == '/') {
-        if ((f = platformFileOpen(path, "r"))) {
-            fclose(f);
-            return 1;
-        }
+SiteFileMeta *fileSiteSchemeStatOpenMeta(FileSite *self, const char *path) {
+    char *fullPath;
+    SiteFileMeta *meta;
+    PlatformFileStat st;
+
+    if (!(fullPath = ResolvePath(self->fullUri, (char*) path)))
+        return NULL;
+
+    if (!(meta = malloc(sizeof(SiteFileMeta)))) {
+        if (fullPath != path)
+            free(fullPath);
+
+        return NULL;
     }
 
-    return 0;
+    if (!(platformFileStat(fullPath, &st)))
+        FillFileMeta(&st, meta);
+    else
+        meta->type = SITE_FILE_TYPE_NOTHING;
+
+    if (fullPath != path)
+        free(fullPath);
+
+    return meta;
 }
 
 const char *fileSiteSchemeFileOpenRead(FileSite *self, const char *path, PlatformFileOffset start, PlatformFileOffset end) {

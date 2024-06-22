@@ -245,9 +245,20 @@ void siteFileClose(Site *self);
 SOCK_BUF_TYPE siteFileRead(Site *self, char *buffer, SOCK_BUF_TYPE size);
 
 /**
+ * Open file at path, get metadata from it then close the file
+ * @param self The site to the the meta from
+ * @param path The path to the the meta from
+ * @return NULL of failure, allocation of files metadata on success
+ * @remark Before checking any other data make sure type is not equal to NOTHING. If it is then file doesn't exist
+ * @remark Use siteFileMetaFree() then free() on returned pointer before leaving scope
+ */
+SiteFileMeta *siteStatOpenMeta(Site *self, const char *path);
+
+/**
  * Get the file meta of the currently open file on a site
  * @param self The site to the the file meta from
  * @return A pointer to a SiteFileMeta struct populated with the currently open file or NULL on error
+ * @remark Do not free return pointer
  */
 SiteFileMeta *siteFileOpenMeta(Site *self);
 

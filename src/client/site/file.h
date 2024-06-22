@@ -27,6 +27,8 @@ void fileSiteSchemeFileClose(FileSite *self);
 
 SOCK_BUF_TYPE fileSiteSchemeFileRead(FileSite *self, char *buffer, SOCK_BUF_TYPE size);
 
+SiteFileMeta *fileSiteSchemeStatOpenMeta(FileSite *self, const char *path);
+
 const char *fileSiteSchemeFileOpenRead(FileSite *self, const char *path, PlatformFileOffset start, PlatformFileOffset end);
 
 const char *fileSiteSchemeFileOpenWrite(FileSite *self, const char *path, PlatformFileOffset start, PlatformFileOffset end);
