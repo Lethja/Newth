@@ -288,7 +288,7 @@ SiteFileMeta *fileSiteSchemeStatOpenMeta(FileSite *self, const char *path) {
     if (!(fullPath = ResolvePath(self->fullUri, (char*) path)))
         return NULL;
 
-    if (!(meta = malloc(sizeof(SiteFileMeta)))) {
+    if (!(meta = calloc(1, sizeof(SiteFileMeta)))) {
         if (fullPath != path)
             free(fullPath);
 
