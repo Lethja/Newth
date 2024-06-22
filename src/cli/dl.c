@@ -23,9 +23,9 @@ static inline void Copy(const char **argv) {
     if (i > 2)
         puts("COPY from/to not yet implemented");
     else {
-        const char *e, *name;
+        const char *e;
         Site *from = siteArrayActiveGet(), *to = siteArrayPtr(NULL);
-        SiteFileMeta *fromMeta;
+        SiteFileMeta *fromMeta, *toMeta;
         char buf[SB_DATA_SIZE];
 
         if ((e = siteFileOpenRead(from, argv[1], -1, -1))) {
@@ -33,15 +33,29 @@ static inline void Copy(const char **argv) {
             return;
         }
 
-        if (!(fromMeta = siteFileOpenMeta(from)) || fromMeta->type == SITE_FILE_TYPE_UNKNOWN) {
+        if (!(fromMeta = siteFileOpenMeta(from)) || fromMeta->type == SITE_FILE_TYPE_UNKNOWN || !fromMeta->name) {
             siteFileClose(from), puts(ErrHeaderNotFound);
             return;
         }
 
-        name = fromMeta->name;
+        if (fromMeta->type != SITE_FILE_TYPE_FILE) {
+            siteFileClose(from), puts(strerror(EISDIR));
+            return;
+        }
 
-        /* TODO: check if file exists already, add logic for overwrite/update */
-        if ((e = siteFileOpenWrite(to, name, -1, -1))) {
+        if (!(toMeta = siteStatOpenMeta(to, fromMeta->name))) {
+            siteFileClose(from), puts(strerror(errno));
+            return;
+        }
+
+        /* TODO: add logic for overwrite/update behaviour */
+        if (toMeta->type != SITE_FILE_TYPE_NOTHING) {
+            siteFileMetaFree(toMeta), free(toMeta), siteFileClose(from), puts(strerror(EEXIST));
+            return;
+        }
+        siteFileMetaFree(toMeta), free(toMeta);
+
+        if ((e = siteFileOpenWrite(to, fromMeta->name, -1, -1))) {
             siteFileClose(from), puts(e);
             return;
         }
