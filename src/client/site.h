@@ -276,7 +276,7 @@ SiteFileMeta *siteFileOpenMeta(Site *self);
 const char *siteFileOpenRead(Site *self, const char *path, PlatformFileOffset start, PlatformFileOffset end);
 
 /**
- * Open a file on the site for writing
+ * Open a file on the site for appending to an existing file
  * @param self The site to write a file on
  * @param path The path (relative or absolute to the path of the URI)
  * @param start Number of bytes to start writing at or -1 for default
@@ -284,9 +284,21 @@ const char *siteFileOpenRead(Site *self, const char *path, PlatformFileOffset st
  * @return NULL on success, user friendly error message otherwise
  * @remark By design sites can only have one file open at a time and it can only be opened to read or write, not both.
  * Opening another file will close the first.
- * @remark Some types of sites are more strict than others with the start and/or finish byte requested
+ * @remark Some sites types are more strict than others on a valid file and byte range requested. Be sure the
+ * requested sense. Use siteFileStatMeta() to get if a file exists and what it's length is if it does
  */
-const char *siteFileOpenWrite(Site *self, const char *path, PlatformFileOffset start, PlatformFileOffset end);
+const char *siteFileOpenAppend(Site *self, const char *path, PlatformFileOffset start, PlatformFileOffset end);
+
+/**
+ * Open a file on the site for writing a new file
+ * @param self The site to write a file on
+ * @param path The path (relative or absolute to the path of the URI)
+ * @return NULL on success, user friendly error message otherwise
+ * @remark By design sites can only have one file open at a time and it can only be opened to read or write, not both.
+ * Opening another file will close the first.
+ * @remark If a file exists this function will overwrite it, to resume a download use siteFileOpenAppend() instead
+ */
+const char *siteFileOpenWrite(Site *self, const char *path);
 
 /**
  * Write to the open file of a site

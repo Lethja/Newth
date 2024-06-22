@@ -48,7 +48,7 @@ SiteFileMeta *httpSiteSchemeStatOpenMeta(HttpSite *self, const char *path);
 
 const char *httpSiteSchemeFileOpenRead(HttpSite *self, const char *path, PlatformFileOffset start, PlatformFileOffset end);
 
-const char *httpSiteSchemeFileOpenWrite(HttpSite *self, const char *path, PlatformFileOffset start, PlatformFileOffset end);
+const char *httpSiteSchemeFileOpenWrite(HttpSite *self, const char *path);
 
 SOCK_BUF_TYPE httpSiteSchemeFileWrite(HttpSite *self, char *buffer, SOCK_BUF_TYPE size);
 

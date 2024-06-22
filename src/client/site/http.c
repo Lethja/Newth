@@ -1036,7 +1036,7 @@ const char *httpSiteSchemeFileOpenRead(HttpSite *self, const char *path, Platfor
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "UnusedParameter"
-const char *httpSiteSchemeFileOpenWrite(HttpSite *self, const char *path, PlatformFileOffset start, PlatformFileOffset end) {
+const char *httpSiteSchemeFileOpenWrite(HttpSite *self, const char *path) {
     /* HTTP implementation is read only */
     return strerror(EACCES);
 }

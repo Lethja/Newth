@@ -299,12 +299,23 @@ const char *siteFileOpenRead(Site *self, const char *path, PlatformFileOffset st
     }
 }
 
-const char *siteFileOpenWrite(Site *self, const char *path, PlatformFileOffset start, PlatformFileOffset end) {
+const char *siteFileOpenAppend(Site *self, const char *path, PlatformFileOffset start, PlatformFileOffset end) {
     switch (self->type) {
         case SITE_FILE:
-            return fileSiteSchemeFileOpenWrite(&self->site.file, path, start, end);
+            return fileSiteSchemeFileOpenAppend(&self->site.file, path, start, end);
         case SITE_HTTP:
-            return httpSiteSchemeFileOpenWrite(&self->site.http, path, start, end);
+            return httpSiteSchemeFileOpenWrite(&self->site.http, path);
+        default:
+            return "Not Implemented";
+    }
+}
+
+const char *siteFileOpenWrite(Site *self, const char *path) {
+    switch (self->type) {
+        case SITE_FILE:
+            return fileSiteSchemeFileOpenWrite(&self->site.file, path);
+        case SITE_HTTP:
+            return httpSiteSchemeFileOpenWrite(&self->site.http, path);
         default:
             return "Not Implemented";
     }

@@ -55,7 +55,7 @@ static inline void Copy(const char **argv) {
         }
         siteFileMetaFree(toMeta), free(toMeta);
 
-        if ((e = siteFileOpenWrite(to, fromMeta->name, -1, -1))) {
+        if ((e = siteFileOpenWrite(to, fromMeta->name))) {
             siteFileClose(from), puts(e);
             return;
         }

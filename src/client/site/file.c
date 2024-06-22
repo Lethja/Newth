@@ -315,18 +315,18 @@ const char *fileSiteSchemeFileOpenRead(FileSite *self, const char *path, Platfor
     return e;
 }
 
-const char *fileSiteSchemeFileOpenWrite(FileSite *self, const char *path, PlatformFileOffset start, PlatformFileOffset end) {
+const char *fileSiteSchemeFileOpenAppend(FileSite *self, const char *path, PlatformFileOffset start, PlatformFileOffset end) {
     const char *e;
 
-    if (start == -1)
-        e = FileOpen(self, path, "wb");
-    else {
-        if (!(e = FileOpen(self, path, "ab")))
-            if (fseek(self->file, start, SEEK_SET))
-                e = strerror(errno);
-    }
+    if (!(e = FileOpen(self, path, "ab")))
+        if (fseek(self->file, start, SEEK_SET))
+            e = strerror(errno);
 
     return e;
+}
+
+const char *fileSiteSchemeFileOpenWrite(FileSite *self, const char *path) {
+    return FileOpen(self, path, "wb");
 }
 
 SOCK_BUF_TYPE fileSiteSchemeFileWrite(FileSite *self, char *buffer, SOCK_BUF_TYPE size) {

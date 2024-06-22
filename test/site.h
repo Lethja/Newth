@@ -144,7 +144,7 @@ static void SiteFileTransferToFile(void **state) {
     assert_null(siteNew(&site2, SITE_FILE, platformTempDirectoryGet()));
 
     assert_null(siteFileOpenRead(&site1, "nt_f1", -1, -1));
-    assert_null(siteFileOpenWrite(&site2, "nt_f2", -1, -1));
+    assert_null(siteFileOpenWrite(&site2, "nt_f2"));
 
     assert_int_equal(siteFileRead(&site1, (char *) buf, 22), 22);
     assert_int_equal(siteFileWrite(&site2, (char *) buf, 22), 22);
@@ -174,7 +174,7 @@ static void SiteFileTransferToFileContinue(void **state) {
     assert_null(siteNew(&site2, SITE_FILE, platformTempDirectoryGet()));
 
     assert_null(siteFileOpenRead(&site1, "nt_f1", 35, -1));
-    assert_null(siteFileOpenWrite(&site2, "nt_f2", -1, -1));
+    assert_null(siteFileOpenWrite(&site2, "nt_f2"));
 
     assert_int_equal(siteFileRead(&site1, (char *) buf, 22), 8);
     assert_int_equal(siteFileWrite(&site2, (char *) buf, 8), 8);
@@ -607,7 +607,7 @@ static void SiteHttpTransferToFile(void **state) {
     rewind(mockReceiveStream);
 
     assert_null(siteFileOpenRead(&site1, "foo", -1, -1));
-    assert_null(siteFileOpenWrite(&site2, "nt_f2", -1, -1));
+    assert_null(siteFileOpenWrite(&site2, "nt_f2"));
 
     assert_int_equal(siteFileRead(&site1, (char *) buf, 22), 22);
     assert_int_equal(siteFileWrite(&site2, (char *) buf, 22), 22);

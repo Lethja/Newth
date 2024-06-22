@@ -31,7 +31,9 @@ SiteFileMeta *fileSiteSchemeStatOpenMeta(FileSite *self, const char *path);
 
 const char *fileSiteSchemeFileOpenRead(FileSite *self, const char *path, PlatformFileOffset start, PlatformFileOffset end);
 
-const char *fileSiteSchemeFileOpenWrite(FileSite *self, const char *path, PlatformFileOffset start, PlatformFileOffset end);
+const char *fileSiteSchemeFileOpenAppend(FileSite *self, const char *path, PlatformFileOffset start, PlatformFileOffset end);
+
+const char *fileSiteSchemeFileOpenWrite(FileSite *self, const char *path);
 
 SOCK_BUF_TYPE fileSiteSchemeFileWrite(FileSite *self, char *buffer, SOCK_BUF_TYPE size);
 
