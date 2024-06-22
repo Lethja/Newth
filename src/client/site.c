@@ -271,7 +271,7 @@ SiteFileMeta *siteStatOpenMeta(Site *self, const char *path) {
         case SITE_FILE:
             return fileSiteSchemeStatOpenMeta(&self->site.file, path);
         case SITE_HTTP:
-            /* TODO: Implement */
+            return httpSiteSchemeStatOpenMeta(&self->site.http, path);
         default:
             return NULL;
     }

@@ -901,6 +901,78 @@ SOCK_BUF_TYPE httpSiteSchemeFileRead(HttpSite *self, char *buffer, SOCK_BUF_TYPE
     return bufferSize;
 }
 
+SiteFileMeta *httpSiteSchemeStatOpenMeta(HttpSite *self, const char *path) {
+    SiteFileMeta *meta;
+    UriDetails d = uriDetailsNewFrom(self->fullUri);
+    HttpResponseHeader headerResponse = {0};
+    char *resolvedPath, *request, *response, *scheme, *header;
+
+    if (!(meta = calloc(1, sizeof(SiteFileMeta))))
+        return NULL;
+
+    if (d.path) {
+        resolvedPath = uriPathAbsoluteAppend(d.path, path);
+        scheme = NULL, GenerateHostHeader(&scheme, &d);
+        uriDetailsFree(&d);
+    } else {
+        uriDetailsFree(&d), free(meta);
+        return NULL;
+    }
+
+    GenerateConnectionHeader(&scheme);
+    if (!(request = ioHttpRequestGenerateGet(resolvedPath, scheme))) {
+        free(resolvedPath), free(scheme), free(meta);
+        return NULL;
+    }
+
+    free(scheme), recvBufferClear(&self->socket);
+    /* TODO: Ensure the previous request finished successfully and reset the TCP session before sending if it hasn't */
+    if (recvBufferSend(&self->socket, request, strlen(request), 0)) {
+        free(request), free(resolvedPath), free(meta);
+        return NULL;
+    }
+
+    free(request), request = NULL, scheme = NULL;
+    if (ioHttpResponseHeaderRead(&self->socket, &header)) {
+        free(resolvedPath), free(meta);
+        return NULL;
+    }
+
+    if (ioHttpResponseHeaderEssential(header, &scheme, &response)) {
+        free(header), free(resolvedPath), free(meta);
+        return NULL;
+    }
+
+    HeadersPopulate(header, &headerResponse);
+    free(header), free(scheme);
+    HeadersCompute(self, &headerResponse, "HEAD");
+
+    meta->type = headerResponse.fileName ? SITE_FILE_TYPE_FILE : SITE_FILE_TYPE_DIRECTORY;
+    meta->length = headerResponse.length;
+
+    if (headerResponse.modifiedDate)
+        meta->modifiedDate = headerResponse.modifiedDate, headerResponse.modifiedDate = NULL;
+
+    meta->path = resolvedPath, meta->name = uriPathLast(resolvedPath);
+    if (!meta->name) {
+        /* There MUST be a name in a SiteFileMeta */
+        if (headerResponse.fileName)
+            meta->name = headerResponse.fileName, headerResponse.fileName = NULL;
+        else {
+            free(resolvedPath), HeadersFree(&headerResponse), free(meta);
+            return NULL;
+        }
+    } else if (headerResponse.fileName && strcmp(meta->name, headerResponse.fileName) != 0) {
+        if (meta->name < meta->path || meta->name > &meta->path[strlen(meta->path) + 1])
+            free(meta->name);
+
+        meta->name = headerResponse.fileName, headerResponse.fileName = NULL;
+    }
+
+    HeadersFree(&headerResponse);
+    return meta;
+}
+
 const char *httpSiteSchemeFileOpenRead(HttpSite *self, const char *path, PlatformFileOffset start, PlatformFileOffset end) {
     const char *e;
     UriDetails d = uriDetailsNewFrom(self->fullUri);
@@ -928,6 +1000,7 @@ const char *httpSiteSchemeFileOpenRead(HttpSite *self, const char *path, Platfor
     free(scheme);
     recvBufferClear(&self->socket);
 
+    /* TODO: Ensure the previous request finished successfully and reset the TCP session before sending if it hasn't */
     if ((e = recvBufferSend(&self->socket, request, strlen(request), 0))) {
         free(request), free(resolvedPath);
         return e;
