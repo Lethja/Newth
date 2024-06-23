@@ -73,6 +73,15 @@ void platformConnectSignals(void(*noAction)(int), void(*shutdownCrash)(int), voi
     /* See platformShouldExit() */
 }
 
+#ifdef PLATFORM_SYS_EXEC
+
+char *platformExecRunWait(const char** args) {
+    /* TODO: Implement */
+    return "Not yet implemented";
+}
+
+#endif
+
 #pragma region Network Adapter Discovery
 
 #ifdef PLATFORM_NET_ADAPTER
@@ -231,6 +240,15 @@ const char *platformDirEntryGetName(PlatformDirEntry *entry, size_t *length) {
     return entry->d_name;
 }
 
+static inline void ParseFileSchemePathToDos(char *absolutePath) {
+    if (absolutePath[0] == '/' && absolutePath[1] != '\0' && absolutePath[2] == '/') {
+        absolutePath[0] = toupper(absolutePath[1]), absolutePath[1] = ':';
+    }
+
+    while (*absolutePath != '\0')
+        *absolutePath = *absolutePath == '\\' ? '/' : tolower(*absolutePath), ++absolutePath;
+}
+
 static inline void ParseDosToFileScheme(char *absolutePath) {
     if (absolutePath[1] == ':')
         absolutePath[1] = tolower(absolutePath[0]), absolutePath[0] = '/';
@@ -250,6 +268,35 @@ char *platformPathSystemToFileScheme(char *path) {
     ParseDosToFileScheme(abs);
     strcpy(r, "file://"), strcat(r, abs), free(abs);
     return r;
+}
+
+char *platformPathFileSchemePathToSystem(char *path) {
+    char *r;
+    size_t len = strlen(path);
+
+    if(len < 3)
+        return NULL;
+
+    if ((r = malloc(len + 1))) {
+        char drive = toupper(r[1]);
+        strcpy(r, path);
+        ParseFileSchemePathToDos(r);
+        if(r[0] == drive && r[1] == ':' && r[2] == '\\')
+            return r;
+
+        free(r);
+        return NULL;
+    }
+
+    return r;
+}
+
+char *platformPathFileSchemeToSystem(char *path) {
+    if (!(toupper(path[0]) == 'F' && toupper(path[1]) == 'I' && toupper(path[2]) == 'L' && toupper(path[3]) == 'E'
+          && path[4] == ':' && path[5] == '/' && path[6] == '/' && path[7] == '/'))
+        return NULL;
+    else
+        return platformPathFileSchemePathToSystem(&path[7]);
 }
 
 int platformPathSystemChangeWorkingDirectory(const char *path) {
