@@ -106,24 +106,23 @@ char *platformExecRunWait(const char** args) {
     }
 #ifdef __I86__
 #define DOSCMDMAX 128
+#define DOSCMDPAR "/C "
     if (!(p = getenv("COMSPEC")))
         p = "COMMAND.COM";
 
-    j = strlen("/C ") + strlen(a[0]);
-
-    if (strlen(a[0]) < DOSCMDMAX - j + 1) {
+    if (strlen(a[0]) < DOSCMDMAX - 5) { /* Combined size of "/C " + a[0] + '\r' + 1 must not exceed 128 */
         union REGS regs;
         struct SREGS sregs;
         ExecParamRec exec;
         char command[DOSCMDMAX];
 
+        j = strlen(DOSCMDPAR) + strlen(a[0]);
         command[0] = j; /* Length byte */
-        strcpy(&command[1], "/C "), strcat(&command[1], a[0]); /* Copy arguments to cmdtail */
+        strcpy(&command[1], DOSCMDPAR), strcat(&command[1], a[0]); /* Copy arguments to cmdtail */
         command[1 + j] = 0x0D; /* Expected carriage return at the end */
 
         /* Clear registers and structures */
         memset(&exec, 0, sizeof(ExecParamRec)), memset(&regs, 0, sizeof(union REGS)), memset(&sregs, 0, sizeof(struct SREGS));
-        exec.envseg = _psp;
         exec.cmdline = command;
 
         regs.x.ax = 0x4b00;            /* Exec + load */
@@ -133,9 +132,17 @@ char *platformExecRunWait(const char** args) {
         sregs.es = FP_SEG(&exec);      /* Segment of the ExecParamRec structure (ES:BX) */
         intdosx(&regs, &regs, &sregs); /* 0x21 Send it! */
 
-        /* Result */
-        if (regs.x.cflag != 0)
-            return "Couldn't find or run COMMAND.COM. Check %COMSPEC%";
+        /* Check COMMAND.COM ran correctly, inform the user if it didn't */
+        if (regs.x.cflag != 0) {
+            switch (regs.x.ax) {
+                default:
+                    printf("E%d: ", regs.x.ax);
+                    return "COMMAND.COM did not return gracefully";
+                case 2: /* File not found */
+                case 3: /* Path not found */
+                    return "Could not find %COMSPEC% or COMMAND.COM. Check system disk or set enviroment variable";
+            }
+        }
 
         return NULL;
     } else
