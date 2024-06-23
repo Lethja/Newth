@@ -3,7 +3,6 @@
 #include "../server/event.h"
 
 #include <bios.h>
-#include <process.h>
 
 #ifdef DJGPP
 #include <limits.h>
@@ -76,11 +75,16 @@ void platformConnectSignals(void(*noAction)(int), void(*shutdownCrash)(int), voi
 
 #ifdef PLATFORM_SYS_EXEC
 
-char *platformExecRunWait(const char** args) {
 #ifdef __I86__
-    /* TODO: Not enough space in a large model for system() or spawnvp() */
-    return "Feature requires 32-bit build";
-#else
+typedef struct ExecParamRec {
+    unsigned short int envseg; /* Segment address of environment block (DS for .COM) */
+    char far *cmdline;         /* Pointer to command line string (ES:BX) */
+    unsigned short int fcb1;   /* Reserved */
+    unsigned short int fcb2;
+} ExecParamRec;
+#endif
+
+char *platformExecRunWait(const char** args) {
     char **a = (char **) args, *p;
     int i = -1, j;
 
@@ -100,7 +104,43 @@ char *platformExecRunWait(const char** args) {
         *p = '\0';
         break;
     }
+#ifdef __I86__
+#define DOSCMDMAX 128
+    if (!(p = getenv("COMSPEC")))
+        p = "COMMAND.COM";
 
+    j = strlen("/C ") + strlen(a[0]);
+
+    if (strlen(a[0]) < DOSCMDMAX - j + 1) {
+        union REGS regs;
+        struct SREGS sregs;
+        ExecParamRec exec;
+        char command[DOSCMDMAX];
+
+        command[0] = j; /* Length byte */
+        strcpy(&command[1], "/C "), strcat(&command[1], a[0]); /* Copy arguments to cmdtail */
+        command[1 + j] = 0x0D; /* Expected carriage return at the end */
+
+        /* Clear registers and structures */
+        memset(&exec, 0, sizeof(ExecParamRec)), memset(&regs, 0, sizeof(union REGS)), memset(&sregs, 0, sizeof(struct SREGS));
+        exec.envseg = _psp;
+        exec.cmdline = command;
+
+        regs.x.ax = 0x4b00;            /* Exec + load */
+        regs.x.dx = FP_OFF(p);         /* Offset of the command line string (DS:DX) */
+        sregs.ds = FP_SEG(p);          /* Segment of the command line string (DS:DX) */
+        regs.x.bx = FP_OFF(&exec);     /* Offset of the ExecParamRec structure (ES:BX) */
+        sregs.es = FP_SEG(&exec);      /* Segment of the ExecParamRec structure (ES:BX) */
+        intdosx(&regs, &regs, &sregs); /* 0x21 Send it! */
+
+        /* Result */
+        if (regs.x.cflag != 0)
+            return "Couldn't find or run COMMAND.COM. Check %COMSPEC%";
+
+        return NULL;
+    } else
+        return "Command is too long";
+#else
     system(a[0]);
     return NULL;
 #endif
