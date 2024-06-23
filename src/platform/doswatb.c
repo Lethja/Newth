@@ -75,51 +75,60 @@ void platformConnectSignals(void(*noAction)(int), void(*shutdownCrash)(int), voi
 
 #ifdef PLATFORM_SYS_EXEC
 
+#pragma region Real Mode Exec Helper Functions & Definitions
+
 #ifdef __I86__
+
+#define DOSCMDMAX 128
+#define DOSCMDPAR "/C "
+
 typedef struct ExecParamRec {
     unsigned short int envseg; /* Segment address of environment block (DS for .COM) */
     char far *cmdline;         /* Pointer to command line string (ES:BX) */
     unsigned short int fcb1;   /* Reserved */
     unsigned short int fcb2;
 } ExecParamRec;
+
+static inline size_t CountArgLength(const char **args) {
+    size_t i, z;
+
+    i = z = 0;
+    while (args[i])
+        z += strlen(args[i]) + 1, ++i;
+
+    --z;
+    return z;
+}
+
+static inline void BuildCmdTail(const char **args, char *tail) {
+    size_t i;
+    char *s = &tail[1];
+
+    strcpy(s, "/C");
+    for (i = 0; args[i]; ++i)
+        strcat(s, " "), strcat(s, args[i]);
+
+    i = strlen(s);
+    s[i] = '\n', tail[0] = i;
+}
 #endif
 
+#pragma endregion
+
 char *platformExecRunWait(const char** args) {
-    char **a = (char **) args, *p;
-    int i = -1, j;
-
-    while (args[i])
-        ++i;
-
-    for (j = 0; j < i; ++j)
-        a[j][strlen(a[j]) + 1] = ' ';
-
-    p = a[0];
-    while (*p != '\0') {
-        if (*p != '\n') {
-            ++p;
-            continue;
-        }
-
-        *p = '\0';
-        break;
-    }
 #ifdef __I86__
-#define DOSCMDMAX 128
-#define DOSCMDPAR "/C "
+    #pragma region Real Mode Version
+    char *p;
     if (!(p = getenv("COMSPEC")))
         p = "COMMAND.COM";
 
-    if (strlen(a[0]) < DOSCMDMAX - 5) { /* Combined size of "/C " + a[0] + '\r' + 1 must not exceed 128 */
+    if (CountArgLength(args) < DOSCMDMAX - 5) { /* Combined size of "/C " + a[0] + '\r' + 1 must not exceed 128 */
         union REGS regs;
         struct SREGS sregs;
         ExecParamRec exec;
         char command[DOSCMDMAX];
 
-        j = strlen(DOSCMDPAR) + strlen(a[0]);
-        command[0] = j; /* Length byte */
-        strcpy(&command[1], DOSCMDPAR), strcat(&command[1], a[0]); /* Copy arguments to cmdtail */
-        command[1 + j] = 0x0D; /* Expected carriage return at the end */
+        BuildCmdTail(args, &command);
 
         /* Clear registers and structures */
         memset(&exec, 0, sizeof(ExecParamRec)), memset(&regs, 0, sizeof(union REGS)), memset(&sregs, 0, sizeof(struct SREGS));
@@ -147,9 +156,29 @@ char *platformExecRunWait(const char** args) {
         return NULL;
     } else
         return "Command is too long";
+    #pragma endregion
 #else
+    #pragma region Standard C Version
+    char **a = (char **) args, *p;
+    int i = 0;
+
+    while (args[i])
+        p = &a[i][strlen(a[i])], *p = ' ', ++i;
+
+    *p = '\0', p = a[0];
+    while (*p != '\0') {
+        if (*p != '\n') {
+            ++p;
+            continue;
+        }
+
+        *p = '\0';
+        break;
+    }
+
     system(a[0]);
     return NULL;
+    #pragma endregion
 #endif
 }
 
