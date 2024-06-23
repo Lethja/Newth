@@ -217,6 +217,21 @@ const char *platformHeapStringAppendAndFree(char **alloc, char *append);
 void platformPathCombine(char *output, const char *path1, const char *path2);
 
 /**
+ * Get the name on the end of the path
+ * @param path The path to get the end of
+ * @return The end of the path on success or NULL on error
+ * @remark Depending on circumstances returned pointer could be either be a sub-string or it's own heap allocation.
+ * In case of the latter the caller must free the allocation itself. Check for and handle this condition like so:
+ * @code
+ * char *l = uriPathLast(p);
+ * if (l &lt p || l &gt &p[strlen(p) + 1])
+ *     free(l);
+ * @endcode
+ * @note If the last node in the path has a trailing '/' it will be removed from the returned value
+ */
+char *platformPathLast(const char *path);
+
+/**
  * Get the absolute path from a relative path
  * @param path In: the relative path to convert
  * @return The absolute path

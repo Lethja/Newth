@@ -198,7 +198,7 @@ char *fileSiteSchemeDirectoryListingEntryStat(void *listing, void *entry, SiteFi
         return strerror(errno);
     }
 
-    meta->path = entryPath, meta->name = uriPathLast(entryPath), meta->length = st.st_size;
+    meta->path = entryPath, meta->name = platformPathLast(entryPath), meta->length = st.st_size;
     if ((meta->modifiedDate = malloc(sizeof(PlatformTimeStruct))))
         if (platformGetTimeStruct(&st.st_mtime, meta->modifiedDate))
             free(meta->modifiedDate), meta->modifiedDate = NULL;

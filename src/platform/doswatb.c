@@ -271,7 +271,7 @@ static inline void ParseFileSchemePathToDos(char *absolutePath) {
         absolutePath[0] = toupper(absolutePath[1]), absolutePath[1] = ':';
 
     while (*absolutePath != '\0')
-        *absolutePath = *absolutePath == '\\' ? '/' : tolower(*absolutePath), ++absolutePath;
+        *absolutePath = *absolutePath == '/' ? '\\' : toupper(*absolutePath), ++absolutePath;
 }
 
 static inline void ParseDosToFileScheme(char *absolutePath) {
@@ -303,8 +303,8 @@ char *platformPathFileSchemePathToSystem(char *path) {
         return NULL;
 
     if ((r = malloc(len + 1))) {
-        char drive = toupper(r[1]);
-        strcpy(r, path);
+        char drive;
+        strcpy(r, path), drive = toupper(r[1]);
         ParseFileSchemePathToDos(r);
         if (r[0] == drive && r[1] == ':' && r[2] == '\\')
             return r;
@@ -481,6 +481,30 @@ const char *platformTempDirectoryGet(void) {
     }
 
     return NULL;
+}
+
+char *platformPathLast(const char *path) {
+    const char *p = NULL;
+    size_t i;
+
+    for (i = 0; path[i] != '\0'; ++i) {
+        if (path[i] == '/' || path[i] == '\\') {
+            if (path[i + 1] == '\0') {
+                if (p && i) {
+                    char *a;
+
+                    i = strlen(p);
+                    if ((a = malloc(i)))
+                        --i, memcpy(a, p, i), a[i] = '\0'; /* Remove trailing '/' */
+                    return a;
+                }
+                return NULL; /* Never return "/" */
+            } else
+                p = &path[i + 1];
+        }
+    }
+
+    return (char *) p;
 }
 
 #pragma region Watt32 Networking

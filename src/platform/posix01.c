@@ -603,6 +603,30 @@ char *platformPathFileSchemeToSystem(char *path) {
         return platformPathFileSchemePathToSystem(&path[7]);
 }
 
+char *platformPathLast(const char *path) {
+    const char *p = NULL;
+    size_t i;
+
+    for (i = 0; path[i] != '\0'; ++i) {
+        if (path[i] == '/') {
+            if (path[i + 1] == '\0') {
+                if (p && i) {
+                    char *a;
+
+                    i = strlen(p);
+                    if ((a = malloc(i)))
+                        --i, memcpy(a, p, i), a[i] = '\0'; /* Remove trailing '/' */
+                    return a;
+                }
+                return NULL; /* Never return "/" */
+            } else
+                p = &path[i + 1];
+        }
+    }
+
+    return (char *) p;
+}
+
 char *platformPathSystemToFileScheme(char *path) {
     char *r, *abs = platformRealPath(path);
     size_t absLen;
