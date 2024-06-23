@@ -3,6 +3,7 @@
 #include "../server/event.h"
 
 #include <bios.h>
+#include <process.h>
 
 #ifdef DJGPP
 #include <limits.h>
@@ -76,8 +77,33 @@ void platformConnectSignals(void(*noAction)(int), void(*shutdownCrash)(int), voi
 #ifdef PLATFORM_SYS_EXEC
 
 char *platformExecRunWait(const char** args) {
-    /* TODO: Implement */
-    return "Not yet implemented";
+#ifdef __I86__
+    /* TODO: Not enough space in a large model for system() or spawnvp() */
+    return "Feature requires 32-bit build";
+#else
+    char **a = (char **) args, *p;
+    int i = -1, j;
+
+    while (args[i])
+        ++i;
+
+    for (j = 0; j < i; ++j)
+        a[j][strlen(a[j]) + 1] = ' ';
+
+    p = a[0];
+    while (*p != '\0') {
+        if (*p != '\n') {
+            ++p;
+            continue;
+        }
+
+        *p = '\0';
+        break;
+    }
+
+    system(a[0]);
+    return NULL;
+#endif
 }
 
 #endif
@@ -241,9 +267,8 @@ const char *platformDirEntryGetName(PlatformDirEntry *entry, size_t *length) {
 }
 
 static inline void ParseFileSchemePathToDos(char *absolutePath) {
-    if (absolutePath[0] == '/' && absolutePath[1] != '\0' && absolutePath[2] == '/') {
+    if (absolutePath[0] == '/' && absolutePath[1] != '\0' && absolutePath[2] == '/')
         absolutePath[0] = toupper(absolutePath[1]), absolutePath[1] = ':';
-    }
 
     while (*absolutePath != '\0')
         *absolutePath = *absolutePath == '\\' ? '/' : tolower(*absolutePath), ++absolutePath;
@@ -274,14 +299,14 @@ char *platformPathFileSchemePathToSystem(char *path) {
     char *r;
     size_t len = strlen(path);
 
-    if(len < 3)
+    if (len < 3)
         return NULL;
 
     if ((r = malloc(len + 1))) {
         char drive = toupper(r[1]);
         strcpy(r, path);
         ParseFileSchemePathToDos(r);
-        if(r[0] == drive && r[1] == ':' && r[2] == '\\')
+        if (r[0] == drive && r[1] == ':' && r[2] == '\\')
             return r;
 
         free(r);
