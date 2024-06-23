@@ -275,6 +275,33 @@ static inline void MountList(void) {
     }
 }
 
+/**
+ * Shifts every byte in the args array back one so that '!' is removed, pointers are also adjusted to this change
+ * @param args The args created by platformArgvConvertString() to remove the first character from
+ * @remark It's up to the caller to check that if this function should be used or not.
+ * It will remove the first character of the first parameter no matter what it is
+ * @code
+ * char **result;
+ * if (args[0][0] == '!'`) {
+ *     if (args[0][1] != '\0')
+ *        StripBang(args), result = args;
+ *     else
+ *        result = &args[1];
+ * } else
+ *     result = args;
+ * @endcode
+ */
+static inline void StripBang(char **args) {
+    char *e;
+    size_t i = 1;
+
+    while (args[i])
+        args[i] = args[i] - 1, ++i;
+
+    --i, e = &args[i][strlen(&args[i][1]) + 1];
+    memmove(&args[0][0], &args[0][1], e - &args[0][0]);
+}
+
 static inline void ProcessCommand(char **args) {
     const char *str;
 
@@ -363,7 +390,12 @@ static inline void ProcessCommand(char **args) {
     } else if (args[2] == NULL || args[2][0] == '-') {
         switch (toupper(args[0][0])) {
             case '!':
-                str = platformExecRunWait((const char **) &args[1]);
+                if (args[0][1] != '\0') {
+                    StripBang(args);
+                    str = platformExecRunWait((const char **) args);
+                } else
+                    str = platformExecRunWait((const char **) &args[1]);
+
                 if (str)
                     puts(str);
                 break;
@@ -430,7 +462,12 @@ static inline void ProcessCommand(char **args) {
     } else { /* Infinite commands */
         switch (toupper(args[0][0])) {
             case '!':
-                str = platformExecRunWait((const char **) &args[1]);
+                if (args[0][1] != '\0') {
+                    StripBang(args);
+                    str = platformExecRunWait((const char **) args);
+                } else
+                    str = platformExecRunWait((const char **) &args[1]);
+
                 if (str)
                     puts(str);
                 break;
