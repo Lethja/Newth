@@ -432,9 +432,10 @@ const char *recvBufferNewFromSocketAddress(RecvBuffer *self, SocketAddress serve
 
 const char *recvBufferNewFromUriDetails(RecvBuffer *self, void *details, int options) {
     const char *e;
-    SocketAddress a = {0};
+    SocketAddress a;
     UriDetails *d = details;
 
+    memset(&a, 0, sizeof(SocketAddress));
     if ((e = uriDetailsCreateSocketAddress(d, &a, (unsigned short) uriDetailsGetScheme(d))))
         return e;
 

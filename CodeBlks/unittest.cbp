@@ -107,6 +107,7 @@
 		<Compiler>
 			<Add option="-Wall" />
 			<Add option="-DPLATFORM_NET_LISTEN=1" />
+			<Add option="-DPLATFORM_SYS_EXEC=1" />
 			<Add option="-DSB_DATA_SIZE=128" />
 			<Add option="-DEWOULDBLOCK=41" />
 		</Compiler>
@@ -222,6 +223,9 @@
 		<Unit filename="../test/xml.h" />
 		<Extensions>
 			<lib_finder disable_auto="1" />
+			<code_completion />
+			<envvars />
+			<debugger />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

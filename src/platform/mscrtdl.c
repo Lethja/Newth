@@ -906,15 +906,80 @@ int platformSocketGetLastError(void) {
 
 const char *platformTempDirectoryGet(void) {
     const char *tmp, *fallback = "C:\\TEMP";
-    struct stat st;
+    PlatformFileStat st;
 
     if ((tmp = getenv("TEMP")) || (getenv("TMP")) || (tmp = getenv("TMPDIR")))
         return tmp;
 
-    if (!stat(fallback, &st)) {
-        if (S_ISDIR(st.st_mode))
+    if (!platformFileStat(fallback, &st)) {
+        if (platformFileStatIsDirectory(&st))
             return fallback;
     }
 
     return NULL;
+}
+
+static inline void ParseFileSchemePathToDos(char *absolutePath) {
+    if (absolutePath[0] == '/' && absolutePath[1] != '\0' && absolutePath[2] == '/')
+        absolutePath[0] = toupper(absolutePath[1]), absolutePath[1] = ':';
+
+    while (*absolutePath != '\0')
+        *absolutePath = *absolutePath == '/' ? '\\' : toupper(*absolutePath), ++absolutePath;
+}
+
+char *platformPathLast(const char *path) {
+    const char *p = NULL;
+    size_t i;
+
+    for (i = 0; path[i] != '\0'; ++i) {
+        if (path[i] == '/' || path[i] == '\\') {
+            if (path[i + 1] == '\0') {
+                if (p && i) {
+                    char *a;
+
+                    i = strlen(p);
+                    if ((a = malloc(i)))
+                        --i, memcpy(a, p, i), a[i] = '\0'; /* Remove trailing '/' */
+                    return a;
+                }
+                return NULL; /* Never return "/" */
+            } else
+                p = &path[i + 1];
+        }
+    }
+
+    return (char *) p;
+}
+
+char *platformPathFileSchemePathToSystem(char *path) {
+    char *r;
+    size_t len = strlen(path);
+
+    if (len < 3)
+        return NULL;
+
+    if ((r = malloc(len + 1))) {
+        char drive;
+        strcpy(r, path), drive = toupper(r[1]);
+        ParseFileSchemePathToDos(r);
+        if (r[0] == drive && r[1] == ':' && r[2] == '\\')
+            return r;
+
+        free(r);
+        return NULL;
+    }
+
+    return r;
+}
+
+char *platformPathFileSchemeToSystem(char *path) {
+    if (!(toupper(path[0]) == 'F' && toupper(path[1]) == 'I' && toupper(path[2]) == 'L' && toupper(path[3]) == 'E'
+          && path[4] == ':' && path[5] == '/' && path[6] == '/' && path[7] == '/'))
+        return NULL;
+    else
+        return platformPathFileSchemePathToSystem(&path[7]);
+}
+
+char *platformExecRunWait(const char** args) {
+    return "Not implemented yet";
 }

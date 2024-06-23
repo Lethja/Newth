@@ -166,9 +166,10 @@ static inline void PrintDirectoryFilesDosLike(Site *site, char *path) {
         if (!siteDirectoryListingEntryStat(site, dir, entry, &meta)) {
             char timeStr[30];
             if (meta.name) {
-                /* There should always be a `meta.name` but in the case there isn't this code is never run */
+                /* There should always be a `meta.name` but in the case there is not this code is never run */
 
                 if (meta.modifiedDate)
+                    /* TODO: Platform independent to convert meta.modifiedDate into */
                     strftime(timeStr, 30, "%a, %d %b %Y %H:%M:%S GMT", meta.modifiedDate);
                 else
                     strcpy(timeStr, "???, ?? ??? ???? ??:??:?? GMT");
