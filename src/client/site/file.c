@@ -310,7 +310,7 @@ const char *fileSiteSchemeFileOpenRead(FileSite *self, const char *path, Platfor
     const char *e = FileOpen(self, path, "rb");
 
     if (!e && start != -1)
-        fseek(self->file, start, SEEK_SET);
+        platformFileSeek(self->file, start, SEEK_SET);
 
     return e;
 }
@@ -319,7 +319,7 @@ const char *fileSiteSchemeFileOpenAppend(FileSite *self, const char *path, Platf
     const char *e;
 
     if (!(e = FileOpen(self, path, "ab")))
-        if (fseek(self->file, start, SEEK_SET))
+        if (platformFileSeek(self->file, start, SEEK_SET))
             e = strerror(errno);
 
     return e;
