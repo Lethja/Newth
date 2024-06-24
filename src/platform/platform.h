@@ -302,6 +302,13 @@ void platformGetCurrentTime(char *timeStr);
 char platformGetTimeStruct(void *clock, PlatformTimeStruct *timeStructure);
 
 /**
+ * Convert a PlatformTimeStruct into a RFC 1123 formatted string
+ * @param time In: The time to reference
+ * @param str Out: A string of at least 30 characters to put the RFC 1123 date into
+ */
+void platformTimeStructToStr(PlatformTimeStruct *time, char *str);
+
+/**
  * Convert HTTP date-time string to a platform neutral implementation time
  * @param str In: The HTTP date-time string to be converted
  * @param time Out: The time structure

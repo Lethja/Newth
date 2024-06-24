@@ -715,7 +715,7 @@ short platformPathWebToSystem(const char *rootPath, char *webPath, char *absolut
 
 #pragma region Time Functions
 
-static void systemTimeToStr(SYSTEMTIME *timeStruct, char *timeStr) {
+static inline void SystemTimeToStr(SYSTEMTIME *timeStruct, char *timeStr) {
     char day[4], month[4];
     switch (timeStruct->wDayOfWeek) {
         case 0:
@@ -787,17 +787,21 @@ static void systemTimeToStr(SYSTEMTIME *timeStruct, char *timeStr) {
 void platformGetTime(void *clock, char *timeStr) {
     SYSTEMTIME timeStruct;
     FileTimeToSystemTime(clock, &timeStruct);
-    systemTimeToStr(&timeStruct, timeStr);
+    SystemTimeToStr(&timeStruct, timeStr);
 }
 
 void platformGetCurrentTime(char *timeStr) {
     SYSTEMTIME timeStruct;
     GetSystemTime(&timeStruct);
-    systemTimeToStr(&timeStruct, timeStr);
+    SystemTimeToStr(&timeStruct, timeStr);
 }
 
 char platformGetTimeStruct(void *clock, PlatformTimeStruct *timeStructure) {
     return FileTimeToSystemTime(clock, timeStructure) ? 0 : 1;
+}
+
+void platformTimeStructToStr(PlatformTimeStruct *time, char *str) {
+    SystemTimeToStr(time, str);
 }
 
 int platformTimeStructEquals(PlatformTimeStruct *t1, PlatformTimeStruct *t2) {

@@ -369,6 +369,10 @@ char platformGetTimeStruct(void *clock, PlatformTimeStruct *timeStructure) {
     return 1;
 }
 
+void platformTimeStructToStr(PlatformTimeStruct *time, char *str) {
+    strftime(str, 30, "%a, %d %b %Y %H:%M:%S GMT", time);
+}
+
 int platformTimeStructEquals(PlatformTimeStruct *t1, PlatformTimeStruct *t2) {
     return (t1->tm_year == t2->tm_year && t1->tm_mon == t2->tm_mon && t1->tm_mday == t2->tm_mday &&
             t1->tm_hour == t2->tm_hour && t1->tm_min == t2->tm_min && t1->tm_sec == t2->tm_sec);

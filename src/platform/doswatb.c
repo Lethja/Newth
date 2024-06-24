@@ -227,6 +227,10 @@ char platformGetTimeStruct(void *clock, PlatformTimeStruct *timeStructure) {
     return 1;
 }
 
+void platformTimeStructToStr(PlatformTimeStruct *time, char *str) {
+    strftime(str, 30, "%a, %d %b %Y %H:%M:%S GMT", time);
+}
+
 void platformSleep(unsigned int ms) {
 #ifdef DJGPP
     usleep((ms) * 1000);
