@@ -882,14 +882,14 @@ SOCK_BUF_TYPE httpSiteSchemeFileRead(HttpSite *self, char *buffer, SOCK_BUF_TYPE
     SOCK_BUF_TYPE bufferSize;
 
     /* Determine if the requested size buffer is feasible */
-    if (self->socket.len < size) {
+    if (self->socket.len < (size_t) size) {
         const char *e;
 
         /* Try get some more */
         if ((e = recvBufferAppend(&self->socket, size - self->socket.len)) && e != ErrNoDataToBeRetrieved)
             return -1;
 
-        bufferSize = self->socket.len > size ? size : self->socket.len;
+        bufferSize = self->socket.len > (size_t) size ? size : self->socket.len;
     } else
         bufferSize = size;
 
