@@ -130,6 +130,32 @@ static void SiteFileDirEntry(void **state) {
     siteDirectoryListingClose(&site, d), siteFree(&site);
 }
 
+static void SiteFileOpenFile(void **state) {
+    FILE *f;
+    const char *data = "The quick brown fox jumps over the lazy dog", buf[44] = {0};
+    Site site;
+    SiteFileMeta *meta;
+    struct stat st;
+    char *p1 = platformTempFilePath("nt_f1");
+
+    assert_non_null(f = fopen(p1, "wb"));
+    assert_int_equal(fwrite(data, 1, strlen(data), f), strlen(data)), fclose(f);
+    assert_false(stat(p1, &st)), free(p1);
+
+    assert_null(siteNew(&site, SITE_FILE, platformTempDirectoryGet()));
+
+    assert_null(siteFileOpenRead(&site, "nt_f1", -1, -1));
+    assert_non_null(meta = siteFileOpenMeta(&site));
+    assert_non_null(meta->path);
+    assert_non_null(meta->name);
+    assert_string_equal(meta->name, "nt_f1");
+    assert_int_equal(meta->length, st.st_size);
+    assert_int_equal(meta->type, SITE_FILE_TYPE_FILE);
+    assert_non_null(meta->modifiedDate);
+
+    siteFree(&site); /* siteFree() should close the files if required */
+}
+
 static void SiteFileTransferToFile(void **state) {
     FILE *f;
     const char *data = "The quick brown fox jumps over the lazy dog", buf[44] = {0};
@@ -751,6 +777,7 @@ static void SiteHttpTransferToFile(void **state) {
 
 const struct CMUnitTest siteTest[] = {cmocka_unit_test(SiteArrayFunctions), cmocka_unit_test(SiteFileNew),
                                       cmocka_unit_test(SiteFileNewWithPath), cmocka_unit_test(SiteFileGetDirectory),
+                                      cmocka_unit_test(SiteFileOpenFile),
                                       cmocka_unit_test(SiteFileSetDirectory), cmocka_unit_test(SiteFileDirEntry),
                                       cmocka_unit_test(SiteFileTransferToFile), cmocka_unit_test(SiteFileTransferToFileContinue)
 #ifdef MOCK

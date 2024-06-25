@@ -21,26 +21,32 @@ static inline void UpdateFileUri(FileSite *self, char *path) {
 
 /**
  * Convert PlatformFileStat to FileSite
- * @param stat In: The stat to fill data from
+ * @param path In: The absolute system path used to open the stat
  * @param siteFileMeta Out: The FileSite to fill to
  */
-static inline void FillFileMeta(PlatformFileStat *stat, SiteFileMeta *siteFileMeta) {
-    if (siteFileMeta->modifiedDate)
-        free(siteFileMeta->modifiedDate);
+static inline void FillFileMeta(char *path, SiteFileMeta *siteFileMeta) {
+    PlatformFileStat stat;
 
-    memset(siteFileMeta, 0, sizeof(SiteFileMeta));
+    if ((siteFileMeta->path = platformPathSystemToFileScheme(path)))
+        siteFileMeta->name = uriPathLast(siteFileMeta->path);
 
-    siteFileMeta->length = stat->st_size;
+    if (platformFileStat(path, &stat)) {
+        siteFileMeta->type = SITE_FILE_TYPE_UNKNOWN;
+        siteFileMeta->length = 0;
+        return;
+    }
 
-    if (platformFileStatIsFile(stat))
+    siteFileMeta->length = stat.st_size;
+
+    if (platformFileStatIsFile(&stat))
         siteFileMeta->type = SITE_FILE_TYPE_FILE;
-    else if (platformFileStatIsDirectory(stat))
+    else if (platformFileStatIsDirectory(&stat))
         siteFileMeta->type = SITE_FILE_TYPE_DIRECTORY;
     else
         siteFileMeta->type = SITE_FILE_TYPE_UNKNOWN;
 
     if ((siteFileMeta->modifiedDate = malloc(sizeof(PlatformTimeStruct))))
-        platformGetTimeStruct(&stat->st_mtime, siteFileMeta->modifiedDate);
+        platformGetTimeStruct(&stat.st_mtime, siteFileMeta->modifiedDate);
 }
 
 /**
@@ -71,7 +77,6 @@ static inline char *ResolvePath(char *uri, char *path) {
  * @return NULL on success, user friendly error message otherwise
  */
 static inline const char *FileOpen(FileSite *self, const char *path, const char *mode) {
-    PlatformFileStat st;
     char *fullPath;
     fileSiteSchemeFileClose(self);
 
@@ -85,12 +90,7 @@ static inline const char *FileOpen(FileSite *self, const char *path, const char 
         return strerror(errno);
     }
 
-    memset(&self->meta, 0, sizeof(SiteFileMeta));
-    if (!platformFileStat(fullPath, &st))
-        FillFileMeta(&st, &self->meta);
-    else
-        self->meta.type = SITE_FILE_TYPE_UNKNOWN;
-
+    FillFileMeta(fullPath, &self->meta);
     if (fullPath != path)
         free(fullPath);
 
@@ -141,9 +141,6 @@ void fileSiteSchemeFree(FileSite *self) {
 
     if (self->fullUri)
         free(self->fullUri);
-
-    if (self->file)
-        fclose(self->file);
 }
 
 char *fileSiteSchemeWorkingDirectoryGet(FileSite *self) {
@@ -270,6 +267,9 @@ void fileSiteSchemeFileClose(FileSite *self) {
     if (self->file)
         platformFileClose(self->file), self->file = NULL;
 
+    if (self->meta.path)
+        free(self->meta.path);
+
     if (self->meta.modifiedDate)
         free(self->meta.modifiedDate);
 
@@ -283,7 +283,6 @@ SOCK_BUF_TYPE fileSiteSchemeFileRead(FileSite *self, char *buffer, SOCK_BUF_TYPE
 SiteFileMeta *fileSiteSchemeStatOpenMeta(FileSite *self, const char *path) {
     char *fullPath;
     SiteFileMeta *meta;
-    PlatformFileStat st;
 
     if (!(fullPath = ResolvePath(self->fullUri, (char*) path)))
         return NULL;
@@ -295,11 +294,7 @@ SiteFileMeta *fileSiteSchemeStatOpenMeta(FileSite *self, const char *path) {
         return NULL;
     }
 
-    if (!(platformFileStat(fullPath, &st)))
-        FillFileMeta(&st, meta);
-    else
-        meta->type = SITE_FILE_TYPE_NOTHING;
-
+    FillFileMeta(fullPath, meta);
     if (fullPath != path)
         free(fullPath);
 
