@@ -224,7 +224,7 @@ void platformPathCombine(char *output, const char *path1, const char *path2);
  * In case of the latter the caller must free the allocation itself. Check for and handle this condition like so:
  * @code
  * char *l = uriPathLast(p);
- * if (l &lt p || l &gt &p[strlen(p) + 1])
+ * if (l && (l &lt p || l &gt &p[strlen(p) + 1]))
  *     free(l);
  * @endcode
  * @note If the last node in the path has a trailing '/' it will be removed from the returned value
