@@ -577,6 +577,125 @@ static void SiteHttpDirEntryNginx(void **state) {
     siteFree(&site);
 }
 
+static void SiteHttpOpenFile(void **state) {
+    const char *head = "HTTP/1.1 200 OK" HTTP_EOL
+                       "Content-Type: text/html; charset=ISO-8859-1" HTTP_EOL
+                       "Date: Thu, 1 Jan 1970 00:00:00 GMT" HTTP_EOL
+                       "Length: 0" HTTP_EOL HTTP_EOL;
+
+    const char *headFile = "HTTP/1.1 200 OK" HTTP_EOL
+                           "Content-Type: text/html; charset=ISO-8859-1" HTTP_EOL
+                           "Last-Modified: Tue, 20 Jun 2023 10:22:33 GMT" HTTP_EOL
+                           "Date: Thu, 1 Jan 1970 00:00:00 GMT" HTTP_EOL
+                           "Content-Length: 43" HTTP_EOL HTTP_EOL;
+    Site site;
+    SiteFileMeta *meta;
+
+    char *p1 = platformTempFilePath("nt_f1");
+
+    mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
+
+    assert_non_null(mockReceiveStream = fopen(p1, "wb+")), free(p1);
+    assert_int_equal(fwrite(head, 1, strlen(head), mockReceiveStream), strlen(head)), rewind(mockReceiveStream);
+
+    assert_null(siteNew(&site, SITE_HTTP, "http://127.0.0.1"));
+    rewind(mockReceiveStream);
+    assert_int_equal(fwrite(headFile, 1, strlen(headFile), mockReceiveStream), strlen(headFile));
+    rewind(mockReceiveStream);
+
+    assert_null(siteFileOpenRead(&site, "foo", -1, -1));
+    assert_non_null(meta = siteFileOpenMeta(&site));
+    assert_non_null(meta->name);
+    assert_string_equal(meta->name, "foo");
+    assert_non_null(meta->modifiedDate);
+    assert_non_null(p1 = malloc(30));
+    platformTimeStructToStr(meta->modifiedDate, p1);
+    assert_string_equal(p1, "Tue, 20 Jun 2023 10:22:33 GMT"), free(p1);
+    assert_int_equal(meta->length, 43);
+    assert_int_equal(meta->type, SITE_FILE_TYPE_DIRECTORY);
+    siteFree(&site);
+}
+
+static void SiteHttpOpenFileAttachment(void **state) {
+    const char *head = "HTTP/1.1 200 OK" HTTP_EOL
+                       "Content-Type: text/html; charset=ISO-8859-1" HTTP_EOL
+                       "Date: Thu, 1 Jan 1970 00:00:00 GMT" HTTP_EOL
+                       "Length: 0" HTTP_EOL HTTP_EOL;
+
+    const char *headFile = "HTTP/1.1 200 OK" HTTP_EOL
+                           "Content-Type: text/html; charset=ISO-8859-1" HTTP_EOL
+                           "Content-Disposition: attachment" HTTP_EOL
+                           "Last-Modified: Tue, 20 Jun 2023 10:22:33 GMT" HTTP_EOL
+                           "Date: Thu, 1 Jan 1970 00:00:00 GMT" HTTP_EOL
+                           "Content-Length: 43" HTTP_EOL HTTP_EOL;
+    Site site;
+    SiteFileMeta *meta;
+
+    char *p1 = platformTempFilePath("nt_f1");
+
+    mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
+
+    assert_non_null(mockReceiveStream = fopen(p1, "wb+")), free(p1);
+    assert_int_equal(fwrite(head, 1, strlen(head), mockReceiveStream), strlen(head)), rewind(mockReceiveStream);
+
+    assert_null(siteNew(&site, SITE_HTTP, "http://127.0.0.1"));
+    rewind(mockReceiveStream);
+    assert_int_equal(fwrite(headFile, 1, strlen(headFile), mockReceiveStream), strlen(headFile));
+    rewind(mockReceiveStream);
+
+    assert_null(siteFileOpenRead(&site, "foo", -1, -1));
+    assert_non_null(meta = siteFileOpenMeta(&site));
+    assert_non_null(meta->name);
+    assert_string_equal(meta->name, "foo");
+    assert_non_null(meta->modifiedDate);
+    assert_non_null(p1 = malloc(30));
+    platformTimeStructToStr(meta->modifiedDate, p1);
+    assert_string_equal(p1, "Tue, 20 Jun 2023 10:22:33 GMT"), free(p1);
+    assert_int_equal(meta->length, 43);
+    assert_int_equal(meta->type, SITE_FILE_TYPE_FILE);
+    siteFree(&site);
+}
+
+static void SiteHttpOpenFileFileName(void **state) {
+    const char *head = "HTTP/1.1 200 OK" HTTP_EOL
+                       "Content-Type: text/html; charset=ISO-8859-1" HTTP_EOL
+                       "Date: Thu, 1 Jan 1970 00:00:00 GMT" HTTP_EOL
+                       "Length: 0" HTTP_EOL HTTP_EOL;
+
+    const char *headFile = "HTTP/1.1 200 OK" HTTP_EOL
+                           "Content-Type: text/html; charset=ISO-8859-1" HTTP_EOL
+                           "Content-Disposition: attachment; filename=\"bar\"" HTTP_EOL
+                           "Last-Modified: Tue, 20 Jun 2023 10:22:33 GMT" HTTP_EOL
+                           "Date: Thu, 1 Jan 1970 00:00:00 GMT" HTTP_EOL
+                           "Content-Length: 43" HTTP_EOL HTTP_EOL;
+    Site site;
+    SiteFileMeta *meta;
+
+    char *p1 = platformTempFilePath("nt_f1");
+
+    mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
+
+    assert_non_null(mockReceiveStream = fopen(p1, "wb+")), free(p1);
+    assert_int_equal(fwrite(head, 1, strlen(head), mockReceiveStream), strlen(head)), rewind(mockReceiveStream);
+
+    assert_null(siteNew(&site, SITE_HTTP, "http://127.0.0.1"));
+    rewind(mockReceiveStream);
+    assert_int_equal(fwrite(headFile, 1, strlen(headFile), mockReceiveStream), strlen(headFile));
+    rewind(mockReceiveStream);
+
+    assert_null(siteFileOpenRead(&site, "foo", -1, -1));
+    assert_non_null(meta = siteFileOpenMeta(&site));
+    assert_non_null(meta->name);
+    assert_string_equal(meta->name, "bar");
+    assert_non_null(meta->modifiedDate);
+    assert_non_null(p1 = malloc(30));
+    platformTimeStructToStr(meta->modifiedDate, p1);
+    assert_string_equal(p1, "Tue, 20 Jun 2023 10:22:33 GMT"), free(p1);
+    assert_int_equal(meta->length, 43);
+    assert_int_equal(meta->type, SITE_FILE_TYPE_FILE);
+    siteFree(&site);
+}
+
 static void SiteHttpTransferToFile(void **state) {
     const char *data = "The quick brown fox jumps over the lazy dog", buf[49] = {0};
     const char *head = "HTTP/1.1 200 OK" HTTP_EOL
@@ -642,6 +761,8 @@ const struct CMUnitTest siteTest[] = {cmocka_unit_test(SiteArrayFunctions), cmoc
                                       cmocka_unit_test(SiteHttpDirEntryApache),
                                       cmocka_unit_test(SiteHttpDirEntryLighttpd),
                                       cmocka_unit_test(SiteHttpDirEntryNewth), cmocka_unit_test(SiteHttpDirEntryNginx),
+                                      cmocka_unit_test(SiteHttpOpenFile), cmocka_unit_test(SiteHttpOpenFileAttachment),
+                                      cmocka_unit_test(SiteHttpOpenFileFileName),
                                       cmocka_unit_test(SiteHttpTransferToFile)
 #endif
 };

@@ -401,7 +401,7 @@ static inline void HeadersPopulate(const char *header, HttpResponseHeader *heade
     ioHttpResponseHeaderFind(header, "Transfer-Encoding", &v);
     if (v) {
         if (platformStringFindWord(v, "Chunked"))
-            headerResponse->options |= SA_PROTOCOL_ALT_MODE;
+            headerResponse->protocol |= HTTP_CHUCKED_MODE;
         free(v);
     } else
         HttpGetContentLength(header, &headerResponse->length);
@@ -416,14 +416,42 @@ static inline void HeadersPopulate(const char *header, HttpResponseHeader *heade
 
     ioHttpResponseHeaderFind(header, "Content-Disposition", &v);
     if (v) {
-        char *p = platformStringFindWord(v, "filename");
-        if (p) {
+        char *p = platformStringFindNeedle(v, "attachment");
+        if (p) { /* Make sure "attachment" is not part of the filename */
+            char *f = platformStringFindNeedle(v, "filename");
+            if (!f || f > p)
+                headerResponse->protocol |= HTTP_CONTENT_ATTACHMENT, p = f;
+            else
+                p = NULL;
+        }
+
+        if (p) { /* 'filename=' is only valid if attachment has been specified first */
             if ((p = strchr(p, '='))) {
                 size_t len;
 
-                ++p, len = strlen(p);
-                if ((headerResponse->fileName = malloc(len + 1)))
-                    strcpy(headerResponse->fileName, p);
+                ++p;
+                while (*p == ' ')
+                    ++p;
+
+                if (*p == '"') {
+                    char c = *p, *t = &p[1];
+                    while (*t != '\0') {
+                        if (*t == c) {
+                            if (t[1] == c) {
+                                t = &t[2]; /* Skip an escape double quote ("") */
+                                continue;
+                            }
+                            *t = '\0';
+                            break;
+                        }
+                        ++t;
+                    }
+                }
+
+                len = strlen(&p[1]);
+
+                if (len && (headerResponse->fileName = malloc(len + 1)))
+                    strcpy(headerResponse->fileName, &p[1]);
             }
         }
         free(v);
@@ -455,7 +483,7 @@ static inline void HeadersCompute(HttpSite *self, HttpResponseHeader *headerResp
     /* TODO: Check filename if exists, extract from url otherwise */
     /* TODO: Check modification date against local file if exists */
     if (toupper(mode[0]) == 'G' && toupper(mode[1]) == 'E' && toupper(mode[2]) == 'T') {
-        if (headerResponse->options & SA_PROTOCOL_ALT_MODE)
+        if (headerResponse->protocol & HTTP_CHUCKED_MODE)
             recvBufferSetLengthChunk(&self->socket);
         else {
             if (headerResponse->length == self->socket.len)
@@ -871,9 +899,12 @@ void *httpSiteSchemeDirectoryListingRead(void *listing) {
 
 void httpSiteSchemeFileClose(HttpSite *self) {
     if (self->file) {
-        if (self->file->fullUri)
-            free(self->file->fullUri);
+        if (self->file->fullUri) {
+            if (self->file->meta.path != self->file->fullUri)
+                free(self->file->fullUri);
+        }
 
+        siteFileMetaFree(&self->file->meta);
         free(self->file), self->file = NULL;
     }
 }
@@ -1023,11 +1054,31 @@ const char *httpSiteSchemeFileOpenRead(HttpSite *self, const char *path, Platfor
     free(header), free(scheme);
     HeadersCompute(self, &headerResponse, "GET");
 
-    httpSiteSchemeFileClose(self);
     self->file = malloc(sizeof(HttpSiteOpenFile));
-    self->file->fullUri = resolvedPath;
+    self->file->fullUri = resolvedPath; /* TODO: Duplicate data from FileSiteMeta deprecate ? */
     self->file->start = start;
     self->file->end = end;
+
+    memset(&self->file->meta, 0, sizeof(SiteFileMeta));
+    self->file->meta.path = resolvedPath;
+    self->file->meta.type = headerResponse.protocol & HTTP_CONTENT_ATTACHMENT ? SITE_FILE_TYPE_FILE : SITE_FILE_TYPE_DIRECTORY;
+    self->file->meta.length = headerResponse.length;
+    self->file->meta.modifiedDate = headerResponse.modifiedDate, headerResponse.modifiedDate = NULL;
+
+    if (headerResponse.fileName) {
+        /* If the name is identical to the end of the path then save some memory by using a pointer in path */
+        char *p = uriPathLast(resolvedPath);
+        if (p && p > resolvedPath && p < &resolvedPath[strlen(resolvedPath) + 1]
+            && strcmp(&p[1], headerResponse.fileName) == 0)
+            self->file->meta.name = p;
+        else {
+            if (p && (p < resolvedPath || p > &resolvedPath[strlen(resolvedPath) + 1]))
+                free(p);
+
+            self->file->meta.name = headerResponse.fileName, headerResponse.fileName = NULL;
+        }
+    } else
+        self->file->meta.name = uriPathLast(resolvedPath);
 
     HeadersFree(&headerResponse);
 

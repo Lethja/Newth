@@ -6,21 +6,49 @@
 #include "recvbufr.h"
 
 typedef struct HttpResponseHeader {
-    PlatformTimeStruct *modifiedDate; /* Last modified date (to allow HTTP 304) */
-    PlatformFileOffset length; /* Length of HTTP body */
-    char *fileName; /* Content-Disposition given file name if applicable */
-    int options; /* User options to change the behaviour of this download */
+    /**
+     * @brief Last modified date (to allow HTTP 304)
+     */
+    PlatformTimeStruct *modifiedDate;
+    /**
+     * @brief Content-Length field; of HTTP body
+     */
+    PlatformFileOffset length;
+    /**
+     * @brief Content-Disposition field; filename if provided
+     */
+    char *fileName;
+    /**
+     * @brief The queue state, probably not needed
+     */
+    char state;
+    /**
+     * @brief Boolean states of the http header
+     */
+    char protocol;
 } HttpResponseHeader;
+
+enum HttpStateFlags {
+    /**
+     * @brief The http connection has TLS
+     */
+    HTTP_ENCRYPTION,
+    /**
+     * @brief The http data encoding is chunked
+     */
+    HTTP_CHUCKED_MODE,
+    /**
+     * @brief The http data is an attachment and should be treated like a file download
+     */
+    HTTP_CONTENT_ATTACHMENT
+};
 
 enum SocketAddressFlags {
     SA_STATE_QUEUED,
     SA_STATE_CONNECTED,
     SA_STATE_FAILED,
     SA_STATE_FINISHED,
-    SA_STATE_TRY_LATER,
-    SA_PROTOCOL_ENCRYPTION,
-    SA_PROTOCOL_ALT_MODE,
-    SA_PROTOCOL_DIRECTORY
+    SA_STATE_TRY_LATER
 };
 
 /**
