@@ -140,7 +140,7 @@ char platformBindPort(const SOCKET *listenSocket, struct sockaddr *socketAddress
 
 #pragma region Argv & System Execution Call
 
-#ifdef PLATFORM_SYS_EXEC
+#ifdef PLATFORM_SYS_ARGV
 
 char **platformArgvConvertString(const char *str) {
     char **r = NULL, *a, *p;
@@ -215,10 +215,6 @@ void platformArgvFree(char **argv) {
     free(argv);
 }
 
-#endif
-
-#pragma endregion
-
 int platformArgvGetFlag(int argc, char **argv, char shortFlag, char *longFlag, char **optArg) {
     int i;
     for (i = 1; i < argc; ++i) {
@@ -257,6 +253,10 @@ int platformArgvGetFlag(int argc, char **argv, char shortFlag, char *longFlag, c
 
     return 0;
 }
+
+#endif
+
+#pragma endregion
 
 char platformHeapResize(void **heap, size_t elementSize, size_t elementNumber) {
     size_t allocSize = elementSize * elementNumber;

@@ -325,6 +325,5 @@ const char *fileSiteSchemeFileOpenWrite(FileSite *self, const char *path) {
 }
 
 SOCK_BUF_TYPE fileSiteSchemeFileWrite(FileSite *self, char *buffer, SOCK_BUF_TYPE size) {
-    /* TODO: implement platformFileWrite() */
-    return fwrite(buffer, 1, size, self->file);
+    return platformFileWrite(buffer, 1, size, self->file);
 }

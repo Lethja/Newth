@@ -5,7 +5,9 @@ all: dl th
 debug: dldbg thdbg
 
 dl:
-	$(CC) -Wall -Wno-unknown-pragmas -O3 -s -DWATT32=1 -DNDEBUG=1 -Iwatt32s/inc \
+	$(CC) -Wall -Wno-unknown-pragmas -O3 -s -DWATT32=1 -DNDEBUG=1 \
+		-DPLATFORM_SYS_ARGV=1 -DPLATFORM_SYS_EXEC=1 -DPLATFORM_SYS_WRITE=1 \
+		-Iwatt32s/inc \
 		../src/cli/dl.c \
 		../src/client/err.c \
 		../src/client/io.c \
@@ -23,7 +25,9 @@ dl:
 		watt32s/lib/libwatt.a -o dl.exe
 
 th:
-	$(CC) -Wall -Wno-unknown-pragmas -O3 -s -DWATT32=1 -DNDEBUG=1 -DPLATFORM_NET_ADAPTER=1 -DPLATFORM_NET_LISTEN=1 -Iwatt32s/inc \
+	$(CC) -Wall -Wno-unknown-pragmas -O3 -s -DWATT32=1 -DNDEBUG=1 \
+		-DPLATFORM_NET_ADAPTER=1 -DPLATFORM_NET_LISTEN=1 -DPLATFORM_SYS_ARGV=1 \
+		-Iwatt32s/inc \
 		../src/cli/th.c \
 		../src/common/hex.c \
 		../src/common/signal.c \
@@ -38,7 +42,8 @@ th:
 		watt32s/lib/libwatt.a -o th.exe
 
 dldbg:
-	$(CC) -Wall -Wno-unknown-pragmas -O3 -s -DWATT32=1 -Iwatt32s/inc \
+	$(CC) -Wall -Wno-unknown-pragmas -O3 -s -DWATT32=1 -DPLATFORM_SYS_ARGV=1 -DPLATFORM_SYS_EXEC=1 -DPLATFORM_SYS_WRITE=1 \
+		-Iwatt32s/inc \
 		../src/cli/dl.c \
 		../src/client/io.c \
 		../src/client/queue.c \
@@ -55,7 +60,8 @@ dldbg:
 		watt32s/lib/libwatt.a -o dldbg.exe
 
 thdbg:
-	$(CC) -Wall -Wno-unknown-pragmas -O3 -DWATT32=1 -DPLATFORM_NET_ADAPTER=1 -DPLATFORM_NET_LISTEN=1 -Iwatt32s/inc \
+	$(CC) -Wall -Wno-unknown-pragmas -O3 -DWATT32=1 -DPLATFORM_NET_ADAPTER=1 -DPLATFORM_NET_LISTEN=1 -DPLATFORM_SYS_ARGV=1 \
+		-Iwatt32s/inc \
 		../src/cli/th.c \
 		../src/common/hex.c \
 		../src/common/signal.c \

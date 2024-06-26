@@ -109,7 +109,9 @@
 		<Compiler>
 			<Add option="-Wall" />
 			<Add option="-Wno-unknown-pragmas" />
+			<Add option="-DPLATFORM_SYS_ARGV=1" />
 			<Add option="-DPLATFORM_SYS_EXEC=1" />
+			<Add option="-DPLATFORM_SYS_WRITE=1" />
 		</Compiler>
 		<Unit filename="../src/cli/dl.c">
 			<Option compilerVar="CC" />

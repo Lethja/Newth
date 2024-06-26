@@ -158,7 +158,7 @@
 			<Add option="-Wno-unknown-pragmas" />
 			<Add option="-DPLATFORM_NET_ADAPTER=1" />
 			<Add option="-DPLATFORM_NET_LISTEN=1" />
-			<Add option="-DPLATFORM_SYS_EXEC=1" />
+			<Add option="-DPLATFORM_SYS_ARGV=1" />
 		</Compiler>
 		<Unit filename="../src/cli/th.c">
 			<Option compilerVar="CC" />

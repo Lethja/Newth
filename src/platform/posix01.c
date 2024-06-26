@@ -666,6 +666,14 @@ size_t platformFileRead(void *buffer, size_t size, size_t n, PlatformFile stream
     return fread(buffer, size, n, stream);
 }
 
+#ifdef PLATFORM_SYS_WRITE
+
+size_t platformFileWrite(void *buffer, size_t size, size_t n, PlatformFile stream) {
+    return fwrite(buffer, size, n, stream);
+}
+
+#endif
+
 void platformSleep(unsigned int ms) {
     struct timespec ts;
     ts.tv_sec = (ms) / 1000, ts.tv_nsec = ((ms) % 1000) * 1000000;

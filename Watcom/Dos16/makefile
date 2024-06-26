@@ -109,19 +109,19 @@ xml.o:
 	$(CC) @flag.lnk -fo="$@" "../../src/client/xml.c"
 
 walk_dl: .SYMBOLIC
-    %write flag.lnk -q -dWATT32=1 -bt=dos -ml -0 -i="watt32s/inc/" -d3 -db -dDBGHALT=1 -dPLATFORM_SYS_EXEC=1
+    %write flag.lnk -q -dWATT32=1 -bt=dos -ml -0 -i="watt32s/inc/" -d3 -db -dDBGHALT=1 -dPLATFORM_SYS_ARGV=1 -dPLATFORM_SYS_EXEC=1 -dPLATFORM_SYS_WRITE=1
 
 debug_dl: .SYMBOLIC
-    %write flag.lnk -q -dWATT32=1 -bt=dos -ml -0 -i="watt32s/inc/" -d3 -db -dPLATFORM_SYS_EXEC=1
+    %write flag.lnk -q -dWATT32=1 -bt=dos -ml -0 -i="watt32s/inc/" -d3 -db -dPLATFORM_SYS_ARGV=1 -dPLATFORM_SYS_EXEC=1 -dPLATFORM_SYS_WRITE=1
 
 release_dl: .SYMBOLIC
-    %write flag.lnk -q -dWATT32=1 -bt=dos -ml -0 -i="watt32s/inc/" -d0 -osr -zc -dNDEBUG=1 -dPLATFORM_SYS_EXEC=1
+    %write flag.lnk -q -dWATT32=1 -bt=dos -ml -0 -i="watt32s/inc/" -d0 -osr -zc -dNDEBUG=1 -dPLATFORM_SYS_ARGV=1 -dPLATFORM_SYS_EXEC=1 -dPLATFORM_SYS_WRITE=1
 
 walk_th: .SYMBOLIC
-    %write flag.lnk -q -dWATT32=1 -bt=dos -ml -0 -i="watt32s/inc/" -d3 -db -dDBGHALT=1 -dPLATFORM_NET_ADAPTER=1 -dPLATFORM_NET_LISTEN=1
+    %write flag.lnk -q -dWATT32=1 -bt=dos -ml -0 -i="watt32s/inc/" -d3 -db -dDBGHALT=1 -dPLATFORM_NET_ADAPTER=1 -dPLATFORM_NET_LISTEN=1 -dPLATFORM_SYS_ARGV=1
 
 debug_th: .SYMBOLIC
-    %write flag.lnk -q -dWATT32=1 -bt=dos -ml -0 -i="watt32s/inc/" -d3 -db -dPLATFORM_NET_ADAPTER=1 -dPLATFORM_NET_LISTEN=1
+    %write flag.lnk -q -dWATT32=1 -bt=dos -ml -0 -i="watt32s/inc/" -d3 -db -dPLATFORM_NET_ADAPTER=1 -dPLATFORM_NET_LISTEN=1 -dPLATFORM_SYS_ARGV=1
 
 release_th: .SYMBOLIC
-    %write flag.lnk -q -dWATT32=1 -bt=dos -ml -0 -i="watt32s/inc/" -d0 -osr -zc -dNDEBUG=1 -dPLATFORM_NET_ADAPTER=1 -dPLATFORM_NET_LISTEN=1
+    %write flag.lnk -q -dWATT32=1 -bt=dos -ml -0 -i="watt32s/inc/" -d0 -osr -zc -dNDEBUG=1 -dPLATFORM_NET_ADAPTER=1 -dPLATFORM_NET_LISTEN=1 -dPLATFORM_SYS_ARGV=1

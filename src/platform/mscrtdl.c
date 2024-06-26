@@ -629,6 +629,22 @@ size_t platformFileRead(void *ptr, size_t size, size_t n, PlatformFile stream) {
     return 0;
 }
 
+#ifdef PLATFORM_SYS_WRITE
+
+size_t platformFileWrite(void *ptr, size_t size, size_t n, PlatformFile stream) {
+    DWORD bytes, bufferSize = size * n;
+
+    if (bufferSize > BUFSIZ)
+        bufferSize = BUFSIZ;
+
+    if (WriteFile(stream, ptr, bufferSize, &bytes, NULL))
+        return bytes;
+
+    return 0;
+}
+
+#endif
+
 char platformFileStatIsDirectory(PlatformFileStat *stat) {
     return ((stat->st_mode & FILE_ATTRIBUTE_DIRECTORY) > 0) ? 1 : 0;
 }

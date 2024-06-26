@@ -132,7 +132,7 @@ static void SiteFileDirEntry(void **state) {
 
 static void SiteFileOpenFile(void **state) {
     FILE *f;
-    const char *data = "The quick brown fox jumps over the lazy dog", buf[44] = {0};
+    const char *data = "The quick brown fox jumps over the lazy dog";
     Site site;
     SiteFileMeta *meta;
     struct stat st;

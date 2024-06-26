@@ -141,7 +141,7 @@ SOCKET *platformServerStartup(sa_family_t family, char *ports, char **err);
 
 #pragma region Argv & System Execution Call
 
-#ifdef PLATFORM_SYS_EXEC
+#ifdef PLATFORM_SYS_ARGV
 
 /**
  * Interpret a string as a command prompt and convert it into a argv array
@@ -166,6 +166,10 @@ int platformArgvGetFlag(int argc, char **argv, char shortFlag, char *longFlag, c
  * @param argv The string to free
  */
 void platformArgvFree(char **argv);
+
+#endif
+
+#ifdef PLATFORM_SYS_EXEC
 
 /**
  * Run a program and suspend until it has finished
@@ -504,6 +508,20 @@ PlatformFileOffset platformFileTell(PlatformFile stream);
  * @return The number of elements read or 0 when no elements have been read
  */
 size_t platformFileRead(void *buffer, size_t size, size_t n, PlatformFile stream);
+
+#ifdef PLATFORM_SYS_WRITE
+
+/**
+ * Write to a stream created with platformFileOpen from a memory buffer
+ * @param buffer In: The memory buffer to read from
+ * @param size In: the number of elements to read
+ * @param n In: the size of each element to be read
+ * @param stream In: the stream to write to
+ * @return The number of written read or 0 when no elements have been wrote
+ */
+size_t platformFileWrite(void *buffer, size_t size, size_t n, PlatformFile stream);
+
+#endif
 
 /**
  * Open a temporary file stream

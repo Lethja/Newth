@@ -39,7 +39,7 @@ dl_SOURCES = src/cli/dl.c src/common/defines.h \
     src/platform/platform.c src/platform/platform.h \
     $(PLATFORM_SRC)
 
-dl_CFLAGS = -DPLATFORM_SYS_EXEC=1
+dl_CFLAGS = -DPLATFORM_SYS_ARGV=1 -DPLATFORM_SYS_EXEC=1 -DPLATFORM_SYS_WRITE=1
 
 th_SOURCES = src/cli/th.c src/common/defines.h \
     src/common/hex.c src/common/hex.h \
@@ -52,13 +52,15 @@ th_SOURCES = src/cli/th.c src/common/defines.h \
     src/server/sendbufr.c src/server/sendbufr.h \
     $(MULTIPLEX_SRC) $(PLATFORM_SRC)
 
-th_CFLAGS = -DPLATFORM_NET_ADAPTER=1 -DPLATFORM_NET_LISTEN=1 -DPLATFORM_SYS_EXEC=1
+th_CFLAGS = -DPLATFORM_NET_ADAPTER=1 -DPLATFORM_NET_LISTEN=1 -DPLATFORM_SYS_ARGV=1
 
 if CMOCKA
     TESTS = unittest
     check_PROGRAMS = unittest
 
-    unittest_CFLAGS = ${cmocka_CFLAGS} -DMOCK=1 -DSB_DATA_SIZE=128 -DEWOULDBLOCK=41 -DPLATFORM_NET_LISTEN=1 -DPLATFORM_SYS_EXEC=1
+    unittest_CFLAGS = ${cmocka_CFLAGS} -DMOCK=1 -DSB_DATA_SIZE=128 -DEWOULDBLOCK=41 \
+        -DPLATFORM_NET_LISTEN=1 -DPLATFORM_SYS_ARGV=1 -DPLATFORM_SYS_WRITE=1
+
     unittest_LDFLAGS = ${cmocka_LIBS} \
 		-Wl,--wrap=malloc,--wrap=calloc,--wrap=realloc,--wrap=free,--wrap=connect,--wrap=recv,--wrap=send,--wrap=fclose
 
