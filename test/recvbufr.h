@@ -582,8 +582,8 @@ static void ReceiveSend(void **state) {
     const char *data = "The quick brown fox jumps over the lazy dog";
     char *res;
 
-    mockReset(), mockOptions = MOCK_CONNECT | MOCK_RECEIVE |
-                               MOCK_SEND, mockReceiveMaxBuf = mockSendMaxBuf = 1024, mockSendStream = tmpfile();
+    mockReset(), mockOptions = MOCK_CONNECT | MOCK_RECEIVE | MOCK_SEND;
+    mockReceiveMaxBuf = mockSendMaxBuf = 1024, mockSendStream = tmpfile();
 
     assert_null(recvBufferNewFromUri(&socketBuffer, "http://127.0.0.1", 0));
     assert_null(recvBufferSend(&socketBuffer, data, strlen(data), 0));

@@ -68,15 +68,15 @@ static inline char DataIncrement(RecvBuffer *self, size_t added) {
         if (platformStringFindNeedleRaw(self->buffer, self->length.token.token, self->len,
                                         strlen(self->length.token.token)))
             goto DataIncrement_complete;
-    } else {
+    } else { /* RECV_BUFFER_DATA_LENGTH_UNKNOWN */
         self->length.unknown.escape += (PlatformFileOffset) added;
         if (self->length.unknown.escape >= self->length.unknown.limit)
-            goto DataIncrement_complete;
+            return 1;
     }
     return 0;
 
 DataIncrement_complete:
-    /* TODO: Use `recvBufferSetLengthComplete()` to indicate the data is completed */
+    recvBufferSetLengthComplete(self);
     return 1;
 }
 
@@ -489,6 +489,15 @@ const char *recvBufferSend(RecvBuffer *self, const void *data, size_t n, int fla
     SOCK_BUF_TYPE s, sent = 0;
     unsigned int attempt = 0;
     char dump[SB_DATA_SIZE];
+
+    #pragma region Check that the last request ended successfully and that the same TCP stream can be reused
+
+    if (self->options && !(self->options & RECV_BUFFER_DATA_LENGTH_COMPLETE))
+        recvBufferReconnect(self), recvBufferClear(self);
+
+    recvBufferSetLengthUnknown(self, SB_DATA_SIZE);
+
+    #pragma endregion
 
     #pragma region Limit the amount of reattempts at establishing a connection there can be
 

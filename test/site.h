@@ -769,6 +769,69 @@ static void SiteHttpTransferToFile(void **state) {
     fclose(mockReceiveStream), mockReceiveStream = NULL;
 }
 
+static void SiteHttpTransferClobberedRequests(void **state) {
+    const char *data1 = "The quick brown fox jumps over the lazy dog", *data2 = "The lazy dog jumps over the quick brown fox";
+    const char *head = "HTTP/1.1 200 OK" HTTP_EOL
+                       "Content-Type: text/html; charset=ISO-8859-1" HTTP_EOL
+                       "Date: Thu, 1 Jan 1970 00:00:00 GMT" HTTP_EOL
+                       "Length: 0" HTTP_EOL HTTP_EOL;
+
+    const char *headFile = "HTTP/1.1 200 OK" HTTP_EOL
+                           "Content-Type: text/html; charset=ISO-8859-1" HTTP_EOL
+                           "Content-Disposition: attachment" HTTP_EOL
+                           "Date: Thu, 1 Jan 1970 00:00:00 GMT" HTTP_EOL
+                           "Length: 43" HTTP_EOL HTTP_EOL;
+    Site site1, site2;
+    FILE *test;
+
+    char *p1 = platformTempFilePath("nt_f1"), *p2 = platformTempFilePath("nt_f2"), buf[49] = {0};
+
+    mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
+    assert_non_null(mockReceiveStream = fopen(p2, "wb+")), fclose(mockReceiveStream);
+    assert_non_null(mockReceiveStream = fopen(p1, "wb+")), free(p1);
+    assert_int_equal(fwrite(head, 1, strlen(head), mockReceiveStream), strlen(head)), rewind(mockReceiveStream);
+
+    assert_null(siteNew(&site1, SITE_HTTP, "http://127.0.0.1"));
+    assert_null(siteNew(&site2, SITE_FILE, platformTempDirectoryGet()));
+
+    rewind(mockReceiveStream);
+    assert_int_equal(fwrite(headFile, 1, strlen(headFile), mockReceiveStream), strlen(headFile));
+    assert_int_equal(fwrite(data1, 1, strlen(data1), mockReceiveStream), strlen(data1));
+    rewind(mockReceiveStream);
+
+    assert_null(siteFileOpenRead(&site1, "foo", -1, -1));
+    assert_null(siteFileOpenWrite(&site2, "nt_f2"));
+
+    assert_int_equal(siteFileRead(&site1, (char *) buf, 20), 20);
+    assert_int_equal(siteFileWrite(&site2, (char *) buf, 20), 20);
+
+    memset(buf, 0, sizeof(buf)), fflush(site2.site.file.file);
+    assert_non_null(test = platformFileOpen(p2, "rb"));
+    assert_int_equal(platformFileRead(buf, 1, 68, test), 20);
+    assert_memory_equal(data1, buf, 20), platformFileClose(test);
+
+    /* Requests clobbered beyond this point. TCP stream should be reset and all data wiped from recvBuffer */
+
+    fflush(mockReceiveStream), rewind(mockReceiveStream);
+    assert_int_equal(fwrite(headFile, 1, strlen(headFile), mockReceiveStream), strlen(headFile));
+    assert_int_equal(fwrite(data2, 1, strlen(data2), mockReceiveStream), strlen(data2));
+    rewind(mockReceiveStream);
+
+    assert_null(siteFileOpenRead(&site1, "foo", -1, -1));
+    assert_null(siteFileOpenWrite(&site2, "nt_f2"));
+
+    assert_int_equal(siteFileRead(&site1, (char *) buf, 20), 20);
+    assert_int_equal(siteFileWrite(&site2, (char *) buf, 20), 20);
+
+    memset(buf, 0, sizeof(buf)), fflush(site2.site.file.file);
+    assert_non_null(test = platformFileOpen(p2, "rb"));
+    assert_int_equal(platformFileRead(buf, 1, 68, test), 20);
+    assert_memory_equal(data2, buf, 20), platformFileClose(test);
+
+    free(p2), siteFree(&site1), siteFree(&site2); /* siteFree() should close the files if required */
+    fclose(mockReceiveStream), mockReceiveStream = NULL;
+}
+
 #endif /* MOCK */
 
 #pragma endregion
@@ -790,6 +853,7 @@ const struct CMUnitTest siteTest[] = {cmocka_unit_test(SiteArrayFunctions), cmoc
                                       cmocka_unit_test(SiteHttpDirEntryNewth), cmocka_unit_test(SiteHttpDirEntryNginx),
                                       cmocka_unit_test(SiteHttpOpenFile), cmocka_unit_test(SiteHttpOpenFileAttachment),
                                       cmocka_unit_test(SiteHttpOpenFileFileName),
+                                      cmocka_unit_test(SiteHttpTransferClobberedRequests),
                                       cmocka_unit_test(SiteHttpTransferToFile)
 #endif
 };

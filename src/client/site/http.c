@@ -480,8 +480,6 @@ static inline void HeadersPopulate(const char *header, HttpResponseHeader *heade
  * @param mode The mode this header is responding to
  */
 static inline void HeadersCompute(HttpSite *self, HttpResponseHeader *headerResponse, const char *mode) {
-    /* TODO: Check filename if exists, extract from url otherwise */
-    /* TODO: Check modification date against local file if exists */
     if (toupper(mode[0]) == 'G' && toupper(mode[1]) == 'E' && toupper(mode[2]) == 'T') {
         if (headerResponse->protocol & HTTP_CHUCKED_MODE)
             recvBufferSetLengthChunk(&self->socket);
@@ -1053,6 +1051,9 @@ const char *httpSiteSchemeFileOpenRead(HttpSite *self, const char *path, Platfor
     HeadersPopulate(header, &headerResponse);
     free(header), free(scheme);
     HeadersCompute(self, &headerResponse, "GET");
+
+    if (self->file)
+        httpSiteSchemeFileClose(self);
 
     self->file = malloc(sizeof(HttpSiteOpenFile));
     self->file->fullUri = resolvedPath; /* TODO: Duplicate data from FileSiteMeta deprecate ? */

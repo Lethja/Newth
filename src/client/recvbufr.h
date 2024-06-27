@@ -48,7 +48,7 @@ typedef struct SocketAddress {
 } SocketAddress;
 
 typedef struct RecvBuffer {
-    char *buffer; /* TODO: Replace all stream code with heap equivalents */
+    char *buffer;
     size_t idx, len, max;
     SocketAddress serverAddress;
     SOCKET serverSocket;
