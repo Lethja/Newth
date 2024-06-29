@@ -6,7 +6,7 @@ all: .SYMBOLIC dl.exe th.exe
 dl.exe: release_dl err.o doswatbd.o hex.o io.o plat_dl.o queue.o recvbufr.o signal.o site.o s_file.o s_http.o uri.o xml.o dl.o
     %write link.lnk NAME $@
     %write link.lnk SYS  dos4g
-    %write link.lnk OPT  st=8192
+    %write link.lnk OPT  st=9216
     %write link.lnk FILE err.o,doswatbd.o,hex.o,io.o,plat_dl.o,queue.o,recvbufr.o,signal.o,site.o,s_file.o,s_http.o,uri.o,xml.o,dl.o
     %write link.lnk LIBP watt32s/lib/
     %write link.lnk LIBF wattcpwf.lib
@@ -15,7 +15,7 @@ dl.exe: release_dl err.o doswatbd.o hex.o io.o plat_dl.o queue.o recvbufr.o sign
 dldbg.exe: debug_dl err.o doswatbd.o hex.o io.o plat_dl.o queue.o recvbufr.o signal.o site.o s_file.o s_http.o uri.o xml.o dl.o
     %write link.lnk NAME $@
     %write link.lnk SYS  dos4g
-    %write link.lnk OPT  st=8192
+    %write link.lnk OPT  st=9216
     %write link.lnk FILE err.o,doswatbd.o,hex.o,io.o,plat_dl.o,queue.o,recvbufr.o,signal.o,site.o,s_file.o,s_http.o,uri.o,xml.o,dl.o
     %write link.lnk LIBP watt32s/lib/
     %write link.lnk LIBF wattcpwf.lib
@@ -24,7 +24,7 @@ dldbg.exe: debug_dl err.o doswatbd.o hex.o io.o plat_dl.o queue.o recvbufr.o sig
 dlwlk.exe: walk_dl err.o doswatbd.o hex.o io.o plat_dl.o queue.o recvbufr.o signal.o site.o s_file.o s_http.o uri.o xml.o dl.o
     %write link.lnk NAME $@
     %write link.lnk SYS  dos4g
-    %write link.lnk OPT  st=8192
+    %write link.lnk OPT  st=9216
     %write link.lnk FILE err.o,doswatbd.o,hex.o,io.o,plat_dl.o,queue.o,recvbufr.o,signal.o,site.o,s_file.o,s_http.o,uri.o,xml.o,dl.o
     %write link.lnk LIBP watt32s/lib/
     %write link.lnk LIBF wattcpwf.lib
