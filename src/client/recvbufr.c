@@ -419,7 +419,7 @@ const char *recvBufferNewFromSocketAddress(RecvBuffer *self, SocketAddress serve
     if ((e = ioCreateSocketFromSocketAddress(&serverAddress, &sock)))
         return e;
 
-    if (connect(sock, &self->serverAddress.address.sock, sizeof(self->serverAddress.address.sock)) == -1) {
+    if (connect(sock, (struct sockaddr*) &serverAddress, sizeof(struct sockaddr_storage))) {
         if (sock == INVALID_SOCKET)
             CLOSE_SOCKET(sock);
 

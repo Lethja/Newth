@@ -652,7 +652,7 @@ const char *httpSiteSchemeNew(HttpSite *self, const char *path) {
 
     scheme = response = NULL;
 
-    if ((err = recvBufferConnect(&self->socket)) || (err = recvBufferSend(&self->socket, send, strlen(send), 0))) {
+    if ((err = recvBufferSend(&self->socket, send, strlen(send), 0))) {
         free(send);
         goto httpSiteSchemeNew_closeSocketAndAbort;
     }
