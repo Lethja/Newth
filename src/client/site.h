@@ -7,15 +7,15 @@ enum SiteFileType {
     /**
      * @brief A regular file that can be read and written to
      */
-    SITE_FILE_TYPE_FILE,
+    SITE_FILE_TYPE_FILE = 4,
     /**
      * @brief A directory (a.k.a folder) that may contain files and/or other directories
      */
-    SITE_FILE_TYPE_DIRECTORY,
+    SITE_FILE_TYPE_DIRECTORY = 2,
     /**
      * @brief The path does not exist
      */
-    SITE_FILE_TYPE_NOTHING,
+    SITE_FILE_TYPE_NOTHING = 1,
     /**
      * @brief The path either has not been checked or is not a file or directory
      */
