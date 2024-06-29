@@ -423,9 +423,10 @@ static inline void HeadersPopulate(const char *header, HttpResponseHeader *heade
                 headerResponse->protocol |= HTTP_CONTENT_ATTACHMENT, p = f;
             else
                 p = NULL;
-        }
+        } else if ((p = platformStringFindNeedle(v, "filename"))) /* This is not spec but intention is clear enough */
+            headerResponse->protocol |= HTTP_CONTENT_ATTACHMENT;
 
-        if (p) { /* 'filename=' is only valid if attachment has been specified first */
+        if (p) { /* 'filename=' is only valid before attachment (or in the absence of it) */
             if ((p = strchr(p, '='))) {
                 size_t len;
 
