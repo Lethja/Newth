@@ -484,6 +484,13 @@ PlatformFile platformFileOpen(const char *fileName, const char *fileMode);
 int platformFileClose(PlatformFile stream);
 
 /**
+ * Check if the stream is at the end of the file or not
+ * @param stream In: The file stream to check if at the end of the file of
+ * @return 0 when stream is at the end, positive number when stream is not at the end, negative number on error
+ */
+int platformFileAtEnd(PlatformFile stream);
+
+/**
  * Seek through a file stream created with platformFileOpen to a certain position
  * @param stream In: The file stream to seek on
  * @param offset In: The amount of bytes to seek, use a negative number to rewind

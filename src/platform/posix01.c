@@ -469,6 +469,10 @@ void platformDirClose(PlatformDir *self) {
     free(self);
 }
 
+int platformFileAtEnd(PlatformFile stream) {
+    return feof(stream);
+}
+
 const char *platformDirPath(PlatformDir *self) {
     return self->path;
 }

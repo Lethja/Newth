@@ -520,6 +520,10 @@ short platformPathWebToSystem(const char *rootPath, char *webPath, char *absolut
     return 0;
 }
 
+int platformFileAtEnd(PlatformFile stream) {
+    return feof(stream);
+}
+
 PlatformFile platformFileOpen(const char *fileName, const char *fileMode) {
     return fopen(fileName, fileMode);
 }

@@ -579,6 +579,27 @@ int platformFileClose(PlatformFile stream) {
     return CloseHandle(stream);
 }
 
+int platformFileAtEnd(PlatformFile stream) {
+    int r;
+    LARGE_INTEGER pos = platformFileTell(stream), end;
+
+    /* Get end position */
+    ZeroMemory(&end, sizeof(LARGE_INTEGER));
+    end.LowPart = SetFilePointer(stream, 0, &end.HighPart, FILE_END);
+    if (end.LowPart == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
+        return -1;
+
+    /* Is position at or past the end */
+    r = end.QuadPart <= pos.QuadPart;
+
+    /* Restore original position */
+    pos.LowPart = SetFilePointer(stream, pos.LowPart, &end.HighPart, FILE_BEGIN);
+    if (pos.LowPart == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
+        return -1;
+
+    return r;
+}
+
 int platformFileSeek(PlatformFile stream, PlatformFileOffset offset, int whence) {
     LARGE_INTEGER li;
 
