@@ -926,8 +926,10 @@ SOCK_BUF_TYPE httpSiteSchemeFileRead(HttpSite *self, char *buffer, SOCK_BUF_TYPE
         const char *e;
 
         /* Try get some more */
-        if ((e = recvBufferAppend(&self->socket, size - self->socket.len)) && e != ErrNoDataToBeRetrieved)
-            return -1;
+        if ((e = recvBufferAppend(&self->socket, size - self->socket.len)) && e != ErrNoDataToBeRetrieved) {
+            if (e != ErrRequestCompleted)
+                return -1;
+        }
 
         bufferSize = self->socket.len > (size_t) size ? size : self->socket.len;
     } else
