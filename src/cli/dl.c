@@ -62,11 +62,15 @@ static inline void Copy(const char **argv) {
 
         while ((i = siteFileRead(from, buf, SB_DATA_SIZE))) {
             if (i != -1) {
-                siteFileWrite(to, buf, i);
-                continue;
-            }
+                if (siteFileWrite(to, buf, i) != -1)
+                    continue;
 
-            puts(strerror(errno));
+                siteFileClose(from), siteFileClose(to), puts(strerror(errno));
+                return;
+            } else if (siteFileAtEnd(from))
+                break;
+
+            siteFileClose(from), siteFileClose(to), puts(strerror(errno));
             return;
         }
 
