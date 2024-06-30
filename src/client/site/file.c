@@ -31,7 +31,7 @@ static inline void FillFileMeta(char *path, SiteFileMeta *siteFileMeta) {
         siteFileMeta->name = uriPathLast(siteFileMeta->path);
 
     if (platformFileStat(path, &stat)) {
-        siteFileMeta->type = SITE_FILE_TYPE_UNKNOWN;
+        siteFileMeta->type = errno == ENOENT ? SITE_FILE_TYPE_NOTHING : SITE_FILE_TYPE_UNKNOWN;
         siteFileMeta->length = 0;
         return;
     }
