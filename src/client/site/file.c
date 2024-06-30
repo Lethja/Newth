@@ -276,6 +276,10 @@ void fileSiteSchemeFileClose(FileSite *self) {
     memset(&self->meta, 0, sizeof(SiteFileMeta));
 }
 
+int fileSiteSchemeFileAtEnd(FileSite *self) {
+    return platformFileAtEnd(self->file);
+}
+
 SOCK_BUF_TYPE fileSiteSchemeFileRead(FileSite *self, char *buffer, SOCK_BUF_TYPE size) {
     return platformFileRead(buffer, 1, size, self->file);
 }

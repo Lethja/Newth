@@ -42,6 +42,8 @@ int httpSiteSchemeWorkingDirectorySet(HttpSite *self, const char *path);
 
 void httpSiteSchemeFileClose(HttpSite *self);
 
+int httpSiteSchemeFileAtEnd(HttpSite *self);
+
 SOCK_BUF_TYPE httpSiteSchemeFileRead(HttpSite *self, char *buffer, SOCK_BUF_TYPE size);
 
 SiteFileMeta *httpSiteSchemeStatOpenMeta(HttpSite *self, const char *path);

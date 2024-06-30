@@ -908,6 +908,16 @@ void httpSiteSchemeFileClose(HttpSite *self) {
     }
 }
 
+int httpSiteSchemeFileAtEnd(HttpSite *self) {
+    if (self->socket.options & RECV_BUFFER_DATA_LENGTH_UNKNOWN)
+        return -1;
+
+    if (self->socket.options & RECV_BUFFER_DATA_LENGTH_COMPLETE && !self->socket.len)
+        return 1;
+
+    return 0;
+}
+
 SOCK_BUF_TYPE httpSiteSchemeFileRead(HttpSite *self, char *buffer, SOCK_BUF_TYPE size) {
     SOCK_BUF_TYPE bufferSize;
 
@@ -925,7 +935,7 @@ SOCK_BUF_TYPE httpSiteSchemeFileRead(HttpSite *self, char *buffer, SOCK_BUF_TYPE
 
     /* Copy and ditch */
     memcpy(buffer, self->socket.buffer, bufferSize);
-    recvBufferDitch(&self->socket, (PlatformFileOffset) bufferSize);
+    recvBufferDitch(&self->socket, (PlatformFileOffset) bufferSize), self->socket.len -= bufferSize;
 
     /* Bytes copied */
     return bufferSize;

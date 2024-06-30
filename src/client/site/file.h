@@ -25,6 +25,8 @@ int fileSiteSchemeWorkingDirectorySet(FileSite *self, const char *path);
 
 void fileSiteSchemeFileClose(FileSite *self);
 
+int fileSiteSchemeFileAtEnd(FileSite *self);
+
 SOCK_BUF_TYPE fileSiteSchemeFileRead(FileSite *self, char *buffer, SOCK_BUF_TYPE size);
 
 SiteFileMeta *fileSiteSchemeStatOpenMeta(FileSite *self, const char *path);

@@ -236,6 +236,13 @@ const char *siteNew(Site *site, enum SiteType type, const char *path);
 void siteFileClose(Site *self);
 
 /**
+ * Check if the open file stream on the site has reached the end
+ * @param self The site to check if the open file stream has reached the end of
+ * @return 0 if the sites file hasn't reached the end, positive number if it has, negative it can't be determined
+ */
+int siteFileAtEnd(Site *self);
+
+/**
  * Read from the open file
  * @param self The site to read the open file from
  * @param buffer The buffer to write the file streams data to

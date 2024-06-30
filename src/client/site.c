@@ -255,6 +255,17 @@ void siteFileClose(Site *self) {
     }
 }
 
+int siteFileAtEnd(Site *self) {
+    switch (self->type) {
+        case SITE_FILE:
+            return fileSiteSchemeFileAtEnd(&self->site.file);
+        case SITE_HTTP:
+            return httpSiteSchemeFileAtEnd(&self->site.http);
+        default:
+            return -1;
+    }
+}
+
 SiteFileMeta *siteFileOpenMeta(Site *self) {
     switch (self->type) {
         case SITE_FILE:
