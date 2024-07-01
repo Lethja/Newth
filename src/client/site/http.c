@@ -937,7 +937,7 @@ SOCK_BUF_TYPE httpSiteSchemeFileRead(HttpSite *self, char *buffer, SOCK_BUF_TYPE
 
     /* Copy and ditch */
     memcpy(buffer, self->socket.buffer, bufferSize);
-    recvBufferDitch(&self->socket, (PlatformFileOffset) bufferSize), self->socket.len -= bufferSize;
+    recvBufferDitch(&self->socket, (PlatformFileOffset) bufferSize);
 
     /* Bytes copied */
     return bufferSize;

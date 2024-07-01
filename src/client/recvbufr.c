@@ -274,7 +274,7 @@ void recvBufferDitch(RecvBuffer *self, PlatformFileOffset len) {
             size_t diff = self->len - (size_t) len;
             memmove(self->buffer, &self->buffer[len], diff), self->len -= (size_t) len;
         } else
-            free(self->buffer), self->buffer = NULL;
+            free(self->buffer), self->buffer = NULL, self->len = 0;
     }
 }
 
