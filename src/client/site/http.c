@@ -968,7 +968,6 @@ SiteFileMeta *httpSiteSchemeStatOpenMeta(HttpSite *self, const char *path) {
     }
 
     free(scheme), recvBufferClear(&self->socket);
-    /* TODO: Ensure the previous request finished successfully and reset the TCP session before sending if it hasn't */
     if (recvBufferSend(&self->socket, request, strlen(request), 0)) {
         free(request), free(resolvedPath), free(meta);
         return NULL;
@@ -1042,7 +1041,6 @@ const char *httpSiteSchemeFileOpenRead(HttpSite *self, const char *path, Platfor
     free(scheme);
     recvBufferClear(&self->socket);
 
-    /* TODO: Ensure the previous request finished successfully and reset the TCP session before sending if it hasn't */
     if ((e = recvBufferSend(&self->socket, request, strlen(request), 0))) {
         free(request), free(resolvedPath);
         return e;

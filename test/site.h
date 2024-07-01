@@ -21,10 +21,11 @@
 
 static void SiteArrayFunctions(void **state) {
     Site site1, site2;
+    char *uri = platformPathSystemToFileScheme((char*) platformTempDirectoryGet());
     memset(&site1, 0, sizeof(Site)), memset(&site2, 0, sizeof(Site));
-    assert_null(siteNew(&site1, SITE_FILE, "/"));
-    assert_null(siteNew(&site2, SITE_FILE, "/"));
-    siteArrayInit();
+    assert_null(siteNew(&site1, SITE_FILE, uri));
+    assert_null(siteNew(&site2, SITE_FILE, uri)), free(uri);
+    assert_null(siteArrayInit());
     assert_null(siteArrayActiveSetNth(0));
     assert_non_null(siteArrayActiveSetNth(1));
     assert_null(siteArrayAdd(&site1));
@@ -71,13 +72,13 @@ static void SiteFileNew(void **state) {
 }
 
 static void SiteFileNewWithPath(void **state) {
-    const char *testPath = platformTempDirectoryGet();
+    char *testPath = platformPathSystemToFileScheme((char *) platformTempDirectoryGet());
     Site site;
     assert_null(siteNew(&site, SITE_FILE, testPath));
     assert_int_equal(site.type, SITE_FILE);
     assert_non_null(site.site.file.fullUri);
     assert_non_null(strstr(site.site.file.fullUri, testPath));
-    siteFree(&site);
+    free(testPath), siteFree(&site);
 }
 
 static void SiteFileGetDirectory(void **state) {
@@ -136,13 +137,13 @@ static void SiteFileOpenFile(void **state) {
     Site site;
     SiteFileMeta *meta;
     struct stat st;
-    char *p1 = platformTempFilePath("nt_f1");
+    char *p0 = platformPathSystemToFileScheme((char *) platformTempDirectoryGet()), *p1 = platformTempFilePath("nt_f1");
 
     assert_non_null(f = fopen(p1, "wb"));
     assert_int_equal(fwrite(data, 1, strlen(data), f), strlen(data)), fclose(f);
     assert_false(stat(p1, &st)), free(p1);
 
-    assert_null(siteNew(&site, SITE_FILE, platformTempDirectoryGet()));
+    assert_null(siteNew(&site, SITE_FILE, p0)), free(p0);
 
     assert_null(siteFileOpenRead(&site, "nt_f1", -1, -1));
     assert_non_null(meta = siteFileOpenMeta(&site));
@@ -157,17 +158,18 @@ static void SiteFileOpenFile(void **state) {
 }
 
 static void SiteFileTransferToFile(void **state) {
-    FILE *f;
+    void *f;
     const char *data = "The quick brown fox jumps over the lazy dog", buf[44] = {0};
     Site site1, site2;
-    char *p1 = platformTempFilePath("nt_f1"), *p2 = platformTempFilePath("nt_f2");
+    char *p0, *p1 = platformTempFilePath("nt_f1"), *p2 = platformTempFilePath("nt_f2");
 
     assert_non_null(f = fopen(p1, "wb")), free(p1);
     assert_int_equal(fwrite(data, 1, strlen(data), f), strlen(data));
     fclose(f), f = fopen(p2, "wb"), fclose(f);
 
-    assert_null(siteNew(&site1, SITE_FILE, platformTempDirectoryGet()));
-    assert_null(siteNew(&site2, SITE_FILE, platformTempDirectoryGet()));
+    p0 = platformPathSystemToFileScheme((char *) platformTempDirectoryGet());
+    assert_null(siteNew(&site1, SITE_FILE, p0));
+    assert_null(siteNew(&site2, SITE_FILE, p0)), free(p0);
 
     assert_null(siteFileOpenRead(&site1, "nt_f1", -1, -1));
     assert_null(siteFileOpenWrite(&site2, "nt_f2"));
@@ -190,14 +192,15 @@ static void SiteFileTransferToFileContinue(void **state) {
     FILE *f;
     const char *data = "The quick brown fox jumps over the lazy dog", buf[44] = {0};
     Site site1, site2;
-    char *p1 = platformTempFilePath("nt_f1"), *p2 = platformTempFilePath("nt_f2");
+    char *p0, *p1 = platformTempFilePath("nt_f1"), *p2 = platformTempFilePath("nt_f2");
 
     assert_non_null(f = fopen(p1, "wb")), free(p1);
     assert_int_equal(fwrite(data, 1, strlen(data), f), strlen(data));
     fclose(f), f = fopen(p2, "wb"), fclose(f);
 
-    assert_null(siteNew(&site1, SITE_FILE, platformTempDirectoryGet()));
-    assert_null(siteNew(&site2, SITE_FILE, platformTempDirectoryGet()));
+    p0 = platformPathSystemToFileScheme((char *) platformTempDirectoryGet());
+    assert_null(siteNew(&site1, SITE_FILE, p0));
+    assert_null(siteNew(&site2, SITE_FILE, p0)), free(p0);
 
     assert_null(siteFileOpenRead(&site1, "nt_f1", 35, -1));
     assert_null(siteFileOpenWrite(&site2, "nt_f2"));
@@ -736,7 +739,7 @@ static void SiteHttpTransferToFile(void **state) {
                            "Length: 43" HTTP_EOL HTTP_EOL;
     Site site1, site2;
 
-    char *p1 = platformTempFilePath("nt_f1"), *p2 = platformTempFilePath("nt_f2");
+    char *p0, *p1 = platformTempFilePath("nt_f1"), *p2 = platformTempFilePath("nt_f2");
 
     mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
     assert_non_null(mockReceiveStream = fopen(p2, "wb+")), fclose(mockReceiveStream);
@@ -744,7 +747,8 @@ static void SiteHttpTransferToFile(void **state) {
     assert_int_equal(fwrite(head, 1, strlen(head), mockReceiveStream), strlen(head)), rewind(mockReceiveStream);
 
     assert_null(siteNew(&site1, SITE_HTTP, "http://127.0.0.1"));
-    assert_null(siteNew(&site2, SITE_FILE, platformTempDirectoryGet()));
+    p0 = platformPathSystemToFileScheme((char *) platformTempDirectoryGet());
+    assert_null(siteNew(&site2, SITE_FILE, p0)), free(p0);
 
     rewind(mockReceiveStream);
     assert_int_equal(fwrite(headFile, 1, strlen(headFile), mockReceiveStream), strlen(headFile));
@@ -784,7 +788,7 @@ static void SiteHttpTransferClobberedRequests(void **state) {
     Site site1, site2;
     FILE *test;
 
-    char *p1 = platformTempFilePath("nt_f1"), *p2 = platformTempFilePath("nt_f2"), buf[49] = {0};
+    char *p0, *p1 = platformTempFilePath("nt_f1"), *p2 = platformTempFilePath("nt_f2"), buf[49] = {0};
 
     mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
     assert_non_null(mockReceiveStream = fopen(p2, "wb+")), fclose(mockReceiveStream);
@@ -792,7 +796,8 @@ static void SiteHttpTransferClobberedRequests(void **state) {
     assert_int_equal(fwrite(head, 1, strlen(head), mockReceiveStream), strlen(head)), rewind(mockReceiveStream);
 
     assert_null(siteNew(&site1, SITE_HTTP, "http://127.0.0.1"));
-    assert_null(siteNew(&site2, SITE_FILE, platformTempDirectoryGet()));
+    p0 = platformPathSystemToFileScheme((char *) platformTempDirectoryGet());
+    assert_null(siteNew(&site2, SITE_FILE, p0)), free(p0);
 
     rewind(mockReceiveStream);
     assert_int_equal(fwrite(headFile, 1, strlen(headFile), mockReceiveStream), strlen(headFile));

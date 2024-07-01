@@ -59,7 +59,7 @@ int __wrap_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
                     mockConnectError = ENOERR;
             return -1;
         }
-        return 4;
+        return 0;
     }
 
     return __real_connect(sockfd, addr, addrlen);

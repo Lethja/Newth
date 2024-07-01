@@ -161,8 +161,7 @@ char **platformArgvConvertString(const char *str) {
             if (!esc) {
                 esc = *p, ++p;
                 continue;
-            }
-            else if (esc == *p) {
+            } else if (esc == *p) {
                 esc = '\0', ++p;
                 continue;
             }
