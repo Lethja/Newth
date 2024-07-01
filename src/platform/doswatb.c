@@ -379,8 +379,24 @@ char *platformPathFileSchemePathToSystem(char *path) {
     char *r;
     size_t len = strlen(path);
 
-    if (len < 3)
-        return NULL;
+    if (len < 3) {
+        /* Allow omitting of the trailing slash on a drives root path */
+        if (len == 2 && path[0] == '/') {
+            char drive = toupper(path[1]);
+
+            /* Check if the remaining character is within the range of a DOS drive */
+            if (drive < 'A' || drive > 'Z') {
+                errno = ENOENT;
+                return NULL;
+            }
+
+            if ((r = malloc(4)))
+                r[0] = drive, r[1] = ':', r[2] = '\\', r[3] = '\0';
+
+            return r;
+        } else
+            return NULL;
+    }
 
     if ((r = malloc(len + 1))) {
         char drive;
