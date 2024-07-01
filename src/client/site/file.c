@@ -51,22 +51,24 @@ static inline void FillFileMeta(char *path, SiteFileMeta *siteFileMeta) {
 
 /**
  * Resolve a URI to a system path
- * @param uri
- * @param path
- * @return
+ * @param uri In: The current absolute uri (including file://)
+ * @param path In: The relative path from this uri
+ * @return A system path
  */
-static inline char *ResolvePath(char *uri, char *path) {
-    if (path[0] == '/') /* TODO: this is a UNIX only trick */
-        return path;
-    else {
-        char *osPath, *fullPath;
+static inline char *ResolveToSystemPath(char *uri, char *path) {
+    char *fullPath, *sysPath;
 
-        if (!(osPath = platformPathFileSchemeToSystem(uri)))
-            return strerror(errno);
+    if ((fullPath = uriPathAbsoluteAppend(&uri[7], path))) {
+        if ((sysPath = platformPathFileSchemePathToSystem(fullPath))) {
+            free(fullPath);
 
-        fullPath = uriPathAbsoluteAppend(osPath, path), free(osPath);
-        return fullPath;
+            return sysPath;
+        }
+
+        free(fullPath);
     }
+
+    return NULL;
 }
 
 /**
@@ -80,19 +82,16 @@ static inline const char *FileOpen(FileSite *self, const char *path, const char 
     char *fullPath;
     fileSiteSchemeFileClose(self);
 
-    if (!(fullPath = ResolvePath(self->fullUri, (char *) path)))
+    if (!(fullPath = ResolveToSystemPath(self->fullUri, (char *) path)))
         return strerror(errno);
 
     if (!(self->file = platformFileOpen(fullPath, mode))) {
-        if (fullPath != path)
-            free(fullPath);
-
+        free(fullPath);
         return strerror(errno);
     }
 
     FillFileMeta(fullPath, &self->meta);
-    if (fullPath != path)
-        free(fullPath);
+    free(fullPath);
 
     return NULL;
 }
@@ -288,19 +287,17 @@ SiteFileMeta *fileSiteSchemeStatOpenMeta(FileSite *self, const char *path) {
     char *fullPath;
     SiteFileMeta *meta;
 
-    if (!(fullPath = ResolvePath(self->fullUri, (char*) path)))
+    if (!(fullPath = ResolveToSystemPath(self->fullUri, (char *) path)))
         return NULL;
 
     if (!(meta = calloc(1, sizeof(SiteFileMeta)))) {
-        if (fullPath != path)
-            free(fullPath);
+        free(fullPath);
 
         return NULL;
     }
 
     FillFileMeta(fullPath, meta);
-    if (fullPath != path)
-        free(fullPath);
+    free(fullPath);
 
     return meta;
 }
