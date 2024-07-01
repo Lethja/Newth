@@ -147,31 +147,32 @@ char *fileSiteSchemeWorkingDirectoryGet(FileSite *self) {
 }
 
 char *fileSiteSchemeNew(FileSite *self, const char *path) {
-    char *wd;
+    char *sysDir;
 
     self->fullUri = NULL;
     if (path) {
-        if (platformStringFindNeedle(path, "file://") == path)
-            memmove((char *) path, &path[7], strlen(&path[7]) + 1);
+        if ((sysDir = platformPathFileSchemeToSystem((char*) path))) {
+            PlatformFileStat st;
 
-        if (!(wd = platformRealPath((char *) path)))
-            return "Unable to resolve absolute path";
+            /* Check the path exists and is a directory */
+            if (platformFileStat(sysDir, &st))
+                return strerror(errno);
 
-        if (strlen(wd) + 1 > FILENAME_MAX) {
-            free(wd);
-            return "Absolute path is beyond maximum path limit";
-        }
+            if (!platformFileStatIsDirectory(&st))
+                return strerror(ENOTDIR);
+        } else
+            return strerror(errno);
     } else {
-        if (!(wd = malloc(FILENAME_MAX)))
+        if (!(sysDir = malloc(FILENAME_MAX)))
             return strerror(errno);
 
-        if (!platformGetWorkingDirectory(wd, FILENAME_MAX)) {
-            free(wd);
+        if (!platformGetWorkingDirectory(sysDir, FILENAME_MAX)) {
+            free(sysDir);
             return "Unable to get systems working directory";
         }
     }
 
-    UpdateFileUri(self, wd), free(wd);
+    UpdateFileUri(self, sysDir), free(sysDir);
     return NULL;
 }
 
