@@ -169,6 +169,17 @@ static void StringToArgvPaddingEnd(void **state) {
     platformArgvFree(argv);
 }
 
+static void StringToArgvEsc(void **state) {
+    const char *str = "\"This is\" \"a\"\" test\"";
+    char **argv = platformArgvConvertString(str);
+
+    assert_string_equal(argv[0], "This is");
+    assert_string_equal(argv[1], "a test");
+    assert_null(argv[2]);
+
+    platformArgvFree(argv);
+}
+
 static void TemporaryPath(void **state) {
     const char *dir = platformTempDirectoryGet();
     assert_non_null(dir);
@@ -200,7 +211,8 @@ const struct CMUnitTest platformTest[] = {cmocka_unit_test(HaystackAndNeedle), c
 #ifdef BACKSLASH_PATH_DIVIDER
         cmocka_unit_test(PathCombineStringUnixDividers),
 #endif
-                                          cmocka_unit_test(StringToArgv), cmocka_unit_test(StringToArgvOneWord),
+                                          cmocka_unit_test(StringToArgv), cmocka_unit_test(StringToArgvEsc),
+                                          cmocka_unit_test(StringToArgvOneWord),
                                           cmocka_unit_test(StringToArgvPaddingEnd),
                                           cmocka_unit_test(StringToArgvPaddingMiddle),
                                           cmocka_unit_test(StringToArgvPaddingStart),

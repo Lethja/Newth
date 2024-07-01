@@ -143,7 +143,7 @@ char platformBindPort(const SOCKET *listenSocket, struct sockaddr *socketAddress
 #ifdef PLATFORM_SYS_ARGV
 
 char **platformArgvConvertString(const char *str) {
-    char **r = NULL, *a, *p;
+    char **r = NULL, *a, *p, esc;
     size_t s;
 
     if (!str || str[0] == '\0')
@@ -155,9 +155,20 @@ char **platformArgvConvertString(const char *str) {
 
     #pragma region Count amount of arguments, strip any excessive whitespace
     strcpy(a, str);
-    p = a, s = 0;
+    p = a, s = 0, esc = '\0';
     while (*p != '\0') {
-        if (*p == ' ') {
+        if (*p == '"' || *p == '\'') {
+            if (!esc) {
+                esc = *p, ++p;
+                continue;
+            }
+            else if (esc == *p) {
+                esc = '\0', ++p;
+                continue;
+            }
+        }
+
+        if (*p == ' ' && !esc) {
             size_t amt = 0;
 
             ++s;
@@ -192,12 +203,23 @@ char **platformArgvConvertString(const char *str) {
     #pragma endregion
 
     #pragma region Set pointers
-    r[0] = p = a, s = 1;
+    r[0] = p = a, s = 1, esc = '\0';
     while (*p != '\0') {
-        if (*p == ' ') {
+        if (*p == '"' || *p == '\'') {
+            if (!esc) {
+                esc = *p, memmove(p, &p[1], strlen(p));
+                continue;
+            } else if (esc == *p) {
+                esc = '\0', memmove(p, &p[1], strlen(p));
+                continue;
+            }
+        }
+
+        if (*p == ' ' && !esc) {
             r[s] = p[1] != '\0' ? &p[1] : NULL;
             *p = '\0';
             ++s, ++p;
+            continue;
         }
         ++p;
     }

@@ -147,6 +147,7 @@ SOCKET *platformServerStartup(sa_family_t family, char *ports, char **err);
  * Interpret a string as a command prompt and convert it into a argv array
  * @param str The string to be converted
  * @return NULL on error, otherwise a NULL terminated argv array
+ * @remark The use of quotation marks will be interpreted as a string escape
  */
 char **platformArgvConvertString(const char *str);
 
