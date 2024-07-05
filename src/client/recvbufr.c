@@ -152,8 +152,11 @@ recvBufferAppendChunk_parse: {
                 hex = &hex[2];
             else
                 return ErrMalformedChunkEncoding;
-        } else
-            hex = b, finish = strstr(b, HTTP_EOL);
+        } else {
+            hex = b;
+            if (!(finish = strstr(b, HTTP_EOL)))
+                return ErrMalformedChunkEncoding;
+        }
 
         finish[0] = '\0';
         if ((e = ioHttpBodyChunkHexToSize(hex, (size_t *) &l)))
