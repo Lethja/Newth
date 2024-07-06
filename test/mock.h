@@ -81,14 +81,15 @@ static void MockReceive(void **state) {
 }
 
 static void MockReceiveStream(void **state) {
+#define MOCK_RECV_BUFR_LEN 128
     size_t i, received;
-    char junkData[SB_DATA_SIZE] = "";
+    char junkData[MOCK_RECV_BUFR_LEN] = "";
     const char *SampleData = "Lorem ipsum dolor sit amet, consectetur adipiscing elit,"
                              " sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
                              " Urna porttitor rhoncus dolor purus non enim praesent elementum facilisis."
                              " Cras sed felis eget velit aliquet sagittis id consectetur.";
 
-    mockReset(), mockOptions = MOCK_RECEIVE, mockReceiveMaxBuf = SB_DATA_SIZE, i = strlen(
+    mockReset(), mockOptions = MOCK_RECEIVE, mockReceiveMaxBuf = MOCK_RECV_BUFR_LEN, i = strlen(
             SampleData), mockReceiveStream = tmpfile();
 
     assert_non_null(mockReceiveStream);
@@ -106,17 +107,17 @@ static void MockReceiveStream(void **state) {
     assert_memory_equal(junkData, " dolor sit amet", sizeof(char) * 15);
 
     /* Receive the maximum */
-    received = recv(0, junkData, SB_DATA_SIZE, 0);
-    assert_int_equal(received, SB_DATA_SIZE);
-    assert_memory_equal(junkData, &SampleData[i - (i - 15 - 11)], SB_DATA_SIZE);
+    received = recv(0, junkData, MOCK_RECV_BUFR_LEN, 0);
+    assert_int_equal(received, MOCK_RECV_BUFR_LEN);
+    assert_memory_equal(junkData, &SampleData[i - (i - 15 - 11)], MOCK_RECV_BUFR_LEN);
 
     /* Receive less than requested */
-    received = recv(0, junkData, SB_DATA_SIZE, 0);
-    assert_int_equal(received, i - 15 - 11 - SB_DATA_SIZE);
-    assert_memory_equal(junkData, &SampleData[i - (i - 15 - 11 - SB_DATA_SIZE)], received);
+    received = recv(0, junkData, MOCK_RECV_BUFR_LEN, 0);
+    assert_int_equal(received, i - 15 - 11 - MOCK_RECV_BUFR_LEN);
+    assert_memory_equal(junkData, &SampleData[i - (i - 15 - 11 - MOCK_RECV_BUFR_LEN)], received);
 
     /* No more */
-    received = recv(0, junkData, SB_DATA_SIZE, 0);
+    received = recv(0, junkData, MOCK_RECV_BUFR_LEN, 0);
     assert_int_equal(received, 0);
 
     fflush(mockReceiveStream), fclose(mockReceiveStream), mockReceiveStream = NULL;
