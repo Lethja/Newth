@@ -564,11 +564,43 @@ recvBufferSend_reply:
     return NULL;
 }
 
+/**
+ * Helper function for when a RecvBuffer is set into chunk mode.
+ * It assumes the current start of the buffer is now at the beginning of the first chunk hex and pre-computes chunks
+ * already in the buffer allowing the next call to recvBufferAppend to be synchronized with the state of the buffer
+ * @param self The buffer to pre-compute chunks for
+ */
+static inline void HttpChunkParseExistingBuffer(RecvBuffer *self) {
+    char *finish, hex[20];
+
+    self->length.chunk.total = self->length.chunk.next = 0;
+    while (self->length.chunk.total < self->len) {
+        memset(hex, 0, sizeof(hex));
+        recvBufferFetch(self, hex, self->length.chunk.total, 20);
+        if ((finish = strstr(hex, HTTP_EOL))) {
+            size_t s;
+
+            finish[0] = '\0';
+            if (!ioHttpBodyChunkHexToSize(hex, &s)) {
+                size_t l = self->length.chunk.total + strlen(hex) + 2;
+
+                if(self->len - l > 0)
+                    memmove(&self->buffer[self->length.chunk.total], &self->buffer[l], self->len - l);
+
+                self->length.chunk.total += (PlatformFileOffset) s, self->length.chunk.next = (PlatformFileOffset) s;
+            }
+        }
+    }
+}
+
 void recvBufferSetLengthChunk(RecvBuffer *self) {
     self->options &= ~(RECV_BUFFER_DATA_LENGTH_KNOWN | RECV_BUFFER_DATA_LENGTH_TOKEN |
                        RECV_BUFFER_DATA_LENGTH_COMPLETE);
     self->options |= RECV_BUFFER_DATA_LENGTH_CHUNK;
-    self->length.chunk.total = 0, self->length.chunk.next = -1;
+    if (self->buffer && self->len) {
+        HttpChunkParseExistingBuffer(self);
+    } else
+        self->length.chunk.total = 0, self->length.chunk.next = -1;
 }
 
 void recvBufferSetLengthComplete(RecvBuffer *self) {
