@@ -19,6 +19,9 @@
 
 #pragma region Site Array Tests
 
+/**
+ * This test ensures several sites can be added and removed from a site array
+ */
 static void SiteArrayFunctions(void **state) {
     Site site1, site2;
     char *uri = platformPathSystemToFileScheme((char*) platformTempDirectoryGet());
@@ -59,6 +62,9 @@ static void SiteArrayFunctions(void **state) {
 
 #pragma region File Site Tests
 
+/**
+ * This test ensures that siteNew() creates a file site without any junk data when no path is specified
+ */
 static void SiteFileNew(void **state) {
     Site site;
     char *wd = malloc(FILENAME_MAX + 1);
@@ -71,6 +77,9 @@ static void SiteFileNew(void **state) {
     free(wd), siteFree(&site);
 }
 
+/**
+ * This test ensures that siteNew() creates a file site with a path & without any junk data
+ */
 static void SiteFileNewWithPath(void **state) {
     char *testPath = platformPathSystemToFileScheme((char *) platformTempDirectoryGet());
     Site site;
@@ -81,6 +90,9 @@ static void SiteFileNewWithPath(void **state) {
     free(testPath), siteFree(&site);
 }
 
+/**
+ * This test checks that siteWorkingDirectoryGet() on a file site gets the correct path for a site
+ */
 static void SiteFileGetDirectory(void **state) {
     Site site;
     char *wd = malloc(FILENAME_MAX + 1);
@@ -93,6 +105,9 @@ static void SiteFileGetDirectory(void **state) {
     free(wd), siteFree(&site);
 }
 
+/**
+ * This test checks that siteWorkingDirectorySet() on a file site will set the correct path
+ */
 static void SiteFileSetDirectory(void **state) {
     Site site;
     char *wd = malloc(FILENAME_MAX + 1);
@@ -106,6 +121,9 @@ static void SiteFileSetDirectory(void **state) {
     free(wd), siteFree(&site);
 }
 
+/**
+ * This test checks that directory on a file site can be opened and listed
+ */
 static void SiteFileDirEntry(void **state) {
     Site site;
     size_t i, j = i = 0;
@@ -131,6 +149,9 @@ static void SiteFileDirEntry(void **state) {
     siteDirectoryListingClose(&site, d), siteFree(&site);
 }
 
+/**
+ * This test checks that a file on a file site can be opened and read
+ */
 static void SiteFileOpenFile(void **state) {
     FILE *f;
     const char *data = "The quick brown fox jumps over the lazy dog";
@@ -157,6 +178,9 @@ static void SiteFileOpenFile(void **state) {
     siteFree(&site); /* siteFree() should close the files if required */
 }
 
+/**
+ * This test ensures that a file site can copy an open to read file to another file site open to write file
+ */
 static void SiteFileTransferToFile(void **state) {
     void *f;
     const char *data = "The quick brown fox jumps over the lazy dog", buf[44] = {0};
@@ -188,6 +212,9 @@ static void SiteFileTransferToFile(void **state) {
     fclose(f);
 }
 
+/**
+ * This test ensures that a incomplete site file copy can be resumed between two file sites
+ */
 static void SiteFileTransferToFileContinue(void **state) {
     FILE *f;
     const char *data = "The quick brown fox jumps over the lazy dog", buf[44] = {0};
@@ -227,15 +254,18 @@ const char *HttpHeaderResponseDir = "HTTP/1.1 200 OK" HTTP_EOL
                                     "Date: Thu, 1 Jan 1970 00:00:00 GMT" HTTP_EOL HTTP_EOL;
 
 const char *HttpHeaderResponseDirChunk = "HTTP/1.1 200 OK" HTTP_EOL
-                                         "Content-Type: text/html; charset=ISO-8859-1" HTTP_EOL
-                                         "Date: Thu, 1 Jan 1970 00:00:00 GMT" HTTP_EOL
-                                         "Transfer-Encoding: chunked" HTTP_EOL HTTP_EOL;
+        "Content-Type: text/html; charset=ISO-8859-1" HTTP_EOL
+        "Date: Thu, 1 Jan 1970 00:00:00 GMT" HTTP_EOL
+        "Transfer-Encoding: chunked" HTTP_EOL HTTP_EOL;
 
 const char *HttpHeaderResponseFile = "HTTP/1.1 200 OK" HTTP_EOL
                                      "Content-Type: text/html; charset=ISO-8859-1" HTTP_EOL
                                      "Content-Disposition: attachment" HTTP_EOL
                                      "Date: Thu, 1 Jan 1970 00:00:00 GMT" HTTP_EOL HTTP_EOL;
 
+/**
+ * This test ensures that siteNew() will error out gracefully on http site without a path
+ */
 static void SiteHttpNew(void **state) {
     Site site;
     assert_ptr_equal(siteNew(&site, SITE_HTTP, NULL), ErrNoUriSpecified);
@@ -245,6 +275,9 @@ static void SiteHttpNew(void **state) {
     siteFree(&site);
 }
 
+/**
+ * This test ensures that siteNew() creates a http site without any junk data
+ */
 static void SiteHttpNewWithPath(void **state) {
     Site site;
 
@@ -259,6 +292,9 @@ static void SiteHttpNewWithPath(void **state) {
     siteFree(&site);
 }
 
+/**
+ * This test checks that siteWorkingDirectoryGet() on a http site gets the correct path for a site
+ */
 static void SiteHttpGetDirectory(void **state) {
     Site site;
     UriDetails details;
@@ -281,6 +317,9 @@ static void SiteHttpGetDirectory(void **state) {
     uriDetailsFree(&details), siteFree(&site);
 }
 
+/**
+ * This test checks that siteWorkingDirectorySet() on a http site will set the correct path
+ */
 static void SiteHttpSetDirectory(void **state) {
     Site site;
     char *wd = "http://127.0.0.1/foo";
@@ -308,6 +347,9 @@ static void SiteHttpSetDirectory(void **state) {
     siteFree(&site);
 }
 
+/**
+ * This test ensures siteWorkingDirectorySet() gracefully rejects setting a path to a file on a http site
+ */
 static void SiteHttpSetDirectoryFailFile(void **state) {
     Site site;
     char *wd = "http://127.0.0.1/foo";
@@ -327,6 +369,9 @@ static void SiteHttpSetDirectoryFailFile(void **state) {
     siteFree(&site);
 }
 
+/**
+ * This test parses a mockup of a generic html file listing with good links
+ */
 static void SiteHttpDirEntryGood(void **state) {
     const char *HttpBody = "<!DOCTYPE html>\n<html>\n<head>\n"
                            "\t<title>Directory Listing</title>\n"
@@ -407,6 +452,9 @@ static void SiteHttpDirEntryGood(void **state) {
     siteFree(&site);
 }
 
+/**
+ * This test parses a mockup of a generic html file listing with bad links
+ */
 static void SiteHttpDirEntryBad(void **state) {
     const char *HttpBody = "<!DOCTYPE html>\n<html>\n<head>\n"
                            "\t<title>Directory Listing</title>\n</head>\n<body>\n"
@@ -437,6 +485,9 @@ static void SiteHttpDirEntryBad(void **state) {
     siteFree(&site);
 }
 
+/**
+ * This test parses a mockup of Apaches file listings
+ */
 static void SiteHttpDirEntryApache(void **state) {
     const char *ApacheHtml = "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2 Final//EN\">\n"
                              "<html>\n<body>\n<pre><img src=\"/icons/blank.gif\" alt=\"Icon \">"
@@ -480,6 +531,9 @@ static void SiteHttpDirEntryApache(void **state) {
     siteFree(&site);
 }
 
+/**
+ * This test parses a mockup of Lighttpd file listings
+ */
 static void SiteHttpDirEntryLighttpd(void **state) {
     const char *LighttpdHtml = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n"
                                "<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\">\n"
@@ -518,6 +572,9 @@ static void SiteHttpDirEntryLighttpd(void **state) {
     siteFree(&site);
 }
 
+/**
+ * This test parses a mockup of Newths server file listings (including chunked HTTP)
+ */
 static void SiteHttpDirEntryNewth(void **state) {
     const char *NewthHtml = "10a" HTTP_EOL "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"\n"
                             "\t\"http://www.w3.org/TR/html4/strict.dtd\">\n<HTML>\n\t<HEAD>\n"
@@ -568,6 +625,9 @@ static void SiteHttpDirEntryNewth(void **state) {
     siteFree(&site);
 }
 
+/**
+ * This test parses a mockup of Nginxs server file listings
+ */
 static void SiteHttpDirEntryNginx(void **state) {
     const char *NginxHttp = "<html>\n<head><title>Index of /</title></head>\n<body>\n"
                             "<h1>Index of /</h1><hr><pre><a href=\"../\">../</a>\n"
@@ -606,6 +666,9 @@ static void SiteHttpDirEntryNginx(void **state) {
     siteFree(&site);
 }
 
+/**
+ * This test parses a mockup of a HTTP file
+ */
 static void SiteHttpOpenFile(void **state) {
     const char *head = "HTTP/1.1 200 OK" HTTP_EOL
                        "Content-Type: text/html; charset=ISO-8859-1" HTTP_EOL
@@ -645,6 +708,9 @@ static void SiteHttpOpenFile(void **state) {
     siteFree(&site);
 }
 
+/**
+ * This test parses a mockup of a HTTP file with content-disposition specified
+ */
 static void SiteHttpOpenFileAttachment(void **state) {
     const char *head = "HTTP/1.1 200 OK" HTTP_EOL
                        "Content-Type: text/html; charset=ISO-8859-1" HTTP_EOL
@@ -685,6 +751,9 @@ static void SiteHttpOpenFileAttachment(void **state) {
     siteFree(&site);
 }
 
+/**
+ * This test parses a mockup of a HTTP file with content-disposition specifying a preferred name
+ */
 static void SiteHttpOpenFileFileName(void **state) {
     const char *head = "HTTP/1.1 200 OK" HTTP_EOL
                        "Content-Type: text/html; charset=ISO-8859-1" HTTP_EOL
@@ -725,6 +794,9 @@ static void SiteHttpOpenFileFileName(void **state) {
     siteFree(&site);
 }
 
+/**
+ * This test ensures that a http site can copy an open to read file to a file site file open to write
+ */
 static void SiteHttpTransferToFile(void **state) {
     const char *data = "The quick brown fox jumps over the lazy dog", buf[49] = {0};
     const char *head = "HTTP/1.1 200 OK" HTTP_EOL
@@ -773,6 +845,9 @@ static void SiteHttpTransferToFile(void **state) {
     fclose(mockReceiveStream), mockReceiveStream = NULL;
 }
 
+/**
+ * This test ensures that opening a new file on a site will "gracefully" close an already open file data & connection
+ */
 static void SiteHttpTransferClobberedRequests(void **state) {
     const char *data1 = "The quick brown fox jumps over the lazy dog", *data2 = "The lazy dog jumps over the quick brown fox";
     const char *head = "HTTP/1.1 200 OK" HTTP_EOL
@@ -843,24 +918,34 @@ static void SiteHttpTransferClobberedRequests(void **state) {
 
 #pragma clang diagnostic pop
 
-const struct CMUnitTest siteTest[] = {cmocka_unit_test(SiteArrayFunctions), cmocka_unit_test(SiteFileNew),
-                                      cmocka_unit_test(SiteFileNewWithPath), cmocka_unit_test(SiteFileGetDirectory),
-                                      cmocka_unit_test(SiteFileOpenFile),
-                                      cmocka_unit_test(SiteFileSetDirectory), cmocka_unit_test(SiteFileDirEntry),
-                                      cmocka_unit_test(SiteFileTransferToFile), cmocka_unit_test(SiteFileTransferToFileContinue)
+const struct CMUnitTest siteTest[] = {
 #ifdef MOCK
-        , cmocka_unit_test(SiteHttpNew), cmocka_unit_test(SiteHttpNewWithPath), cmocka_unit_test(SiteHttpGetDirectory),
-                                      cmocka_unit_test(SiteHttpSetDirectory),
-                                      cmocka_unit_test(SiteHttpSetDirectoryFailFile),
-                                      cmocka_unit_test(SiteHttpDirEntryBad), cmocka_unit_test(SiteHttpDirEntryGood),
-                                      cmocka_unit_test(SiteHttpDirEntryApache),
-                                      cmocka_unit_test(SiteHttpDirEntryLighttpd),
-                                      cmocka_unit_test(SiteHttpDirEntryNewth), cmocka_unit_test(SiteHttpDirEntryNginx),
-                                      cmocka_unit_test(SiteHttpOpenFile), cmocka_unit_test(SiteHttpOpenFileAttachment),
-                                      cmocka_unit_test(SiteHttpOpenFileFileName),
-                                      cmocka_unit_test(SiteHttpTransferClobberedRequests),
-                                      cmocka_unit_test(SiteHttpTransferToFile)
+    cmocka_unit_test(SiteHttpNew),
+    cmocka_unit_test(SiteHttpNewWithPath),
+    cmocka_unit_test(SiteHttpGetDirectory),
+    cmocka_unit_test(SiteHttpSetDirectory),
+    cmocka_unit_test(SiteHttpSetDirectoryFailFile),
+    cmocka_unit_test(SiteHttpDirEntryBad),
+    cmocka_unit_test(SiteHttpDirEntryGood),
+    cmocka_unit_test(SiteHttpDirEntryApache),
+    cmocka_unit_test(SiteHttpDirEntryLighttpd),
+    cmocka_unit_test(SiteHttpDirEntryNewth),
+    cmocka_unit_test(SiteHttpDirEntryNginx),
+    cmocka_unit_test(SiteHttpOpenFile),
+    cmocka_unit_test(SiteHttpOpenFileAttachment),
+    cmocka_unit_test(SiteHttpOpenFileFileName),
+    cmocka_unit_test(SiteHttpTransferClobberedRequests),
+    cmocka_unit_test(SiteHttpTransferToFile),
 #endif
+    cmocka_unit_test(SiteArrayFunctions),
+    cmocka_unit_test(SiteFileNew),
+    cmocka_unit_test(SiteFileNewWithPath),
+    cmocka_unit_test(SiteFileGetDirectory),
+    cmocka_unit_test(SiteFileOpenFile),
+    cmocka_unit_test(SiteFileSetDirectory),
+    cmocka_unit_test(SiteFileDirEntry),
+    cmocka_unit_test(SiteFileTransferToFile),
+    cmocka_unit_test(SiteFileTransferToFileContinue)
 };
 
 #endif /* NEW_DL_TEST_SITE_H */

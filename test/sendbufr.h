@@ -19,11 +19,14 @@
 
 #pragma endregion
 
+/**
+ * This test ensures that a SendBuffers memory is freed
+ */
 static void SendBufferMemoryFree(void **state) {
     SendBuffer socketBuffer = sendBufferNew(0, 0);
 
 #ifdef MOCK
-    mockReset(),
+    mockReset();
 #endif
 
     socketBuffer.buffer = platformMemoryStreamNew();
@@ -37,6 +40,9 @@ static void SendBufferMemoryFree(void **state) {
 
 #ifdef MOCK
 
+/**
+ * This test ensures that sendBufferWriteText() appends text into the buffer (but doesn't push it out)
+ */
 static void SendBufferTextWrite(void **state) {
     const char *text = "Hello Socket Buffer Text";
     const size_t textLen = strlen(text);
@@ -48,6 +54,9 @@ static void SendBufferTextWrite(void **state) {
     mockReset();
 }
 
+/**
+ * This test ensures that sendBufferWriteData() appends data into the buffer (but doesn't push it out)
+ */
 static void SendBufferDataWrite(void **state) {
     const char *data = "Hello Socket Buffer Data";
     const size_t dataLen = strlen(data);
@@ -59,6 +68,9 @@ static void SendBufferDataWrite(void **state) {
     mockReset();
 }
 
+/**
+ * This test ensures that sendBufferFlush() sends whatever data is in the socket buffer out onto the network
+ */
 static void SendBufferSocketFlush(void **state) {
     const char *text = "Hello Socket Buffer Flush";
     const size_t textLen = strlen(text), bufSize = 5;
@@ -66,47 +78,47 @@ static void SendBufferSocketFlush(void **state) {
     SendBuffer socketBuffer = sendBufferNew(0, 0);
     mockOptions = MOCK_SEND, mockSendMaxBuf = bufSize, mockSendStream = fopen(path, "wb"), free(path);
 
-#pragma region Write some text that will overflow
+    #pragma region Write some text that will overflow
     assert_int_equal(textLen, sendBufferWriteText(&socketBuffer, text));
     fflush(mockSendStream);
     assert_int_equal(bufSize, platformFileTell(mockSendStream)); /* Break here for manual verification */
-#pragma endregion
+    #pragma endregion
 
-#pragma region Flush where no data is sent
+    #pragma region Flush where no data is sent
     mockSendMaxBuf = 0;
     assert_int_equal(0, sendBufferFlush(&socketBuffer));
     fflush(mockSendStream);
     assert_int_equal(bufSize, platformFileTell(mockSendStream)); /* Break here for manual verification */
-#pragma endregion
+    #pragma endregion
 
-#pragma region Flush where some data is sent
+    #pragma region Flush where some data is sent
     mockSendMaxBuf = bufSize;
     assert_int_equal(bufSize, sendBufferFlush(&socketBuffer));
     fflush(mockSendStream);
     assert_int_equal(bufSize * 2, platformFileTell(mockSendStream)); /* Break here for manual verification */
-#pragma endregion
+    #pragma endregion
 
-#pragma region Another flush where no data is sent
+    #pragma region Another flush where no data is sent
     mockSendMaxBuf = 0;
     assert_int_equal(0, sendBufferFlush(&socketBuffer));
     fflush(mockSendStream);
     assert_int_equal(bufSize * 2, platformFileTell(mockSendStream)); /* Break here for manual verification */
-#pragma endregion
+    #pragma endregion
 
-#pragma region Another flush where some data is sent
+    #pragma region Another flush where some data is sent
     mockSendMaxBuf = bufSize;
     assert_int_equal(bufSize, sendBufferFlush(&socketBuffer));
     fflush(mockSendStream);
     assert_int_equal(bufSize * 3, platformFileTell(mockSendStream)); /* Break here for manual verification */
-#pragma endregion
+    #pragma endregion
 
-#pragma region Flush where all remaining data is sent
+    #pragma region Flush where all remaining data is sent
     mockSendMaxBuf = BUFSIZ;
     assert_int_equal(textLen - (bufSize * 3), sendBufferFlush(&socketBuffer));
     assert_int_equal(textLen, platformFileTell(mockSendStream));
     fflush(mockSendStream);
     assert_false(socketBuffer.buffer); /* Break here for manual verification */
-#pragma endregion
+    #pragma endregion
 
     mockReset();
 }
@@ -115,9 +127,13 @@ static void SendBufferSocketFlush(void **state) {
 
 #pragma clang diagnostic pop
 
-const struct CMUnitTest sendBufferSocketTest[] = {cmocka_unit_test(SendBufferMemoryFree)
+const struct CMUnitTest sendBufferSocketTest[] = {
+    cmocka_unit_test(SendBufferMemoryFree)
 #ifdef MOCK
-        , cmocka_unit_test(SendBufferDataWrite), cmocka_unit_test(SendBufferTextWrite), cmocka_unit_test(SendBufferSocketFlush)
+    ,
+    cmocka_unit_test(SendBufferDataWrite),
+    cmocka_unit_test(SendBufferTextWrite),
+    cmocka_unit_test(SendBufferSocketFlush)
 #endif
 };
 

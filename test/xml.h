@@ -104,9 +104,12 @@ static void XmlFindHtmlElementPtr(void **state) {
 
 #pragma clang diagnostic pop
 
-const struct CMUnitTest xmlTest[] = {cmocka_unit_test(XmlFindHtmlElementPtr), cmocka_unit_test(XmlFindHtmlAttributePtr),
-                                     cmocka_unit_test(XmlExtractHtmlAttributeValue),
-                                     cmocka_unit_test(XmlFindExtractElement),
-                                     cmocka_unit_test(XmlFindExtractAttribute)};
+const struct CMUnitTest xmlTest[] = {
+    cmocka_unit_test(XmlFindHtmlElementPtr),
+    cmocka_unit_test(XmlFindHtmlAttributePtr),
+    cmocka_unit_test(XmlExtractHtmlAttributeValue),
+    cmocka_unit_test(XmlFindExtractElement),
+    cmocka_unit_test(XmlFindExtractAttribute)
+};
 
 #endif /* NEW_DL_TEST_XML_H */

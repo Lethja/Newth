@@ -19,6 +19,9 @@
 
 #pragma endregion
 
+/**
+ * This test ensures that malloc() can be mocked correctly by the CMocka library
+ */
 static void MockMalloc(void **state) {
     void *test;
     mockReset();
@@ -32,6 +35,9 @@ static void MockMalloc(void **state) {
         free(test);
 }
 
+/**
+ * This test ensures that realloc() can be mocked correctly by the CMocka library
+ */
 static void MockRealloc(void **state) {
     void *test, *new;
     mockReset();
@@ -52,6 +58,9 @@ static void MockRealloc(void **state) {
         free(test);
 }
 
+/**
+ * This test ensures that Berkley socket function recv() can be mocked correctly by the CMocka library
+ */
 static void MockReceive(void **state) {
     size_t i = SB_DATA_SIZE * 2, received;
     char junkData[SB_DATA_SIZE * 2] = "";
@@ -80,6 +89,9 @@ static void MockReceive(void **state) {
     assert_int_equal(platformSocketGetLastError(), EAGAIN);
 }
 
+/**
+ * This test ensures that Berkley socket function recv() can be set to mock a transmission of data from a file stream
+ */
 static void MockReceiveStream(void **state) {
 #define MOCK_RECV_BUFR_LEN 128
     size_t i, received;
@@ -89,8 +101,9 @@ static void MockReceiveStream(void **state) {
                              " Urna porttitor rhoncus dolor purus non enim praesent elementum facilisis."
                              " Cras sed felis eget velit aliquet sagittis id consectetur.";
 
-    mockReset(), mockOptions = MOCK_RECEIVE, mockReceiveMaxBuf = MOCK_RECV_BUFR_LEN, i = strlen(
-            SampleData), mockReceiveStream = tmpfile();
+    mockReset(), mockOptions = MOCK_RECEIVE, mockReceiveMaxBuf = MOCK_RECV_BUFR_LEN;
+    i = strlen(
+        SampleData), mockReceiveStream = tmpfile();
 
     assert_non_null(mockReceiveStream);
     assert_int_equal(fwrite(SampleData, 1, i, mockReceiveStream), i);
@@ -123,6 +136,9 @@ static void MockReceiveStream(void **state) {
     fflush(mockReceiveStream), fclose(mockReceiveStream), mockReceiveStream = NULL;
 }
 
+/**
+ * This test ensures that Berkley socket function recv() can have an artificial send limit of data set on it
+ */
 static void MockReceiveStreamCount(void **state) {
     size_t i, received;
     char junkData[32] = "";
@@ -131,8 +147,8 @@ static void MockReceiveStreamCount(void **state) {
                              " Urna porttitor rhoncus dolor purus non enim praesent elementum facilisis."
                              " Cras sed felis eget velit aliquet sagittis id consectetur.";
 
-    mockReset(), mockOptions = MOCK_RECEIVE | MOCK_RECEIVE_COUNT, mockReceiveMaxBuf = 32, i = strlen(
-            SampleData), mockReceiveStream = tmpfile();
+    mockReset(), mockOptions = MOCK_RECEIVE | MOCK_RECEIVE_COUNT, mockReceiveMaxBuf = 32;
+    i = strlen(SampleData), mockReceiveStream = tmpfile();
 
     assert_non_null(mockReceiveStream);
     assert_int_equal(fwrite(SampleData, 1, i, mockReceiveStream), i);
@@ -156,6 +172,9 @@ static void MockReceiveStreamCount(void **state) {
     fflush(mockReceiveStream), fclose(mockReceiveStream), mockReceiveStream = NULL;
 }
 
+/**
+ * This test ensures that Berkley socket function send() can be mocked correctly by the CMocka library
+ */
 static void MockSend(void **state) {
     size_t i, bufferMax = ((SB_DATA_SIZE * 2) / 32) - 1, sent;
     char junkData[SB_DATA_SIZE * 2] = "";
@@ -186,6 +205,9 @@ static void MockSend(void **state) {
     assert_int_equal(platformSocketGetLastError(), EAGAIN);
 }
 
+/**
+ * This test ensures that helper function FindHttpBodyStart() can find the start of a http body
+ */
 static void MockHttpBodyFindStart(void **state) {
     const char *http = "HTTP/1.1 200 OK\n"
                        "Date: Thu, 27 Jul 2023 05:57:33 GMT" HTTP_EOL
@@ -204,7 +226,7 @@ static void MockHttpBodyFindStart(void **state) {
     assert_non_null(tmpFile1), fwrite(http, strlen(http), 1, tmpFile1), correctPosition = ftell(tmpFile1);
 
     fwrite(body, strlen(body), 1, tmpFile1);
-    testPosition = findHttpBodyStart(tmpFile1);
+    testPosition = FindHttpBodyStart(tmpFile1);
     assert_int_equal(correctPosition, testPosition);
 
     assert_non_null(tmpFile2 = tmpfile()), fwrite(body, 1, strlen(body), tmpFile2), rewind(tmpFile2);
@@ -215,9 +237,14 @@ static void MockHttpBodyFindStart(void **state) {
 
 #pragma clang diagnostic pop
 
-const struct CMUnitTest mockTest[] = {cmocka_unit_test(MockHttpBodyFindStart), cmocka_unit_test(MockMalloc),
-                                      cmocka_unit_test(MockRealloc), cmocka_unit_test(MockReceive),
-                                      cmocka_unit_test(MockReceiveStream), cmocka_unit_test(MockReceiveStreamCount),
-                                      cmocka_unit_test(MockSend)};
+const struct CMUnitTest mockTest[] = {
+    cmocka_unit_test(MockHttpBodyFindStart),
+    cmocka_unit_test(MockMalloc),
+    cmocka_unit_test(MockRealloc),
+    cmocka_unit_test(MockReceive),
+    cmocka_unit_test(MockReceiveStream),
+    cmocka_unit_test(MockReceiveStreamCount),
+    cmocka_unit_test(MockSend)
+};
 
 #endif /* NEW_TH_TEST_MOCK_H */

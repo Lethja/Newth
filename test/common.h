@@ -22,7 +22,7 @@
 
 static char *sampleText = "Glum-Schwartzkopf,vex'd_by NJ&IQ"; /* 32 characters, each unique */
 
-static void writeSampleFile(FILE *file, size_t length) {
+static void WriteSampleFile(FILE *file, size_t length) {
     const char *content = "123456789\n";
     size_t i, max = strlen(content);
 
@@ -34,7 +34,7 @@ static void writeSampleFile(FILE *file, size_t length) {
     }
 }
 
-static long findHttpBodyStart(FILE *stream) {
+static long FindHttpBodyStart(FILE *stream) {
     long r = 0, match = 0;
 
     rewind(stream);
@@ -43,12 +43,12 @@ static long findHttpBodyStart(FILE *stream) {
         switch (ch) {
             case '\n':
                 if (match) {
-                    case '\r':
-                        ++match;
+                case '\r':
+                    ++match;
                     break;
                 } else
-                    default:
-                        match = 0;
+                default:
+                match = 0;
                 break;
             case EOF:
                 return -1;

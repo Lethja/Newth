@@ -18,6 +18,9 @@
 
 #pragma endregion
 
+/**
+ * This test ensures uriDetailsNewFrom() is filling out UriDetails with the minimum amount of functional data
+ */
 static void UriNewMinimum(void **state) {
     const char *Uri = "localhost/foo";
 
@@ -34,6 +37,9 @@ static void UriNewMinimum(void **state) {
     assert_null(details.path);
 }
 
+/**
+ * This test ensures uriDetailsNewFrom() doesn't write junk data into UriDetails
+ */
 static void UriNewNoString(void **state) {
     const char *Uri = "";
     UriDetails details = uriDetailsNewFrom(Uri);
@@ -44,6 +50,9 @@ static void UriNewNoString(void **state) {
     uriDetailsFree(&details);
 }
 
+/**
+ * This test ensures uriDetailsNewFrom() doesn't write junk data into UriDetails when only a host is given
+ */
 static void UriNewPathless(void **state) {
     const char *Uri = "localhost";
 
@@ -60,6 +69,9 @@ static void UriNewPathless(void **state) {
     assert_null(details.path);
 }
 
+/**
+ * This test ensures uriDetailsNewFrom() writes correct information into all members of UriDetails
+ */
 static void UriNewVerbose(void **state) {
     const char *Uri = "http://localhost:8080/foo?bar";
 
@@ -78,6 +90,9 @@ static void UriNewVerbose(void **state) {
     assert_null(details.query);
 }
 
+/**
+* This test ensures the string made by uriDetailsCreateString() is identical to the one put into uriDetailsNewFrom()
+ */
 static void UriDetailsToString(void **state) {
     const char *Uri = "http://localhost/foo";
     char *res;
@@ -88,6 +103,9 @@ static void UriDetailsToString(void **state) {
     free(res), uriDetailsFree(&details);
 }
 
+/**
+* This test is the port version of the 'UriDetailsToString' test
+ */
 static void UriDetailsToStringWithPort(void **state) {
     const char *Uri = "http://localhost:8080/foo";
     char *res;
@@ -98,6 +116,9 @@ static void UriDetailsToStringWithPort(void **state) {
     free(res), uriDetailsFree(&details);
 }
 
+/**
+* This test is the query version of the 'UriDetailsToString' test
+ */
 static void UriDetailsToStringWithQuery(void **state) {
     const char *Uri = "http://localhost/foo?bar";
     char *res;
@@ -108,6 +129,9 @@ static void UriDetailsToStringWithQuery(void **state) {
     free(res), uriDetailsFree(&details);
 }
 
+/**
+ * This test ensures that name resolution can take place and uriDetailsGetHostAddr() returns the correct address
+ */
 static void UriGetAddressFromHost(void **state) {
     UriDetails details;
     char *addr;
@@ -119,6 +143,9 @@ static void UriGetAddressFromHost(void **state) {
     free(addr);
 }
 
+/**
+ * This test ensures that ip address resolution can take place and uriDetailsGetHostAddr() returns the correct address
+ */
 static void UriGetAddressFromAddress(void **state) {
     UriDetails details;
     char *addr;
@@ -130,12 +157,18 @@ static void UriGetAddressFromAddress(void **state) {
     free(addr);
 }
 
+/**
+ * This test checks that uriDetailsGetPort() converts a string input of a port number into a unsigned short correctly
+ */
 static void UriGetPort(void **state) {
     UriDetails details;
     details.port = "80";
     assert_int_equal(uriDetailsGetPort(&details), 80);
 }
 
+/**
+ * This test ensures that when the port string is not within the range of a unsigned short it will be set to 0
+ */
 static void UriGetPortInvalid(void **state) {
     UriDetails details;
     details.port = "65536";
@@ -144,6 +177,9 @@ static void UriGetPortInvalid(void **state) {
     assert_int_equal(uriDetailsGetPort(&details), 0);
 }
 
+/**
+ * This test ensures that known uri schemes are given the correct enum value from uriDetailsGetScheme()
+ */
 static void UriGetScheme(void **state) {
     UriDetails details;
 
@@ -166,6 +202,9 @@ static void UriGetScheme(void **state) {
     assert_int_equal(uriDetailsGetScheme(&details), SCHEME_HTTPS);
 }
 
+/**
+ * This test checks that schemes enums are set back to the correct string counterparts with uriDetailsSetScheme()
+ */
 static void UriSetScheme(void **state) {
     UriDetails details = uriDetailsNewFrom(NULL);
     uriDetailsSetScheme(&details, SCHEME_HTTPS);
@@ -181,6 +220,9 @@ static void UriSetScheme(void **state) {
     assert_int_equal(uriDetailsGetScheme(&details), SCHEME_UNKNOWN);
 }
 
+/**
+ * This test checks that address and port set back to the correct string counterparts with uriDetailsSetAddress()
+ */
 static void UriSetAddressAndPort(void **state) {
     UriDetails details = uriDetailsNewFrom(NULL);
     struct sockaddr_in ipv4;
@@ -194,6 +236,9 @@ static void UriSetAddressAndPort(void **state) {
     free(details.host), free(details.port);
 }
 
+/**
+ * This test ensures that a uri can be converted directly into a socket address if enough information is given to do so
+ */
 static void UriConvertToSocketAddress(void **state) {
     SocketAddress address;
     UriDetails details = uriDetailsNewFrom("http://localhost");
@@ -205,6 +250,9 @@ static void UriConvertToSocketAddress(void **state) {
     uriDetailsFree(&details);
 }
 
+/**
+ * This test ensures that a uri with a port can be converted directly into a socket address if enough information is given to do so
+ */
 static void UriConvertToSocketAddressWithScheme(void **state) {
     SocketAddress address;
     UriDetails details = uriDetailsNewFrom("localhost");
@@ -216,6 +264,9 @@ static void UriConvertToSocketAddressWithScheme(void **state) {
     uriDetailsFree(&details);
 }
 
+/**
+ * This test is like the UriSetScheme test except with a port in the uri
+ */
 static void UriConvertToSocketAddressWithPort(void **state) {
     SocketAddress address;
     UriDetails details = uriDetailsNewFrom("localhost:1");
@@ -230,30 +281,46 @@ static void UriConvertToSocketAddressWithPort(void **state) {
     uriDetailsFree(&details);
 }
 
+/**
+ * This test checks that two paths can be added together with neither having a path divider in it's string
+ * @remark uriPathCombine() should not to be confused with platformPathCombine()
+ */
 static void UriPathCombineString(void **state) {
     const char *path1 = "foo", *path2 = "bar";
     char output[FILENAME_MAX];
 
-    platformPathCombine(output, path1, path2);
+    uriPathCombine(output, path1, path2);
     assert_string_equal(output, "foo/bar");
 }
 
+/**
+ * This test checks that two paths can be added together, if they have path dividers but not on the joining end
+ * @remark uriPathCombine() should not to be confused with platformPathCombine()
+ */
 static void UriPathCombineStringNoDivider(void **state) {
     const char *path1 = "/foo", *path2 = "bar/";
     char output[FILENAME_MAX];
 
-    platformPathCombine(output, path1, path2);
+    uriPathCombine(output, path1, path2);
     assert_string_equal(output, "/foo/bar/");
 }
 
+/**
+ * This test checks that two paths can be added together, if the first has a path divider
+ * @remark uriPathCombine() should not to be confused with platformPathCombine()
+ */
 static void UriPathCombineStringTrailingDivider(void **state) {
     const char *path1 = "/foo/", *path2 = "bar/";
     char output[FILENAME_MAX];
 
-    platformPathCombine(output, path1, path2);
+    uriPathCombine(output, path1, path2);
     assert_string_equal(output, "/foo/bar/");
 }
 
+/**
+ * This test checks that two paths can be added together, if the second has a path divider
+ * @remark uriPathCombine() should not to be confused with platformPathCombine()
+ */
 static void UriPathCombineStringLeadingDivider(void **state) {
     const char *path1 = "/foo", *path2 = "/bar/";
     char output[FILENAME_MAX];
@@ -262,6 +329,10 @@ static void UriPathCombineStringLeadingDivider(void **state) {
     assert_string_equal(output, "/foo/bar/");
 }
 
+/**
+ * This test checks that two paths can be added together, if both strings have the divider
+ * @remark uriPathCombine() should not to be confused with platformPathCombine()
+ */
 static void UriPathCombineStringBothDividers(void **state) {
     const char *path1 = "/foo/", *path2 = "/bar/";
     char output[FILENAME_MAX];
@@ -270,22 +341,33 @@ static void UriPathCombineStringBothDividers(void **state) {
     assert_string_equal(output, "/foo/bar/");
 }
 
+/**
+ * This test checks that non-sense paths are not combined in a non-sense way
+ * @remark uriPathCombine() should not to be confused with platformPathCombine()
+ */
 static void UriPathCombineStringJustDividers(void **state) {
     const char *path1 = "////", *path2 = path1;
     char output[FILENAME_MAX];
 
-    platformPathCombine(output, path1, path2);
+    uriPathCombine(output, path1, path2);
     assert_string_equal(output, "/");
 }
 
+/**
+ * This test checks that two root paths are not combined together
+ * @remark uriPathCombine() should not to be confused with platformPathCombine()
+ */
 static void UriPathCombineStringDumbInput(void **state) {
     const char *path1, *path2 = path1 = "/";
     char output[FILENAME_MAX];
 
-    platformPathCombine(output, path1, path2);
+    uriPathCombine(output, path1, path2);
     assert_string_equal(output, "/");
 }
 
+/**
+ * This test ensures that uri paths can be appended to and a new string be returned
+ */
 static void UriPathAppend(void **state) {
     const char *path1 = "/animal/dog", *path2 = "bone";
     char *r;
@@ -294,6 +376,9 @@ static void UriPathAppend(void **state) {
     free(r);
 }
 
+/**
+ * This test ensures that when an absolute uri paths is attempting to be appended it is instead return verbatim
+ */
 static void UriPathAppendAbsolute(void **state) {
     const char *path1 = "/animal/dog", *path2 = "/bone";
     char *r;
@@ -302,6 +387,9 @@ static void UriPathAppendAbsolute(void **state) {
     free(r);
 }
 
+/**
+ * This test checks that a relative path '.' does not get appended and that the same path as before is returned
+ */
 static void UriPathAppendGoNowhere(void **state) {
     const char *path1 = "/animal/dog", *path2 = ".";
     char *r;
@@ -310,6 +398,9 @@ static void UriPathAppendGoNowhere(void **state) {
     free(r);
 }
 
+/**
+ * This test ensures that a relative path '.' gets omitted from appending
+ */
 static void UriPathAppendGoNowhereDouble(void **state) {
     const char *path1 = "/animal/dog", *path2 = "././";
     char *r;
@@ -318,6 +409,9 @@ static void UriPathAppendGoNowhereDouble(void **state) {
     free(r);
 }
 
+/**
+ * This test ensures that a current path '.' gets omitted from appending but valid paths aren't
+ */
 static void UriPathAppendGoNowhereYetSomewhere(void **state) {
     const char *path1 = "/animal/dog", *path2 = "./bone";
     char *r;
@@ -326,6 +420,9 @@ static void UriPathAppendGoNowhereYetSomewhere(void **state) {
     free(r);
 }
 
+/**
+ * This test ensures that a current path '.' gets omitted from appending but valid paths aren't even when there's many
+ */
 static void UriPathAppendGoNowhereYetSomewhereDouble(void **state) {
     const char *path1 = "/animal/dog", *path2 = "././bone";
     char *r;
@@ -334,6 +431,9 @@ static void UriPathAppendGoNowhereYetSomewhereDouble(void **state) {
     free(r);
 }
 
+/**
+ * This test ensures that a up path works even if curret paths occurred before
+ */
 static void UriPathAppendGoNowhereAndUp(void **state) {
     const char *path1 = "/animal/dog", *path2 = "././../bone";
     char *r;
@@ -342,6 +442,9 @@ static void UriPathAppendGoNowhereAndUp(void **state) {
     free(r);
 }
 
+/**
+ * This test ensures that a up path works even if current paths occur after
+ */
 static void UriPathAppendGoUpAndNowhere(void **state) {
     const char *path1 = "/animal/dog", *path2 = "../././bone";
     char *r;
@@ -350,6 +453,9 @@ static void UriPathAppendGoUpAndNowhere(void **state) {
     free(r);
 }
 
+/**
+ * This test ensures that a up path works
+ */
 static void UriPathAppendGoUp(void **state) {
     const char *path1 = "/animal/dog", *path2 = "..";
     char *r;
@@ -358,6 +464,9 @@ static void UriPathAppendGoUp(void **state) {
     free(r);
 }
 
+/**
+ * This test ensures that a up path can work multiple times
+ */
 static void UriPathAppendGoUpDouble(void **state) {
     const char *path1 = "/animal/dog", *path2 = "../..";
     char *r;
@@ -366,6 +475,9 @@ static void UriPathAppendGoUpDouble(void **state) {
     free(r);
 }
 
+/**
+ * This test ensures that going up too many paths will simply leave you at root
+ */
 static void UriPathAppendGoUpTooFar(void **state) {
     const char *path1 = "/animal/dog", *path2 = "../../..";
     char *r;
@@ -374,6 +486,9 @@ static void UriPathAppendGoUpTooFar(void **state) {
     free(r);
 }
 
+/**
+ * This test ensures that going up still allows you to go to a path afterward
+ */
 static void UriPathAppendGoSideways(void **state) {
     const char *path1 = "/animal/dog", *path2 = "../cat";
     char *r;
@@ -382,6 +497,9 @@ static void UriPathAppendGoSideways(void **state) {
     free(r);
 }
 
+/**
+ * This test ensures that going up still allows you to go to a path afterward
+ */
 static void UriPathAppendGoSidewaysDouble(void **state) {
     const char *path1 = "/animal/dog/bone", *path2 = "../../cat/fish";
     char *r;
@@ -390,6 +508,9 @@ static void UriPathAppendGoSidewaysDouble(void **state) {
     free(r);
 }
 
+/**
+ * This test checks that uriPathLast() return the last element of the path correctly as a sub-pointer
+ */
 static void UriPathLast(void **state) {
     const char *path = "/animal/dog.png";
     const char *last = uriPathLast(path);
@@ -398,6 +519,9 @@ static void UriPathLast(void **state) {
     assert_ptr_equal(last, &path[8]);
 }
 
+/**
+ * This test checks that uriPathLast() return a new heap with the last element and any trailing divider removed
+ */
 static void UriPathLastHeap(void **state) {
     const char *path = "/animal/cat/";
     char *last = uriPathLast(path);
@@ -409,6 +533,9 @@ static void UriPathLastHeap(void **state) {
 
 #ifdef GETHOSTBYNAME_CANT_IPV4STR
 
+/**
+ * This test checks that isValidIpv4Str() returns correct results
+ */
 static void Ipv4Validate(void **state) {
     const char *bad1 = "256.255.255.255", *bad2 = "0", *bad3 = "0000", *bad4 = "Connect please", *loop = "127.0.0.1", *max = "255.255.255.255", *min = "0.0.0.0";
 
@@ -428,27 +555,48 @@ static void Ipv4Validate(void **state) {
 const struct CMUnitTest fetchTest[] = {
 #ifdef GETHOSTBYNAME_CANT_IPV4STR
 
-        cmocka_unit_test(Ipv4Validate),
+    cmocka_unit_test(Ipv4Validate),
 
 #endif
-        cmocka_unit_test(UriConvertToSocketAddress), cmocka_unit_test(UriConvertToSocketAddressWithPort),
-        cmocka_unit_test(UriConvertToSocketAddressWithScheme), cmocka_unit_test(UriGetAddressFromAddress),
-        cmocka_unit_test(UriDetailsToString), cmocka_unit_test(UriDetailsToStringWithPort),
-        cmocka_unit_test(UriDetailsToStringWithQuery), cmocka_unit_test(UriGetAddressFromHost),
-        cmocka_unit_test(UriGetPort), cmocka_unit_test(UriGetPortInvalid), cmocka_unit_test(UriGetScheme),
-        cmocka_unit_test(UriSetAddressAndPort), cmocka_unit_test(UriSetScheme), cmocka_unit_test(UriNewMinimum),
-        cmocka_unit_test(UriNewNoString), cmocka_unit_test(UriNewPathless), cmocka_unit_test(UriNewVerbose),
-        cmocka_unit_test(UriPathCombineString), cmocka_unit_test(UriPathAppend),
-        cmocka_unit_test(UriPathAppendAbsolute), cmocka_unit_test(UriPathAppendGoNowhere),
-        cmocka_unit_test(UriPathAppendGoNowhereAndUp), cmocka_unit_test(UriPathAppendGoNowhereDouble),
-        cmocka_unit_test(UriPathAppendGoNowhereYetSomewhere),
-        cmocka_unit_test(UriPathAppendGoNowhereYetSomewhereDouble), cmocka_unit_test(UriPathAppendGoSideways),
-        cmocka_unit_test(UriPathAppendGoSidewaysDouble), cmocka_unit_test(UriPathAppendGoUp),
-        cmocka_unit_test(UriPathAppendGoUpAndNowhere), cmocka_unit_test(UriPathAppendGoUpDouble),
-        cmocka_unit_test(UriPathAppendGoUpTooFar), cmocka_unit_test(UriPathCombineStringBothDividers),
-        cmocka_unit_test(UriPathCombineStringDumbInput), cmocka_unit_test(UriPathCombineStringJustDividers),
-        cmocka_unit_test(UriPathCombineStringLeadingDivider), cmocka_unit_test(UriPathCombineStringNoDivider),
-        cmocka_unit_test(UriPathCombineStringTrailingDivider), cmocka_unit_test(UriPathLast),
-        cmocka_unit_test(UriPathLastHeap)};
+    cmocka_unit_test(UriConvertToSocketAddress),
+    cmocka_unit_test(UriConvertToSocketAddressWithPort),
+    cmocka_unit_test(UriConvertToSocketAddressWithScheme),
+    cmocka_unit_test(UriGetAddressFromAddress),
+    cmocka_unit_test(UriDetailsToString),
+    cmocka_unit_test(UriDetailsToStringWithPort),
+    cmocka_unit_test(UriDetailsToStringWithQuery),
+    cmocka_unit_test(UriGetAddressFromHost),
+    cmocka_unit_test(UriGetPort),
+    cmocka_unit_test(UriGetPortInvalid),
+    cmocka_unit_test(UriGetScheme),
+    cmocka_unit_test(UriSetAddressAndPort),
+    cmocka_unit_test(UriSetScheme),
+    cmocka_unit_test(UriNewMinimum),
+    cmocka_unit_test(UriNewNoString),
+    cmocka_unit_test(UriNewPathless),
+    cmocka_unit_test(UriNewVerbose),
+    cmocka_unit_test(UriPathCombineString),
+    cmocka_unit_test(UriPathAppend),
+    cmocka_unit_test(UriPathAppendAbsolute),
+    cmocka_unit_test(UriPathAppendGoNowhere),
+    cmocka_unit_test(UriPathAppendGoNowhereAndUp),
+    cmocka_unit_test(UriPathAppendGoNowhereDouble),
+    cmocka_unit_test(UriPathAppendGoNowhereYetSomewhere),
+    cmocka_unit_test(UriPathAppendGoNowhereYetSomewhereDouble),
+    cmocka_unit_test(UriPathAppendGoSideways),
+    cmocka_unit_test(UriPathAppendGoSidewaysDouble),
+    cmocka_unit_test(UriPathAppendGoUp),
+    cmocka_unit_test(UriPathAppendGoUpAndNowhere),
+    cmocka_unit_test(UriPathAppendGoUpDouble),
+    cmocka_unit_test(UriPathAppendGoUpTooFar),
+    cmocka_unit_test(UriPathCombineStringBothDividers),
+    cmocka_unit_test(UriPathCombineStringDumbInput),
+    cmocka_unit_test(UriPathCombineStringJustDividers),
+    cmocka_unit_test(UriPathCombineStringLeadingDivider),
+    cmocka_unit_test(UriPathCombineStringNoDivider),
+    cmocka_unit_test(UriPathCombineStringTrailingDivider),
+    cmocka_unit_test(UriPathLast),
+    cmocka_unit_test(UriPathLastHeap)
+};
 
 #endif /* NEW_DL_TEST_FETCH_H */

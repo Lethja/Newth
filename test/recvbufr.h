@@ -20,6 +20,9 @@
 
 #pragma endregion
 
+/**
+ * This test checks that recvBufferCopyBetween() copies data over into another buffer a sane way
+ */
 static void RecvBufferCopyBetween(void **state) {
     char *copy;
 
@@ -39,6 +42,9 @@ static void RecvBufferCopyBetween(void **state) {
     free(copy), recvBufferClear(&socketBuffer);
 }
 
+/**
+ * This test checks that the heap buffer is freed correctly
+ */
 static void RecvBufferMemoryFree(void **state) {
     RecvBuffer socketBuffer = {0};
 
@@ -55,6 +61,9 @@ static void RecvBufferMemoryFree(void **state) {
 #endif
 }
 
+/**
+ * This test checks that the heap buffer is cleared correctly
+ */
 static void RecvBufferClear(void **state) {
     RecvBuffer socketBuffer = {0};
     char buf[10];
@@ -63,9 +72,9 @@ static void RecvBufferClear(void **state) {
     char *buffer;
     mockReset();
     buffer =
-    #endif
+#endif
 
-            socketBuffer.buffer = malloc(10);
+    socketBuffer.buffer = malloc(10);
     assert_non_null(&socketBuffer.buffer);
     recvBufferClear(&socketBuffer);
     assert_null(socketBuffer.buffer);
@@ -76,6 +85,9 @@ static void RecvBufferClear(void **state) {
 #endif
 }
 
+/**
+ * This test ensures that recvBufferSetLengthChunk() sets the socket buffer into chunk parsing mode correctly
+ */
 static void ReceiveSetLengthChunk(void **state) {
     RecvBuffer socketBuffer;
 
@@ -100,6 +112,9 @@ static void ReceiveSetLengthChunk(void **state) {
     assert_int_equal(socketBuffer.length.chunk.total, 0);
 }
 
+/**
+ * This test ensures that recvBufferSetLengthComplete() marks the socket buffer as request complete correctly
+ */
 static void ReceiveSetLengthComplete(void **state) {
     RecvBuffer socketBuffer;
 
@@ -124,6 +139,9 @@ static void ReceiveSetLengthComplete(void **state) {
     assert_int_equal(socketBuffer.length.chunk.total, 0);
 }
 
+/**
+ * This test ensures that recvBufferSetLengthKnown() sets the socket buffer is set into length known mode correctly
+ */
 static void ReceiveSetLengthKnown(void **state) {
     RecvBuffer socketBuffer;
 
@@ -148,6 +166,9 @@ static void ReceiveSetLengthKnown(void **state) {
     assert_int_equal(socketBuffer.length.known.escape, 0);
 }
 
+/**
+ * This test ensures that recvBufferSetLengthToken() set the socket buffer is set into token parsing mode correctly
+ */
 static void ReceiveSetLengthToken(void **state) {
     RecvBuffer socketBuffer;
 
@@ -172,6 +193,9 @@ static void ReceiveSetLengthToken(void **state) {
     assert_int_equal(socketBuffer.length.token.length, 4);
 }
 
+/**
+ * This test ensures that recvBufferSetLengthUnknown() set the socket buffer is set into unknown mode correctly
+ */
 static void ReceiveSetLengthUnknown(void **state) {
     RecvBuffer socketBuffer;
 
@@ -196,6 +220,9 @@ static void ReceiveSetLengthUnknown(void **state) {
 
 #ifdef MOCK
 
+/**
+ * This test ensures that recvBufferDitch() only ditches the amount of bytes specified from the beginning of the buffer
+ */
 static void ReceiveDitch(void **state) {
     RecvBuffer socketBuffer = {0};
     char buf[11] = {0};
@@ -219,6 +246,9 @@ static void ReceiveDitch(void **state) {
     recvBufferFailFree(&socketBuffer);
 }
 
+/**
+ * This test ensures that recvBufferFetch() get the correct starting position and length from the requested buffer
+ */
 static void ReceiveFetch(void **state) {
     RecvBuffer socketBuffer = {0};
     char buf[11] = {0};
@@ -239,6 +269,9 @@ static void ReceiveFetch(void **state) {
     recvBufferFailFree(&socketBuffer);
 }
 
+/**
+ * This test is like the ReceiveFetch test except in chunk parsing mode
+ */
 static void ReceiveFetchChunk(void **state) {
     RecvBuffer socketBuffer;
 
@@ -259,6 +292,9 @@ static void ReceiveFetchChunk(void **state) {
     recvBufferFailFree(&socketBuffer);
 }
 
+/**
+ * This test ensures that HTTP chunk metadata is not interpreted as data
+ */
 static void ReceiveFetchChunkEmpty(void **state) {
     RecvBuffer socketBuffer;
 
@@ -276,6 +312,9 @@ static void ReceiveFetchChunkEmpty(void **state) {
     recvBufferClear(&socketBuffer);
 }
 
+/**
+ * This test ensures that HTTP chunk metadata is not interpreted as data when the requests come in aligned to the chunks
+ */
 static void ReceiveFetchChunkIterateAligned(void **state) {
     RecvBuffer socketBuffer;
 
@@ -321,6 +360,9 @@ static void ReceiveFetchChunkIterateAligned(void **state) {
     recvBufferClear(&socketBuffer);
 }
 
+/**
+ * This test ensures that HTTP chunk metadata is not interpreted as data when the requests are unaligned to the chunks
+ */
 static void ReceiveFetchChunkIterateUnaligned(void **state) {
     RecvBuffer socketBuffer;
 
@@ -366,6 +408,9 @@ static void ReceiveFetchChunkIterateUnaligned(void **state) {
     recvBufferClear(&socketBuffer);
 }
 
+/**
+ * This test ensures that recvBufferAppend() fails gracefully when HTTP chunk metadata is corrupted
+ */
 static void ReceiveFetchChunkMalformed(void **state) {
     RecvBuffer socketBuffer;
 
@@ -382,6 +427,9 @@ static void ReceiveFetchChunkMalformed(void **state) {
     recvBufferClear(&socketBuffer);
 }
 
+/**
+ * This test ensures that recvBufferAppend() fails gracefully when HTTP chunk metadata is malformed at the start
+ */
 static void ReceiveFetchChunkMalformedStart(void **state) {
     RecvBuffer socketBuffer;
 
@@ -398,6 +446,9 @@ static void ReceiveFetchChunkMalformedStart(void **state) {
     recvBufferClear(&socketBuffer);
 }
 
+/**
+ * This test is similar to the ReceiveFetchNonBlocking test but for chunk mode
+ */
 static void ReceiveFetchChuckNonBlocking(void **state) {
     RecvBuffer socketBuffer = {0};
     char sample[] = "4" HTTP_EOL "This" HTTP_EOL "3" HTTP_EOL " is" HTTP_EOL "2" HTTP_EOL" a" HTTP_EOL "5" HTTP_EOL " test" HTTP_EOL "0" HTTP_EOL HTTP_EOL;
@@ -408,15 +459,15 @@ static void ReceiveFetchChuckNonBlocking(void **state) {
     mockReceiveStream = tmpfile(), fwrite(sample, 1, max, mockReceiveStream), rewind(mockReceiveStream);
     recvBufferSetLengthChunk(&socketBuffer);
 
-#pragma region A normal request
+    #pragma region A normal request
 
     assert_null(recvBufferAppend(&socketBuffer, 10));
     assert_null(recvBufferFetch(&socketBuffer, output, 0, 11));
     assert_string_equal("This is a ", output);
 
-#pragma endregion
+    #pragma endregion
 
-#pragma region Client is too quick, no packets received
+    #pragma region Client is too quick, no packets received
 
     mockReceiveError = EAGAIN, mockErrorReset = 2;
     recvBufferClear(&socketBuffer);
@@ -425,11 +476,14 @@ static void ReceiveFetchChuckNonBlocking(void **state) {
     assert_null(recvBufferFetch(&socketBuffer, output, 0, 11));
     assert_string_equal("test", output);
 
-#pragma endregion
+    #pragma endregion
 
     recvBufferFailFree(&socketBuffer);
 }
 
+/**
+ * This test ensures that recvBufferAppend() handles chunks that make no sense gracefully
+ */
 static void ReceiveFetchChunkOverflow(void **state) {
     RecvBuffer socketBuffer;
 
@@ -447,6 +501,9 @@ static void ReceiveFetchChunkOverflow(void **state) {
     recvBufferClear(&socketBuffer);
 }
 
+/**
+ * This test ensures that recvBufferAppend() handles chunks that make no sense at the end of a stream gracefully
+ */
 static void ReceiveFetchChunkOverflowExact(void **state) {
     RecvBuffer socketBuffer;
 
@@ -464,6 +521,9 @@ static void ReceiveFetchChunkOverflowExact(void **state) {
     recvBufferClear(&socketBuffer);
 }
 
+/**
+ * This test ensures that recvBufferAppend() handles chunks metadata that isn't a valid hex value gracefully
+ */
 static void ReceiveFetchChunkOverflowMalformed(void **state) {
     RecvBuffer socketBuffer;
     const char *e;
@@ -482,21 +542,24 @@ static void ReceiveFetchChunkOverflowMalformed(void **state) {
     recvBufferClear(&socketBuffer);
 }
 
+/**
+ * This test ensures that recvBufferAppend() waits for packets if it's requesting them too fast
+ */
 static void ReceiveFetchNonBlocking(void **state) {
     RecvBuffer socketBuffer = {0};
     char buf[11] = {0};
 
     mockReset(), mockOptions = MOCK_CONNECT | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
 
-#pragma region A normal request
+    #pragma region A normal request
 
     assert_null(recvBufferAppend(&socketBuffer, 10));
     assert_null(recvBufferFetch(&socketBuffer, buf, 0, 11));
     assert_string_equal("1234567890", buf);
 
-#pragma endregion
+    #pragma endregion
 
-#pragma region Client is too quick, no packets at the moment, should block until at least a byte is ready
+    #pragma region Client is too quick, no packets at the moment, should block until at least a byte is ready
 
     mockReceiveError = EAGAIN, mockErrorReset = 2;
     recvBufferClear(&socketBuffer);
@@ -505,9 +568,9 @@ static void ReceiveFetchNonBlocking(void **state) {
     assert_null(recvBufferFetch(&socketBuffer, buf, 0, 11));
     assert_string_equal("1234567890", buf);
 
-#pragma endregion
+    #pragma endregion
 
-#pragma region There is some packets but less then requested
+    #pragma region There is some packets but less then requested
 
     mockReceiveError = ENOERR, mockErrorReset = 0, mockReceiveMaxBuf = 2;
     recvBufferClear(&socketBuffer), buf[0] = buf[1] = buf[2] = '\0';
@@ -516,11 +579,14 @@ static void ReceiveFetchNonBlocking(void **state) {
     assert_null(recvBufferFetch(&socketBuffer, buf, 0, 11));
     assert_string_equal("12", buf);
 
-#pragma endregion
+    #pragma endregion
 
     recvBufferFailFree(&socketBuffer);
 }
 
+/**
+ * This test checks that recvBufferFind() can retrieve position of certain strings in the buffer
+ */
 static void ReceiveFind(void **state) {
     const char *data = "The quick brown fox jumps over the lazy dog";
     size_t len = strlen(data);
@@ -541,6 +607,9 @@ static void ReceiveFind(void **state) {
     recvBufferFailFree(&socketBuffer);
 }
 
+/**
+ * This test checks that recvBufferFindAndDitch() can find and remove everything before a certain string in the buffer
+ */
 static void ReceiveFindDitch(void **state) {
     const char *data = "The quick brown fox jumps over the lazy dog";
     size_t len = strlen(data);
@@ -559,6 +628,9 @@ static void ReceiveFindDitch(void **state) {
     recvBufferFailFree(&socketBuffer);
 }
 
+/**
+ * This test checks that recvBufferFindAndFetch() can find bytes in the buffer
+ */
 static void ReceiveFindFetch(void **state) {
     const char *data = "The quick brown fox jumps over the lazy dog";
     size_t len = strlen(data);
@@ -577,6 +649,9 @@ static void ReceiveFindFetch(void **state) {
     recvBufferFailFree(&socketBuffer);
 }
 
+/**
+ * This test ensures that recvBufferSend() can send a message to the remote on the RecvBuffer socket
+ */
 static void ReceiveSend(void **state) {
     RecvBuffer socketBuffer;
     const char *data = "The quick brown fox jumps over the lazy dog";
@@ -594,6 +669,9 @@ static void ReceiveSend(void **state) {
     free(res);
 }
 
+/**
+ * This test ensures that recvBufferSend() can gracefully reestablish a connection if it is possible to do so
+ */
 static void ReceiveSendReconnect(void **state) {
     RecvBuffer socketBuffer;
     const char *data = "The quick brown fox jumps over the lazy dog", *e;
@@ -614,6 +692,9 @@ static void ReceiveSendReconnect(void **state) {
     assert_int_equal(mockErrorReset, 5);
 }
 
+/**
+ * This test ensures that recvBufferUpdateSocket() works as intended
+ */
 static void ReceiveUpdateSocket(void **state) {
     SocketAddress address;
     RecvBuffer socketBuffer1, socketBuffer2;
@@ -645,32 +726,38 @@ static void ReceiveUpdateSocket(void **state) {
 
 #pragma clang diagnostic pop
 
-const struct CMUnitTest recvBufferSocketTest[] = {cmocka_unit_test(RecvBufferClear),
-                                                  cmocka_unit_test(RecvBufferCopyBetween),
-                                                  cmocka_unit_test(RecvBufferMemoryFree),
-                                                  cmocka_unit_test(ReceiveSetLengthChunk),
-                                                  cmocka_unit_test(ReceiveSetLengthComplete),
-                                                  cmocka_unit_test(ReceiveSetLengthKnown),
-                                                  cmocka_unit_test(ReceiveSetLengthToken),
-                                                  cmocka_unit_test(ReceiveSetLengthUnknown)};
+const struct CMUnitTest recvBufferSocketTest[] = {
+    cmocka_unit_test(RecvBufferClear),
+    cmocka_unit_test(RecvBufferCopyBetween),
+    cmocka_unit_test(RecvBufferMemoryFree),
+    cmocka_unit_test(ReceiveSetLengthChunk),
+    cmocka_unit_test(ReceiveSetLengthComplete),
+    cmocka_unit_test(ReceiveSetLengthKnown),
+    cmocka_unit_test(ReceiveSetLengthToken),
+    cmocka_unit_test(ReceiveSetLengthUnknown)
+};
 #ifdef MOCK
-const struct CMUnitTest recvBufferSocketTestMock[] = {cmocka_unit_test(ReceiveFetch),
-                                                      cmocka_unit_test(ReceiveFetchChunk),
-                                                      cmocka_unit_test(ReceiveFetchChunkEmpty),
-                                                      cmocka_unit_test(ReceiveFetchChunkIterateAligned),
-                                                      cmocka_unit_test(ReceiveFetchChunkIterateUnaligned),
-                                                      cmocka_unit_test(ReceiveFetchChunkMalformed),
-                                                      cmocka_unit_test(ReceiveFetchChunkMalformedStart),
-                                                      cmocka_unit_test(ReceiveFetchChuckNonBlocking),
-                                                      cmocka_unit_test(ReceiveFetchChunkOverflow),
-                                                      cmocka_unit_test(ReceiveFetchChunkOverflowExact),
-                                                      cmocka_unit_test(ReceiveFetchChunkOverflowMalformed),
-                                                      cmocka_unit_test(ReceiveFetchNonBlocking),
-                                                      cmocka_unit_test(ReceiveFind), cmocka_unit_test(ReceiveDitch),
-                                                      cmocka_unit_test(ReceiveFindDitch),
-                                                      cmocka_unit_test(ReceiveFindFetch), cmocka_unit_test(ReceiveSend),
-                                                      cmocka_unit_test(ReceiveSendReconnect),
-                                                      cmocka_unit_test(ReceiveUpdateSocket)};
+const struct CMUnitTest recvBufferSocketTestMock[] = {
+    cmocka_unit_test(ReceiveFetch),
+    cmocka_unit_test(ReceiveFetchChunk),
+    cmocka_unit_test(ReceiveFetchChunkEmpty),
+    cmocka_unit_test(ReceiveFetchChunkIterateAligned),
+    cmocka_unit_test(ReceiveFetchChunkIterateUnaligned),
+    cmocka_unit_test(ReceiveFetchChunkMalformed),
+    cmocka_unit_test(ReceiveFetchChunkMalformedStart),
+    cmocka_unit_test(ReceiveFetchChuckNonBlocking),
+    cmocka_unit_test(ReceiveFetchChunkOverflow),
+    cmocka_unit_test(ReceiveFetchChunkOverflowExact),
+    cmocka_unit_test(ReceiveFetchChunkOverflowMalformed),
+    cmocka_unit_test(ReceiveFetchNonBlocking),
+    cmocka_unit_test(ReceiveFind),
+    cmocka_unit_test(ReceiveDitch),
+    cmocka_unit_test(ReceiveFindDitch),
+    cmocka_unit_test(ReceiveFindFetch),
+    cmocka_unit_test(ReceiveSend),
+    cmocka_unit_test(ReceiveSendReconnect),
+    cmocka_unit_test(ReceiveUpdateSocket)
+};
 #endif
 
 #endif /* NEW_DL_TEST_SOCKET_BUFFER_H */
