@@ -569,6 +569,10 @@ recvBufferSend_reply:
  * It assumes the current start of the buffer is now at the beginning of the first chunk hex and pre-computes chunks
  * already in the buffer allowing the next call to recvBufferAppend to be synchronized with the state of the buffer
  * @param self The buffer to pre-compute chunks for
+ * @remark In the case that a chunks metadata is between the end of one packet and the beginning of another
+ * this function will pull the beginning of the next packet into recvBuffer so that the chunk metadata can be parsed.
+ * If the remote is not immediately forthcoming with information the function assumes this connection to have a
+ * malicious nature and will drop the connection, clear the buffer and set the connection length mode to unknown
  */
 static inline void HttpChunkParseExistingBuffer(RecvBuffer *self) {
     char *finish, hex[20];
@@ -586,13 +590,39 @@ static inline void HttpChunkParseExistingBuffer(RecvBuffer *self) {
 
                 if (self->len - l > 0)
                     memmove(&self->buffer[self->length.chunk.total], &self->buffer[l], self->len - l), self->len -= i;
+                else
+                    self->len -= i;
 
                 self->length.chunk.total += (PlatformFileOffset) s, self->length.chunk.next = (PlatformFileOffset) s;
             }
+        } else { /* Try and buffer in a overlapping chunk, when remote won't assume intent is malicious and close */
+            if ((recv(self->serverSocket, hex, 19, MSG_PEEK) != -1)) {
+                char *p;
+                if ((p = strstr(hex, HTTP_EOL))) {
+                    size_t n = p - (char*)hex + 2;
+                    if (self->max < self->len + n) {
+                        if (platformHeapResize((void **) &self->buffer, sizeof(char), self->len + n))
+                            goto HttpChunkParseExistingBuffer_abort;
+
+                        self->max = self->len + n;
+                    }
+
+                    memcpy(&self->buffer[self->len], hex, n), recv(self->serverSocket, hex, n, 0);
+                    self->len += n;
+                } else
+                    goto HttpChunkParseExistingBuffer_abort;
+            } else
+                goto HttpChunkParseExistingBuffer_abort;
         }
     }
 
     self->length.chunk.next = self->length.chunk.total - (PlatformFileOffset) self->len;
+    return;
+
+HttpChunkParseExistingBuffer_abort:
+    recvBufferClear(self);
+    CLOSE_SOCKET(self->serverSocket), self->serverSocket = INVALID_SOCKET;
+    recvBufferSetLengthUnknown(self, 0);
 }
 
 void recvBufferSetLengthChunk(RecvBuffer *self) {
