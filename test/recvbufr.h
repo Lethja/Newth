@@ -221,6 +221,71 @@ static void ReceiveSetLengthUnknown(void **state) {
 #ifdef MOCK
 
 /**
+ * This test simulates a situation where a HTTP request is being called and the end of the header overshoots into a
+ * chunk encoded body. In particular the switch between token mode and chuck mode in the buffer should account for the
+ * fact that some of the body may already have be loaded into the buffer and should adjust where the next chunk is
+ * so that it is resynchronized with the current buffer position before recvAppend() is called
+ */
+static void ReceiveComputePreBufferedChunk(void **state) {
+    const char *d1 = "2B" HTTP_EOL "The quick brow", *d2 = "n fox jumps over the lazy dog" HTTP_EOL "0" HTTP_EOL;
+    char expect[] = "The quick brown fox jumps over the lazy dog", output[53] = {0};
+    RecvBuffer socketBuffer = {0};
+
+    #pragma region Prepare Simulation State
+    mockReset(), mockOptions = MOCK_CONNECT | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
+    mockReceiveStream = tmpfile(), fwrite(d2, 1, strlen(d2), mockReceiveStream), rewind(mockReceiveStream);
+
+    assert_non_null(socketBuffer.buffer = calloc(1, 54));
+    socketBuffer.idx = 0, socketBuffer.len = 18, socketBuffer.max = 54, strcpy(socketBuffer.buffer, d1);
+    #pragma endregion
+
+    #pragma region Test PreComputation Of Buffer When Switching To Chunk Mode
+    recvBufferSetLengthChunk(&socketBuffer);
+    assert_int_equal(socketBuffer.len, 14);
+    assert_int_equal(socketBuffer.length.chunk.next, 29);
+    #pragma endregion
+
+    #pragma region Test Appending More Data Functions As Intended
+    assert_null(recvBufferAppend(&socketBuffer, 43));
+    assert_int_equal(socketBuffer.len, 43);
+    assert_null(recvBufferFetch(&socketBuffer, output, 0, 44)), free(socketBuffer.buffer), fclose(mockReceiveStream), mockReceiveStream = NULL;
+    assert_int_equal(socketBuffer.options, RECV_BUFFER_DATA_LENGTH_COMPLETE);
+    assert_string_equal(expect, output);
+    #pragma endregion
+}
+
+/**
+ * This test is a variant of the ReceiveComputePreBufferedChunk test where more than one chunk has been pre-buffered
+ */
+static void ReceiveComputePreBufferedMultiChunk(void **state) {
+    const char *d1 = "13" HTTP_EOL "The quick brown fox" HTTP_EOL "18" HTTP_EOL " jumps over the ", *d2 = "lazy dog" HTTP_EOL "0" HTTP_EOL;
+    char expect[] = "The quick brown fox jumps over the lazy dog", output[53] = {0};
+    RecvBuffer socketBuffer = {0};
+
+    #pragma region Prepare Simulation State
+    mockReset(), mockOptions = MOCK_CONNECT | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
+    mockReceiveStream = tmpfile(), fwrite(d2, 1, strlen(d2), mockReceiveStream), rewind(mockReceiveStream);
+
+    assert_non_null(socketBuffer.buffer = calloc(1, 54));
+    socketBuffer.idx = 0, socketBuffer.len = 45, socketBuffer.max = 54, strcpy(socketBuffer.buffer, d1);
+    #pragma endregion
+
+    #pragma region Test PreComputation Of Buffer When Switching To Chunk Mode
+    recvBufferSetLengthChunk(&socketBuffer);
+    assert_int_equal(socketBuffer.len, 35);
+    assert_int_equal(socketBuffer.length.chunk.next, 8);
+    #pragma endregion
+
+    #pragma region Test Appending More Data Functions As Intended
+    assert_null(recvBufferAppend(&socketBuffer, 43));
+    assert_int_equal(socketBuffer.len, 43);
+    assert_null(recvBufferFetch(&socketBuffer, output, 0, 44)), free(socketBuffer.buffer), fclose(mockReceiveStream), mockReceiveStream = NULL;
+    assert_int_equal(socketBuffer.options, RECV_BUFFER_DATA_LENGTH_COMPLETE);
+    assert_string_equal(expect, output);
+    #pragma endregion
+}
+
+/**
  * This test ensures that recvBufferDitch() only ditches the amount of bytes specified from the beginning of the buffer
  */
 static void ReceiveDitch(void **state) {
@@ -738,6 +803,8 @@ const struct CMUnitTest recvBufferSocketTest[] = {
 };
 #ifdef MOCK
 const struct CMUnitTest recvBufferSocketTestMock[] = {
+    cmocka_unit_test(ReceiveComputePreBufferedChunk),
+    cmocka_unit_test(ReceiveComputePreBufferedMultiChunk),
     cmocka_unit_test(ReceiveFetch),
     cmocka_unit_test(ReceiveFetchChunk),
     cmocka_unit_test(ReceiveFetchChunkEmpty),

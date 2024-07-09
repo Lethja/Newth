@@ -576,30 +576,32 @@ static inline void HttpChunkParseExistingBuffer(RecvBuffer *self) {
     self->length.chunk.total = self->length.chunk.next = 0;
     while (self->length.chunk.total < self->len) {
         memset(hex, 0, sizeof(hex));
-        recvBufferFetch(self, hex, self->length.chunk.total, 20);
+        recvBufferFetch(self, hex, self->length.chunk.total ? self->length.chunk.total + 2 : self->length.chunk.total, 20);
         if ((finish = strstr(hex, HTTP_EOL))) {
             size_t s;
 
             finish[0] = '\0';
             if (!ioHttpBodyChunkHexToSize(hex, &s)) {
-                size_t l = self->length.chunk.total + strlen(hex) + 2;
+                size_t i = strlen(hex) + (self->length.chunk.total ? 4 : 2), l = self->length.chunk.total + i;
 
-                if(self->len - l > 0)
-                    memmove(&self->buffer[self->length.chunk.total], &self->buffer[l], self->len - l);
+                if (self->len - l > 0)
+                    memmove(&self->buffer[self->length.chunk.total], &self->buffer[l], self->len - l), self->len -= i;
 
                 self->length.chunk.total += (PlatformFileOffset) s, self->length.chunk.next = (PlatformFileOffset) s;
             }
         }
     }
+
+    self->length.chunk.next = self->length.chunk.total - (PlatformFileOffset) self->len;
 }
 
 void recvBufferSetLengthChunk(RecvBuffer *self) {
     self->options &= ~(RECV_BUFFER_DATA_LENGTH_KNOWN | RECV_BUFFER_DATA_LENGTH_TOKEN |
                        RECV_BUFFER_DATA_LENGTH_COMPLETE);
     self->options |= RECV_BUFFER_DATA_LENGTH_CHUNK;
-    if (self->buffer && self->len) {
+    if (self->buffer && self->len)
         HttpChunkParseExistingBuffer(self);
-    } else
+    else
         self->length.chunk.total = 0, self->length.chunk.next = -1;
 }
 
