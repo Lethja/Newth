@@ -342,6 +342,7 @@ char *platformStringFindNeedleRaw(const char *haystack, const char *needle, size
     if (haystackLen == 0 || needleLen == 0 || haystackLen < needleLen)
         return NULL; /* A needle bigger then a haystack can't exist within it */
 
+    haystackLen = (haystackLen - needleLen) + 1; /* Don't bother checking where the needle won't fit */
     for (i = 0; i < haystackLen; ++i) {
         if (toupper(haystack[i]) == toupper(needle[0])) {
             size_t h;
