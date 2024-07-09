@@ -81,8 +81,7 @@ extern char platformShouldExit(void);
 #define HEX_OFFSET "x"
 
 #ifndef SB_DATA_SIZE
-/* TODO: ~1kb SB_DATA_SIZE is a temporary and flawed workaround to make http chunk decoding work, fix properly */
-#define SB_DATA_SIZE 1024
+#define SB_DATA_SIZE 64
 #endif
 
 #ifndef SOCKET_TRY_AGAIN
