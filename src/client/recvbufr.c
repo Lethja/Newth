@@ -596,7 +596,7 @@ static inline void HttpChunkParseExistingBuffer(RecvBuffer *self) {
                 self->length.chunk.total += (PlatformFileOffset) s, self->length.chunk.next = (PlatformFileOffset) s;
             }
         } else { /* Try and buffer in a overlapping chunk, when remote won't assume intent is malicious and close */
-            if ((recv(self->serverSocket, hex, 19, MSG_PEEK) != -1)) {
+            if ((AppendWait(self->serverSocket, hex, 19, MSG_PEEK) != -1)) {
                 char *p;
                 if ((p = strstr(hex, HTTP_EOL))) {
                     size_t n = p - (char*)hex + 2;
@@ -607,7 +607,7 @@ static inline void HttpChunkParseExistingBuffer(RecvBuffer *self) {
                         self->max = self->len + n;
                     }
 
-                    memcpy(&self->buffer[self->len], hex, n), recv(self->serverSocket, hex, n, 0);
+                    memcpy(&self->buffer[self->len], hex, n), AppendWait(self->serverSocket, hex, n, 0);
                     self->len += n;
                 } else
                     goto HttpChunkParseExistingBuffer_abort;
