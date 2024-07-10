@@ -107,14 +107,14 @@ static inline char LinkPathIsDirectSub(const UriDetails *path, const char *link)
         return 0;
     else if (link[0] == '/') {
         if (strstr(link, path->path) == link) {
-            size_t len = strlen(path->path);
+            size_t pathLen = strlen(path->path), linkLen = strlen(link);
             char *last;
 
-            if (strlen(link) <= len) /* The same directory */
+            if (linkLen <= pathLen || (pathLen + 1 == linkLen && link[pathLen] == '/')) /* The same directory */
                 return 0;
 
             /* Check if link is multiple levels down but allow trailing '/' on a single level down */
-            if ((last = strchr(&link[len + 1], '/')) && last != &link[strlen(link) - 1])
+            if ((last = strchr(&link[pathLen + 1], '/')) && last != &link[strlen(link) - 1])
                 return 0;
 
             return 1;
