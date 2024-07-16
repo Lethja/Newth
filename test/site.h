@@ -157,12 +157,12 @@ static void SiteFileOpenFile(void **state) {
     const char *data = "The quick brown fox jumps over the lazy dog";
     Site site;
     SiteFileMeta *meta;
-    struct stat st;
+    PlatformFileStat st;
     char *p0 = platformPathSystemToFileScheme((char *) platformTempDirectoryGet()), *p1 = platformTempFilePath("nt_f1");
 
     assert_non_null(f = fopen(p1, "wb"));
     assert_int_equal(fwrite(data, 1, strlen(data), f), strlen(data)), fclose(f);
-    assert_false(stat(p1, &st)), free(p1);
+    assert_false(platformFileStat(p1, &st)), free(p1);
 
     assert_null(siteNew(&site, SITE_FILE, p0)), free(p0);
 

@@ -586,7 +586,7 @@ static inline void HttpChunkParseExistingBuffer(RecvBuffer *self) {
 
             finish[0] = '\0';
             if (!ioHttpBodyChunkHexToSize(hex, &s)) {
-                size_t i = strlen(hex) + (self->length.chunk.total ? 4 : 2), l = self->length.chunk.total + i;
+                size_t i = strlen(hex) + (self->length.chunk.total ? 4 : 2), l = (size_t) self->length.chunk.total + i;
 
                 if (self->len - l > 0)
                     memmove(&self->buffer[self->length.chunk.total], &self->buffer[l], self->len - l), self->len -= i;

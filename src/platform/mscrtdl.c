@@ -581,8 +581,9 @@ int platformFileClose(PlatformFile stream) {
 
 int platformFileAtEnd(PlatformFile stream) {
     int r;
-    LARGE_INTEGER pos = platformFileTell(stream), end;
+    LARGE_INTEGER pos, end;
 
+    pos.QuadPart = platformFileTell(stream);
     /* Get end position */
     ZeroMemory(&end, sizeof(LARGE_INTEGER));
     end.LowPart = SetFilePointer(stream, 0, &end.HighPart, FILE_END);
