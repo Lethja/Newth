@@ -457,21 +457,6 @@ static inline void HeadersPopulate(const char *header, HttpResponseHeader *heade
         }
         free(v);
     }
-
-    headerResponse->length = 0, ioHttpResponseHeaderFind(header, "Content-Length", &v);
-    if (v) {
-        size_t l = strlen(v), i;
-        for (i = 0; i < l; ++i)
-            if (!isdigit(v[i])) {
-                free(v);
-                return;
-            }
-
-        for (i = 0; i < l; ++i)
-            headerResponse->length *= 10, headerResponse->length += v[i] - '0';
-
-        free(v);
-    }
 }
 
 /**
