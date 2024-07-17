@@ -515,6 +515,8 @@ int platformFileStat(const char *path, PlatformFileStat *stat) {
             return 0;
         }
     }
+
+    errno = GetLastError();
     return 1;
 }
 
@@ -662,6 +664,7 @@ size_t platformFileWrite(void *ptr, size_t size, size_t n, PlatformFile stream) 
     if (WriteFile(stream, ptr, bufferSize, &bytes, NULL))
         return bytes;
 
+    errno = GetLastError();
     return 0;
 }
 
