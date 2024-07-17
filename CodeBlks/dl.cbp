@@ -40,14 +40,17 @@
 				<Option object_output="obj/mingw32/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option projectCompilerOptionsRelation="-1" />
-				<Option projectLinkerOptionsRelation="-1" />
 				<Option projectIncludeDirsRelation="-1" />
 				<Option projectLibDirsRelation="-1" />
 				<Compiler>
 					<Add option="-Wall" />
+					<Add option="-g" />
 					<Add option="-Wno-unknown-pragmas" />
+					<Add option="-DWIN32=1" />
 				</Compiler>
+				<Linker>
+					<Add library="wsock32" />
+				</Linker>
 			</Target>
 			<Target title="MingW32 Release">
 				<Option platforms="Windows;" />
