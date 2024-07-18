@@ -656,16 +656,19 @@ size_t platformFileRead(void *ptr, size_t size, size_t n, PlatformFile stream) {
 #ifdef PLATFORM_SYS_WRITE
 
 size_t platformFileWrite(void *ptr, size_t size, size_t n, PlatformFile stream) {
-    DWORD bytes, bufferSize = size * n;
+    size_t sent = 0, bufferSize = size * n;
 
-    if (bufferSize > BUFSIZ)
-        bufferSize = BUFSIZ;
+    while (sent < bufferSize) {
+        DWORD bytes;
+        if (!WriteFile(stream, ptr, bufferSize, &bytes, NULL)) {
+            errno = GetLastError();
+            break;
+        }
 
-    if (WriteFile(stream, ptr, bufferSize, &bytes, NULL))
-        return bytes;
+        sent += bytes;
+    }
 
-    errno = GetLastError();
-    return 0;
+    return sent;
 }
 
 #endif
