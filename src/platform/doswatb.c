@@ -79,6 +79,8 @@ void platformConnectSignals(void(*noAction)(int), void(*shutdownCrash)(int), voi
 
 #ifdef __I86__
 
+#include <malloc.h>
+
 #define DOSCMDMAX 128
 #define DOSCMDPAR "/C "
 
@@ -88,6 +90,38 @@ typedef struct ExecParamRec {
     unsigned short int fcb1;   /* Reserved */
     unsigned short int fcb2;
 } ExecParamRec;
+
+/**
+ * Check if there's enough free base memory to attempt starting another program
+ * @return 0 if there's enough memory to try run a program otherwise 1 for not enough memory or -1 for unexpected result
+ */
+static inline char NotEnoughMemory() {
+    union REGS regs;
+
+    /* Give as much memory as possible back to DOS */
+    _heapmin();
+
+    /* Attempt to allocate an unreasonable amount of memory so INT 21:48h fails and returns free memory amount */
+    regs.x.ax = 0x4800, regs.x.bx = 0xFFFF;
+    intdos(&regs, &regs);
+
+    /* This should never be the case but might be under a forgiving emulator */
+    if (regs.x.cflag == 0) {
+        struct SREGS sregs;
+
+        regs.h.ah = 0x49, sregs.es = regs.x.ax;
+        intdosx(&regs, &regs, &sregs);
+        return -1;
+    }
+
+    if (regs.x.ax != 0x08)
+        return -1;
+
+    if (regs.x.bx >= 0x2000)
+        return 0;
+
+    return 1;
+}
 
 static inline size_t CountArgLength(const char **args) {
     size_t i, z;
@@ -127,6 +161,14 @@ char *platformExecRunWait(const char** args) {
         struct SREGS sregs;
         ExecParamRec exec;
         char command[DOSCMDMAX];
+
+        switch (NotEnoughMemory()) {
+            case 1:
+                return "Command not run due to low free memory";
+
+            case -1:
+                return "Command not run due unexpected result during free memory check";
+        }
 
         BuildCmdTail(args, &command);
 
