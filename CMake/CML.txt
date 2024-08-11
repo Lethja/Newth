@@ -7,6 +7,7 @@ set(CMAKE_C_FLAGS "-pedantic -Wall -Wno-unknown-pragmas")
 option(ENABLE_MOCK "Build additional CMocka Unit Tests that require mocking system calls" OFF)
 option(ENABLE_POLL "Use poll() instead of select()" OFF)
 option(ENABLE_TEST "Build CMocka Unit Tests" OFF)
+option(ENABLE_READLINE "Enable GNU readline support in dl" ON)
 option(ENABLE_W32_SOCKET_1 "Enable WinSock 1.1 support for a truly portable Windows 32-bit binary" OFF)
 option(ENABLE_W32_VISUAL_STYLES "Enable native visual styling for Windows XP and later" ON)
 
@@ -48,6 +49,11 @@ add_executable(dl ../src/cli/dl.c
 target_compile_definitions(dl PUBLIC "$<$<CONFIG:RELEASE>:NDEBUG>"
         PLATFORM_SYS_ARGV=1 PLATFORM_SYS_WRITE=1 PLATFORM_SYS_EXEC=1
 )
+
+if (ENABLE_READLINE)
+    target_compile_definitions(dl PUBLIC READLINE=1)
+    target_link_libraries(dl readline)
+endif ()
 
 # Server
 add_executable(th ../src/cli/th.c ../src/common/defines.h

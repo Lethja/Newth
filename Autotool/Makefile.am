@@ -41,6 +41,11 @@ dl_SOURCES = src/cli/dl.c src/common/defines.h \
 
 dl_CFLAGS = -DPLATFORM_SYS_ARGV=1 -DPLATFORM_SYS_EXEC=1 -DPLATFORM_SYS_WRITE=1
 
+if READLINE
+    dl_CFLAGS += ${readline_CFLAGS}
+    dl_LDFLAGS = ${readline_LIBS}
+endif
+
 th_SOURCES = src/cli/th.c src/common/defines.h \
     src/common/hex.c src/common/hex.h \
     src/common/signal.c src/common/signal.h \

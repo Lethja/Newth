@@ -8,6 +8,11 @@
 #include <ctype.h>
 #include <time.h>
 
+#ifdef READLINE
+#include <readline/history.h>
+#include <readline/readline.h>
+#endif
+
 #if defined(WATT32) || defined(WIN32)
 #define SHELL_PS1 "%ld>"
 #else
@@ -127,11 +132,15 @@ static inline void ParseUris(int argc, char **argv) {
         printf("WARN: %u addresses couldn't be parsed", e);
 }
 
+#ifndef READLINE
+
 static inline void CleanInput(char *input) {
     char *newline = strchr(input, '\n');
     if (newline)
         *newline = '\0';
 }
+
+#endif
 
 static inline void PrintDirectoryFilesDosLike(Site *site, char *path) {
     void *dir;
@@ -333,6 +342,9 @@ static inline void ProcessCommand(char **args) {
             case 'E':
                 if (toupper(args[0][1]) == 'X' && toupper(args[0][2]) == 'I' && toupper(args[0][3]) == 'T') {
                     siteArrayFree();
+#ifdef READLINE
+                    clear_history();
+#endif
                     exit(0);
                 } else
                     goto processCommand_notFound;
@@ -499,18 +511,51 @@ processCommand_notFound:
     puts("Command not found. See valid commands with '?'");
 }
 
-# if __STDC_VERSION__ >= 201112L
+#if __STDC_VERSION__ >= 201112L
 _Noreturn
 #endif
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "EndlessLoop"
+#ifdef READLINE
+static inline void InteractiveMode(void) {
+
+    char **args;
+
+    siteArrayInit();
+    stifle_history(10);
+
+    while (1) {
+        char *input, *prompt;
+        {
+            long id = siteArrayActiveGetNth();
+            size_t digits = id < 0 ? 2 : 1;
+
+            while (id > 9)
+                id /= 10, ++digits;
+
+            prompt = malloc(strlen(SHELL_PS1) + digits + 1);
+            sprintf(prompt, SHELL_PS1, siteArrayActiveGetNth());
+        }
+
+        input = readline(prompt), free(prompt);
+        if (input) {
+            args = platformArgvConvertString(input);
+            add_history(input);
+            free(input), input = NULL;
+
+            if (args)
+                ProcessCommand(args), platformArgvFree(args);
+        }
+    }
+}
+#else
 static inline void InteractiveMode(void) {
     char input[BUFSIZ];
     char **args;
 
     siteArrayInit();
 
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "EndlessLoop"
     while (1) {
         printf(SHELL_PS1, siteArrayActiveGetNth());
         if (fgets(input, sizeof(input), stdin)) {
@@ -521,8 +566,9 @@ static inline void InteractiveMode(void) {
             }
         }
     }
-#pragma clang diagnostic pop
 }
+#endif
+#pragma clang diagnostic pop
 
 int main(int argc, char **argv) {
     char *err;

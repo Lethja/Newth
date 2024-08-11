@@ -67,6 +67,24 @@ AS_IF(
 PKG_CHECK_MODULES([cmocka], [cmocka], [have_cmocka=yes], [have_cmocka=no])
 AM_CONDITIONAL([CMOCKA], [test "$have_cmocka" = "yes"])
 
+AC_ARG_WITH(
+    [readline],
+    AS_HELP_STRING(
+        [--without-readline],
+        [Build dl without GNU readline support in interactive mode]
+    )
+)
+
+AS_IF(
+    [test "x$with_readline" != "xno"],
+    [
+    AC_DEFINE(READLINE)
+    PKG_CHECK_MODULES([readline], [readline], [have_readline=yes], [have_readline=no])
+    ]
+)
+
+AM_CONDITIONAL([READLINE], [test "$have_readline" = "yes"])
+
 AC_SEARCH_LIBS([getsockname], [nsl socket resolv network])
 AC_SEARCH_LIBS([getifaddrs], [nsl socket resolv network])
 AC_SEARCH_LIBS([inet_ntoa], [nsl socket resolv network])
