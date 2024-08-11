@@ -201,21 +201,25 @@ char *platformExecRunWait(const char** args) {
     #pragma endregion
 #else
     #pragma region Standard C Version
-    char **a = (char **) args, *p;
+    char **a = (char **) args, *p = NULL;
     int i = 0;
 
+    /* Turn args** back into a continuous string */
     while (args[i])
         p = &a[i][strlen(a[i])], *p = ' ', ++i;
 
-    *p = '\0', p = a[0];
-    while (*p != '\0') {
-        if (*p != '\n') {
-            ++p;
-            continue;
-        }
+    /* Find and remove newline */
+    if (p) {
+        *p = '\0', p = a[0];
+        while (*p != '\0') {
+            if (*p != '\n') {
+                ++p;
+                continue;
+            }
 
-        *p = '\0';
-        break;
+            *p = '\0';
+            break;
+        }
     }
 
     system(a[0]);
