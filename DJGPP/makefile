@@ -1,76 +1,29 @@
 CC=gcc
+CFLAGS = -Wall -Wno-unknown-pragmas -O3 -s -Iwatt32s/inc
 
-all: dl th
+LIB_WATT = watt32s/lib/libwatt.a
 
-debug: dldbg thdbg
+DEF = -DWATT32=1 -DNDEBUG=1
+SRC = ../src/common/hex.c ../src/common/signal.c ../src/platform/doswatb.c ../src/platform/platform.c
 
-dl:
-	$(CC) -Wall -Wno-unknown-pragmas -O3 -s -DWATT32=1 -DNDEBUG=1 \
-		-DPLATFORM_SYS_ARGV=1 -DPLATFORM_SYS_EXEC=1 -DPLATFORM_SYS_WRITE=1 \
-		-Iwatt32s/inc \
-		../src/cli/dl.c \
-		../src/client/err.c \
-		../src/client/io.c \
-		../src/client/queue.c \
-		../src/client/recvbufr.c \
-		../src/client/site.c \
-		../src/client/site/file.c \
-		../src/client/site/http.c \
-		../src/client/uri.c \
-		../src/client/xml.c \
-		../src/common/hex.c \
-		../src/common/signal.c \
-		../src/platform/doswatb.c \
-		../src/platform/platform.c \
-		watt32s/lib/libwatt.a -o dl.exe
+DL_DEF = $(DEF) -DPLATFORM_SYS_ARGV=1 -DPLATFORM_SYS_EXEC=1 -DPLATFORM_SYS_WRITE=1
+DL_SRC = ../src/cli/dl.c $(SRC) ../src/client/err.c ../src/client/io.c ../src/client/queue.c ../src/client/recvbufr.c ../src/client/site.c ../src/client/site/file.c ../src/client/site/http.c ../src/client/uri.c ../src/client/xml.c
 
-th:
-	$(CC) -Wall -Wno-unknown-pragmas -O3 -s -DWATT32=1 -DNDEBUG=1 \
-		-DPLATFORM_NET_ADAPTER=1 -DPLATFORM_NET_LISTEN=1 -DPLATFORM_SYS_ARGV=1 \
-		-Iwatt32s/inc \
-		../src/cli/th.c \
-		../src/common/hex.c \
-		../src/common/signal.c \
-		../src/platform/doswatb.c \
-		../src/platform/platform.c \
-		../src/server/event.c \
-		../src/server/http.c \
-		../src/server/routine.c \
-		../src/server/server.c \
-		../src/server/sendbufr.c \
-		../src/server/mltiplex/select.c \
-		watt32s/lib/libwatt.a -o th.exe
+TH_DEF = $(DEF) -DPLATFORM_NET_ADAPTER=1 -DPLATFORM_NET_LISTEN=1 -DPLATFORM_SYS_ARGV=1
+TH_SRC = ../src/cli/th.c $(SRC) ../src/server/event.c ../src/server/http.c ../src/server/routine.c ../src/server/server.c ../src/server/sendbufr.c ../src/server/mltiplex/select.c
 
-dldbg:
-	$(CC) -Wall -Wno-unknown-pragmas -O3 -s -DWATT32=1 -DPLATFORM_SYS_ARGV=1 -DPLATFORM_SYS_EXEC=1 -DPLATFORM_SYS_WRITE=1 \
-		-Iwatt32s/inc \
-		../src/cli/dl.c \
-		../src/client/io.c \
-		../src/client/queue.c \
-		../src/client/recvbufr.c \
-		../src/client/site.c \
-		../src/client/site/file.c \
-		../src/client/site/http.c \
-		../src/client/uri.c \
-		../src/client/xml.c \
-		../src/common/hex.c \
-		../src/common/signal.c \
-		../src/platform/doswatb.c \
-		../src/platform/platform.c \
-		watt32s/lib/libwatt.a -o dldbg.exe
+DL_BIN = dl
+TH_BIN = th
 
-thdbg:
-	$(CC) -Wall -Wno-unknown-pragmas -O3 -DWATT32=1 -DPLATFORM_NET_ADAPTER=1 -DPLATFORM_NET_LISTEN=1 -DPLATFORM_SYS_ARGV=1 \
-		-Iwatt32s/inc \
-		../src/cli/th.c \
-		../src/common/hex.c \
-		../src/common/signal.c \
-		../src/platform/doswatb.c \
-		../src/platform/platform.c \
-		../src/server/event.c \
-		../src/server/http.c \
-		../src/server/routine.c \
-		../src/server/server.c \
-		../src/server/sendbufr.c \
-		../src/server/mltiplex/select.c \
-		watt32s/lib/libwatt.a -o thdbg.exe
+ifneq ($(origin COMSPEC), undefined)
+DL_BIN := $(DL_BIN).exe
+TH_BIN := $(TH_BIN).exe
+endif
+
+all: $(DL_BIN) $(TH_BIN)
+
+$(DL_BIN):
+	$(CC) $(CFLAGS) $(DL_DEF) $(DL_SRC) $(LIB_WATT) -o $@
+
+$(TH_BIN):
+	$(CC) $(CFLAGS) $(TH_DEF) $(TH_SRC) $(LIB_WATT) -o $@
