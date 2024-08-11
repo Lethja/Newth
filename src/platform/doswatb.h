@@ -52,7 +52,6 @@
 typedef struct tm PlatformTimeStruct;
 typedef struct dirent PlatformDirEntry;
 typedef struct stat PlatformFileStat;
-typedef long PlatformFileOffset;
 typedef FILE *PlatformFile;
 
 typedef struct PlatformDir {
@@ -73,8 +72,10 @@ extern char platformShouldExit(void);
 #define SOCK_BUF_TYPE size_t
 
 #ifdef DJGPP
-#define PF_OFFSET "u"
+typedef off_t PlatformFileOffset;
+#define PF_OFFSET "o"
 #else /* Open Watcom */
+typedef long PlatformFileOffset;
 #define PF_OFFSET "lu"
 #endif
 
