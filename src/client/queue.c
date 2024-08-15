@@ -4,6 +4,43 @@
 
 AddressQueue *addressQueue = NULL;
 
+const char *queueEntryArrayAppend(QueueEntryArray **queueEntryArray, QueueEntry *entry) {
+    QueueEntryArray *array = *queueEntryArray;
+
+    if (!array) {
+        if (!(array = malloc(sizeof(QueueEntryArray))))
+            return strerror(errno);
+
+        if (!(array->entry = malloc(sizeof(QueueEntry)))) {
+            free(array);
+            return strerror(errno);
+        }
+
+        memcpy(array->entry, entry, sizeof(QueueEntry));
+        array->len = 1, *queueEntryArray = array;
+
+        return NULL;
+    }
+
+    if (platformHeapResize((void **) array->entry, sizeof(QueueEntry), array->len + 1))
+        return strerror(errno);
+
+    memcpy(&array->entry[array->len], entry, sizeof(QueueEntry));
+    ++array->len;
+
+    return NULL;
+}
+
+void queueEntryArrayFree(QueueEntryArray *queueEntryArray) {
+    if (!queueEntryArray)
+        return;
+
+    if (queueEntryArray->entry)
+        free(queueEntryArray->entry);
+
+    free(queueEntryArray);
+}
+
 static inline const char *PathAppendOrCreate(PathQueue *pathQueue, const char *path) {
     size_t i;
 
