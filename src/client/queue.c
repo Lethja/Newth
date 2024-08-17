@@ -4,6 +4,20 @@
 
 AddressQueue *addressQueue = NULL;
 
+static inline QueueEntry *EntrySearch(QueueEntryArray *array, QueueEntry *entry) {
+    size_t i;
+
+    for (i = 0; i < array->len; ++i) {
+        QueueEntry *it = &array->entry[i];
+        if (it->destinationSite == entry->destinationSite && it->sourceSite == entry->sourceSite
+            && strcmp(it->destinationPath, entry->destinationPath) == 0
+            && strcmp(it->sourcePath, entry->sourcePath) == 0)
+            return it;
+    }
+
+    return NULL;
+}
+
 const char *queueEntryArrayAppend(QueueEntryArray **queueEntryArray, QueueEntry *entry) {
     QueueEntryArray *array = *queueEntryArray;
 
@@ -21,6 +35,9 @@ const char *queueEntryArrayAppend(QueueEntryArray **queueEntryArray, QueueEntry 
 
         return NULL;
     }
+
+    if (EntrySearch(array, entry))
+        return NULL;
 
     if (platformHeapResize((void **) array->entry, sizeof(QueueEntry), array->len + 1))
         return strerror(errno);
