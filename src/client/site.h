@@ -117,6 +117,20 @@ void siteArrayActiveSetWrite(Site *site);
 Site *siteArrayGet(long id);
 
 /**
+ * Get an existing site in the array that can serve the input
+ * @param input The input to parse and get a site from
+ * @return Pointer to a site on success, otherwise NULL
+ */
+Site *siteArrayGetFromInput(const char *input);
+
+/**
+ * Get an existing site in the array that can serve the input
+ * @param input The input to parse and get a site from
+ * @return Site id on success, otherwise -1
+ */
+long siteArrayGetFromInputNth(const char *input);
+
+/**
  * Find a site that serve a URI based on resolved address
  * @param uri The full URI to resolve
  * @return Pointer to the site that can serve this URI on success, otherwise NULL

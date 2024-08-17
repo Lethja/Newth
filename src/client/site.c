@@ -136,6 +136,30 @@ static inline long SiteArrayGetByUriHostNth(const char *uri) {
     return -1;
 }
 
+Site *siteArrayGetFromInput(const char *input) {
+    long self;
+
+    if (isdigit(input[0])) {
+        errno = 0, self = strtol(input, NULL, 10);
+        if (!errno && self >= 0 && self < Sites.len)
+            return &Sites.array[self];
+    }
+
+    return siteArrayGetByUriHost(input);
+}
+
+long siteArrayGetFromInputNth(const char *input) {
+    long self;
+
+    if (isdigit(input[0])) {
+        errno = 0, self = strtol(input, NULL, 10);
+        if (!errno && self >= 0 && self < Sites.len)
+            return self;
+    }
+
+    return SiteArrayGetByUriHostNth(input);
+}
+
 Site *siteArrayGetByUriHost(const char *uri) {
     long i = SiteArrayGetByUriHostNth(uri);
     return i >= 0 ? &Sites.array[i] : NULL;
