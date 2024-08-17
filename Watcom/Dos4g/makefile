@@ -1,127 +1,80 @@
 CC=wcc386
+WATT_32=watt32s
 
-# Default building process
 all: .SYMBOLIC dl.exe th.exe
 
-dl.exe: release_dl err.o doswatbd.o hex.o io.o plat_dl.o queue.o recvbufr.o signal.o site.o s_file.o s_http.o uri.o xml.o dl.o
-    %write link.lnk NAME $@
-    %write link.lnk SYS  dos4g
-    %write link.lnk OPT  st=9216
-    %write link.lnk FILE err.o,doswatbd.o,hex.o,io.o,plat_dl.o,queue.o,recvbufr.o,signal.o,site.o,s_file.o,s_http.o,uri.o,xml.o,dl.o
-    %write link.lnk LIBP watt32s/lib/
-    %write link.lnk LIBF wattcpwf.lib
-    wlink @link.lnk
+dl.exe: flag.lnk dldef.lnk err.o doswatbd.o hex.o io.o plat_dl.o queue.o recvbufr.o signal.o site.o s_file.o s_http.o uri.o xml.o dl.o dllnk.lnk
+	wlink NAME $@ @dllnk.lnk
 
-dldbg.exe: debug_dl err.o doswatbd.o hex.o io.o plat_dl.o queue.o recvbufr.o signal.o site.o s_file.o s_http.o uri.o xml.o dl.o
-    %write link.lnk NAME $@
-    %write link.lnk SYS  dos4g
-    %write link.lnk OPT  st=9216
-    %write link.lnk FILE err.o,doswatbd.o,hex.o,io.o,plat_dl.o,queue.o,recvbufr.o,signal.o,site.o,s_file.o,s_http.o,uri.o,xml.o,dl.o
-    %write link.lnk LIBP watt32s/lib/
-    %write link.lnk LIBF wattcpwf.lib
-    wlink @link.lnk
+th.exe: flag.lnk thdef.lnk doswatbt.o event.o hex.o http.o plat_th.o poll.o routine.o signal.o server.o sendbufr.o th.o thlnk.lnk
+	wlink NAME $@ @thlnk.lnk
 
-dlwlk.exe: walk_dl err.o doswatbd.o hex.o io.o plat_dl.o queue.o recvbufr.o signal.o site.o s_file.o s_http.o uri.o xml.o dl.o
-    %write link.lnk NAME $@
-    %write link.lnk SYS  dos4g
-    %write link.lnk OPT  st=9216
-    %write link.lnk FILE err.o,doswatbd.o,hex.o,io.o,plat_dl.o,queue.o,recvbufr.o,signal.o,site.o,s_file.o,s_http.o,uri.o,xml.o,dl.o
-    %write link.lnk LIBP watt32s/lib/
-    %write link.lnk LIBF wattcpwf.lib
-    wlink @link.lnk
+flag.lnk:
+	%write flag.lnk -q -dWATT32=1 -bt=dos -mf -3 -i="$(WATT_32)/inc" -d0 -osr -zc -dNDEBUG=1
 
-th.exe: release_th doswatbt.o event.o hex.o http.o plat_th.o poll.o routine.o signal.o server.o sendbufr.o th.o
-    %write link.lnk NAME $@
-    %write link.lnk SYS  dos4g
-    %write link.lnk OPT  st=8192
-    %write link.lnk FILE doswatbt.o,event.o,hex.o,http.o,plat_th.o,poll.o,routine.o,signal.o,server.o,sendbufr.o,th.o
-    %write link.lnk LIBP watt32s/lib/
-    %write link.lnk LIBF wattcpwf.lib
-    wlink @link.lnk
-    
-thdbg.exe: debug_th doswatbt.o event.o hex.o http.o plat_th.o poll.o routine.o signal.o server.o sendbufr.o th.o
-    %write link.lnk NAME $@
-    %write link.lnk SYS  dos4g
-    %write link.lnk OPT  st=8192
-    %write link.lnk FILE doswatbt.o,event.o,hex.o,http.o,plat_th.o,poll.o,routine.o,signal.o,server.o,sendbufr.o,th.o
-    %write link.lnk LIBP watt32s/lib/
-    %write link.lnk LIBF wattcpwf.lib
-    wlink @link.lnk
+dldef.lnk:
+	%write dldef.lnk -dPLATFORM_SYS_ARGV=1 -dPLATFORM_SYS_EXEC=1 -dPLATFORM_SYS_WRITE=1
 
-thwlk.exe: walk_th doswatbt.o event.o hex.o http.o plat_th.o poll.o routine.o signal.o server.o sendbufr.o th.o
-    %write link.lnk NAME $@
-    %write link.lnk SYS  dos4g
-    %write link.lnk OPT  st=8192
-    %write link.lnk FILE doswatbt.o,event.o,hex.o,http.o,plat_th.o,poll.o,routine.o,signal.o,server.o,sendbufr.o,th.o
-    %write link.lnk LIBP watt32s/lib/
-    %write link.lnk LIBF wattcpwf.lib
-    wlink @link.lnk
+thdef.lnk:
+	%write thdef.lnk -dPLATFORM_NET_ADAPTER=1 -dPLATFORM_NET_LISTEN=1 -dPLATFORM_SYS_ARGV=1
 
-dbg: .SYMBOLIC dldbg.exe thdbg.exe
+dllnk.lnk:
+	%write dllnk.lnk SYS  dos4g
+	%write dllnk.lnk OPT  st=9216
+	%write dllnk.lnk FILE err.o,doswatbd.o,hex.o,io.o,plat_dl.o,queue.o,recvbufr.o,signal.o,site.o,s_file.o,s_http.o,uri.o,xml.o,dl.o
+	%write dllnk.lnk LIBP $(WATT_32)/lib/
+	%write dllnk.lnk LIBF wattcpwf.lib
 
-wlk: .SYMBOLIC dlwlk.exe thwlk.exe
+thlnk.lnk:
+	%write thlnk.lnk SYS  dos4g
+	%write thlnk.lnk OPT  st=4608
+	%write thlnk.lnk FILE doswatbt.o,event.o,hex.o,http.o,plat_th.o,poll.o,routine.o,signal.o,server.o,sendbufr.o,th.o
+	%write thlnk.lnk LIBP $(WATT_32)/lib/
+	%write thlnk.lnk LIBF wattcpwf.lib
 
-err.o:
-	$(CC) @flag.lnk -fo="$@" "../../src/client/err.c"
-dl.o:
-	$(CC) @flag.lnk -fo="$@" "../../src/cli/dl.c"
+err.o: ../../src/client/err.c
+	$(CC) @flag.lnk -fo="$@" $<
+dl.o: ../../src/cli/dl.c
+	$(CC) @flag.lnk @dldef.lnk -fo="$@" $<
 doswatbd.o: ../../src/platform/doswatb.c
-    $(CC) @flag.lnk -fo="$@" "../../src/platform/doswatb.c"
+	$(CC) @flag.lnk @dldef.lnk -fo="$@" $<
 doswatbt.o: ../../src/platform/doswatb.c
-    $(CC) @flag.lnk -fo="$@" "../../src/platform/doswatb.c"
+	$(CC) @flag.lnk @thdef.lnk -fo="$@" $<
 event.o: ../../src/server/event.c
-    $(CC) @flag.lnk -fo="$@" "../../src/server/event.c"
+	$(CC) @flag.lnk -fo="$@" $<
 hex.o: ../../src/common/hex.c
-    $(CC) @flag.lnk -fo="$@" "../../src/common/hex.c"
+	$(CC) @flag.lnk -fo="$@" $<
 http.o: ../../src/server/http.c
-    $(CC) @flag.lnk -fo="$@" "../../src/server/http.c"
+	$(CC) @flag.lnk -fo="$@" $<
 io.o: ../../src/client/io.c
-    $(CC) @flag.lnk -fo="$@" "../../src/client/io.c"
+	$(CC) @flag.lnk -fo="$@" $<
 queue.o: ../../src/client/queue.c
-    $(CC) @flag.lnk -fo="$@" "../../src/client/queue.c"
+	$(CC) @flag.lnk -fo="$@" $<
 recvbufr.o: ../../src/client/recvbufr.c
-    $(CC) @flag.lnk -fo="$@" "../../src/client/recvbufr.c"
+	$(CC) @flag.lnk -fo="$@" $<
 site.o: ../../src/client/site.c
-    $(CC) @flag.lnk -fo="$@" "../../src/client/site.c"
+	$(CC) @flag.lnk -fo="$@" $<
 s_file.o: ../../src/client/site/file.c
-    $(CC) @flag.lnk -fo="$@" "../../src/client/site/file.c"
+	$(CC) @flag.lnk @dldef.lnk -fo="$@" $<
 s_http.o: ../../src/client/site/http.c
-    $(CC) @flag.lnk -fo="$@" "../../src/client/site/http.c"
+	$(CC) @flag.lnk @dldef.lnk -fo="$@" $<
 routine.o: ../../src/server/routine.c
-    $(CC) @flag.lnk -fo="$@" "../../src/server/routine.c"
+	$(CC) @flag.lnk @thdef.lnk -fo="$@" $<
 server.o: ../../src/server/server.c
-    $(CC) @flag.lnk -fo="$@" "../../src/server/server.c"
+	$(CC) @flag.lnk -fo="$@" $<
 sendbufr.o: ../../src/server/sendbufr.c
-    $(CC) @flag.lnk -fo="$@" "../../src/server/sendbufr.c"
+	$(CC) @flag.lnk -fo="$@" $<
 signal.o: ../../src/common/signal.c
-    $(CC) @flag.lnk -fo="$@" "../../src/common/signal.c"
+	$(CC) @flag.lnk -fo="$@" $<
 plat_dl.o: ../../src/platform/platform.c
-    $(CC) @flag.lnk -fo="$@" "../../src/platform/platform.c"
+	$(CC) @flag.lnk @dldef.lnk -fo="$@" $<
 plat_th.o: ../../src/platform/platform.c
-    $(CC) @flag.lnk -fo="$@" "../../src/platform/platform.c"
+	$(CC) @flag.lnk @thdef.lnk -fo="$@" $<
 poll.o: ../../src/server/mltiplex/poll.c
-    $(CC) @flag.lnk -fo="$@" "../../src/server/mltiplex/poll.c"
+	$(CC) @flag.lnk @thdef.lnk -fo="$@" $<
 th.o: ../../src/cli/th.c
-    $(CC) @flag.lnk -fo="$@" "../../src/cli/th.c"
-uri.o:
-	$(CC) @flag.lnk -fo="$@" "../../src/client/uri.c"
-xml.o:
-	$(CC) @flag.lnk -fo="$@" "../../src/client/xml.c"
-
-walk_dl: .SYMBOLIC
-    %write flag.lnk -q -dWATT32=1 -bt=dos -mf -3 -i="watt32s/inc/" -d3 -db -dDBGHALT=1 -dPLATFORM_SYS_ARGV=1 -dPLATFORM_SYS_EXEC=1 -dPLATFORM_SYS_WRITE=1
-
-debug_dl: .SYMBOLIC
-    %write flag.lnk -q -dWATT32=1 -bt=dos -mf -3 -i="watt32s/inc/" -d3 -db -dPLATFORM_SYS_ARGV=1 -dPLATFORM_SYS_EXEC=1 -dPLATFORM_SYS_WRITE=1
-
-release_dl: .SYMBOLIC
-    %write flag.lnk -q -dWATT32=1 -bt=dos -mf -3 -i="watt32s/inc/" -d0 -osr -zc -dNDEBUG=1 -dPLATFORM_SYS_ARGV=1 -dPLATFORM_SYS_EXEC=1 -dPLATFORM_SYS_WRITE=1
-
-walk_th: .SYMBOLIC
-    %write flag.lnk -q -dWATT32=1 -bt=dos -mf -3 -i="watt32s/inc/" -d3 -db -dDBGHALT=1 -dPLATFORM_NET_ADAPTER=1 -dPLATFORM_NET_LISTEN=1 -dPLATFORM_SYS_ARGV=1
-
-debug_th: .SYMBOLIC
-    %write flag.lnk -q -dWATT32=1 -bt=dos -mf -3 -i="watt32s/inc/" -d3 -db -dPLATFORM_NET_ADAPTER=1 -dPLATFORM_NET_LISTEN=1 -dPLATFORM_SYS_ARGV=1
-
-release_th: .SYMBOLIC
-    %write flag.lnk -q -dWATT32=1 -bt=dos -mf -3 -i="watt32s/inc/" -d0 -osr -zc -dNDEBUG=1 -dPLATFORM_NET_ADAPTER=1 -dPLATFORM_NET_LISTEN=1 -dPLATFORM_SYS_ARGV=1
+	$(CC) @flag.lnk @thdef.lnk -fo="$@" $<
+uri.o: ../../src/client/uri.c
+	$(CC) @flag.lnk -fo="$@" $<
+xml.o: ../../src/client/xml.c
+	$(CC) @flag.lnk -fo="$@" $<
