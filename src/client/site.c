@@ -55,6 +55,13 @@ long siteArrayActiveGetNth(void) {
     return Sites.set;
 }
 
+Site *siteArrayGet(long id) {
+    if(id < 0 || id >= Sites.len)
+        return NULL;
+
+    return &Sites.array[id];
+}
+
 /**
  * Find a site that serve this a URI based on resolved address
  * @param uri The full URI to resolve

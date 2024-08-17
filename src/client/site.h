@@ -92,6 +92,13 @@ long siteArrayActiveGetNth(void);
 void siteArrayActiveSet(Site *site);
 
 /**
+ * Get pointer to a site from its array id
+ * @param id The id of the site
+ * @return Pointer to a site on success, otherwise NULL
+ */
+Site *siteArrayGet(long id);
+
+/**
  * Find a site that serve a URI based on resolved address
  * @param uri The full URI to resolve
  * @return Pointer to the site that can serve this URI on success, otherwise NULL
