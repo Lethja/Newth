@@ -451,20 +451,34 @@ static inline void ProcessCommand(char **args) {
             case 'P':
                 if (toupper(args[0][1]) == 'W' && toupper(args[0][2]) == 'D') {
                     long id;
-                    if (args[1][0] == '0' && args[1][1] == '\0')
-                        id = 0;
-                    else if (!(id = atol(args[1]))) { /* NOLINT(*-err34-c) */
-                        puts("Invalid Mount ID");
-                        return;
-                    }
+
+                    errno = 0, id = strtol(args[1], NULL, 10);
+                    if (errno)
+                        goto processCommand_invalidId;
 
                     if (siteArrayNthMounted(id))
                         puts(siteWorkingDirectoryGet(&siteArrayPtr(NULL)[id]));
                     else
-                        puts("Invalid Mount ID");
+                        goto processCommand_invalidId;
                 } else
                     goto processCommand_notFound;
                 break;
+            case 'U':
+                if (toupper(args[0][1]) == 'M' && toupper(args[0][2]) == 'O' && toupper(args[0][3]) == 'U' &&
+                    toupper(args[0][4]) == 'N' && toupper(args[0][5]) == 'T') {
+                    Site *site;
+                    long id;
+
+                    errno = 0, id = strtol(args[1], NULL, 10);
+                    if (!errno) {
+                        if (!(site = siteArrayGet(id)))
+                            goto processCommand_invalidId;
+
+                        siteFree(site), siteArrayRemove(site);
+                    }
+                    goto processCommand_invalidId;
+                } else
+                    goto processCommand_notFound;
             case 'X':
                 if (toupper(args[0][1]) == 'C' ||
                     (toupper(args[0][2]) == 'O' && toupper(args[0][3]) == 'P' && toupper(args[0][4]) == 'Y'))
@@ -505,6 +519,10 @@ static inline void ProcessCommand(char **args) {
                 goto processCommand_notFound;
         }
     }
+    return;
+
+processCommand_invalidId:
+    puts("Invalid Mount ID");
     return;
 
 processCommand_notFound:
