@@ -5,7 +5,7 @@
 #pragma region Site Array Type & Functions
 
 typedef struct SiteArray {
-    long len, set;
+    long len, activeRead, activeWrite;
     Site *array;
 } SiteArray;
 
@@ -42,21 +42,35 @@ static inline char SiteCompare(Site *site1, Site *site2) {
 }
 
 Site *siteArrayActiveGet(void) {
-    if (Sites.set >= Sites.len)
+    if (Sites.activeRead >= Sites.len)
         return NULL;
 
-    return &Sites.array[Sites.set];
+    return &Sites.array[Sites.activeRead];
 }
 
 long siteArrayActiveGetNth(void) {
-    if (Sites.set >= Sites.len)
+    if (Sites.activeRead >= Sites.len)
         return -1;
 
-    return Sites.set;
+    return Sites.activeRead;
+}
+
+Site *siteArrayActiveGetWrite(void) {
+    if (Sites.activeWrite >= Sites.len)
+        return NULL;
+
+    return &Sites.array[Sites.activeWrite];
+}
+
+long siteArrayActiveGetWriteNth(void) {
+    if (Sites.activeWrite >= Sites.len)
+        return -1;
+
+    return Sites.activeWrite;
 }
 
 Site *siteArrayGet(long id) {
-    if(id < 0 || id >= Sites.len)
+    if (id < 0 || id >= Sites.len)
         return NULL;
 
     return &Sites.array[id];
@@ -101,7 +115,7 @@ static inline long SiteArrayGetByUriHostNth(const char *uri) {
                         char *siteAddress = uriDetailsGetHostAddr(&details);
                         uriDetailsFree(&details);
 
-                        if(siteAddress) {
+                        if (siteAddress) {
                             if (strcmp(desiredAddress, siteAddress) == 0) {
                                 free(desiredAddress), free(siteAddress);
                                 return i;
@@ -137,11 +151,30 @@ void siteArrayActiveSet(Site *site) {
     }
 }
 
+void siteArrayActiveSetWrite(Site *site) {
+    long i;
+
+    for (i = 0; i < Sites.len; ++i) {
+        if (SiteCompare(&Sites.array[i], site)) {
+            siteArrayActiveSetNth(i);
+            return;
+        }
+    }
+}
+
 const char *siteArrayActiveSetNth(long siteNumber) {
     if (siteNumber >= Sites.len)
         return ErrInvalidSite;
 
-    Sites.set = siteNumber;
+    Sites.activeRead = siteNumber;
+    return NULL;
+}
+
+const char *siteArrayActiveSetWriteNth(long siteNumber) {
+    if (siteNumber >= Sites.len)
+        return ErrInvalidSite;
+
+    Sites.activeWrite = siteNumber;
     return NULL;
 }
 
@@ -185,6 +218,12 @@ void siteArrayRemoveNth(long n) {
 
         Sites.array = p;
     }
+
+    if (Sites.activeRead == n)
+        Sites.activeRead = -1;
+
+    if (Sites.activeWrite == n)
+        Sites.activeWrite = -1;
 }
 
 void siteArrayRemove(Site *site) {

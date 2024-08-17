@@ -233,12 +233,12 @@ static inline void PrintHelp(void) {
     " # = id, ... = parameter(s), () = parameter is optional."
     " All commands are case-insensitive.\n";
     const char *help =
-    " ?            - Show this printout       #           - Change active site\n"
-    " ! ...        - Run system command       COPY ...    - Queue file(s) for download\n"
-    " DIR (...)    - Full directory info      EXIT        - Close the program\n"
-    " LS (...)     - Slim directory info      MOUNT (...) - Mount URI as site\n"
-    " PWD (#)      - Print site current path  QUEUE       - List enqueued tasks\n"
-    " UMOUNT #     - Unmount site             XCOPY ...   - Queue subdirectorie(s) for download\n";
+    " ?            - Show this printout          #           - Change active site\n"
+    " ! ...        - Run system command          +(>/!/#)    - Change default writing site\n"
+    " COPY ...     - Queue file(s) for download  EXIT        - Close the program\n"
+    " DIR/LS (...) - Full/Slim directory info    MOUNT (...) - Mount URI as site\n"
+    " PWD (#)      - Print site current path     QUEUE       - List enqueued tasks\n"
+    " UMOUNT #     - Unmount site                XCOPY ...   - Queue subdirectorie(s) for download\n";
     puts(help), puts(legend);
 }
 
@@ -274,15 +274,17 @@ static inline const char *MountSite(const char *parameter) {
 }
 
 static inline void MountList(void) {
-    long a, i, len;
+    long a, b, i, len;
     Site *sites = siteArrayPtr(&len);
 
     if (!len)
         siteArrayInit();
 
     a = siteArrayActiveGetNth();
+    b = siteArrayActiveGetWriteNth();
+
     for (i = 0; i < len; ++i) {
-        printf("%c%ld:\t%s\n", i == a ? '>' : ' ', i,
+        printf("%c%c%ld:\t%s\n", i == b ? '+' : ' ', i == a ? '>' : ' ', i,
                sites[i].type == SITE_HTTP ? sites[i].site.http.fullUri : sites[i].site.file.fullUri);
 
     }
@@ -333,6 +335,53 @@ static inline void ProcessCommand(char **args) {
             case '?':
                 PrintHelp();
                 break;
+            case '+':
+                switch (args[0][1]) {
+                    case '\0': {
+                        Site *site = siteArrayActiveGetWrite();
+                        if (site)
+                            puts(siteWorkingDirectoryGet(site));
+                        else
+                            goto processCommand_invalidId;
+                        break;
+                    }
+                    case '!': /* Reverse direction */
+                        l = siteArrayActiveGetWriteNth();
+
+                        if (!(str = siteArrayActiveSetWriteNth(siteArrayActiveGetNth())))
+                            siteArrayActiveSetNth(l);
+                        else
+                            puts(str);
+                        break;
+                    case '>':
+                        if ((str = siteArrayActiveSetWriteNth(siteArrayActiveGetNth())))
+                            puts(str);
+
+                        break;
+                    case '0':
+                    case '1':
+                    case '2':
+                    case '3':
+                    case '4':
+                    case '5':
+                    case '6':
+                    case '7':
+                    case '8':
+                    case '9':
+                        errno = 0, l = strtol(&args[0][1], NULL, 10);
+                        if (errno)
+                            goto processCommand_invalidId;
+                        else {
+                            const char *e = siteArrayActiveSetWriteNth(l);
+                            if (e)
+                                puts(e);
+                        }
+                        break;
+                    default:
+                        /* TODO: Uri resolving */
+                        goto processCommand_invalidId;
+                }
+                break;
             case 'D':
                 if (toupper(args[0][1]) == 'I' && toupper(args[0][2]) == 'R')
                     PrintDirectoryFilesDosLike(siteArrayActiveGet(), NULL);
@@ -381,7 +430,6 @@ static inline void ProcessCommand(char **args) {
                         return;
 
                     siteFree(site), siteArrayRemove(site);
-                    siteArrayActiveSetNth(0);
                 } else
                     goto processCommand_notFound;
                 break;
@@ -401,6 +449,7 @@ static inline void ProcessCommand(char **args) {
                         puts(str);
                 break;
             default:
+                /* TODO: Uri resolving */
                 goto processCommand_notFound;
         }
     } else if (args[2] == NULL || args[2][0] == '-') {

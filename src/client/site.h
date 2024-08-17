@@ -86,10 +86,28 @@ Site *siteArrayActiveGet(void);
 long siteArrayActiveGetNth(void);
 
 /**
+ * Return the default writing site
+ * @return Pointer to the default writing site
+ */
+Site *siteArrayActiveGetWrite(void);
+
+/**
+ * Return the default writing site structure
+ * @return Pointer to the default writing site
+ */
+long siteArrayActiveGetWriteNth(void);
+
+/**
  * Set the active site by pointer
  * @param site The site to set to active
  */
 void siteArrayActiveSet(Site *site);
+
+/**
+ * Set the default write site by pointer
+ * @param site The site to set for default writing
+ */
+void siteArrayActiveSetWrite(Site *site);
 
 /**
  * Get pointer to a site from its array id
@@ -111,6 +129,13 @@ Site *siteArrayGetByUriHost(const char *uri);
  * @return NULL on success, user friendly error message as to why the site couldn't be changed otherwise
  */
 const char *siteArrayActiveSetNth(long siteNumber);
+
+/**
+ * Set the default write site
+ * @param siteNumber The id to be set as the default writing site
+ * @return NULL on success, user friendly error message as to why the site couldn't be changed otherwise
+ */
+const char *siteArrayActiveSetWriteNth(long siteNumber);
 
 /**
  * Is the site id valid
