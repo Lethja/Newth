@@ -233,10 +233,10 @@ static inline void PrintHelp(void) {
     " # = id, ... = parameter(s), () = parameter is optional."
     " All commands are case-insensitive.\n";
     const char *help =
-    " ?            - Show this printout          #           - Change active site\n"
-    " ! ...        - Run system command          +(>/!/#)    - Change default writing site\n"
+    " ?            - Show this printout          #|>...      - Change active site\n"
+    " ! ...        - Run system command          +(>|!|#)    - Change default writing site\n"
     " COPY ...     - Queue file(s) for download  EXIT        - Close the program\n"
-    " DIR/LS (...) - Full/Slim directory info    MOUNT (...) - Mount URI as site\n"
+    " DIR|LS (...) - Full|Slim directory info    MOUNT (...) - Mount URI as site\n"
     " PWD (#)      - Print site current path     QUEUE       - List enqueued tasks\n"
     " UMOUNT #     - Unmount site                XCOPY ...   - Queue subdirectorie(s) for download\n";
     puts(help), puts(legend);
@@ -329,11 +329,21 @@ static inline void ProcessCommand(char **args) {
             case '!':
                 memmove(&args[0][0], &args[0][1], strlen(&args[0][1]) + 1);
                 str = platformExecRunWait((const char **) args);
+
                 if (str)
                     puts(str);
                 break;
             case '?':
                 PrintHelp();
+                break;
+            case '>':
+                if (args[0][1] != '\0') {
+                    if ((l = siteArrayGetFromInputNth(&args[0][1])) != -1) {
+                        if ((str = siteArrayActiveSetNth(l)))
+                            puts(str);
+                    } else
+                        goto processCommand_invalidId;
+                }
                 break;
             case '+':
                 switch (args[0][1]) {
@@ -358,34 +368,23 @@ static inline void ProcessCommand(char **args) {
                             puts(str);
 
                         break;
-                    case '0':
-                    case '1':
-                    case '2':
-                    case '3':
-                    case '4':
-                    case '5':
-                    case '6':
-                    case '7':
-                    case '8':
-                    case '9':
-                        errno = 0, l = strtol(&args[0][1], NULL, 10);
-                        if (errno)
-                            goto processCommand_invalidId;
-                        else {
+                    default:
+                        if ((l = siteArrayGetFromInputNth(&args[0][1])) != -1) {
                             const char *e = siteArrayActiveSetWriteNth(l);
                             if (e)
                                 puts(e);
-                        }
-                        break;
-                    default:
-                        /* TODO: Uri resolving */
-                        goto processCommand_invalidId;
+                        } else
+                            goto processCommand_invalidId;
                 }
                 break;
             case 'D':
-                if (toupper(args[0][1]) == 'I' && toupper(args[0][2]) == 'R')
-                    PrintDirectoryFilesDosLike(siteArrayActiveGet(), NULL);
-                else
+                if (toupper(args[0][1]) == 'I' && toupper(args[0][2]) == 'R') {
+                    Site *site = siteArrayActiveGet();
+                    if (site)
+                        PrintDirectoryFilesDosLike(site, NULL);
+                    else
+                        goto processCommand_invalidId;
+                } else
                     goto processCommand_notFound;
                 break;
             case 'E':
@@ -398,9 +397,13 @@ static inline void ProcessCommand(char **args) {
                 } else
                     goto processCommand_notFound;
             case 'L':
-                if (toupper(args[0][1]) == 'S')
-                    PrintDirectoryFilesUnixLike(siteArrayActiveGet(), NULL);
-                else
+                if (toupper(args[0][1]) == 'S') {
+                    Site *site = siteArrayActiveGet();
+                    if (site)
+                        PrintDirectoryFilesUnixLike(siteArrayActiveGet(), NULL);
+                    else
+                        goto processCommand_invalidId;
+                } else
                     goto processCommand_notFound;
                 break;
             case 'M':
@@ -515,19 +518,15 @@ static inline void ProcessCommand(char **args) {
             case 'U':
                 if (toupper(args[0][1]) == 'M' && toupper(args[0][2]) == 'O' && toupper(args[0][3]) == 'U' &&
                     toupper(args[0][4]) == 'N' && toupper(args[0][5]) == 'T') {
-                    Site *site;
-                    long id;
+                    Site *site = siteArrayGetFromInput(args[1]);
 
-                    errno = 0, id = strtol(args[1], NULL, 10);
-                    if (!errno) {
-                        if (!(site = siteArrayGet(id)))
-                            goto processCommand_invalidId;
-
+                    if (site)
                         siteFree(site), siteArrayRemove(site);
-                    }
-                    goto processCommand_invalidId;
+                    else
+                        goto processCommand_invalidId;
                 } else
                     goto processCommand_notFound;
+                break;
             case 'X':
                 if (toupper(args[0][1]) == 'C' ||
                     (toupper(args[0][2]) == 'O' && toupper(args[0][3]) == 'P' && toupper(args[0][4]) == 'Y'))
@@ -571,7 +570,7 @@ static inline void ProcessCommand(char **args) {
     return;
 
 processCommand_invalidId:
-    puts("Invalid Mount ID");
+    puts("Invalid site. See currently valid sites with 'MOUNT'");
     return;
 
 processCommand_notFound:
