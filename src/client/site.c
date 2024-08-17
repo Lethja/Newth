@@ -42,28 +42,28 @@ static inline char SiteCompare(Site *site1, Site *site2) {
 }
 
 Site *siteArrayActiveGet(void) {
-    if (Sites.activeRead >= Sites.len)
+    if (Sites.activeRead < 0 || Sites.activeRead >= Sites.len)
         return NULL;
 
     return &Sites.array[Sites.activeRead];
 }
 
 long siteArrayActiveGetNth(void) {
-    if (Sites.activeRead >= Sites.len)
+    if (Sites.activeRead < 0 || Sites.activeRead >= Sites.len)
         return -1;
 
     return Sites.activeRead;
 }
 
 Site *siteArrayActiveGetWrite(void) {
-    if (Sites.activeWrite >= Sites.len)
+    if (Sites.activeWrite < 0 || Sites.activeWrite >= Sites.len)
         return NULL;
 
     return &Sites.array[Sites.activeWrite];
 }
 
 long siteArrayActiveGetWriteNth(void) {
-    if (Sites.activeWrite >= Sites.len)
+    if (Sites.activeWrite < 0 || Sites.activeWrite >= Sites.len)
         return -1;
 
     return Sites.activeWrite;
@@ -96,6 +96,7 @@ static inline long SiteArrayGetByUriHostNth(const char *uri) {
                 break;
             default:
             case SCHEME_UNKNOWN:
+                uriDetailsFree(&details);
                 return -1;
         }
 
