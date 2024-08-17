@@ -107,7 +107,7 @@ char *uriDetailsGetHostAddr(UriDetails *details) {
         return NULL;
 
 #ifdef GETHOSTBYNAME_CANT_IPV4STR
-    /* This implementation of gethostbyname() can resolve literal IPV4, check manually */
+    /* This implementation of gethostbyname() can not resolve literal IPV4, check manually */
     if (isValidIpv4Str(details->host)) {
         char *r = malloc(strlen(details->host) + 1);
 

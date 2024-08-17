@@ -1,5 +1,6 @@
 #include "err.h"
 #include "site.h"
+#include "uri.h"
 
 #pragma region Site Array Type & Functions
 
@@ -10,6 +11,12 @@ typedef struct SiteArray {
 
 SiteArray Sites;
 
+/**
+ * Compare sites
+ * @param site1 The first site to compare
+ * @param site2 The second site to compare
+ * @return 1 if sites are identical the same otherwise 0
+ */
 static inline char SiteCompare(Site *site1, Site *site2) {
     size_t s;
     void *p, *q;
@@ -46,6 +53,70 @@ long siteArrayActiveGetNth(void) {
         return -1;
 
     return Sites.set;
+}
+
+/**
+ * Find a site that serve this a URI based on resolved address
+ * @param uri The full URI to resolve
+ * @return Site ID on success -1 on failure
+ */
+static inline long SiteArrayGetByUriHostNth(const char *uri) {
+    char *desiredAddress;
+    enum SiteType type;
+    {
+        UriDetails details = uriDetailsNewFrom(uri);
+
+        switch (uriDetailsGetScheme(&details)) {
+            case SCHEME_FILE:
+                type = SITE_FILE, desiredAddress = NULL;
+                break;
+            case SCHEME_HTTP:
+                type = SITE_HTTP, desiredAddress = uriDetailsGetHostAddr(&details);
+                break;
+            default:
+            case SCHEME_UNKNOWN:
+                return -1;
+        }
+
+        uriDetailsFree(&details);
+    }
+
+    {
+        long i;
+        for (i = 0; i < Sites.len; ++i) {
+            Site *site = &Sites.array[i];
+            if (type == site->type) {
+                switch (type) {
+                    case SITE_FILE: /* Any file scheme site is valid */
+                        return i;
+                    case SITE_HTTP: {
+                        UriDetails details = uriDetailsNewFrom(site->site.http.fullUri);
+                        char *siteAddress = uriDetailsGetHostAddr(&details);
+                        uriDetailsFree(&details);
+
+                        if(siteAddress) {
+                            if (strcmp(desiredAddress, siteAddress) == 0) {
+                                free(desiredAddress), free(siteAddress);
+                                return i;
+                            }
+
+                            free(siteAddress);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (desiredAddress)
+        free(desiredAddress);
+
+    return -1;
+}
+
+Site *siteArrayGetByUriHost(const char *uri) {
+    long i = SiteArrayGetByUriHostNth(uri);
+    return i >= 0 ? &Sites.array[i] : NULL;
 }
 
 void siteArrayActiveSet(Site *site) {

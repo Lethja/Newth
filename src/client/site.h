@@ -92,6 +92,13 @@ long siteArrayActiveGetNth(void);
 void siteArrayActiveSet(Site *site);
 
 /**
+ * Find a site that serve a URI based on resolved address
+ * @param uri The full URI to resolve
+ * @return Pointer to the site that can serve this URI on success, otherwise NULL
+ */
+Site *siteArrayGetByUriHost(const char *uri);
+
+/**
  * Set the active site by number
  * @param siteNumber The site number to set to active
  * @return NULL on success, user friendly error message as to why the site couldn't be changed otherwise
