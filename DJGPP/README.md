@@ -42,10 +42,10 @@ To build Newth with DJGPP you will need the following:
 
 - 80386 compatible machine or emulator
 - DOS 4.0+ operating system or emulator
-- [DJGPP v2.05](https://www.delorie.com/djgpp/)
+- [DJGPP v2.03](https://www.delorie.com/djgpp/) or later
 - [GNU Mtools](https://www.gnu.org/software/mtools/) (optional)
 - [UPX binary compression](https://upx.github.io/) (optional)
-- [Watt32 library](https://github.com/gvanem/Watt-32) compiled with the same version of DJGPP
+- [Watt-32 library](https://github.com/gvanem/Watt-32) compiled with the same version of DJGPP
 
 > Tip: If hardware isn't available it's possible to proceed with a emulator such as [Dosbox-X](https://dosbox-x.com/)
 
