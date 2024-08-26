@@ -48,36 +48,6 @@ typedef struct QueueEntryArray {
     QueueEntry *entry;
 } QueueEntryArray;
 
-typedef struct PathQueue {
-    SocketAddress address;
-    unsigned int pathsLen;
-    char **paths;
-    SOCKET ctrlSock, dataSock;
-} PathQueue;
-
-typedef struct AddressQueue {
-    unsigned int queueLen;
-    PathQueue **queue;
-} AddressQueue;
-
-extern const char *pathQueueAppendOrCreate(SocketAddress *address, const char *path);
-
-extern void *pathQueueFind(SocketAddress *address, const char *path, size_t *addressIdx, size_t *pathIdx);
-
-extern char *pathQueueRemove(SocketAddress *address, const char *path);
-
-extern void addressQueueClear(void);
-
-extern PathQueue **addressQueueGet(void);
-
-extern unsigned int addressQueueGetNth(void);
-
-extern unsigned int pathQueueGetNth(SocketAddress *address);
-
-extern unsigned int addressQueueGetTotalPathRequests(void);
-
-extern char *pathQueueConnect(PathQueue *self);
-
 /**
  * Create or append QueueEntry to an QueueEntryArray
  * @param queueEntryArray In: A pointer to the array to append to or NULL to create a new one
@@ -86,6 +56,10 @@ extern char *pathQueueConnect(PathQueue *self);
  */
 const char *queueEntryArrayAppend(QueueEntryArray **queueEntryArray, QueueEntry *entry);
 
+/**
+ * Free the entry array and its elements
+ * @param queueEntryArray The entry array to free from memory
+ */
 void queueEntryArrayFree(QueueEntryArray *queueEntryArray);
 
 #endif /* NEW_DL_QUEUE_H */

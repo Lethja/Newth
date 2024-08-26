@@ -99,39 +99,6 @@ static inline void ListQueue(void) {
     puts("QUEUE not yet implemented"); /* TODO: Implement */
 }
 
-static inline SocketAddress *ParseUri(const char *uri, UriDetails *uriDetails) {
-    UriDetails details = uriDetailsNewFrom(uri);
-    SocketAddress *address = calloc(1, sizeof(SocketAddress));
-
-    if (uriDetailsCreateSocketAddress(&details, address, SCHEME_HTTP)) {
-        uriDetailsFree(&details), free(address);
-        return NULL;
-    }
-
-    memcpy(uriDetails, &details, sizeof(UriDetails));
-    return address;
-}
-
-static inline void ParseUris(int argc, char **argv) {
-    int i;
-    unsigned int e;
-    for (e = 0, i = 1; i < argc; ++i) {
-        UriDetails details;
-        SocketAddress *address = ParseUri(argv[i], &details);
-        if (address) {
-            const char *err;
-            if ((err = pathQueueAppendOrCreate(address, details.path ? details.path : "/")))
-                printf("ERR: '%s' (%s)\n", argv[i], err), ++e;
-        } else
-            printf("ERR: '%s' (Couldn't parse URI)\n", argv[i]), ++e;
-
-        uriDetailsFree(&details);
-    }
-
-    if (e)
-        printf("WARN: %u addresses couldn't be parsed", e);
-}
-
 #ifndef READLINE
 
 static inline void CleanInput(char *input) {
@@ -237,7 +204,7 @@ static inline void PrintHelp(void) {
     " ! ...        - Run system command          +(>|!|#)    - Change default writing site\n"
     " COPY ...     - Queue file(s) for download  EXIT        - Close the program\n"
     " DIR|LS (...) - Full|Slim directory info    MOUNT (...) - Mount URI as site\n"
-    " PWD (#)      - Print site current path     QUEUE       - List enqueued tasks\n"
+    " PWD (#)      - Print site current path     QUEUE (...) - List enqueued tasks\n"
     " UMOUNT #     - Unmount site                XCOPY ...   - Queue subdirectorie(s) for download\n";
     puts(help), puts(legend);
 }
@@ -639,8 +606,6 @@ static inline void InteractiveMode(void) {
 int main(int argc, char **argv) {
     char *err;
 
-    ParseUris(argc, argv);
-
     err = platformIpStackInit();
     if (err) {
         puts(err);
@@ -649,22 +614,10 @@ int main(int argc, char **argv) {
 
     platformConnectSignals(signalNoAction, NULL, NULL);
 
-    switch (addressQueueGetTotalPathRequests()) {
-        case 0:
 #ifndef _WIN32
-            if (isatty(fileno(stdout)))
+    if (isatty(fileno(stdout)))
 #endif /* _WIN32 */
-                InteractiveMode();
-#ifndef _WIN32
-            else
-                puts("Nothing queued for download");
-#endif /* _WIN32 */
-            return 1;
-        case 1:
-        default:
-            puts("Not yet implemented");
-            break;
-    }
+        InteractiveMode();
 
     return 0;
 }
