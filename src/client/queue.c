@@ -37,7 +37,7 @@ const char *queueEntryArrayAppend(QueueEntryArray **queueEntryArray, QueueEntry 
     if (EntrySearch(array, entry))
         return NULL;
 
-    if (platformHeapResize((void **) array->entry, sizeof(QueueEntry), array->len + 1))
+    if (platformHeapResize((void **) &array->entry, sizeof(QueueEntry), array->len + 1))
         return strerror(errno);
 
     memcpy(&array->entry[array->len], entry, sizeof(QueueEntry));
@@ -46,12 +46,14 @@ const char *queueEntryArrayAppend(QueueEntryArray **queueEntryArray, QueueEntry 
     return NULL;
 }
 
-void queueEntryArrayFree(QueueEntryArray *queueEntryArray) {
-    if (!queueEntryArray)
+void queueEntryArrayFree(QueueEntryArray **queueEntryArray) {
+    QueueEntryArray *a;
+    if (!queueEntryArray || !*queueEntryArray)
         return;
 
-    if (queueEntryArray->entry)
-        free(queueEntryArray->entry);
+    a = *queueEntryArray;
+    if (a->entry)
+        free(a->entry);
 
-    free(queueEntryArray);
+    free(a), *queueEntryArray = NULL;
 }

@@ -58,8 +58,8 @@ const char *queueEntryArrayAppend(QueueEntryArray **queueEntryArray, QueueEntry 
 
 /**
  * Free the entry array and its elements
- * @param queueEntryArray The entry array to free from memory
+ * @param queueEntryArray In-Out: A double pointer to an entry array to free from memory, the value will be set to NULL
  */
-void queueEntryArrayFree(QueueEntryArray *queueEntryArray);
+void queueEntryArrayFree(QueueEntryArray **queueEntryArray);
 
 #endif /* NEW_DL_QUEUE_H */
