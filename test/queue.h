@@ -127,6 +127,93 @@ static void HttpChunkLast(void **state) {
     assert_int_equal(max, 0);
 }
 
+#ifdef MOCK
+
+/**
+ * This test checks that queueEntryArrayAppend() works correctly
+ */
+static void QueueEntryArrayAppend(void **state) {
+    Site from, to;
+    QueueEntryArray *entryArray = NULL;
+    QueueEntry queueEntry = {0};
+    void *p = platformTempFilePath("nt_f1");
+    const char *head = "HTTP/1.1 200 OK" HTTP_EOL
+                       "Content-Type: text/html; charset=ISO-8859-1" HTTP_EOL
+                       "Date: Thu, 1 Jan 1970 00:00:00 GMT" HTTP_EOL
+                       "Length: 0" HTTP_EOL HTTP_EOL;
+
+    mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
+    assert_non_null(mockReceiveStream = fopen(p, "wb+")), free(p);
+    assert_int_equal(fwrite(head, 1, strlen(head), mockReceiveStream), strlen(head)), rewind(mockReceiveStream);
+
+    #pragma region Create Sites to give random pointer values to that queue entry can use
+
+    assert_null(siteNew(&from, SITE_HTTP, "http://127.0.0.1")), fclose(mockReceiveStream), mockReceiveStream = NULL;
+    assert_non_null(p = platformPathSystemToFileScheme((char *) platformTempDirectoryGet()));
+    assert_null(siteNew(&to, SITE_FILE, p)), free(p), siteFree(&to), siteFree(&from);
+
+    #pragma endregion
+
+    #pragma region Create the first entry
+
+    queueEntry.sourceSite = &from, queueEntry.destinationSite = &to;
+    queueEntry.sourcePath = "foo", queueEntry.destinationPath = "bar";
+    queueEntry.state = 0;
+
+    assert_null(queueEntryArrayAppend(&entryArray, &queueEntry));
+    assert_non_null(entryArray), assert_int_equal(entryArray->len, 1), assert_non_null(entryArray->entry);
+    assert_memory_equal(&entryArray->entry[0], &queueEntry, sizeof(QueueEntry));
+
+    #pragma endregion
+
+    #pragma region Create the second entry
+
+    queueEntry.sourceSite = &to, queueEntry.destinationSite = &from;
+    queueEntry.sourcePath = "bar", queueEntry.destinationPath = "foo";
+    queueEntry.state = 1;
+
+    assert_null(queueEntryArrayAppend(&entryArray, &queueEntry));
+    assert_non_null(entryArray), assert_int_equal(entryArray->len, 2), assert_non_null(entryArray->entry);
+    assert_memory_equal(&entryArray->entry[1], &queueEntry, sizeof(QueueEntry));
+
+    #pragma endregion
+
+    #pragma region Create the third entry
+
+    queueEntry.state = 2, queueEntry.sourceSite = &from;
+
+    assert_null(queueEntryArrayAppend(&entryArray, &queueEntry));
+    assert_non_null(entryArray), assert_int_equal(entryArray->len, 3), assert_non_null(entryArray->entry);
+    assert_memory_equal(&entryArray->entry[2], &queueEntry, sizeof(QueueEntry));
+
+    #pragma endregion
+
+    #pragma region Check intergrety of second entry
+
+    queueEntry.state = 1, queueEntry.sourceSite = &to;
+    assert_memory_equal(&entryArray->entry[1], &queueEntry, sizeof(QueueEntry));
+
+    #pragma endregion
+
+    #pragma region Check no duplicates are appended
+
+    assert_null(queueEntryArrayAppend(&entryArray, &queueEntry));
+    assert_int_equal(entryArray->len, 3);
+
+    #pragma endregion
+
+    #pragma region Free all memory in entryArray
+
+    p = entryArray;
+    queueEntryArrayFree(&entryArray);
+    assert_ptr_equal(p, mockLastFree);
+    assert_null(entryArray);
+
+    #pragma endregion
+}
+
+#endif /* MOCK */
+
 const struct CMUnitTest queueTest[] = {
     cmocka_unit_test(HttpHeaderFind),
     cmocka_unit_test(HttpHeaderGetEssential),
@@ -134,6 +221,9 @@ const struct CMUnitTest queueTest[] = {
     cmocka_unit_test(HttpChunkLast),
     cmocka_unit_test(HttpChunkPartial),
     cmocka_unit_test(HttpChunkPartialOverBufferEnd),
+#ifdef MOCK
+    cmocka_unit_test(QueueEntryArrayAppend),
+#endif /* MOCK */
 };
 
 #endif /* NEW_DL_TEST_QUEUE_H */
