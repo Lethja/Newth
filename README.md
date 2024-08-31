@@ -39,3 +39,4 @@ Each build environment gets its own folder and references the same source code w
 | [DJGPP](DJGPP/README.md)       | DJGPP Makefile                | DOS 4 (80386)                      |
 | [VC6](VC6/README.md)           | Microsoft Visual Studio C++ 6 | Windows 95 (80386)                 |
 | [Watcom](Watcom/README.md)     | Open Watcom 1.9               | DOS 2 (8086)                       |
+| [Zig](Zig/README.md)           | Zig                           | Cross Compiler                     |
