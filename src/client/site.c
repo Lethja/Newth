@@ -4,13 +4,6 @@
 
 #pragma region Site Array Type & Functions
 
-typedef struct SiteArray {
-    long len, activeRead, activeWrite;
-    Site *array;
-} SiteArray;
-
-SiteArray Sites;
-
 /**
  * Compare sites
  * @param site1 The first site to compare
@@ -41,39 +34,39 @@ static inline char SiteCompare(Site *site1, Site *site2) {
     return 0;
 }
 
-Site *siteArrayActiveGet(void) {
-    if (Sites.activeRead < 0 || Sites.activeRead >= Sites.len)
+Site *siteArrayActiveGet(SiteArray *self) {
+    if (self->activeRead < 0 || self->activeRead >= self->len)
         return NULL;
 
-    return &Sites.array[Sites.activeRead];
+    return &self->array[self->activeRead];
 }
 
-long siteArrayActiveGetNth(void) {
-    if (Sites.activeRead < 0 || Sites.activeRead >= Sites.len)
+long siteArrayActiveGetNth(SiteArray *self) {
+    if (self->activeRead < 0 || self->activeRead >= self->len)
         return -1;
 
-    return Sites.activeRead;
+    return self->activeRead;
 }
 
-Site *siteArrayActiveGetWrite(void) {
-    if (Sites.activeWrite < 0 || Sites.activeWrite >= Sites.len)
+Site *siteArrayActiveGetWrite(SiteArray *self) {
+    if (self->activeWrite < 0 || self->activeWrite >= self->len)
         return NULL;
 
-    return &Sites.array[Sites.activeWrite];
+    return &self->array[self->activeWrite];
 }
 
-long siteArrayActiveGetWriteNth(void) {
-    if (Sites.activeWrite < 0 || Sites.activeWrite >= Sites.len)
+long siteArrayActiveGetWriteNth(SiteArray *self) {
+    if (self->activeWrite < 0 || self->activeWrite >= self->len)
         return -1;
 
-    return Sites.activeWrite;
+    return self->activeWrite;
 }
 
-Site *siteArrayGet(long id) {
-    if (id < 0 || id >= Sites.len)
+Site *siteArrayGet(SiteArray *self, long id) {
+    if (id < 0 || id >= self->len)
         return NULL;
 
-    return &Sites.array[id];
+    return &self->array[id];
 }
 
 /**
@@ -81,7 +74,7 @@ Site *siteArrayGet(long id) {
  * @param uri The full URI to resolve
  * @return Site ID on success -1 on failure
  */
-static inline long SiteArrayGetByUriHostNth(const char *uri) {
+static inline long SiteArrayGetByUriHostNth(SiteArray *self, const char *uri) {
     char *desiredAddress;
     enum SiteType type;
     {
@@ -105,8 +98,8 @@ static inline long SiteArrayGetByUriHostNth(const char *uri) {
 
     {
         long i;
-        for (i = 0; i < Sites.len; ++i) {
-            Site *site = &Sites.array[i];
+        for (i = 0; i < self->len; ++i) {
+            Site *site = &self->array[i];
             if (type == site->type) {
                 switch (type) {
                     case SITE_FILE: /* Any file scheme site is valid */
@@ -136,137 +129,137 @@ static inline long SiteArrayGetByUriHostNth(const char *uri) {
     return -1;
 }
 
-Site *siteArrayGetFromInput(const char *input) {
-    long self;
+Site *siteArrayGetFromInput(SiteArray *self, const char *input) {
+    long idx;
 
     if (isdigit(input[0])) {
-        errno = 0, self = strtol(input, NULL, 10);
-        if (!errno && self >= 0 && self < Sites.len)
-            return &Sites.array[self];
+        errno = 0, idx = strtol(input, NULL, 10);
+        if (!errno && idx >= 0 && idx < self->len)
+            return &self->array[idx];
     }
 
-    return siteArrayGetByUriHost(input);
+    return siteArrayGetByUriHost(self, input);
 }
 
-long siteArrayGetFromInputNth(const char *input) {
-    long self;
+long siteArrayGetFromInputNth(SiteArray *self, const char *input) {
+    long idx;
 
     if (isdigit(input[0])) {
-        errno = 0, self = strtol(input, NULL, 10);
-        if (!errno && self >= 0 && self < Sites.len)
-            return self;
+        errno = 0, idx = strtol(input, NULL, 10);
+        if (!errno && idx >= 0 && idx < self->len)
+            return idx;
     }
 
-    return SiteArrayGetByUriHostNth(input);
+    return SiteArrayGetByUriHostNth(self, input);
 }
 
-Site *siteArrayGetByUriHost(const char *uri) {
-    long i = SiteArrayGetByUriHostNth(uri);
-    return i >= 0 ? &Sites.array[i] : NULL;
+Site *siteArrayGetByUriHost(SiteArray *self, const char *uri) {
+    long i = SiteArrayGetByUriHostNth(self, uri);
+    return i >= 0 ? &self->array[i] : NULL;
 }
 
-void siteArrayActiveSet(Site *site) {
+void siteArrayActiveSet(SiteArray *self, Site *site) {
     long i;
 
-    for (i = 0; i < Sites.len; ++i) {
-        if (SiteCompare(&Sites.array[i], site)) {
-            siteArrayActiveSetNth(i);
+    for (i = 0; i < self->len; ++i) {
+        if (SiteCompare(&self->array[i], site)) {
+            siteArrayActiveSetNth(self, i);
             return;
         }
     }
 }
 
-void siteArrayActiveSetWrite(Site *site) {
+void siteArrayActiveSetWrite(SiteArray *self, Site *site) {
     long i;
 
-    for (i = 0; i < Sites.len; ++i) {
-        if (SiteCompare(&Sites.array[i], site)) {
-            siteArrayActiveSetNth(i);
+    for (i = 0; i < self->len; ++i) {
+        if (SiteCompare(&self->array[i], site)) {
+            siteArrayActiveSetNth(self, i);
             return;
         }
     }
 }
 
-const char *siteArrayActiveSetNth(long siteNumber) {
-    if (siteNumber >= Sites.len)
+const char *siteArrayActiveSetNth(SiteArray *self, long siteNumber) {
+    if (siteNumber >= self->len)
         return ErrInvalidSite;
 
-    Sites.activeRead = siteNumber;
+    self->activeRead = siteNumber;
     return NULL;
 }
 
-const char *siteArrayActiveSetWriteNth(long siteNumber) {
-    if (siteNumber >= Sites.len)
+const char *siteArrayActiveSetWriteNth(SiteArray *self, long siteNumber) {
+    if (siteNumber >= self->len)
         return ErrInvalidSite;
 
-    Sites.activeWrite = siteNumber;
+    self->activeWrite = siteNumber;
     return NULL;
 }
 
-char siteArrayNthMounted(long siteNumber) {
-    if (siteNumber < 0 || siteNumber >= Sites.len)
+char siteArrayNthMounted(SiteArray *self, long siteNumber) {
+    if (siteNumber < 0 || siteNumber >= self->len)
         return 0;
     return 1;
 }
 
-char *siteArrayInit(void) {
+char *siteArrayInit(SiteArray *self) {
     Site file;
     siteNew(&file, SITE_FILE, NULL);
-    memset(&Sites, 0, sizeof(SiteArray));
-    return siteArrayAdd(&file);
+    memset(self, 0, sizeof(SiteArray));
+    return siteArrayAdd(self, &file);
 }
 
-void siteArrayFree(void) {
+void siteArrayFree(SiteArray *self) {
     int i;
-    for (i = 0; i < Sites.len; ++i)
-        siteFree(&Sites.array[i]);
-    free(Sites.array);
+    for (i = 0; i < self->len; ++i)
+        siteFree(&self->array[i]);
+    free(self->array);
 }
 
-char *siteArrayAdd(Site *site) {
+char *siteArrayAdd(SiteArray *self, Site *site) {
     void *p;
 
-    if (!(p = Sites.array ? realloc(Sites.array, sizeof(Site) * (Sites.len + 1)) : malloc(sizeof(Site))))
+    if (!(p = self->array ? realloc(self->array, sizeof(Site) * (self->len + 1)) : malloc(sizeof(Site))))
         return strerror(errno);
 
-    Sites.array = p, ++Sites.len, memcpy(&Sites.array[Sites.len - 1], site, sizeof(Site));
+    self->array = p, ++self->len, memcpy(&self->array[self->len - 1], site, sizeof(Site));
     return NULL;
 }
 
-void siteArrayRemoveNth(long n) {
-    if (Sites.len - 1 >= n) {
+void siteArrayRemoveNth(SiteArray *self, long n) {
+    if (self->len - 1 >= n) {
         void *p;
 
-        memmove(&Sites.array[n], &Sites.array[n + 1], sizeof(Site) * (Sites.len - n - 1)), --Sites.len;
-        if (!(p = realloc(Sites.array, sizeof(Site) * (Sites.len + 1))))
+        memmove(&self->array[n], &self->array[n + 1], sizeof(Site) * (self->len - n - 1)), --self->len;
+        if (!(p = realloc(self->array, sizeof(Site) * (self->len + 1))))
             return;
 
-        Sites.array = p;
+        self->array = p;
     }
 
-    if (Sites.activeRead == n)
-        Sites.activeRead = -1;
+    if (self->activeRead == n)
+        self->activeRead = -1;
 
-    if (Sites.activeWrite == n)
-        Sites.activeWrite = -1;
+    if (self->activeWrite == n)
+        self->activeWrite = -1;
 }
 
-void siteArrayRemove(Site *site) {
+void siteArrayRemove(SiteArray *self, Site *site) {
     long i;
 
-    for (i = 0; i < Sites.len; ++i) {
-        if (SiteCompare(&Sites.array[i], site)) {
-            siteArrayRemoveNth(i);
+    for (i = 0; i < self->len; ++i) {
+        if (SiteCompare(&self->array[i], site)) {
+            siteArrayRemoveNth(self, i);
             return;
         }
     }
 }
 
-Site *siteArrayPtr(long *length) {
+Site *siteArrayPtr(SiteArray *self, long *length) {
     if (length)
-        *length = Sites.len;
+        *length = self->len;
 
-    return Sites.array;
+    return self->array;
 }
 
 #pragma endregion

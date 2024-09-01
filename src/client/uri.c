@@ -369,8 +369,7 @@ char *uriDetailsCreateStringBase(UriDetails *details) {
         if ((r = malloc(9)))
             strcpy(r, "file:///");
         return r;
-    }
-    else if (details->host) {
+    } else if (details->host) {
         len = strlen(details->scheme) + strlen(details->host) + 3;
         if (details->port)
             len += strlen(details->port) + 1;
@@ -383,10 +382,10 @@ char *uriDetailsCreateStringBase(UriDetails *details) {
     strcpy(r, details->scheme);
     strcat(r, "://");
     strcat(r, details->host);
-    if(details->port)
+    if (details->port)
         strcat(r, ":"), strcat(r, details->port);
 
-    r[len] = '/', r[len+1] = '\0';
+    r[len] = '/', r[len + 1] = '\0';
     return r;
 }
 

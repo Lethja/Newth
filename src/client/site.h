@@ -71,130 +71,154 @@ typedef struct Site {
     } site;
 } Site;
 
+typedef struct SiteArray {
+    long len, activeRead, activeWrite;
+    Site *array;
+} SiteArray;
+
 #pragma region Site Array
 
 /**
  * Return the active site structure
- * @return Pointer to the currently active site
+ * @param self In: The SiteArray to get the active site of
+ * @return Pointer to the currently active site or NULL
  */
-Site *siteArrayActiveGet(void);
+Site *siteArrayActiveGet(SiteArray *self);
 
 /**
  * Return the active site number
- * @return Entry number of the active site
+ * @param self In: The SiteArray to get the active site of
+ * @return Entry number of the active site or -1
  */
-long siteArrayActiveGetNth(void);
+long siteArrayActiveGetNth(SiteArray *self);
 
 /**
  * Return the default writing site
- * @return Pointer to the default writing site
+ * @param self In: The SiteArray to get the active write site of
+ * @return Pointer to the default writing site or NULL
  */
-Site *siteArrayActiveGetWrite(void);
+Site *siteArrayActiveGetWrite(SiteArray *self);
 
 /**
  * Return the default writing site structure
- * @return Pointer to the default writing site
+ * @param self In: The SiteArray to get the active write site of
+ * @return Pointer to the default writing site or -1
  */
-long siteArrayActiveGetWriteNth(void);
+long siteArrayActiveGetWriteNth(SiteArray *self);
 
 /**
  * Set the active site by pointer
- * @param site The site to set to active
+ * @param self In: The SiteArray to set the active site of
+ * @param site In: The site to set to active
  */
-void siteArrayActiveSet(Site *site);
+void siteArrayActiveSet(SiteArray *self, Site *site);
 
 /**
  * Set the default write site by pointer
- * @param site The site to set for default writing
+ * @param self In: The SiteArray to set the active write site of
+ * @param site In: The site to set for default writing
  */
-void siteArrayActiveSetWrite(Site *site);
+void siteArrayActiveSetWrite(SiteArray *self, Site *site);
 
 /**
  * Get pointer to a site from its array id
- * @param id The id of the site
+ * @param self In: The SiteArray to get Site from
+ * @param id In: The id of the site
  * @return Pointer to a site on success, otherwise NULL
  */
-Site *siteArrayGet(long id);
+Site *siteArrayGet(SiteArray *self, long id);
 
 /**
  * Get an existing site in the array that can serve the input
- * @param input The input to parse and get a site from
+ * @param self In: The SiteArray to get Site from
+ * @param input In: The input to parse and get a site from
  * @return Pointer to a site on success, otherwise NULL
  */
-Site *siteArrayGetFromInput(const char *input);
+Site *siteArrayGetFromInput(SiteArray *self, const char *input);
 
 /**
  * Get an existing site in the array that can serve the input
- * @param input The input to parse and get a site from
+ * @param self In: The SiteArray to get Site from
+ * @param input In: The input to parse and get a site from
  * @return Site id on success, otherwise -1
  */
-long siteArrayGetFromInputNth(const char *input);
+long siteArrayGetFromInputNth(SiteArray *self, const char *input);
 
 /**
  * Find a site that serve a URI based on resolved address
- * @param uri The full URI to resolve
+ * @param self In: The SiteArray to get Site from
+ * @param uri In: The full URI to resolve
  * @return Pointer to the site that can serve this URI on success, otherwise NULL
  */
-Site *siteArrayGetByUriHost(const char *uri);
+Site *siteArrayGetByUriHost(SiteArray *self, const char *uri);
 
 /**
  * Set the active site by number
- * @param siteNumber The site number to set to active
+ * @param self In: The SiteArray to set the active site of
+ * @param siteNumber In: The site number to set to active
  * @return NULL on success, user friendly error message as to why the site couldn't be changed otherwise
  */
-const char *siteArrayActiveSetNth(long siteNumber);
+const char *siteArrayActiveSetNth(SiteArray *self, long siteNumber);
 
 /**
  * Set the default write site
- * @param siteNumber The id to be set as the default writing site
+ * @param self In: The SiteArray to set the active write site of
+ * @param siteNumber In: The id to be set as the default writing site
  * @return NULL on success, user friendly error message as to why the site couldn't be changed otherwise
  */
-const char *siteArrayActiveSetWriteNth(long siteNumber);
+const char *siteArrayActiveSetWriteNth(SiteArray *self, long siteNumber);
 
 /**
  * Is the site id valid
- * @param siteNumber The site number to check
+ * @param self In: The SiteArray to check siteNumber is valid for
+ * @param siteNumber In: The site number to check
  * @return Non-zero when site number is valid
  */
-char siteArrayNthMounted(long siteNumber);
+char siteArrayNthMounted(SiteArray *self, long siteNumber);
 
 /**
  * Add a site to the list of mounted devices
- * @param site The site to be added
+ * @param self In: The SiteArray to address
+ * @param site In: The site to be added
  * @return NULL on success, user friendly error message on failure
  */
-char *siteArrayAdd(Site *site);
+char *siteArrayAdd(SiteArray *self, Site *site);
 
 /**
  * Free all memory inside a siteArray made with siteArrayInit()
+ * @param self In: The SiteArray to free internals of
  */
-void siteArrayFree(void);
+void siteArrayFree(SiteArray *self);
 
 /**
  * Initialize a siteArray system
+ * @param self In: The SiteArray to initialize
  * @return Structure with a file:// site pre-mounted
  * @remark Free with siteArrayFree() after use
  */
-char *siteArrayInit(void);
+char *siteArrayInit(SiteArray *self);
 
 /**
  * Array pointer to iterate over, use with caution
+ * @param self In: The SiteArray to address
  * @param length Out/Null: The size of the array
  * @return A pointer to the site array
  */
-Site *siteArrayPtr(long *length);
+Site *siteArrayPtr(SiteArray *self, long *length);
 
 /**
  * Remove this site from mounted devices if found
+ * @param self In: The SiteArray to address
  * @param site The site to be removed
  */
-void siteArrayRemove(Site *site);
+void siteArrayRemove(SiteArray *self, Site *site);
 
 /**
  * Remove index n from mounted devices
+ * @param self In: The SiteArray to address
  * @param n the mounted device to be removed
  */
-void siteArrayRemoveNth(long n);
+void siteArrayRemoveNth(SiteArray *self, long n);
 
 #pragma endregion
 

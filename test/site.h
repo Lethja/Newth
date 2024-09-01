@@ -23,39 +23,40 @@
  * This test ensures several sites can be added and removed from a site array
  */
 static void SiteArrayFunctions(void **state) {
+    SiteArray array;
     Site site1, site2;
     char *uri = platformPathSystemToFileScheme((char*) platformTempDirectoryGet());
     memset(&site1, 0, sizeof(Site)), memset(&site2, 0, sizeof(Site));
     assert_null(siteNew(&site1, SITE_FILE, uri));
     assert_null(siteNew(&site2, SITE_FILE, uri)), free(uri);
-    assert_null(siteArrayInit());
-    assert_null(siteArrayActiveSetNth(0));
-    assert_non_null(siteArrayActiveSetNth(1));
-    assert_null(siteArrayAdd(&site1));
-    assert_null(siteArrayActiveSetNth(1));
-    assert_non_null(siteArrayActiveSetNth(2));
-    assert_null(siteArrayAdd(&site2));
-    assert_null(siteArrayActiveSetNth(2));
-    assert_non_null(siteArrayActiveSetNth(3));
-    assert_null(siteArrayActiveSetNth(2));
-    assert_memory_equal(siteArrayActiveGet(), &site2, sizeof(Site));
-    assert_null(siteArrayActiveSetNth(0));
-    assert_null(siteArrayActiveSetNth(1));
-    assert_memory_equal(siteArrayActiveGet(), &site1, sizeof(Site));
-    assert_null(siteArrayActiveSetNth(2));
-    siteArrayRemove(&site1);
-    assert_null(siteArrayActiveGet());
-    assert_int_equal(siteArrayActiveGetNth(), -1);
-    assert_null(siteArrayActiveSetNth(1));
-    assert_memory_equal(siteArrayActiveGet(), &site2, sizeof(Site));
-    assert_null(siteArrayAdd(&site1));
-    assert_null(siteArrayActiveSetNth(2));
-    assert_non_null(siteArrayActiveGet());
-    assert_int_equal(siteArrayActiveGetNth(), 2);
-    siteArrayRemoveNth(2);
-    assert_null(siteArrayActiveGet());
-    assert_int_equal(siteArrayActiveGetNth(), -1);
-    siteArrayFree(), siteFree(&site1);
+    assert_null(siteArrayInit(&array));
+    assert_null(siteArrayActiveSetNth(&array, 0));
+    assert_non_null(siteArrayActiveSetNth(&array, 1));
+    assert_null(siteArrayAdd(&array, &site1));
+    assert_null(siteArrayActiveSetNth(&array, 1));
+    assert_non_null(siteArrayActiveSetNth(&array, 2));
+    assert_null(siteArrayAdd(&array, &site2));
+    assert_null(siteArrayActiveSetNth(&array, 2));
+    assert_non_null(siteArrayActiveSetNth(&array, 3));
+    assert_null(siteArrayActiveSetNth(&array, 2));
+    assert_memory_equal(siteArrayActiveGet(&array), &site2, sizeof(Site));
+    assert_null(siteArrayActiveSetNth(&array, 0));
+    assert_null(siteArrayActiveSetNth(&array, 1));
+    assert_memory_equal(siteArrayActiveGet(&array), &site1, sizeof(Site));
+    assert_null(siteArrayActiveSetNth(&array, 2));
+    siteArrayRemove(&array, &site1);
+    assert_null(siteArrayActiveGet(&array));
+    assert_int_equal(siteArrayActiveGetNth(&array), -1);
+    assert_null(siteArrayActiveSetNth(&array, 1));
+    assert_memory_equal(siteArrayActiveGet(&array), &site2, sizeof(Site));
+    assert_null(siteArrayAdd(&array, &site1));
+    assert_null(siteArrayActiveSetNth(&array, 2));
+    assert_non_null(siteArrayActiveGet(&array));
+    assert_int_equal(siteArrayActiveGetNth(&array), 2);
+    siteArrayRemoveNth(&array, 2);
+    assert_null(siteArrayActiveGet(&array));
+    assert_int_equal(siteArrayActiveGetNth(&array), -1);
+    siteArrayFree(&array), siteFree(&site1);
 }
 
 #pragma endregion
