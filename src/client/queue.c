@@ -27,23 +27,15 @@ const char *queueEntryNewFromPath(QueueEntry *self, SiteArray *array, const char
     dst = destination ? siteArrayUserPathResolve(array, destination, 1) : NULL;
     srcSite = siteArrayGetByUriHost(array, src), dstSite = dst ? siteArrayGetByUriHost(array, dst) : siteArrayActiveGetWrite(array);
 
-    free(src);
+    self->destinationSite = dstSite, self->sourceSite = srcSite;
+    details = uriDetailsNewFrom(src), self->sourcePath = details.path, details.path = NULL, uriDetailsFree(&details);
+    details = uriDetailsNewFrom(dst ? dst : siteWorkingDirectoryGet(dstSite));
+    self->destinationPath = details.path, details.path = NULL, uriDetailsFree(&details);
+
     if (dst)
         free(dst);
+    free(src);
 
-    if (!srcSite || !dstSite) {
-        if (srcSite)
-            free(srcSite);
-        if (dstSite)
-            free(dstSite);
-        return ErrAddressNotUnderstood;
-    }
-
-    self->destinationSite = dstSite, self->sourceSite = srcSite;
-    details = uriDetailsNewFrom(siteWorkingDirectoryGet(srcSite));
-    self->sourcePath = details.path, details.path = NULL, uriDetailsFree(&details);
-    details = uriDetailsNewFrom(siteWorkingDirectoryGet(dstSite));
-    self->destinationPath = details.path, details.path = NULL, uriDetailsFree(&details);
     self->state = QUEUE_STATE_QUEUED;
 
     return NULL;
@@ -79,14 +71,26 @@ const char *queueEntryArrayAppend(QueueEntryArray **queueEntryArray, QueueEntry 
     return NULL;
 }
 
+void queueEntryFree(QueueEntry *queueEntry) {
+    if (queueEntry->destinationPath)
+        free(queueEntry->destinationPath);
+    if (queueEntry->sourcePath)
+        free(queueEntry->sourcePath);
+}
+
 void queueEntryArrayFree(QueueEntryArray **queueEntryArray) {
     QueueEntryArray *a;
     if (!queueEntryArray || !*queueEntryArray)
         return;
 
     a = *queueEntryArray;
-    if (a->entry)
+    if (a->entry) {
+        size_t i;
+        for (i = 0; i < a->len; ++i)
+            queueEntryFree(&a->entry[i]);
+
         free(a->entry);
+    }
 
     free(a), *queueEntryArray = NULL;
 }

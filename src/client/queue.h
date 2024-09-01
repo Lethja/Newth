@@ -72,4 +72,10 @@ void queueEntryArrayFree(QueueEntryArray **queueEntryArray);
  */
 const char *queueEntryNewFromPath(QueueEntry *self, SiteArray *array, const char *source, const char *destination);
 
+/**
+ * Free internal of a queueEntry
+ * @param queueEntry The QueueEntry to free the internals of
+ */
+void queueEntryFree(QueueEntry *queueEntry);
+
 #endif /* NEW_DL_QUEUE_H */

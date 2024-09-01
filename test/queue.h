@@ -205,11 +205,67 @@ static void QueueEntryArrayAppend(void **state) {
     #pragma region Free all memory in entryArray
 
     p = entryArray;
+    {
+        size_t i;
+        for (i = 0; i < entryArray->len; ++i)
+            entryArray->entry[i].sourcePath = entryArray->entry[i].destinationPath = NULL;
+    }
+
     queueEntryArrayFree(&entryArray);
     assert_ptr_equal(p, mockLastFree);
     assert_null(entryArray);
 
     #pragma endregion
+}
+
+/**
+ * This test checks that queueEntryArrayAppend() works correctly
+ */
+static void QueueEntryFromUser(void **state) {
+    SiteArray siteArray = {0};
+    Site from, to;
+    QueueEntry queueEntry = {0};
+    void *p = platformTempFilePath("nt_f1");
+    const char *head = "HTTP/1.1 200 OK" HTTP_EOL
+                       "Content-Type: text/html; charset=ISO-8859-1" HTTP_EOL
+                       "Date: Thu, 1 Jan 1970 00:00:00 GMT" HTTP_EOL
+                       "Length: 0" HTTP_EOL HTTP_EOL;
+
+    mockReset(), mockOptions = MOCK_CONNECT | MOCK_SEND | MOCK_RECEIVE, mockSendMaxBuf = mockReceiveMaxBuf = 1024;
+    assert_non_null(mockReceiveStream = fopen(p, "wb+")), free(p);
+    assert_int_equal(fwrite(head, 1, strlen(head), mockReceiveStream), strlen(head)), rewind(mockReceiveStream);
+
+    #pragma region Create Sites to give random pointer values to that queue entry can use
+
+    assert_null(siteNew(&from, SITE_HTTP, "http://127.0.0.1")), fclose(mockReceiveStream), mockReceiveStream = NULL;
+    assert_non_null(p = platformPathSystemToFileScheme((char *) platformTempDirectoryGet()));
+    assert_null(siteNew(&to, SITE_FILE, p)), free(p);
+
+    #pragma endregion
+
+    #pragma region Add Sites to SiteArray
+
+    siteArrayAdd(&siteArray, &from);
+    siteArrayAdd(&siteArray, &to);
+
+    #pragma endregion
+
+    #pragma region Add/compare absolue uri entries
+
+    assert_null(queueEntryNewFromPath(&queueEntry, &siteArray, "http://127.0.0.1/foo", "file:///bar"));
+    assert_int_equal(queueEntry.state, QUEUE_STATE_QUEUED);
+    assert_memory_equal(queueEntry.sourceSite, &from, sizeof(Site));
+    assert_memory_equal(queueEntry.destinationSite, &to, sizeof(Site));
+    assert_string_equal(queueEntry.sourcePath, "/foo");
+    assert_string_equal(queueEntry.destinationPath, "/bar");
+
+    #pragma endregion
+
+    #pragma region Cleanup
+    queueEntryFree(&queueEntry);
+    siteArrayFree(&siteArray);
+    #pragma endregion
+
 }
 
 #endif /* MOCK */
@@ -223,6 +279,7 @@ const struct CMUnitTest queueTest[] = {
     cmocka_unit_test(HttpChunkPartialOverBufferEnd),
 #ifdef MOCK
     cmocka_unit_test(QueueEntryArrayAppend),
+    cmocka_unit_test(QueueEntryFromUser),
 #endif /* MOCK */
 };
 
