@@ -1,6 +1,6 @@
 #include "err.h"
 #include "queue.h"
-#include "../platform/platform.h"
+#include "uri.h"
 
 static inline QueueEntry *EntrySearch(QueueEntryArray *array, QueueEntry *entry) {
     size_t i;
@@ -12,6 +12,39 @@ static inline QueueEntry *EntrySearch(QueueEntryArray *array, QueueEntry *entry)
             && strcmp(it->sourcePath, entry->sourcePath) == 0)
             return it;
     }
+
+    return NULL;
+}
+
+const char *queueEntryNewFromPath(QueueEntry *self, SiteArray *array, const char *source, const char *destination) {
+    char *src, *dst;
+    Site *srcSite, *dstSite;
+    UriDetails details;
+
+    if (!(src = siteArrayUserPathResolve(array, source, 0)))
+        return ErrAddressNotUnderstood;
+
+    dst = destination ? siteArrayUserPathResolve(array, destination, 1) : NULL;
+    srcSite = siteArrayGetByUriHost(array, src), dstSite = dst ? siteArrayGetByUriHost(array, dst) : siteArrayActiveGetWrite(array);
+
+    free(src);
+    if (dst)
+        free(dst);
+
+    if (!srcSite || !dstSite) {
+        if (srcSite)
+            free(srcSite);
+        if (dstSite)
+            free(dstSite);
+        return ErrAddressNotUnderstood;
+    }
+
+    self->destinationSite = dstSite, self->sourceSite = srcSite;
+    details = uriDetailsNewFrom(siteWorkingDirectoryGet(srcSite));
+    self->sourcePath = details.path, details.path = NULL, uriDetailsFree(&details);
+    details = uriDetailsNewFrom(siteWorkingDirectoryGet(dstSite));
+    self->destinationPath = details.path, details.path = NULL, uriDetailsFree(&details);
+    self->state = QUEUE_STATE_QUEUED;
 
     return NULL;
 }

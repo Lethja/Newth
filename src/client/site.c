@@ -478,4 +478,55 @@ SOCK_BUF_TYPE siteFileWrite(Site *self, char *buffer, SOCK_BUF_TYPE size) {
     }
 }
 
+char *siteArrayUserPathResolve(SiteArray *array, const char *path, char write) {
+    char *r;
+
+    if (isdigit(path[0]) && strchr(&path[1], ':')) { /* Looks like a relative site path */
+        long l;
+        UriDetails details;
+        char *c;
+        Site *site;
+
+        errno = 0, l = strtol(path, &c, 10);
+        if (errno || !(site = siteArrayGet(array, l)))
+            return NULL;
+
+        details = uriDetailsNewFrom(siteWorkingDirectoryGet(site));
+        if (!(r = uriDetailsCreateStringBase(&details))) {
+            uriDetailsFree(&details);
+            return NULL;
+        }
+
+        if (c[0] == ':' && c[1] != '\0') {
+            size_t len = strlen(r) + strlen(c);
+
+            if (platformHeapResize((void **) &r, sizeof(char), len)) {
+                free(r);
+                return NULL;
+            }
+
+            strcat(r, &c[1]);
+            return r;
+        }
+
+        return NULL;
+    } else if (strstr(path, "://")) { /* Looks like an absolute path */
+        UriDetails details = uriDetailsNewFrom(path);
+
+        if (details.path) {
+            r = uriDetailsCreateString(&details), uriDetailsFree(&details);
+            return r;
+        }
+        uriDetailsFree(&details);
+        return NULL;
+    } else { /* Looks like a relative path on current site */
+        Site *site = write ? siteArrayActiveGetWrite(array) : siteArrayActiveGet(array);
+
+        if (!site)
+            return NULL;
+
+        return uriPathAbsoluteAppend(siteWorkingDirectoryGet(site), path);
+    }
+}
+
 #pragma endregion

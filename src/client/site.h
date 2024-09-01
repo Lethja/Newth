@@ -393,6 +393,16 @@ const char *siteFileOpenWrite(Site *self, const char *path);
  */
 SOCK_BUF_TYPE siteFileWrite(Site *self, char *buffer, SOCK_BUF_TYPE size);
 
+/**
+ * Resolve a user given input into a absolute uri
+ * @param array The SiteArray to check for a match for
+ * @param path The user input path
+ * @param write If the relative input should be interpreted as the default writing path
+ * @return Absolute URI equivalent to path or NULL
+ * @remark Returned pointer should be freed before leaving scope
+ */
+char *siteArrayUserPathResolve(SiteArray *array, const char *path, char write);
+
 #pragma endregion
 
 #endif /* NEW_DL_SITE_H */

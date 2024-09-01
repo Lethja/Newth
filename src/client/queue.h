@@ -62,4 +62,14 @@ const char *queueEntryArrayAppend(QueueEntryArray **queueEntryArray, QueueEntry 
  */
 void queueEntryArrayFree(QueueEntryArray **queueEntryArray);
 
+/**
+ * Fill a QueueEntry given user input paths and a SiteArray
+ * @param self Out: The QueueEntry to fill
+ * @param array In: The SiteArray the QueueEntry will be a member of
+ * @param source In: The user provided copy from path
+ * @param destination In: The user provided copy to path
+ * @return NULL on success, user friendly error message otherwise
+ */
+const char *queueEntryNewFromPath(QueueEntry *self, SiteArray *array, const char *source, const char *destination);
+
 #endif /* NEW_DL_QUEUE_H */
