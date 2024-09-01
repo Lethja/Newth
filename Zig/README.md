@@ -15,8 +15,8 @@
 # What is Zig
 
 Zig is a low level programming language with a focus on memory safety and low friction cross-compilation and is its own
-build system via its "comptime" feature. Because Zigs toolchain also contains C compiler it can be used to build C
-projects.
+build system also written in Zig and making use of it its "comptime" feature. 
+Because Zigs toolchain also contains C compiler it can be used to build C projects.
 
 # Setup Zig
 
@@ -46,11 +46,11 @@ and look for a manual build.
 Zig has several optimization levels. They are as follows:
 
 | Optimization Level        | Description                                                                                  |
-|---------------------------|----------------------------------------------------------------------------------------------|
-| `-Doptimize=Debug`        | Default. Gives as much debugging infomation as possible at the cost of binary size and speed |
-| `-Doptimize=ReleaseSafe`  | A release build with runtime safety checks build in at the cost of binary size and speed     |
-| `-Doptimize=ReleaseFast`  | A release build with no runtime safety checks and a emphasis on execution speed              |
-| `-Doptimize=ReleaseSmall` | A release build with no runtime safety checks and a emphasis on smaller binary sizes         |
+|---------------------------|-----------------------------------------------------------------------------------------------|
+| `-Doptimize=Debug`        | Default. Gives as much debugging information as possible at the cost of binary size and speed |
+| `-Doptimize=ReleaseSafe`  | A release build with runtime safety checks build in at the cost of binary size and speed      |
+| `-Doptimize=ReleaseFast`  | A release build with no runtime safety checks and a emphasis on execution speed               |
+| `-Doptimize=ReleaseSmall` | A release build with no runtime safety checks and a emphasis on smaller binary sizes          |
 
 #### Target
 
@@ -71,13 +71,13 @@ When targeting a system other than native Zig needs to know which system that is
 
 ### Newth Options
 
-Newth has several configuration options that change the behaviour of the program itself. They are as follows:
+Newth has several configuration options that change features and functionality of the built binary. They are as follows:
 
-| Option             | Description                                                           |
-|--------------------|-----------------------------------------------------------------------|
-| `-Dpoll=true`      | Use `poll()` instead of `select()` in `th`                            |
-| `-Dreadline=false` | Disable GNU Readline support in `dl`                                  |
-| `-Dwsock1=true`    | Enable WinSock 1.1 support for a truly portable Windows 32-bit binary |
+| Option            | Description                                                           |
+|-------------------|-----------------------------------------------------------------------|
+| `-Dpoll=true`     | Use `poll()` instead of `select()` in `th`                            |
+| `-Dreadline=true` | Enable GNU Readline support in `dl`                                   |
+| `-Dwsock1=true`   | Enable WinSock 1.1 support for a truly portable Windows 32-bit binary |
 
 ## Build Newth
 
@@ -85,3 +85,8 @@ Run `zig build` in the directory containing `build.zig` to build the project.
 Binaries called `th` and `dl` will be made in the `zig-out` subdirectory
 followed by another directory with the target triplets name.
 Don't forget to append any desired [build options](#configure-build-system) to the command.
+
+### Examples
+```
+zig build 
+```

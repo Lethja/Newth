@@ -1,15 +1,13 @@
 const std = @import("std");
-const platform = @import("builtin").target.os;
 
 pub fn build(b: *std.Build) !void {
     const enable_poll = b.option(bool, "poll", "Use poll() instead of select()") orelse false;
-    const enable_readline = b.option(bool, "readline", "Enable GNU readline support in dl") orelse true;
-    const enable_w32_socket_1 = b.option(bool, "wsock1", "Enable WinSock 1.1 support for a truly portable Windows 32-bit binary") orelse false;
+    const enable_readline = b.option(bool, "readline", "Enable GNU readline support in dl") orelse false;
+    const enable_wsock = b.option(bool, "wsock1", "Enable WinSock 1.1 support for a truly portable Windows 32-bit binary") orelse false;
 
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    // Executables
     const dl = b.addExecutable(.{
         .name = "dl",
         .target = target,
@@ -22,7 +20,6 @@ pub fn build(b: *std.Build) !void {
         .optimize = optimize,
     });
 
-    // Source and flag arrays
     const common_src = &[_][]const u8{
         "../src/common/hex.c",        "../src/common/signal.c",
         "../src/platform/platform.c",
@@ -61,7 +58,7 @@ pub fn build(b: *std.Build) !void {
     try dl_src.appendSlice(dl_common_src);
     try th_src.appendSlice(th_common_src);
 
-    const isWindows = (target.query.os_tag != null and target.query.os_tag == .windows) or platform.tag == .windows;
+    const isWindows = (target.query.isNative() and b.graph.host.query.os_tag == .windows) or target.query.os_tag == .windows;
 
     if (isWindows) {
         const sock2 = &[_][]const u8{
@@ -69,18 +66,26 @@ pub fn build(b: *std.Build) !void {
             "../src/platform/winsock/wsipv6.c",
         };
 
+        //TODO: Is targeting NT5+ possible?
+        const w2k = &[_][]const u8{
+            "-D_WIN32=1",
+            "-DWINVER=0x0500",
+            "-D_WIN32_WINNT=0x0500",
+            "-static"
+        };
+
         try th_src.appendSlice(sock2);
         try dl_src.append("../src/platform/mscrtdl.c");
         try th_src.append("../src/platform/mscrtdl.c");
 
-        try dl_flags.append("-D_WIN32=1");
-        try th_flags.append("-D_WIN32=1");
+        try dl_flags.appendSlice(w2k);
+        try th_flags.appendSlice(w2k);
 
         dl.linkSystemLibrary("wsock32");
         th.linkSystemLibrary("wsock32");
 
-        if (enable_w32_socket_1) {
-            try dl_src.append("../src/platform/winsock/wsock1.c");
+        if (enable_wsock) {
+            try th_flags.append("ENABLE_WS1=1");
             try th_src.append("../src/platform/winsock/wsock1.c");
         }
     } else {
@@ -121,20 +126,18 @@ pub fn build(b: *std.Build) !void {
 
     th.linkLibC();
 
-    const dl_output = b.addInstallArtifact(dl, .{
-        .dest_dir = .{
-            .override = .{
-                .custom = try target.result.zigTriple(b.allocator),
-            },
+    const dir: std.Build.Step.InstallArtifact.Options.Dir = .{
+        .override = .{
+            .custom = try target.result.zigTriple(b.allocator),
         },
+    };
+
+    const dl_output = b.addInstallArtifact(dl, .{
+        .dest_dir = dir,
     });
 
     const th_output = b.addInstallArtifact(th, .{
-        .dest_dir = .{
-            .override = .{
-                .custom = try target.result.zigTriple(b.allocator),
-            },
-        },
+        .dest_dir = dir,
     });
 
     b.getInstallStep().dependOn(&dl_output.step);
