@@ -104,6 +104,19 @@ static void UriDetailsToString(void **state) {
 }
 
 /**
+* This test ensures file:// strings made by uriDetailsCreateString() is identical to the one put into uriDetailsNewFrom()
+ */
+static void UriDetailsToStringFile(void **state) {
+    const char *Uri = "file:///foo";
+    char *res;
+
+    UriDetails details = uriDetailsNewFrom(Uri);
+    assert_non_null((res = uriDetailsCreateString(&details)));
+    assert_string_equal(Uri, res);
+    free(res), uriDetailsFree(&details);
+}
+
+/**
 * This test is the port version of the 'UriDetailsToString' test
  */
 static void UriDetailsToStringWithPort(void **state) {
@@ -126,6 +139,58 @@ static void UriDetailsToStringWithQuery(void **state) {
     UriDetails details = uriDetailsNewFrom(Uri);
     assert_non_null((res = uriDetailsCreateString(&details)));
     assert_string_equal(Uri, res);
+    free(res), uriDetailsFree(&details);
+}
+
+/**
+* This test ensures the string made by uriDetailsCreateString() is identical to the one put into uriDetailsNewFrom()
+ */
+static void UriDetailsToStringBase(void **state) {
+    const char *Uri = "http://localhost/foo";
+    char *res;
+
+    UriDetails details = uriDetailsNewFrom(Uri);
+    assert_non_null((res = uriDetailsCreateStringBase(&details)));
+    assert_string_equal("http://localhost/", res);
+    free(res), uriDetailsFree(&details);
+}
+
+/**
+* This test ensures file:// strings made by uriDetailsCreateString() is identical to the one put into uriDetailsNewFrom()
+ */
+static void UriDetailsToStringBaseFile(void **state) {
+    const char *Uri = "file:///foo";
+    char *res;
+
+    UriDetails details = uriDetailsNewFrom(Uri);
+    assert_non_null((res = uriDetailsCreateStringBase(&details)));
+    assert_string_equal("file:///", res);
+    free(res), uriDetailsFree(&details);
+}
+
+/**
+* This test is the port version of the 'UriDetailsToString' test
+ */
+static void UriDetailsToStringBaseWithPort(void **state) {
+    const char *Uri = "http://localhost:8080/foo";
+    char *res;
+
+    UriDetails details = uriDetailsNewFrom(Uri);
+    assert_non_null((res = uriDetailsCreateStringBase(&details)));
+    assert_string_equal("http://localhost:8080/", res);
+    free(res), uriDetailsFree(&details);
+}
+
+/**
+* This test is the query version of the 'UriDetailsToString' test
+ */
+static void UriDetailsToStringBaseWithQuery(void **state) {
+    const char *Uri = "http://localhost/foo?bar";
+    char *res;
+
+    UriDetails details = uriDetailsNewFrom(Uri);
+    assert_non_null((res = uriDetailsCreateStringBase(&details)));
+    assert_string_equal("http://localhost/", res);
     free(res), uriDetailsFree(&details);
 }
 
@@ -563,8 +628,13 @@ const struct CMUnitTest fetchTest[] = {
     cmocka_unit_test(UriConvertToSocketAddressWithScheme),
     cmocka_unit_test(UriGetAddressFromAddress),
     cmocka_unit_test(UriDetailsToString),
+    cmocka_unit_test(UriDetailsToStringFile),
     cmocka_unit_test(UriDetailsToStringWithPort),
     cmocka_unit_test(UriDetailsToStringWithQuery),
+    cmocka_unit_test(UriDetailsToStringBase),
+    cmocka_unit_test(UriDetailsToStringBaseFile),
+    cmocka_unit_test(UriDetailsToStringBaseWithPort),
+    cmocka_unit_test(UriDetailsToStringBaseWithQuery),
     cmocka_unit_test(UriGetAddressFromHost),
     cmocka_unit_test(UriGetPort),
     cmocka_unit_test(UriGetPortInvalid),

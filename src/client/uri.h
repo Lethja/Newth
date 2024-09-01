@@ -30,6 +30,14 @@ extern UriDetails uriDetailsNewFrom(const char *uri);
 extern char *uriDetailsCreateString(UriDetails *details);
 
 /**
+ * Convert a UriDetails back into its root uri a string representation
+ * @param details The details to convert back into a string
+ * @return A string with the URI address on success, NULL on failure
+ * @remark Returned string should be freed before leaving scope
+ */
+extern char *uriDetailsCreateStringBase(UriDetails *details);
+
+/**
  * Free memory in a UriDetails structure
  * @param details The UriDetails to free
  */

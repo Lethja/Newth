@@ -358,6 +358,38 @@ char *uriDetailsCreateString(UriDetails *details) {
     return r;
 }
 
+char *uriDetailsCreateStringBase(UriDetails *details) {
+    char *r;
+    size_t len;
+
+    if (!details->scheme)
+        return NULL;
+
+    if (uriDetailsGetScheme(details) == SCHEME_FILE) {
+        if ((r = malloc(9)))
+            strcpy(r, "file:///");
+        return r;
+    }
+    else if (details->host) {
+        len = strlen(details->scheme) + strlen(details->host) + 3;
+        if (details->port)
+            len += strlen(details->port) + 1;
+    } else
+        return NULL;
+
+    if (!(r = malloc(len + 2)))
+        return NULL;
+
+    strcpy(r, details->scheme);
+    strcat(r, "://");
+    strcat(r, details->host);
+    if(details->port)
+        strcat(r, ":"), strcat(r, details->port);
+
+    r[len] = '/', r[len+1] = '\0';
+    return r;
+}
+
 void uriDetailsFree(UriDetails *details) {
     if (details->scheme) free(details->scheme), details->scheme = NULL;
     if (details->host) free(details->host), details->host = NULL;
