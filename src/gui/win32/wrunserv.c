@@ -45,7 +45,7 @@ void updateTransferLabel(void) {
 }
 
 static int GetRowByAddress(HWND list, const char *address) {
-    TCHAR addr[MAX_PATH], item[MAX_PATH];
+    TCHAR addr[MAX_PATH], item[MAX_PATH] = {0};
     LVITEM lvi;
     int i, max;
 
@@ -98,14 +98,14 @@ static void updateRow(HWND list, const char *address, const char *state, const c
 static void removeRow(HWND list, const char *address) {
     int row = GetRowByAddress(list, address);
     if (row >= 0) {
-        TCHAR str[12];
+        TCHAR str[12] = {0};
         LVITEM lvi;
 
         ZeroMemory(&lvi, sizeof(LVITEM));
         lvi.cchTextMax = 12, lvi.pszText = (char *) &str, lvi.iItem = row, lvi.mask = LVIF_TEXT;
         /* If this rows state is not TSYN then we must also decrement the active transfers counter */
         if (SendMessage(sConnectionList, LVM_GETITEM, 0, (LPARAM) &lvi)) {
-            if (toupper(str[0] == 'G') && strlen(str) >= 4) {
+            if ((toupper(str[0]) == 'G') && strlen(str) >= 4) {
                 switch (str[3]) {
                     case '0':
                     case '6':

@@ -52,7 +52,7 @@ AdapterAddressArray *wSockIpv6GetAdapterInformation(sa_family_t family,
 
 
     if (rv != NO_ERROR) {
-        LPTSTR errorText;
+        LPTSTR errorText = NULL;
         FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS, NULL,
                       rv, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR) &errorText, 0, NULL);
 
