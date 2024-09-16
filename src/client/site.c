@@ -34,36 +34,36 @@ static inline char SiteCompare(Site *site1, Site *site2) {
     return 0;
 }
 
-Site *siteArrayActiveGet(SiteArray *self) {
-    if (self->activeRead < 0 || self->activeRead >= self->len)
+Site *siteArrayActiveGet(const SiteArray *self) {
+    if (self->activeRead < 0 || self->activeRead >= self->len || !self->array)
         return NULL;
 
     return &self->array[self->activeRead];
 }
 
-long siteArrayActiveGetNth(SiteArray *self) {
-    if (self->activeRead < 0 || self->activeRead >= self->len)
+long siteArrayActiveGetNth(const SiteArray *self) {
+    if (self->activeRead < 0 || self->activeRead >= self->len || !self->array)
         return -1;
 
     return self->activeRead;
 }
 
-Site *siteArrayActiveGetWrite(SiteArray *self) {
-    if (self->activeWrite < 0 || self->activeWrite >= self->len)
+Site *siteArrayActiveGetWrite(const SiteArray *self) {
+    if (self->activeWrite < 0 || self->activeWrite >= self->len || !self->array)
         return NULL;
 
     return &self->array[self->activeWrite];
 }
 
-long siteArrayActiveGetWriteNth(SiteArray *self) {
-    if (self->activeWrite < 0 || self->activeWrite >= self->len)
+long siteArrayActiveGetWriteNth(const SiteArray *self) {
+    if (self->activeWrite < 0 || self->activeWrite >= self->len || !self->array)
         return -1;
 
     return self->activeWrite;
 }
 
-Site *siteArrayGet(SiteArray *self, long id) {
-    if (id < 0 || id >= self->len)
+Site *siteArrayGet(const SiteArray *self, long id) {
+    if (id < 0 || id >= self->len || !self->array)
         return NULL;
 
     return &self->array[id];
@@ -74,7 +74,7 @@ Site *siteArrayGet(SiteArray *self, long id) {
  * @param uri The full URI to resolve
  * @return Site ID on success -1 on failure
  */
-static inline long SiteArrayGetByUriHostNth(SiteArray *self, const char *uri) {
+static inline long SiteArrayGetByUriHostNth(const SiteArray *self, const char *uri) {
     char *desiredAddress;
     enum SiteType type;
     {
@@ -129,7 +129,7 @@ static inline long SiteArrayGetByUriHostNth(SiteArray *self, const char *uri) {
     return -1;
 }
 
-Site *siteArrayGetFromInput(SiteArray *self, const char *input) {
+Site *siteArrayGetFromInput(const SiteArray *self, const char *input) {
     long idx;
 
     if (isdigit(input[0])) {
@@ -141,7 +141,7 @@ Site *siteArrayGetFromInput(SiteArray *self, const char *input) {
     return siteArrayGetByUriHost(self, input);
 }
 
-long siteArrayGetFromInputNth(SiteArray *self, const char *input) {
+long siteArrayGetFromInputNth(const SiteArray *self, const char *input) {
     long idx;
 
     if (isdigit(input[0])) {
@@ -153,7 +153,7 @@ long siteArrayGetFromInputNth(SiteArray *self, const char *input) {
     return SiteArrayGetByUriHostNth(self, input);
 }
 
-Site *siteArrayGetByUriHost(SiteArray *self, const char *uri) {
+Site *siteArrayGetByUriHost(const SiteArray *self, const char *uri) {
     long i = SiteArrayGetByUriHostNth(self, uri);
     return i >= 0 ? &self->array[i] : NULL;
 }
@@ -196,7 +196,7 @@ const char *siteArrayActiveSetWriteNth(SiteArray *self, long siteNumber) {
     return NULL;
 }
 
-char siteArrayNthMounted(SiteArray *self, long siteNumber) {
+char siteArrayNthMounted(const SiteArray *self, long siteNumber) {
     if (siteNumber < 0 || siteNumber >= self->len)
         return 0;
     return 1;
@@ -255,7 +255,7 @@ void siteArrayRemove(SiteArray *self, Site *site) {
     }
 }
 
-Site *siteArrayPtr(SiteArray *self, long *length) {
+Site *siteArrayPtr(const SiteArray *self, long *length) {
     if (length)
         *length = self->len;
 
@@ -478,7 +478,7 @@ SOCK_BUF_TYPE siteFileWrite(Site *self, char *buffer, SOCK_BUF_TYPE size) {
     }
 }
 
-char *siteArrayUserPathResolve(SiteArray *array, const char *path, char write) {
+char *siteArrayUserPathResolve(const SiteArray *array, const char *path, char write) {
     char *r;
 
     if (isdigit(path[0]) && strchr(&path[1], ':')) { /* Looks like a relative site path */

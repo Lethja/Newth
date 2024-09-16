@@ -83,28 +83,28 @@ typedef struct SiteArray {
  * @param self In: The SiteArray to get the active site of
  * @return Pointer to the currently active site or NULL
  */
-Site *siteArrayActiveGet(SiteArray *self);
+Site *siteArrayActiveGet(const SiteArray *self);
 
 /**
  * Return the active site number
  * @param self In: The SiteArray to get the active site of
  * @return Entry number of the active site or -1
  */
-long siteArrayActiveGetNth(SiteArray *self);
+long siteArrayActiveGetNth(const SiteArray *self);
 
 /**
  * Return the default writing site
  * @param self In: The SiteArray to get the active write site of
  * @return Pointer to the default writing site or NULL
  */
-Site *siteArrayActiveGetWrite(SiteArray *self);
+Site *siteArrayActiveGetWrite(const SiteArray *self);
 
 /**
  * Return the default writing site structure
  * @param self In: The SiteArray to get the active write site of
  * @return Pointer to the default writing site or -1
  */
-long siteArrayActiveGetWriteNth(SiteArray *self);
+long siteArrayActiveGetWriteNth(const SiteArray *self);
 
 /**
  * Set the active site by pointer
@@ -126,7 +126,7 @@ void siteArrayActiveSetWrite(SiteArray *self, Site *site);
  * @param id In: The id of the site
  * @return Pointer to a site on success, otherwise NULL
  */
-Site *siteArrayGet(SiteArray *self, long id);
+Site *siteArrayGet(const SiteArray *self, long id);
 
 /**
  * Get an existing site in the array that can serve the input
@@ -134,7 +134,7 @@ Site *siteArrayGet(SiteArray *self, long id);
  * @param input In: The input to parse and get a site from
  * @return Pointer to a site on success, otherwise NULL
  */
-Site *siteArrayGetFromInput(SiteArray *self, const char *input);
+Site *siteArrayGetFromInput(const SiteArray *self, const char *input);
 
 /**
  * Get an existing site in the array that can serve the input
@@ -142,7 +142,7 @@ Site *siteArrayGetFromInput(SiteArray *self, const char *input);
  * @param input In: The input to parse and get a site from
  * @return Site id on success, otherwise -1
  */
-long siteArrayGetFromInputNth(SiteArray *self, const char *input);
+long siteArrayGetFromInputNth(const SiteArray *self, const char *input);
 
 /**
  * Find a site that serve a URI based on resolved address
@@ -150,7 +150,7 @@ long siteArrayGetFromInputNth(SiteArray *self, const char *input);
  * @param uri In: The full URI to resolve
  * @return Pointer to the site that can serve this URI on success, otherwise NULL
  */
-Site *siteArrayGetByUriHost(SiteArray *self, const char *uri);
+Site *siteArrayGetByUriHost(const SiteArray *self, const char *uri);
 
 /**
  * Set the active site by number
@@ -174,7 +174,7 @@ const char *siteArrayActiveSetWriteNth(SiteArray *self, long siteNumber);
  * @param siteNumber In: The site number to check
  * @return Non-zero when site number is valid
  */
-char siteArrayNthMounted(SiteArray *self, long siteNumber);
+char siteArrayNthMounted(const SiteArray *self, long siteNumber);
 
 /**
  * Add a site to the list of mounted devices
@@ -204,7 +204,7 @@ char *siteArrayInit(SiteArray *self);
  * @param length Out/Null: The size of the array
  * @return A pointer to the site array
  */
-Site *siteArrayPtr(SiteArray *self, long *length);
+Site *siteArrayPtr(const SiteArray *self, long *length);
 
 /**
  * Remove this site from mounted devices if found
@@ -401,7 +401,7 @@ SOCK_BUF_TYPE siteFileWrite(Site *self, char *buffer, SOCK_BUF_TYPE size);
  * @return Absolute URI equivalent to path or NULL
  * @remark Returned pointer should be freed before leaving scope
  */
-char *siteArrayUserPathResolve(SiteArray *array, const char *path, char write);
+char *siteArrayUserPathResolve(const SiteArray *array, const char *path, char write);
 
 #pragma endregion
 
