@@ -521,12 +521,48 @@ char *siteArrayUserPathResolve(const SiteArray *array, const char *path, char wr
         return NULL;
     } else { /* Looks like a relative path on current site */
         Site *site = write ? siteArrayActiveGetWrite(array) : siteArrayActiveGet(array);
+        UriDetails d;
 
         if (!site)
             return NULL;
 
-        return uriPathAbsoluteAppend(siteWorkingDirectoryGet(site), path);
+        d = uriDetailsNewFrom(siteWorkingDirectoryGet(site));
+        if (d.path) {
+            char *p = uriPathAbsoluteAppend(d.path, path);
+            free(d.path);
+            if (p)
+                d.path = p, r = uriDetailsCreateString(&d);
+            else
+                r = NULL;
+        } else
+            r = NULL;
+
+        uriDetailsFree(&d);
+
+        return r;
     }
+}
+
+Site *siteArrayUserPathResolveToQueue(const SiteArray *array, const char *path, char write, char **sitePath) {
+    char *a;
+
+    if ((a = siteArrayUserPathResolve(array, path, write))) {
+        UriDetails d = uriDetailsNewFrom(a);
+        char *host = uriDetailsGetHostAddr(&d);
+
+        if (sitePath)
+            *sitePath = d.path, d.path = NULL;
+
+        uriDetailsFree(&d), free(a);
+        if (host) {
+            Site *s = siteArrayGetByUriHost(array, host);
+            free(host);
+            return s;
+        } else if (sitePath)
+            free(*sitePath), *sitePath = NULL;
+    }
+
+    return NULL;
 }
 
 #pragma endregion
