@@ -19,70 +19,72 @@
 #define SHELL_PS1 "%ld # "
 #endif /* defined(WATT32) || defined(WIN32) */
 
-SiteArray array = {0};
+SiteArray siteArray = {0};
+QueueEntryArray *queueEntryArray = NULL;
 
 static inline void Copy(const char **argv) {
+    const char *e;
+    QueueEntry entry;
     size_t i = 0;
+
     while (argv[i])
         ++i;
 
-    /* TODO: Implement adding to the queue */
     if (i > 2)
         puts("COPY from/to not yet implemented");
     else {
-        const char *e;
-        Site *from = siteArrayActiveGet(&array), *to = siteArrayPtr(&array, NULL);
-        SiteFileMeta *fromMeta, *toMeta;
-        char buf[SB_DATA_SIZE];
+        char *s = siteArrayUserPathResolve(&siteArray, argv[1], 0), *d;
 
-        if ((e = siteFileOpenRead(from, argv[1], -1, -1))) {
+        if (!s) {
+            puts(ErrUnableToResolvePath);
+            return;
+        }
+
+        {
+            Site *w = siteArrayActiveGetWrite(&siteArray);
+            char *l;
+
+            if (!w) {
+                free(s);
+                puts(ErrUnableToGetSystemsWorkingDirectory);
+                return;
+            }
+
+            if ((l = uriPathLast(s))) {
+                UriDetails u = uriDetailsNewFrom(siteWorkingDirectoryGet(w));
+                char *p;
+
+                p = u.path ? uriPathAbsoluteAppend(u.path, l) : NULL;
+                if (l < s || l > &s[strlen(s) + 1])
+                    free(l);
+
+                free(u.path), u.path = p ? p : NULL;
+                d = u.path ? uriDetailsCreateString(&u) : NULL;
+                uriDetailsFree(&u);
+            } else
+                d = NULL;
+        }
+
+        if (!d) {
+            free(s);
+            puts(ErrUnableToGetSystemsWorkingDirectory);
+            return;
+        }
+
+        if ((e = queueEntryNewFromPath(&entry, &siteArray, s, d))) {
+            free(s), free(d);
             puts(e);
             return;
         }
 
-        if (!(fromMeta = siteFileOpenMeta(from)) || fromMeta->type == SITE_FILE_TYPE_UNKNOWN || !fromMeta->name) {
-            siteFileClose(from), puts(ErrHeaderNotFound);
-            return;
-        }
+        printf("Queued From: %s\n"
+               "         To: %s\n", s, d);
 
-        if (fromMeta->type != SITE_FILE_TYPE_FILE) {
-            siteFileClose(from), puts(strerror(EISDIR));
-            return;
-        }
-
-        if (!(toMeta = siteStatOpenMeta(to, fromMeta->name))) {
-            siteFileClose(from), puts(strerror(errno));
-            return;
-        }
-
-        /* TODO: add logic for overwrite/update behaviour */
-        if (toMeta->type != SITE_FILE_TYPE_NOTHING) {
-            siteFileMetaFree(toMeta), free(toMeta), siteFileClose(from), puts(strerror(EEXIST));
-            return;
-        }
-        siteFileMetaFree(toMeta), free(toMeta);
-
-        if ((e = siteFileOpenWrite(to, fromMeta->name))) {
-            siteFileClose(from), puts(e);
-            return;
-        }
-
-        while ((i = siteFileRead(from, buf, SB_DATA_SIZE))) {
-            if (i != -1) {
-                if (siteFileWrite(to, buf, i) != -1)
-                    continue;
-
-                siteFileClose(from), siteFileClose(to), puts(strerror(errno));
-                return;
-            } else if (siteFileAtEnd(from))
-                break;
-
-            siteFileClose(from), siteFileClose(to), puts(strerror(errno));
-            return;
-        }
-
-        siteFileClose(from), siteFileClose(to);
+        free(s), free(d);
     }
+
+    if ((e = queueEntryArrayAppend(&queueEntryArray, &entry)))
+        puts(e);
 }
 
 static inline void XCopy(const char **argv) {
@@ -138,7 +140,7 @@ static inline void PrintDirectoryFilesDosLike(Site *site, char *path) {
     if (!pathRes)
         pathRes = unknownPath;
 
-    printf(" Site: %ld\n Path: '%s'\n\n", siteArrayActiveGetNth(&array), pathRes);
+    printf(" Site: %ld\n Path: '%s'\n\n", siteArrayActiveGetNth(&siteArray), pathRes);
 
     if (pathRes != unknownPath)
         free(pathRes);
@@ -235,22 +237,22 @@ static inline const char *MountSite(const char *parameter) {
 
     uriDetailsFree(&details);
 
-    if ((err = siteNew(&site, type, parameter)) || (err = siteArrayAdd(&array, &site)))
+    if ((err = siteNew(&site, type, parameter)) || (err = siteArrayAdd(&siteArray, &site)))
         return err;
 
-    siteArrayActiveSet(&array, &site);
+    siteArrayActiveSet(&siteArray, &site);
     return NULL;
 }
 
 static inline void MountList(void) {
     long a, b, i, len;
-    Site *sites = siteArrayPtr(&array, &len);
+    Site *sites = siteArrayPtr(&siteArray, &len);
 
     if (!len)
-        siteArrayInit(&array);
+        siteArrayInit(&siteArray);
 
-    a = siteArrayActiveGetNth(&array);
-    b = siteArrayActiveGetWriteNth(&array);
+    a = siteArrayActiveGetNth(&siteArray);
+    b = siteArrayActiveGetWriteNth(&siteArray);
 
     for (i = 0; i < len; ++i) {
         printf("%c%c%ld:\t%s\n", i == b ? '+' : ' ', i == a ? '>' : ' ', i,
@@ -307,8 +309,8 @@ static inline void ProcessCommand(char **args) {
                 break;
             case '>':
                 if (args[0][1] != '\0') {
-                    if ((l = siteArrayGetFromInputNth(&array, &args[0][1])) != -1) {
-                        if ((str = siteArrayActiveSetNth(&array, l)))
+                    if ((l = siteArrayGetFromInputNth(&siteArray, &args[0][1])) != -1) {
+                        if ((str = siteArrayActiveSetNth(&siteArray, l)))
                             puts(str);
                     } else
                         goto processCommand_invalidId;
@@ -317,7 +319,7 @@ static inline void ProcessCommand(char **args) {
             case '+':
                 switch (args[0][1]) {
                     case '\0': {
-                        Site *site = siteArrayActiveGetWrite(&array);
+                        Site *site = siteArrayActiveGetWrite(&siteArray);
                         if (site)
                             puts(siteWorkingDirectoryGet(site));
                         else
@@ -325,21 +327,21 @@ static inline void ProcessCommand(char **args) {
                         break;
                     }
                     case '!': /* Reverse direction */
-                        l = siteArrayActiveGetWriteNth(&array);
+                        l = siteArrayActiveGetWriteNth(&siteArray);
 
-                        if (!(str = siteArrayActiveSetWriteNth(&array, siteArrayActiveGetNth(&array))))
-                            siteArrayActiveSetNth(&array, l);
+                        if (!(str = siteArrayActiveSetWriteNth(&siteArray, siteArrayActiveGetNth(&siteArray))))
+                            siteArrayActiveSetNth(&siteArray, l);
                         else
                             puts(str);
                         break;
                     case '>':
-                        if ((str = siteArrayActiveSetWriteNth(&array, siteArrayActiveGetNth(&array))))
+                        if ((str = siteArrayActiveSetWriteNth(&siteArray, siteArrayActiveGetNth(&siteArray))))
                             puts(str);
 
                         break;
                     default:
-                        if ((l = siteArrayGetFromInputNth(&array, &args[0][1])) != -1) {
-                            const char *e = siteArrayActiveSetWriteNth(&array, l);
+                        if ((l = siteArrayGetFromInputNth(&siteArray, &args[0][1])) != -1) {
+                            const char *e = siteArrayActiveSetWriteNth(&siteArray, l);
                             if (e)
                                 puts(e);
                         } else
@@ -348,7 +350,7 @@ static inline void ProcessCommand(char **args) {
                 break;
             case 'D':
                 if (toupper(args[0][1]) == 'I' && toupper(args[0][2]) == 'R') {
-                    Site *site = siteArrayActiveGet(&array);
+                    Site *site = siteArrayActiveGet(&siteArray);
                     if (site)
                         PrintDirectoryFilesDosLike(site, NULL);
                     else
@@ -358,7 +360,7 @@ static inline void ProcessCommand(char **args) {
                 break;
             case 'E':
                 if (toupper(args[0][1]) == 'X' && toupper(args[0][2]) == 'I' && toupper(args[0][3]) == 'T') {
-                    siteArrayFree(&array);
+                    siteArrayFree(&siteArray);
 #ifdef READLINE
                     clear_history();
 #endif
@@ -367,9 +369,9 @@ static inline void ProcessCommand(char **args) {
                     goto processCommand_notFound;
             case 'L':
                 if (toupper(args[0][1]) == 'S') {
-                    Site *site = siteArrayActiveGet(&array);
+                    Site *site = siteArrayActiveGet(&siteArray);
                     if (site)
-                        PrintDirectoryFilesUnixLike(siteArrayActiveGet(&array), NULL);
+                        PrintDirectoryFilesUnixLike(siteArrayActiveGet(&siteArray), NULL);
                     else
                         goto processCommand_invalidId;
                 } else
@@ -382,7 +384,7 @@ static inline void ProcessCommand(char **args) {
                 break;
             case 'P':
                 if (toupper(args[0][1]) == 'W' && toupper(args[0][2]) == 'D')
-                    puts(siteWorkingDirectoryGet(siteArrayActiveGet(&array)));
+                    puts(siteWorkingDirectoryGet(siteArrayActiveGet(&siteArray)));
                 else
                     goto processCommand_notFound;
                 break;
@@ -398,10 +400,10 @@ static inline void ProcessCommand(char **args) {
                     toupper(args[0][4]) == 'N' && toupper(args[0][5]) == 'T') {
                     Site *site;
 
-                    if (!(site = siteArrayActiveGet(&array)))
+                    if (!(site = siteArrayActiveGet(&siteArray)))
                         return;
 
-                    siteFree(site), siteArrayRemove(&array, site);
+                    siteFree(site), siteArrayRemove(&siteArray, site);
                 } else
                     goto processCommand_notFound;
                 break;
@@ -417,7 +419,7 @@ static inline void ProcessCommand(char **args) {
             case '9':
                 errno = 0, l = strtol(args[0], NULL, 10);
                 if (!errno)  /* Must be a site switch */
-                    if ((str = siteArrayActiveSetNth(&array, l)))
+                    if ((str = siteArrayActiveSetNth(&siteArray, l)))
                         puts(str);
                 break;
             default:
@@ -438,7 +440,7 @@ static inline void ProcessCommand(char **args) {
                 break;
             case 'C':
                 if (toupper(args[0][1]) == 'D') { /* CD */
-                    if (siteWorkingDirectorySet(siteArrayActiveGet(&array), args[1]))
+                    if (siteWorkingDirectorySet(siteArrayActiveGet(&siteArray), args[1]))
                         puts(strerror(errno));
                 } else if (toupper(args[0][1]) == 'P' ||
                            (toupper(args[0][1]) == 'O' && toupper(args[0][2]) == 'P' && toupper(args[0][3]) == 'Y'))
@@ -448,13 +450,13 @@ static inline void ProcessCommand(char **args) {
                 break;
             case 'D':
                 if (toupper(args[0][1]) == 'I' && toupper(args[0][2]) == 'R')
-                    PrintDirectoryFilesDosLike(siteArrayActiveGet(&array), args[1]);
+                    PrintDirectoryFilesDosLike(siteArrayActiveGet(&siteArray), args[1]);
                 else
                     goto processCommand_notFound;
                 break;
             case 'L':
                 if (toupper(args[0][1]) == 'S')
-                    PrintDirectoryFilesUnixLike(siteArrayActiveGet(&array), args[1]);
+                    PrintDirectoryFilesUnixLike(siteArrayActiveGet(&siteArray), args[1]);
                 else
                     goto processCommand_notFound;
                 break;
@@ -477,8 +479,8 @@ static inline void ProcessCommand(char **args) {
                     if (errno)
                         goto processCommand_invalidId;
 
-                    if (siteArrayNthMounted(&array, id))
-                        puts(siteWorkingDirectoryGet(&siteArrayPtr(&array, NULL)[id]));
+                    if (siteArrayNthMounted(&siteArray, id))
+                        puts(siteWorkingDirectoryGet(&siteArrayPtr(&siteArray, NULL)[id]));
                     else
                         goto processCommand_invalidId;
                 } else
@@ -487,10 +489,10 @@ static inline void ProcessCommand(char **args) {
             case 'U':
                 if (toupper(args[0][1]) == 'M' && toupper(args[0][2]) == 'O' && toupper(args[0][3]) == 'U' &&
                     toupper(args[0][4]) == 'N' && toupper(args[0][5]) == 'T') {
-                    Site *site = siteArrayGetFromInput(&array, args[1]);
+                    Site *site = siteArrayGetFromInput(&siteArray, args[1]);
 
                     if (site)
-                        siteFree(site), siteArrayRemove(&array, site);
+                        siteFree(site), siteArrayRemove(&siteArray, site);
                     else
                         goto processCommand_invalidId;
                 } else
@@ -557,20 +559,20 @@ static inline void InteractiveMode(void) {
 
     char **args;
 
-    siteArrayInit(&array);
+    siteArrayInit(&siteArray);
     stifle_history(10);
 
     while (1) {
         char *input, *prompt;
         {
-            long id = siteArrayActiveGetNth(&array);
+            long id = siteArrayActiveGetNth(&siteArray);
             size_t digits = id < 0 ? 2 : 1;
 
             while (id > 9)
                 id /= 10, ++digits;
 
             prompt = malloc(strlen(SHELL_PS1) + digits + 1);
-            sprintf(prompt, SHELL_PS1, siteArrayActiveGetNth(&array));
+            sprintf(prompt, SHELL_PS1, siteArrayActiveGetNth(&siteArray));
         }
 
         input = readline(prompt), free(prompt);

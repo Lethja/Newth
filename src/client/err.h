@@ -27,7 +27,7 @@ extern const char *ErrStateOfSocketInvalid;
 extern const char *ErrTokenBiggerThenBufferLimits;
 extern const char *ErrTryAgain;
 extern const char *ErrUnableToGetSystemsWorkingDirectory;
-extern const char *ErrUnableToResolveAbsolutePath;
+extern const char *ErrUnableToResolvePath;
 extern const char *ErrUnexpectedEndToChunk;
 extern const char *ErrUnknownMountType;
 extern const char *ErrUriWasNotUnderstood;
