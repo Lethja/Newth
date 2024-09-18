@@ -112,21 +112,24 @@ static inline void ListQueue(void) {
     for (i = 0; i < queueEntryArray->len; ++i) {
         QueueEntry *entry = &queueEntryArray->entry[i];
         UriDetails d = uriDetailsNewFrom(siteWorkingDirectoryGet(entry->sourceSite));
-        char *src, *dst, *p;
+        char *src, *dst;
 
-        if (!(p = uriDetailsCreateStringBase(&d)))
-            goto ListQueue_LoopError1;
+        if (d.path)
+            free(d.path);
 
-        src = uriPathAbsoluteAppend(p, entry->sourcePath), free(p), uriDetailsFree(&d);
+        d.path = entry->sourcePath;
+        src = uriDetailsCreateString(&d), uriDetailsFree(&d);
 
         if (!src)
             goto ListQueue_LoopError1;
 
         d = uriDetailsNewFrom(siteWorkingDirectoryGet(entry->destinationSite));
-        if (!(p = uriDetailsCreateStringBase(&d)))
-            goto ListQueue_LoopError2;
 
-        dst = uriPathAbsoluteAppend(p, entry->destinationPath), free(p), uriDetailsFree(&d);
+        if (d.path)
+            free(d.path);
+
+        d.path = entry->destinationPath;
+        dst = uriDetailsCreateString(&d), uriDetailsFree(&d);
 
         if (!dst)
             goto ListQueue_LoopError2;
@@ -430,6 +433,7 @@ static inline void ProcessCommand(char **args) {
             case 'Q':
                 if (toupper(args[0][1]) == 'U' && toupper(args[0][2]) == 'E' && toupper(args[0][3]) == 'U' &&
                     toupper(args[0][4]) == 'E')
+                    /* TODO: Subcommands */
                     ListQueue();
                 else
                     goto processCommand_notFound;
