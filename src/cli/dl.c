@@ -9,8 +9,10 @@
 #include <time.h>
 
 #ifdef READLINE
+
 #include <readline/history.h>
 #include <readline/readline.h>
+
 #endif
 
 #if defined(WATT32) || defined(WIN32)
@@ -100,7 +102,46 @@ static inline void XCopy(const char **argv) {
 }
 
 static inline void ListQueue(void) {
-    puts("QUEUE not yet implemented"); /* TODO: Implement */
+    unsigned long i;
+
+    if (!queueEntryArray) {
+        puts("No queue entries");
+        return;
+    }
+
+    for (i = 0; i < queueEntryArray->len; ++i) {
+        QueueEntry *entry = &queueEntryArray->entry[i];
+        UriDetails d = uriDetailsNewFrom(siteWorkingDirectoryGet(entry->sourceSite));
+        char *src, *dst, *p;
+
+        if (!(p = uriDetailsCreateStringBase(&d)))
+            goto ListQueue_LoopError1;
+
+        src = uriPathAbsoluteAppend(p, entry->sourcePath), free(p), uriDetailsFree(&d);
+
+        if (!src)
+            goto ListQueue_LoopError1;
+
+        d = uriDetailsNewFrom(siteWorkingDirectoryGet(entry->destinationSite));
+        if (!(p = uriDetailsCreateStringBase(&d)))
+            goto ListQueue_LoopError2;
+
+        dst = uriPathAbsoluteAppend(p, entry->destinationPath), free(p), uriDetailsFree(&d);
+
+        if (!dst)
+            goto ListQueue_LoopError2;
+
+        printf("%ld: %s > %s\n", i, src, dst);
+        free(src), free(dst);
+        continue;
+
+        ListQueue_LoopError2:
+        free(src);
+
+        ListQueue_LoopError1:
+        uriDetailsFree(&d);
+        printf("%lu: data corruption\n", i);
+    }
 }
 
 #ifndef READLINE
@@ -177,7 +218,7 @@ static inline void PrintDirectoryFilesDosLike(Site *site, char *path) {
     siteDirectoryListingClose(site, dir), putc('\n', stdout);
 }
 
-static inline void PrintDirectoryFilesUnixLike(Site * site, char *path) {
+static inline void PrintDirectoryFilesUnixLike(Site *site, char *path) {
     void *dir;
     SiteFileMeta *entry;
 
@@ -200,16 +241,14 @@ static inline void PrintDirectoryFilesUnixLike(Site * site, char *path) {
 }
 
 static inline void PrintHelp(void) {
-    const char *legend =
-    " # = id, ... = parameter(s), () = parameter is optional."
-    " All commands are case-insensitive.\n";
-    const char *help =
-    " ?            - Show this printout          #|>...      - Change active site\n"
-    " ! ...        - Run system command          +(>|!|#)    - Change default writing site\n"
-    " COPY ...     - Queue file(s) for download  EXIT        - Close the program\n"
-    " DIR|LS (...) - Full|Slim directory info    MOUNT (...) - Mount URI as site\n"
-    " PWD (#)      - Print site current path     QUEUE (...) - List enqueued tasks\n"
-    " UMOUNT #     - Unmount site                XCOPY ...   - Queue subdirectorie(s) for download\n";
+    const char *legend = " # = id, ... = parameter(s), () = parameter is optional."
+                         " All commands are case-insensitive.\n";
+    const char *help = " ?            - Show this printout          #|>...      - Change active site\n"
+                       " ! ...        - Run system command          +(>|!|#)    - Change default writing site\n"
+                       " COPY ...     - Queue file(s) for download  EXIT        - Close the program\n"
+                       " DIR|LS (...) - Full|Slim directory info    MOUNT (...) - Mount URI as site\n"
+                       " PWD (#)      - Print site current path     QUEUE (...) - List enqueued tasks\n"
+                       " UMOUNT #     - Unmount site                XCOPY ...   - Queue subdirectorie(s) for download\n";
     puts(help), puts(legend);
 }
 
@@ -540,11 +579,11 @@ static inline void ProcessCommand(char **args) {
     }
     return;
 
-processCommand_invalidId:
+    processCommand_invalidId:
     puts("Invalid site. See currently valid sites with 'MOUNT'");
     return;
 
-processCommand_notFound:
+    processCommand_notFound:
     puts("Command not found. See valid commands with '?'");
 }
 
@@ -555,6 +594,7 @@ _Noreturn
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "EndlessLoop"
 #ifdef READLINE
+
 static inline void InteractiveMode(void) {
 
     char **args;
@@ -586,6 +626,7 @@ static inline void InteractiveMode(void) {
         }
     }
 }
+
 #else
 static inline void InteractiveMode(void) {
     char input[BUFSIZ];
