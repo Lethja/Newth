@@ -651,10 +651,10 @@ static inline void InteractiveMode(void) {
     char input[BUFSIZ];
     char **args;
 
-    siteArrayInit(&array);
+    siteArrayInit(&siteArray);
 
     while (1) {
-        printf(SHELL_PS1, siteArrayActiveGetNth(&array));
+        printf(SHELL_PS1, siteArrayActiveGetNth(&siteArray));
         if (fgets(input, sizeof(input), stdin)) {
             CleanInput(input);
             if ((args = platformArgvConvertString(input))) {
