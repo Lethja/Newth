@@ -21,6 +21,8 @@
 #define SHELL_PS1 "%ld # "
 #endif /* defined(WATT32) || defined(WIN32) */
 
+#define QUEUE_PRINT "%s %s > %s\n"
+
 SiteArray siteArray = {0};
 QueueEntryArray *queueEntryArray = NULL;
 
@@ -79,16 +81,17 @@ static inline void Copy(const char **argv) {
             return;
         }
 
-        printf("Queued From: %s\n"
-               "         To: %s\n", s, d);
+        entry.state = QUEUE_STATE_QUEUED;
+        if ((e = queueEntryArrayAppend(&queueEntryArray, &entry))) {
+            free(s), free(d);
+            puts(e);
+            return;
+        }
+
+        printf("QUEUE #%ld: " QUEUE_PRINT, queueEntryArray->len - 1, "COPY", s, d);
 
         free(s), free(d);
     }
-
-    entry.state = QUEUE_STATE_QUEUED;
-
-    if ((e = queueEntryArrayAppend(&queueEntryArray, &entry)))
-        puts(e);
 }
 
 static inline void XCopy(const char **argv) {
@@ -105,10 +108,20 @@ static inline void XCopy(const char **argv) {
 
 static inline void ListQueue(void) {
     unsigned long i;
+    int width;
 
     if (!queueEntryArray) {
         puts("No queue entries");
         return;
+    }
+
+    /* Get the width of the longest number */
+    {
+        unsigned long l = queueEntryArray->len;
+        width = 1;
+
+        while (l > 0)
+            l /= 10, ++width;
     }
 
     for (i = 0; i < queueEntryArray->len; ++i) {
@@ -120,7 +133,7 @@ static inline void ListQueue(void) {
             free(d.path);
 
         d.path = entry->sourcePath;
-        src = uriDetailsCreateString(&d), uriDetailsFree(&d);
+        src = uriDetailsCreateString(&d), d.path = NULL, uriDetailsFree(&d);
 
         if (!src)
             goto ListQueue_LoopError1;
@@ -131,12 +144,12 @@ static inline void ListQueue(void) {
             free(d.path);
 
         d.path = entry->destinationPath;
-        dst = uriDetailsCreateString(&d), uriDetailsFree(&d);
+        dst = uriDetailsCreateString(&d), d.path = NULL, uriDetailsFree(&d);
 
         if (!dst)
             goto ListQueue_LoopError2;
 
-        printf("%ld: %s > %s\n", i, src, dst);
+        printf(" %*ld: " QUEUE_PRINT, width, i, entry->state & QUEUE_TYPE_RECURSIVE ? "XCOPY" : "COPY", src, dst);
         free(src), free(dst);
         continue;
 
