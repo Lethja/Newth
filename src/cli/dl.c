@@ -85,6 +85,8 @@ static inline void Copy(const char **argv) {
         free(s), free(d);
     }
 
+    entry.state = QUEUE_STATE_QUEUED;
+
     if ((e = queueEntryArrayAppend(&queueEntryArray, &entry)))
         puts(e);
 }
