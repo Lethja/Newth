@@ -106,62 +106,6 @@ static inline void XCopy(const char **argv) {
         puts("XCOPY from not yet implemented");
 }
 
-static inline void ListQueue(void) {
-    unsigned long i;
-    int width;
-
-    if (!queueEntryArray) {
-        puts("No queue entries");
-        return;
-    }
-
-    /* Get the width of the longest number */
-    {
-        unsigned long l = queueEntryArray->len;
-        width = 1;
-
-        while (l > 0)
-            l /= 10, ++width;
-    }
-
-    for (i = 0; i < queueEntryArray->len; ++i) {
-        QueueEntry *entry = &queueEntryArray->entry[i];
-        UriDetails d = uriDetailsNewFrom(siteWorkingDirectoryGet(entry->sourceSite));
-        char *src, *dst;
-
-        if (d.path)
-            free(d.path);
-
-        d.path = entry->sourcePath;
-        src = uriDetailsCreateString(&d), d.path = NULL, uriDetailsFree(&d);
-
-        if (!src)
-            goto ListQueue_LoopError1;
-
-        d = uriDetailsNewFrom(siteWorkingDirectoryGet(entry->destinationSite));
-
-        if (d.path)
-            free(d.path);
-
-        d.path = entry->destinationPath;
-        dst = uriDetailsCreateString(&d), d.path = NULL, uriDetailsFree(&d);
-
-        if (!dst)
-            goto ListQueue_LoopError2;
-
-        printf(" %*ld: " QUEUE_PRINT, width, i, entry->state & QUEUE_TYPE_RECURSIVE ? "XCOPY" : "COPY", src, dst);
-        free(src), free(dst);
-        continue;
-
-        ListQueue_LoopError2:
-        free(src);
-
-        ListQueue_LoopError1:
-        uriDetailsFree(&d);
-        printf("%lu: data corruption\n", i);
-    }
-}
-
 #ifndef READLINE
 
 static inline void CleanInput(char *input) {
@@ -318,6 +262,72 @@ static inline void MountList(void) {
     }
 }
 
+static inline void QueueHelp(void) {
+    const char *help = " QUEUE LIST   - List all queue entries\n"
+                       " QUEUE START  - Download queue entries, do not overwrite existing\n"
+                       " QUEUE UPDATE - Download queue entries, overwrite existing if newer\n"
+                       " QUEUE MIRROR - Download queue entries, overwrite existing\n"
+                       " QUEUE LOAD   - Load queue from a local file\n"
+                       " QUEUE SAVE   - Save queue to a local file\n";
+    puts(help);
+}
+
+static inline void QueueList(void) {
+    unsigned long i;
+    int width;
+
+    if (!queueEntryArray) {
+        puts("No queue entries");
+        return;
+    }
+
+    /* Get the width of the longest number */
+    {
+        unsigned long l = queueEntryArray->len;
+        width = 0;
+
+        while (l > 0)
+            l /= 10, ++width;
+    }
+
+    for (i = 0; i < queueEntryArray->len; ++i) {
+        QueueEntry *entry = &queueEntryArray->entry[i];
+        UriDetails d = uriDetailsNewFrom(siteWorkingDirectoryGet(entry->sourceSite));
+        char *src, *dst;
+
+        if (d.path)
+            free(d.path);
+
+        d.path = entry->sourcePath;
+        src = uriDetailsCreateString(&d), d.path = NULL, uriDetailsFree(&d);
+
+        if (!src)
+            goto ListQueue_LoopError1;
+
+        d = uriDetailsNewFrom(siteWorkingDirectoryGet(entry->destinationSite));
+
+        if (d.path)
+            free(d.path);
+
+        d.path = entry->destinationPath;
+        dst = uriDetailsCreateString(&d), d.path = NULL, uriDetailsFree(&d);
+
+        if (!dst)
+            goto ListQueue_LoopError2;
+
+        printf(" %*ld: " QUEUE_PRINT, width, i, entry->state & QUEUE_TYPE_RECURSIVE ? "XCOPY" : "COPY", src, dst);
+        free(src), free(dst);
+        continue;
+
+        ListQueue_LoopError2:
+        free(src);
+
+        ListQueue_LoopError1:
+        uriDetailsFree(&d);
+        printf("%lu: data corruption\n", i);
+    }
+}
+
 /**
  * Shifts every byte in the args array back one so that '!' is removed, pointers are also adjusted to this change
  * @param args The args created by platformArgvConvertString() to remove the first character from
@@ -448,8 +458,7 @@ static inline void ProcessCommand(char **args) {
             case 'Q':
                 if (toupper(args[0][1]) == 'U' && toupper(args[0][2]) == 'E' && toupper(args[0][3]) == 'U' &&
                     toupper(args[0][4]) == 'E')
-                    /* TODO: Subcommands */
-                    ListQueue();
+                    QueueHelp();
                 else
                     goto processCommand_notFound;
                 break;
@@ -544,6 +553,21 @@ static inline void ProcessCommand(char **args) {
                 } else
                     goto processCommand_notFound;
                 break;
+            case 'Q':
+                if (toupper(args[0][1]) == 'U' && toupper(args[0][2]) == 'E' && toupper(args[0][3]) == 'U' &&
+                    toupper(args[0][4]) == 'E') {
+                    switch (toupper(args[1][0])) {
+                        case 'L':
+                            if (toupper(args[1][1]) == 'I' && toupper(args[1][2]) == 'S' && toupper(args[1][3]) == 'T') {
+                                QueueList();
+                                break;
+                            }
+                        /* TODO: Other subcommands */
+                        default:
+                            goto processCommand_notFound;
+                    }
+                    break;
+                }
             case 'U':
                 if (toupper(args[0][1]) == 'M' && toupper(args[0][2]) == 'O' && toupper(args[0][3]) == 'U' &&
                     toupper(args[0][4]) == 'N' && toupper(args[0][5]) == 'T') {
