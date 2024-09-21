@@ -95,15 +95,71 @@ static inline void Copy(const char **argv) {
 }
 
 static inline void XCopy(const char **argv) {
+    const char *e;
+    QueueEntry entry;
     size_t i = 0;
+
     while (argv[i])
         ++i;
 
-    /* TODO: Implement adding to the queue */
     if (i > 2)
         puts("XCOPY from/to not yet implemented");
-    else
-        puts("XCOPY from not yet implemented");
+    else {
+        char *s = siteArrayUserPathResolve(&siteArray, argv[1], 0), *d;
+
+        if (!s) {
+            puts(ErrUnableToResolvePath);
+            return;
+        }
+
+        {
+            Site *w = siteArrayActiveGetWrite(&siteArray);
+            char *l;
+
+            if (!w) {
+                free(s);
+                puts(ErrUnableToGetSystemsWorkingDirectory);
+                return;
+            }
+
+            if ((l = uriPathLast(s))) {
+                UriDetails u = uriDetailsNewFrom(siteWorkingDirectoryGet(w));
+                char *p;
+
+                p = u.path ? uriPathAbsoluteAppend(u.path, l) : NULL;
+                if (l < s || l > &s[strlen(s) + 1])
+                    free(l);
+
+                free(u.path), u.path = p ? p : NULL;
+                d = u.path ? uriDetailsCreateString(&u) : NULL;
+                uriDetailsFree(&u);
+            } else
+                d = NULL;
+        }
+
+        if (!d) {
+            free(s);
+            puts(ErrUnableToGetSystemsWorkingDirectory);
+            return;
+        }
+
+        if ((e = queueEntryNewFromPath(&entry, &siteArray, s, d))) {
+            free(s), free(d);
+            puts(e);
+            return;
+        }
+
+        entry.state = QUEUE_STATE_QUEUED | QUEUE_TYPE_RECURSIVE;
+        if ((e = queueEntryArrayAppend(&queueEntryArray, &entry))) {
+            free(s), free(d);
+            puts(e);
+            return;
+        }
+
+        printf("QUEUE #%ld: " QUEUE_PRINT, queueEntryArray->len - 1, "XCOPY", s, d);
+
+        free(s), free(d);
+    }
 }
 
 #ifndef READLINE
