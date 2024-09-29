@@ -8,20 +8,20 @@
   * [Setup DJGPP build environment](#setup-djgpp-build-environment)
     * [DOS-like](#dos-like)
     * [nix-like](#nix-like)
-  * [Configuring Watt32 library for linking with Newth](#configuring-watt32-library-for-linking-with-newth)
+  * [Configuring Watt32 for linking with Newth](#configuring-watt32-for-linking-with-newth)
   * [Build](#build)
 * [After building](#after-building)
   * [DPMI server](#dpmi-server)
     * [Acquire CWSDPMI](#acquire-cwsdpmi)
     * [Using CWSDPMI](#using-cwsdpmi)
       * [Method 1: Copy CWSDPMI.EXE to the same directory as the program](#method-1-copy-cwsdpmiexe-to-the-same-directory-as-the-program)
-      * [Method 2: Include Cwsdpmi inside binaries](#method-2-include-cwsdpmi-inside-binaries)
+      * [Method 2: Cwsdpmi as part of the binaries](#method-2-cwsdpmi-as-part-of-the-binaries)
   * [Compress (optional)](#compress-optional)
   * [Create diskette image (optional)](#create-diskette-image-optional)
     * [On a compressed binary](#on-a-compressed-binary)
       * [5¼-inch QD Diskettes](#5-inch-qd-diskettes)
       * [5¼-inch HD Diskette](#5-inch-hd-diskette)
-    * [On a uncompressed binary](#on-a-uncompressed-binary)
+    * [On an uncompressed binary](#on-an-uncompressed-binary)
       * [3½-inch HD Diskettes](#3-inch-hd-diskettes)
       * [3½-inch ED Diskette](#3-inch-ed-diskette)
 <!-- TOC -->
@@ -30,7 +30,7 @@
 
 [DJGPP](https://www.delorie.com/djgpp/) is a port of GNUs C/C++/Fortran compilers to DOS systems.
 It can be used to build i386 compatible binaries on DOS, for DOS.
-DJGPP cross compilers to build from typical modern systems are also available.
+DJGPP cross-compilers to build from typical modern systems are also available.
 
 > Note: Building Newth with DJGPP is considered experimental due to the Watt32 library requirement
 
@@ -38,7 +38,7 @@ DJGPP cross compilers to build from typical modern systems are also available.
 
 ## Requirements
 
-To build Newth with DJGPP you will need the following:
+To build Newth with DJGPP, you will need the following:
 
 - 80386 compatible machine or emulator
 - DOS 4.0+ operating system or emulator
@@ -47,7 +47,7 @@ To build Newth with DJGPP you will need the following:
 - [UPX binary compression](https://upx.github.io/) (optional)
 - [Watt-32 library](https://github.com/gvanem/Watt-32) compiled with the same version of DJGPP
 
-> Tip: If hardware isn't available it's possible to proceed with a emulator such as [Dosbox-X](https://dosbox-x.com/)
+> Tip: If hardware isn't available, it's possible to proceed with an emulator such as [Dosbox-X](https://dosbox-x.com/)
 
 ## Installing DJGPP
 
@@ -64,9 +64,12 @@ Some common operating systems are listed in the table below:
 
 ### Installing SvarDOS package manager onto another DOS (optional)
 
-If you already have a packet driver setup on your DOS system then it is relatively straight forward to setup the SvarDOS
-package manager. `.SVP` files are normal zip files so it should be possible to bootstrap the SvarDOS repository by
-extracting `PKG.EXE` and moving it and `PKGNET.SVP` onto the system. After which you can use `PKG.EXE` to install
+If you already have a packet driver setup on your DOS system,
+then it is relatively straight forward to set up the SvarDOS
+package manager.
+`.svp` files are normal `.zip` files so it should be possible to bootstrap the SvarDOS repository by
+extracting `PKG.EXE` and moving it and `PKGNET.SVP` onto the system.
+After which you can use `PKG.EXE` to install
 `PKGNET.SVP` to download `PKG.SVP` to install.
 
 Make sure the network packet driver is loaded and both `%DOSDIR%` & `%PATH%` are set correctly then run the following:
@@ -88,7 +91,7 @@ DEL *.SVP
 
 ## Setup DJGPP build environment
 
-The DJGPP build environment needs to be setup before it can be used.
+The DJGPP build environment needs to be set up before it can be used.
 
 ### DOS-like
 
@@ -108,7 +111,7 @@ SET DJGPP=%DOSDIR%\DEVEL\DJGPP\DJGPP.ENV
 
 ### nix-like
 
-Assuming the DJGPP cross compiler tarball was extracted to `/opt` run the following to setup DJGPP in your shell
+Assuming the DJGPP cross-compiler tarball was extracted to `/opt` run the following to set up DJGPP in your shell
 
 ```
 export PATH=/opt/djgpp/i586-pc-msdosdjgpp/bin/:/opt/djgpp/bin/:$PATH
@@ -116,7 +119,7 @@ export GCC_EXEC_PREFIX=/opt/djgpp/lib/gcc/
 export DJDIR=/opt/djgpp/i586-pc-msdosdjgpp
 ```
 
-## Configuring Watt32 library for linking with Newth
+## Configuring Watt32 for linking with Newth
 
 Newth on DOS depends on Watt32. The Watt32s folder should be extracted on symlinked
 into the directory containing `makefile` so that it looks like so.
@@ -127,7 +130,7 @@ DJGPP\Watt32s\inc
 DJGPP\Watt32s\lib
 ```
 
-Newth depends on BSD-like networking API and compiling for DOS is no exception.
+Newth depends on BSD-like networking API, and compiling for DOS is no exception.
 For Newth to link to Watt32 correctly `USE_BSD_API` must be defined when building Watt32 library.
 It's optional but a good idea to define `USE_BOOTP` and/or `USE_DHCP` 
 so that Newth can configure its IP address automatically.
@@ -164,17 +167,19 @@ To do this `Watt32s\src\config.h` has to be manually modified like so:
 Run `make` to build the project.
 Two 32-bit binaries called `dl.exe` and `th.exe` will be made that can be run from any path (including a floppy
 diskette)
-on any DOS computer with a DPMI server running on a 80386 compatible CPU with a 80387 compatible FPU.
+on any DOS computer with a DPMI server running on an i386 compatible CPU with a 80387 compatible FPU.
 
 # After building
 
 ## DPMI server
 
 A DOS Protected Mode Interface (DPMI) server is a utility that allows real mode DOS to extend itself with protected mode
-features of the 80386 and later processors.
+features of the i386 and later processors.
 
-Like all 32-bit DOS executables DJGPP binaries need a DPMI server to run. FreeDOS and Windows 95 setup their own DPMI
-server by default and no further files are needed on these systems. If your system doesn't include it's own DPMI server
+Like all 32-bit DOS executables, DJGPP binaries need a DPMI server to run.
+FreeDOS and Windows 95 setup their own DPMI
+server by default, and no further files are necessary on these systems.
+If your system doesn't include its own DPMI server
 then `CWSDPMI` can be used which is the DJGPP equivalent to Watcoms `DOS4GW.EXE`.
 
 ### Acquire CWSDPMI
@@ -187,21 +192,21 @@ then `CWSDPMI` can be used which is the DJGPP equivalent to Watcoms `DOS4GW.EXE`
 
 There are two ways to use Cwsdpmi. Which way is better depends on the circumstances of the user and system.
 Both methods assume that you're in the same directory as `DL.EXE` and `TH.EXE` and that `cwsdpmi.svp` has been
-installed in it's default directory.
+installed in its default directory.
 
 #### Method 1: Copy CWSDPMI.EXE to the same directory as the program
 
 Similar to `DOS4GW.EXE` for Watcom built applications.
-`CWSDPMI.EXE` can be placed in the same directory as the an EXE to make it start.
+`CWSDPMI.EXE` can be placed in the same directory as an EXE to make it start.
 Several DJGPP binaries in the same directory can make use of the same `CWSDPMI.EXE` which can save some disk space.
 
 ```
 COPY %DOSDIR%\PROGS\CWSDPMI\CWSDPMI.EXE .
 ```
 
-#### Method 2: Include Cwsdpmi inside binaries
+#### Method 2: Cwsdpmi as part of the binaries
 
-`CWSDPMI.EXE` can be baked into `DL.EXE` and `TH.EXE` so that no external files are needed to start the program.
+`CWSDPMI.EXE` can be baked into `DL.EXE` and `TH.EXE` so that no external files are necessary to start the program.
 This is much more ideal for executables that are intended for portable use.
 
 ```
@@ -218,8 +223,8 @@ COPY /B CWSDSTUB.EXE+thnostub th.exe
 
 ## Compress (optional)
 
-On DOS machines disk space is usually at a premium.
-Even though the release builds are stripped of all debugging symbols it is possible to make the binary take
+On DOS machines, disk space is usually at a premium.
+Even though the release builds are stripped of all debugging symbols, it is possible to make the binary take
 substantially less disk space with UPX compression so that it fits comfortably on a smaller diskette standard.
 
 | Build | UPX command                | Fits on            |
@@ -230,16 +235,21 @@ substantially less disk space with UPX compression so that it fits comfortably o
 ## Create diskette image (optional)
 
 On a real DOS machines it makes sense to directly copy the new binaries onto a newly formatted diskette.
-Conversely when cross compiling or distributing over the Internet it may make more sense to distribute as a floppy disk
-image so that users can make their own disks locally. This can be achieve with GNU Mtools.
+Conversely, when cross compiling or distributing over the Internet,
+it may make more sense to distribute as a floppy disk
+image so that users can make their own disks locally.
+This can be achieved with GNU Mtools.
 
-> Note: At the time of writing there's no DOS port of GNU Mtools. The newly created binaries will need
+> Note: At the time of writing, there's no DOS port of GNU Mtools.
+> The newly created binaries will need
 > to be transferred to a more modern Linux or Windows machine to use Mtools on them.
 
-With compression the binaries will fit much better into diskette image then they otherwise would,
+With compression, the binaries will fit much better into diskette image than they otherwise would,
 in some cases becoming compatible with a lower standard of diskette.
-While there might be a lot of free space after copying the files to the image users may want to put other files on the
-disk (such as WatTCP configuration and/or a network packet driver) and a real diskette may contain bad sectors.
+There might be a lot of free space after copying the files to the image.
+However, users may want to put other files on the disk
+(such as WatTCP configuration and/or a network packet driver)
+and a real diskette may contain bad sectors.
 
 With Mtools installed, create a diskette image with `mformat` then copy the binaries to the new image with `mcopy`.
 Below are some example configurations.
@@ -269,7 +279,7 @@ mformat -C -i newth1.2.ima -v "NEWTH DJ" -f 1200
 mcopy -i newth1.2.ima DL.EXE TH.EXE ::
 ```
 
-### On a uncompressed binary
+### On an uncompressed binary
 
 #### 3½-inch HD Diskettes
 

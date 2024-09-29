@@ -18,7 +18,7 @@
 # What is Code::Blocks
 
 [Code::Blocks](http://www.codeblocks.org/) is a [GPLv3](https://www.gnu.org/licenses/gpl-3.0.en.html) licenced
-Integrated Development Environment (IDE) for Linux, macOS and Windows.
+Integrated Development Environment (IDE) for Linux, macOS, and Windows.
 
 > Tip: while Code::Blocks is multi-platform `Newth.cpb` was created with older versions of Windows in mind.
 > BSD, Linux & macOS builders should build with [Autotools](../Autotool/README.md)
@@ -73,8 +73,9 @@ flatpak install flathub org.codeblocks.codeblocks
 
 ### Long names
 
-Code::Blocks `.workspace` file extension has more characters then can be stored on a DOS file system which is limited to
-a maximum of 8 characters and an additional 3 characters for an extension. These files have been given a shorter name.
+Code::Blocks `.workspace` file extension has more characters than can be stored on a DOS file system which is limited to
+a maximum of eight characters and an additional three characters for an extension.
+These files have been given a shorter name.
 To fix this: a symbolic link file with the correct name `Newth.workspace` can be made pointing to `Newth.ws`
 
 Open a terminal/command prompt in the directory containing the `Newth.ws` and run the following:
@@ -94,9 +95,9 @@ MKLINK Newth.workspace Newth.ws
 ## Build Newth
 
 1. Open `Newth.workspace` with **Code::Blocks**
-2. From the **Management** sidebar select the **Projects** tab
+2. From the **Management** sidebar, select the **Projects** tab
 3. Expand the workspace tree item if it isn't already. The activated project will appear in bold text.
-    1. To change the active another project, right click the other project and select **Activate Project**
+    1. To change the active another project, right-click the other project and select **Activate Project**
 4. Select **Build** from the menu bar then point to **Select Target** then check the profile you want to build with
     1. If in doubt, select the **GCC Release** or **MingW32 Release** profile
 5. Select **Build** from the menu bar then select **Build**

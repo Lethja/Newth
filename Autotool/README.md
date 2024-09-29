@@ -11,7 +11,7 @@
     * [Source Folders](#source-folders)
       * [Posix](#posix-1)
       * [Windows](#windows-1)
-  * [Setup the build system](#setup-the-build-system)
+  * [Setup Autotools](#setup-autotools-1)
   * [Configure build system](#configure-build-system)
     * [Recommended configurations](#recommended-configurations)
   * [Build Newth](#build-newth)
@@ -32,7 +32,7 @@ Newth can be built using AutoTools on most POSIX compliant systems.
 
 ## Requirements
 
-To build Newth with Autotools you will need the following:
+To build Newth with Autotools, you will need the following:
 
 - Autoconf 2.71 or newer installed on your system
 - Automake installed on your system
@@ -53,7 +53,7 @@ Some common operating systems are listed in the table below:
 
 > Tip: Windows can technically run Autotools and the generated configuration script with the bash shell included in
 > [Cygwin](https://www.cygwin.com/), [Git for Windows](https://gitforwindows.org/) or [MSYS2](https://www.msys2.org/)
-> however the results are not worth the effort for standalone Windows application development.
+> however, the results are not worth the effort for standalone Windows application development.
 > Windows builders should use [Visual Studio C++ 6](../VC6/README.md) or [Code::Blocks](../CodeBlks/README.md) to build
 > instead
 
@@ -65,9 +65,10 @@ Some common operating systems are listed in the table below:
 
 ### Long names
 
-Autotools depends on some file names having more characters then can be stored on a DOS file system which is limited to
-a maximum of 8 characters and an additional 3 characters for an extension. These files have been given a shorter name
-to be store-able on these older systems but are useless without the correct name.
+Autotools relies on filenames that exceed the character limits imposed by the classic FAT file system used by DOS,
+which adheres to the 8.3-filename convention, 8 characters for the name and 3 characters for the extension.
+These files have been given a shorter name to be store-able on these older systems
+but are useless without the correct name.
 To fix this: a symbolic link file with the correct name `configure.ac` can be made pointing to `autoconf.ac`
 
 Open a terminal/command prompt in the directory containing the `autoconf.ac` and `Makefile.am` files and run the
@@ -87,8 +88,8 @@ MKLINK configure.ac autoconf.ac
 
 ### Source Folders
 
-Autotools expects the source code to be in subdirectories relative to itself but the Newth folder structure is
-setup to support several build systems in different subdirectories away from the source code instead.
+Autotools expects the source code to be in subdirectories relative to itself, but the Newth folder structure is
+set up to support several build systems in different subdirectories away from the source code instead.
 To fix this: the `src` and `test` directories need to be symbolically linked into the `Autotools` folder.
 
 Open a terminal/command prompt in the directory containing the `autoconf.ac` and `Makefile.am` files and run the
@@ -106,7 +107,7 @@ ln -s ../src & ln -s ../test
 MKLINK /d src ..\src & MKLINK /d test ..\test 
 ```
 
-## Setup the build system
+## Setup Autotools
 
 Open a terminal/command prompt in the directory containing the `autoconf.ac` and `Makefile.am` files and run the
 following:
@@ -119,7 +120,7 @@ This should generate the `configure` and `makefile` among other files required f
 
 ## Configure build system
 
-Run the configuration with the `./configure` script. the configuration script has several options specific to Newth:
+Run the configuration with the `./configure` script. The configuration script has several options specific to Newth:
 
 | Parameter         | Comment                                                                                                                                                                                        |
 |-------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -134,8 +135,8 @@ Run the configuration with the `./configure` script. the configuration script ha
 
 ### Recommended configurations
 
-On most POSIX compliant operating systems simply running `./configure` gives the optimum result
-however there are some systems that work better with or outright require certain configuration options to work properly:
+On most POSIX compliant operating systems simply running `./configure` gives the optimum result however,
+there are some systems that work better with or outright require certain configuration options to work properly:
 
 | Operating System | Configure Command             |
 |------------------|-------------------------------|
@@ -170,5 +171,5 @@ and compare results to known good values. All tests should pass.
 Example usage: `make check` to build and run or `./unittest` to run after being built
 
 > The tests contain mocking functions that replace system calls.
-> This mocking functionality might not work correctly on some systems. If this is the case the mockTest group will not
-> pass and no further tests will run.
+> This mocking functionality might not work correctly on some systems.
+> If this is the case, the mockTest group will not pass and no further tests will run.

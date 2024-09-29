@@ -8,7 +8,7 @@
     * [Long names](#long-names)
       * [Posix](#posix)
       * [Windows](#windows)
-  * [Generate build system](#generate-build-system)
+  * [Setup CMake build system](#setup-cmake-build-system)
   * [Build Newth](#build-newth)
   * [Running the test (optional)](#running-the-test-optional)
 <!-- TOC -->
@@ -26,7 +26,7 @@ Newth can be built using CMake on many modern systems.
 
 ## Requirements
 
-To build Newth with CMake you will need the following:
+To build Newth with CMake, you will need the following:
 
 - CMake 3.22 or newer installed on your system
 - A C89 compliant compiler
@@ -54,12 +54,14 @@ Some common operating systems are listed in the table below.
 
 ### Long names
 
-CMake depends on some file names having more characters then can be stored on a DOS file system which is limited to
-a maximum of 8 characters and an additional 3 characters for an extension. These files have been given a shorter name
-to be store-able on these older systems but are useless without the correct name.
-To fix this: a symbolic link file with the correct name `CMakeLists.txt` can be made pointing to `CML.txt`
+CMake relies on filenames that exceed the character limits imposed by the classic FAT file system used by DOS,
+which adheres to the 8.3 filename convention, 8 characters for the name and 3 characters for the extension.
 
-Open a terminal/command prompt in the directory containing the `CML.txt` and run the following:
+To make these files compatible with older systems, they have been given shorter names,
+but this renders them ineffective without their original, longer names.
+To resolve this, you can create a symbolic link with the correct name `CMakeLists.txt` pointing to `CML.txt`.
+
+Open a terminal/command prompt in the directory containing `CML.txt` and run the following command:
 
 #### Posix
 
@@ -73,7 +75,7 @@ ln -s CML.txt CMakeLists.txt
 MKLINK CMakeLists.txt CML.txt 
 ```
 
-## Generate build system
+## Setup CMake build system
 
 Before compiling the code itself CMake needs to generate the build system target
 from instructions in the `CMakeLists.txt` file
@@ -112,5 +114,5 @@ and compare results to known good values. All tests should pass.
 Example usage: `./test`
 
 > The tests contain mocking functions that replace system calls.
-> This mocking functionality might not work correctly on some systems. If this is the case the mockTest group will not
-> pass and no further tests will run.
+> This mocking functionality might not work correctly on some systems.
+> If this is the case, the mockTest group will not pass and no further tests will run.

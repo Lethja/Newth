@@ -8,14 +8,22 @@
 
 # What is Microsoft Visual Studio C++ 6.0
 
-[Microsoft Visual Studio C++ 6.0](https://en.wikipedia.org/wiki/Visual_Studio#6.0_(1998)) was a 
-Integrated Development Environment (IDE) from Microsoft for developing programs on Windows 9x and 32-bit NT systems. 
+[Microsoft Visual Studio C++ 6.0](https://en.wikipedia.org/wiki/Visual_Studio#6.0_(1998)) was an 
+Integrated Development Environment (IDE)
+from Microsoft used for developing software on and for Windows 9x and 32-bit NT systems. 
 Newth supports being built with Microsoft Visual Studio C++ 6.0 on Windows.
 
-Microsoft Visual Studio C++ 6.0 creates the ultimate portable version of Newth binaries for Microsoft Windows systems 
-that do not link to a C runtime or any other dynamic link libraries files not already included in Windows 95 and later.
-The graphical interface binaries support visual styling and have Windows Socket v1, v2 & IPV6 support at runtime and;
-is unfortunately the only way build Newth to be compatible with 80386 processors (which Windows 95 supports) at this time.
+Microsoft Visual Studio C++ 6.0 enables the creation of highly portable 32-bit,
+Win32 Newth binaries for Microsoft Windows systems.
+These builds do not rely on a C runtime or any dynamic link libraries except those
+included in Windows 95 and later versions.
+The graphical interface binaries support visual styling and all builds provide support for Windows Socket v1,
+v2, and IPV6.
+Support is determined at runtime, which allows the same binary to run on Windows 95 yet enables features for 
+newer versions that have support. 
+
+> Note: Microsoft Visual Studio C++ 6.0 is currently the only way 
+> to build Newth binaries compatible with i386 processors which Windows 95 supports
 
 # Setup Microsoft Visual Studio C++ 6.0
 
@@ -30,16 +38,20 @@ To build Newth with Microsoft Visual Studio C++ 6.0, you will need the following
 
 ## Installing Microsoft Visual Studio C++ 6.0
 
-Microsoft Visual Studio C++ 6.0 is closed and proprietary software that is no longer sold or supported by the
-Microsoft Corporation. Buying a used physical copy from a seller is the only means of acquiring the software.
-Be sure that the licence key is included before purchasing from any seller. Good luck.
+Microsoft Visual Studio C++ 6.0 is no longer sold or supported by Microsoft Corporation
+as it is proprietary and discontinued software.
+The only way to acquire it is to purchase a used physical copy from a seller.
+Ensure that the license key is included with the purchase.
+Best of luck.
 
 ## Build Newth
 
 1. Open `newth.dsw` in Microsoft Visual Studio C++ 6.0
-> Note: if `.dsw` is not recognised as a file for Microsoft Visual Studio 6.0 by Microsoft Windows, start Microsoft Visual Studio C++ 6.0 then select **File** from the menu bar then **Open Workspace** and select `newth.dsw` in the **Open Workspace** file dialog
 2. Select **Build** from the menu bar then **Set Active Configuration...**
 3. Select the project and configuration you want to build then select **OK**
-> If in doubt choose the *"Release"* version of the project you want to build
 4. Press the **F7** key to build the project
 5. The binaries of each project will be located in `Debug` or `Release` folders respectively relative to `newth.dsw`
+
+> Note: if `.dsw` is not recognized as a file for Microsoft Visual Studio 6.0 by Microsoft Windows,
+> start Microsoft Visual Studio C++ 6.0 then select **File** from the menu bar then **Open Workspace**
+> and select `newth.dsw` in the **Open Workspace** file dialog

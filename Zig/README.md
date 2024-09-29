@@ -10,19 +10,20 @@
       * [Target](#target)
     * [Newth Options](#newth-options)
   * [Build Newth](#build-newth)
+    * [Examples](#examples)
 <!-- TOC -->
 
 # What is Zig
 
-Zig is a low level programming language with a focus on memory safety and low friction cross-compilation and is its own
+Zig is a low-level programming language with a focus on memory safety and low friction cross-compilation and is its own
 build system also written in Zig and making use of it its "comptime" feature. 
-Because Zigs toolchain also contains C compiler it can be used to build C projects.
+Because Zigs toolchain also contains C compiler, it can be used to build C projects.
 
 # Setup Zig
 
 ## Requirements
 
-To build Newth with Zig you will need the following:
+To build Newth with Zig, you will need the following:
 
 - Zig v0.13
 
@@ -32,7 +33,7 @@ To build Newth with Zig you will need the following:
 
 Installation instructions for Zig differ depending on the build machines operating system.
 Some common operating systems are listed [here](https://github.com/ziglang/zig/wiki/Install-Zig-from-a-Package-Manager).
-If the required operating system or package manager is not listed visit https://ziglang.org/download/
+If the required operating system or package manager is not listed, visit https://ziglang.org/download/
 and look for a manual build.
 
 # Building Newth
@@ -45,7 +46,7 @@ and look for a manual build.
 
 Zig has several optimization levels. They are as follows:
 
-| Optimization Level        | Description                                                                                  |
+| Optimization Level        | Description                                                                                   |
 |---------------------------|-----------------------------------------------------------------------------------------------|
 | `-Doptimize=Debug`        | Default. Gives as much debugging information as possible at the cost of binary size and speed |
 | `-Doptimize=ReleaseSafe`  | A release build with runtime safety checks build in at the cost of binary size and speed      |
@@ -56,7 +57,7 @@ Zig has several optimization levels. They are as follows:
 
 As mentioned [earlier](#what-is-zig) Zig is a cross-compiler.
 This means it's possible to build Newth for one system on another.
-While this in not unique to Zig it's unique in its easy of setup and use.
+While this is not unique to Zig, it's unique in its easy of setup and use.
 
 When targeting a system other than native Zig needs to know which system that is with a triplet, for example:
 
@@ -84,7 +85,7 @@ Newth has several configuration options that change features and functionality o
 Run `zig build` in the directory containing `build.zig` to build the project.
 Binaries called `th` and `dl` will be made in the `zig-out` subdirectory
 followed by another directory with the target triplets name.
-Don't forget to append any desired [build options](#configure-build-system) to the command.
+Remember to append any desired [build options](#configure-build-system) to the command.
 
 ### Examples
 ```

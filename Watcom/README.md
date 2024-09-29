@@ -10,7 +10,7 @@
     * [Installing SvarDOS package manager onto another DOS (optional)](#installing-svardos-package-manager-onto-another-dos-optional)
 * [Building Newth](#building-newth)
   * [Setup Watcom build environment](#setup-watcom-build-environment)
-  * [Configuring Watt32 library for linking with Newth](#configuring-watt32-library-for-linking-with-newth)
+  * [Configuring Watt32 for linking with Newth](#configuring-watt32-for-linking-with-newth)
   * [Build Newth](#build-newth)
     * [Build for 16-bit (Real Mode)](#build-for-16-bit-real-mode)
     * [Build for 32-bit (DOS4GW)](#build-for-32-bit-dos4gw)
@@ -32,8 +32,10 @@
 
 Watcom C/C++ was an integrated development environment for C, C++, and Fortran programming languages that
 was a commercial product until it was discontinued, it has since been released under the
-Sybase Open Watcom Public License as Open Watcom. Open Watcoms niche over other typical compiler choices is it's
-build targets for legacy hardware and software. Open Watcom builds native code for 16-bit x86 processors and can compile
+Sybase Open Watcom Public License as Open Watcom.
+Open Watcoms niche over other typical compiler choices is its 
+build targets for legacy hardware and software.
+Open Watcom builds native code for 16-bit x86 processors and can compile
 code from a modern Linux/Windows host for ancient versions of DOS, OS/2 & Windows.
 
 > Note: Building Newth with Watcom is considered experimental due to the Watt32 library requirement
@@ -71,7 +73,7 @@ Here are some of the more common ones:
 
 ## Requirements
 
-To build Newth with Watcom you will need the following:
+To build Newth with Watcom, you will need the following:
 
 - 80386 compatible machine or emulator
 - DOS 4.0+ operating system or emulator
@@ -80,14 +82,16 @@ To build Newth with Watcom you will need the following:
 - [UPX binary compression](https://upx.github.io/) (optional)
 - [Watt32 library](https://github.com/gvanem/Watt-32) compiled with the same version of Open Watcom
 
-> Tip: If hardware isn't available it's possible to proceed with a emulator such as [Dosbox-X](https://dosbox-x.com/)
+> Tip: If hardware isn't available, it's possible to proceed with an emulator such as [Dosbox-X](https://dosbox-x.com/)
 
 ### Choose processor architecture
 
 Open Watcom can build DOS executables for both 16-bit real mode and 32-bit protected mode.
 It is important to decide what version to build (if not both) before proceeding.
-The 16-bit version can run on 32-bit processors and this might be desired for portability but typically,
-the 32-bit version should be used whenever a processor can run it as it will give the program more memory to use
+The 16-bit version can run on 32-bit processors.
+This might be desired for portability,
+but typically the 32-bit version should be used
+whenever a processor can run it as it will give the program more memory to use
 and take advantage of the ISA.
 
 #### Processor compatibility matrix
@@ -101,7 +105,7 @@ and take advantage of the ISA.
 
 #### Build time
 
-Depending on the hardware being used to build Newth long periods may pass without any output printed to the screen.
+Depending on the hardware being used to build Newth long periods may pass without any output printed on the screen.
 Expected build times are listed below:
 
 | Market Name       | ISA      | Clock  | Build time (up to) |
@@ -126,13 +130,15 @@ Some common operating systems are listed in the table below:
 | Other            | Download and run the [Open Watcom](https://github.com/open-watcom/open-watcom-v2/releases) installation binary. If choosing a selective installation then make sure the **16-bit compiler** with **Large memory model** and **DOS Target operating system** are selected for installation |
 
 > Note: although Open Watcom can cross compile from Linux/Posix & NT systems
-> these instruction will assume Newth is being built by a DOS-like system.
+> these instructions will assume Newth is being built by a DOS-like system.
 
 ### Installing SvarDOS package manager onto another DOS (optional)
 
-If you already have a packet driver setup on your DOS system then it is relatively straight forward to setup the SvarDOS
-package manager. `.SVP` files are normal zip files so it should be possible to bootstrap the SvarDOS repository by
-extracting `PKG.EXE` and moving it and `PKGNET.SVP` onto the system. After which you can use `PKG.EXE` to install
+If you already have a packet driver setup on your DOS system,
+then it is relatively straight forward to set up the SvarDOS package manager.
+`.svp` files are normal `.zip` files, so it should be possible to bootstrap the SvarDOS repository by
+extracting `PKG.EXE` and moving it and `PKGNET.SVP` onto the system.
+After which you can use `PKG.EXE` to install
 `PKGNET.SVP` to download `PKG.SVP` to install.
 
 Make sure the network packet driver is loaded and both `%DOSDIR%` & `%PATH%` are set correctly then run the following:
@@ -154,7 +160,8 @@ DEL *.SVP
 
 ## Setup Watcom build environment
 
-The Open Watcom build environment needs to be setup before it can be used. A script is included to do this.
+The Open Watcom build environment needs to be set up before it can be used.
+A script is included to do this.
 On a typical DOS installation of Open Watcom run the following to enable the build environment.
 
 > Note: the following steps will need to be repeated each time DOS boots.
@@ -168,7 +175,7 @@ On a typical DOS installation of Open Watcom run the following to enable the bui
 > Tip: `wcc`, `wlink` & `wmake` should now be valid commands
 > if this isn't the case check the directories in the script and modify them as necessary.
 
-## Configuring Watt32 library for linking with Newth
+## Configuring Watt32 for linking with Newth
 
 Newth on DOS depends on Watt32. The Watt32s folder should be extracted on symlinked
 into the directory containing `makefile` so that it looks like so.
@@ -182,7 +189,7 @@ Watcom\Dos4g\Watt32s\inc
 Watcom\Dos4g\Watt32s\lib
 ```
 
-Newth depends on BSD-like networking API and compiling for DOS is no exception.
+Newth depends on BSD-like networking API, and compiling for DOS is no exception.
 For Newth to link to Watt32 correctly `USE_BSD_API` must be defined when building Watt32 library.
 
 To do this `Watt32s\src\config.h` has to be manually modified like so:
@@ -217,14 +224,14 @@ To do this `Watt32s\src\config.h` has to be manually modified like so:
 ### Build for 16-bit (Real Mode)
 
 From the `Dos16` directory run `wmake` to build the project.
-Two self contained 16-bit binary called `DL.EXE` and `TH.EXE` will be made and can be run from any path
+Two self-contained 16-bit binaries called `DL.EXE` and `TH.EXE` will be made and can be run from any path
 (including a floppy diskette) on any DOS 2.0 or later computer.
 
 ### Build for 32-bit (DOS4GW)
 
 From the `Dos4g` directory run `wmake` to build the project.
 Two 32-bit binary called `DL.EXE` and `TH.EXE` will be made and can be run from any path (including a floppy diskette)
-on any DOS 4.0 or later computer with a 80386 compatible CPU.
+on any DOS 4.0 or later computer with an i386 compatible CPU.
 
 `DOS4GW.EXE` will need to either exist in a `%PATH%` directory
 or the same directory as the binaries for the programs to function.
@@ -234,8 +241,8 @@ To put a copy of `DOS4GW.EXE` in the same directory as `DL.EXE` and `TH.EXE` run
 
 ## Compress binary (optional)
 
-On DOS machines disk space is usually at a premium.
-Even though the release builds are stripped of all debugging symbols it is possible to make the binary take
+On DOS machines, disk space is usually at a premium.
+Even though the release builds are stripped of all debugging symbols, it is possible to make the binary take
 substantially less disk space with UPX compression so that it fits comfortably on a smaller diskette standard.
 
 | Build     | UPX Command                       | Fits on            |
@@ -247,16 +254,21 @@ substantially less disk space with UPX compression so that it fits comfortably o
 ## Create diskette image (optional)
 
 On a real DOS machines it makes sense to directly copy the new binaries onto a newly formatted diskette.
-Conversely when cross compiling or distributing over the Internet it may make more sense to distribute as a floppy disk
-image so that users can make their own disks locally. This can be achieve with GNU Mtools.
+Conversely, when cross compiling or distributing over the Internet,
+it may make more sense to distribute as a floppy disk
+image so that users can make their own disks locally.
+This can be achieved with GNU Mtools.
 
-> Note: At the time of writing there's no DOS port of GNU Mtools. The newly created binaries will need
+> Note: At the time of writing, there's no DOS port of GNU Mtools.
+> The newly created binaries will need
 > to be transferred to a more modern Linux or Windows machine to use Mtools on them.
 
-With compression the binaries will fit much better into diskette image then they otherwise would,
+With compression, the binaries will fit much better into diskette image than they otherwise would,
 in some cases becoming compatible with a lower standard of diskette.
-While there might be a lot of free space after copying the files to the image users may want to put other files on the
-disk (such as WatTCP configuration and/or a network packet driver) and a real diskette may contain bad sectors.
+There might be a lot of free space after copying the files to the image.
+However, users may want to put other files on the disk
+(such as WatTCP configuration and/or a network packet driver)
+and a real diskette may contain bad sectors.
 
 With Mtools installed, create a diskette image with `mformat` then copy the binaries to the new image with `mcopy`.
 Below are some example configurations.
