@@ -472,7 +472,7 @@ static inline void ProcessCommand(char **args) {
                 }
                 break;
             case 'D':
-                if (toupper(args[0][1]) == 'I' && toupper(args[0][2]) == 'R') {
+                if (toupper(args[0][1]) == 'I' && toupper(args[0][2]) == 'R' && args[0][3] == '\0') {
                     Site *site = siteArrayActiveGet(&siteArray);
                     if (site)
                         PrintDirectoryFilesDosLike(site, NULL);
@@ -482,7 +482,7 @@ static inline void ProcessCommand(char **args) {
                     goto processCommand_notFound;
                 break;
             case 'E':
-                if (toupper(args[0][1]) == 'X' && toupper(args[0][2]) == 'I' && toupper(args[0][3]) == 'T') {
+                if (toupper(args[0][1]) == 'X' && toupper(args[0][2]) == 'I' && toupper(args[0][3]) == 'T' && args[0][4] == '\0') {
                     siteArrayFree(&siteArray);
 #ifdef READLINE
                     clear_history();
@@ -491,7 +491,7 @@ static inline void ProcessCommand(char **args) {
                 } else
                     goto processCommand_notFound;
             case 'L':
-                if (toupper(args[0][1]) == 'S') {
+                if (toupper(args[0][1]) == 'S' && args[0][2] == '\0') {
                     Site *site = siteArrayActiveGet(&siteArray);
                     if (site)
                         PrintDirectoryFilesUnixLike(siteArrayActiveGet(&siteArray), NULL);
@@ -502,25 +502,27 @@ static inline void ProcessCommand(char **args) {
                 break;
             case 'M':
                 if (toupper(args[0][1]) == 'O' && toupper(args[0][2]) == 'U' && toupper(args[0][3]) == 'N' &&
-                    toupper(args[0][4]) == 'T')
+                    toupper(args[0][4]) == 'T' && args[0][5] == '\0')
                     MountList();
+                else
+                    goto processCommand_notFound;
                 break;
             case 'P':
-                if (toupper(args[0][1]) == 'W' && toupper(args[0][2]) == 'D')
+                if (toupper(args[0][1]) == 'W' && toupper(args[0][2]) == 'D' && args[0][3] == '\0')
                     puts(siteWorkingDirectoryGet(siteArrayActiveGet(&siteArray)));
                 else
                     goto processCommand_notFound;
                 break;
             case 'Q':
                 if (toupper(args[0][1]) == 'U' && toupper(args[0][2]) == 'E' && toupper(args[0][3]) == 'U' &&
-                    toupper(args[0][4]) == 'E')
+                    toupper(args[0][4]) == 'E' && args[0][5] == '\0')
                     QueueHelp();
                 else
                     goto processCommand_notFound;
                 break;
             case 'U':
                 if (toupper(args[0][1]) == 'M' && toupper(args[0][2]) == 'O' && toupper(args[0][3]) == 'U' &&
-                    toupper(args[0][4]) == 'N' && toupper(args[0][5]) == 'T') {
+                    toupper(args[0][4]) == 'N' && toupper(args[0][5]) == 'T' && args[0][6] == '\0') {
                     Site *site;
 
                     if (!(site = siteArrayActiveGet(&siteArray)))
@@ -562,30 +564,30 @@ static inline void ProcessCommand(char **args) {
                     puts(str);
                 break;
             case 'C':
-                if (toupper(args[0][1]) == 'D') { /* CD */
+                if (toupper(args[0][1]) == 'D' && args[0][2] == '\0') { /* CD */
                     if (siteWorkingDirectorySet(siteArrayActiveGet(&siteArray), args[1]))
                         puts(strerror(errno));
-                } else if (toupper(args[0][1]) == 'P' ||
-                           (toupper(args[0][1]) == 'O' && toupper(args[0][2]) == 'P' && toupper(args[0][3]) == 'Y'))
+                } else if ((toupper(args[0][1]) == 'P' && args[0][2] == '\0') ||
+                           (toupper(args[0][1]) == 'O' && toupper(args[0][2]) == 'P' && toupper(args[0][3]) == 'Y' && args[0][4] == '\0'))
                     Copy((const char **) args);
                 else
                     goto processCommand_notFound;
                 break;
             case 'D':
-                if (toupper(args[0][1]) == 'I' && toupper(args[0][2]) == 'R')
+                if (toupper(args[0][1]) == 'I' && toupper(args[0][2]) == 'R' && args[0][3] == '\0')
                     PrintDirectoryFilesDosLike(siteArrayActiveGet(&siteArray), args[1]);
                 else
                     goto processCommand_notFound;
                 break;
             case 'L':
-                if (toupper(args[0][1]) == 'S')
+                if (toupper(args[0][1]) == 'S' && args[0][2] == '\0')
                     PrintDirectoryFilesUnixLike(siteArrayActiveGet(&siteArray), args[1]);
                 else
                     goto processCommand_notFound;
                 break;
             case 'M':
                 if (toupper(args[0][1]) == 'O' && toupper(args[0][2]) == 'U' && toupper(args[0][3]) == 'N' &&
-                    toupper(args[0][4]) == 'T') {
+                    toupper(args[0][4]) == 'T' && args[0][5] == '\0') {
                     const char *err;
                     if ((err = MountSite(args[1]))) {
                         puts(err);
@@ -595,7 +597,7 @@ static inline void ProcessCommand(char **args) {
                     goto processCommand_notFound;
                 break;
             case 'P':
-                if (toupper(args[0][1]) == 'W' && toupper(args[0][2]) == 'D') {
+                if (toupper(args[0][1]) == 'W' && toupper(args[0][2]) == 'D' && args[0][3] == '\0') {
                     long id;
 
                     errno = 0, id = strtol(args[1], NULL, 10);
@@ -611,7 +613,7 @@ static inline void ProcessCommand(char **args) {
                 break;
             case 'Q':
                 if (toupper(args[0][1]) == 'U' && toupper(args[0][2]) == 'E' && toupper(args[0][3]) == 'U' &&
-                    toupper(args[0][4]) == 'E') {
+                    toupper(args[0][4]) == 'E' && args[0][5] == '\0') {
                     switch (toupper(args[1][0])) {
                         case 'L':
                             if (toupper(args[1][1]) == 'I' && toupper(args[1][2]) == 'S' && toupper(args[1][3]) == 'T') {
@@ -626,7 +628,7 @@ static inline void ProcessCommand(char **args) {
                 }
             case 'U':
                 if (toupper(args[0][1]) == 'M' && toupper(args[0][2]) == 'O' && toupper(args[0][3]) == 'U' &&
-                    toupper(args[0][4]) == 'N' && toupper(args[0][5]) == 'T') {
+                    toupper(args[0][4]) == 'N' && toupper(args[0][5]) == 'T' && args[0][6] == '\0') {
                     Site *site = siteArrayGetFromInput(&siteArray, args[1]);
 
                     if (site)
@@ -637,8 +639,8 @@ static inline void ProcessCommand(char **args) {
                     goto processCommand_notFound;
                 break;
             case 'X':
-                if (toupper(args[0][1]) == 'C' ||
-                    (toupper(args[0][2]) == 'O' && toupper(args[0][3]) == 'P' && toupper(args[0][4]) == 'Y'))
+                if ((toupper(args[0][1]) == 'C' && args[0][2] == '\0') ||
+                    (toupper(args[0][2]) == 'O' && toupper(args[0][3]) == 'P' && toupper(args[0][4]) == 'Y' && args[0][5] == '\0'))
                     XCopy((const char **) args);
                 else
                     goto processCommand_notFound;
@@ -659,15 +661,15 @@ static inline void ProcessCommand(char **args) {
                     puts(str);
                 break;
             case 'C':
-                if (toupper(args[0][1]) == 'P' ||
-                    (toupper(args[0][1]) == 'O' && toupper(args[0][2]) == 'P' && toupper(args[0][3]) == 'Y'))
+                if ((toupper(args[0][1]) == 'P' && args[0][2] == '\0') ||
+                    (toupper(args[0][1]) == 'O' && toupper(args[0][2]) == 'P' && toupper(args[0][3]) == 'Y' && args[0][4] == '\0'))
                     Copy((const char **) args);
                 else
                     goto processCommand_notFound;
                 break;
             case 'X':
-                if (toupper(args[0][1]) == 'C' ||
-                    (toupper(args[0][2]) == 'O' && toupper(args[0][3]) == 'P' && toupper(args[0][4]) == 'Y'))
+                if ((toupper(args[0][1]) == 'C' && args[0][2] == '\0') ||
+                    (toupper(args[0][2]) == 'O' && toupper(args[0][3]) == 'P' && toupper(args[0][4]) == 'Y' && args[0][5] == '\0'))
                     XCopy((const char **) args);
                 else
                     goto processCommand_notFound;
