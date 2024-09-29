@@ -375,12 +375,85 @@ static inline void QueueList(void) {
         free(src), free(dst);
         continue;
 
-        ListQueue_LoopError2:
+ListQueue_LoopError2:
         free(src);
 
-        ListQueue_LoopError1:
+ListQueue_LoopError1:
         uriDetailsFree(&d);
         printf("%lu: data corruption\n", i);
+    }
+}
+
+static inline void QueueStart(void) {
+    unsigned long i;
+
+    if (!queueEntryArray) {
+        puts("No queue entries");
+        return;
+    }
+
+    for (i = 0; i < queueEntryArray->len; ++i) {
+        const char *e, *fromPath, *toPath;
+        Site *from, *to;
+        SiteFileMeta *fromMeta, *toMeta;
+        char buf[SB_DATA_SIZE];
+
+        if (!(queueEntryArray->entry[i].state & QUEUE_STATE_QUEUED))
+            continue;
+
+        to = queueEntryArray->entry[i].destinationSite, toPath = queueEntryArray->entry[i].destinationPath;
+        if (!(toMeta = siteStatOpenMeta(to, toPath)))
+            continue;
+
+        /* A file exists, skip */
+        if (toMeta->type != SITE_FILE_TYPE_NOTHING) {
+            siteFileMetaFree(toMeta), free(toMeta);
+            continue;
+        }
+        siteFileMetaFree(toMeta), free(toMeta);
+
+        from = queueEntryArray->entry[i].sourceSite, fromPath = queueEntryArray->entry[i].sourcePath;
+        if ((e = siteFileOpenRead(from, fromPath, -1, -1))) {
+            puts(e);
+            return;
+        }
+
+        if (!(fromMeta = siteFileOpenMeta(from)) || fromMeta->type == SITE_FILE_TYPE_UNKNOWN || !fromMeta->name) {
+            siteFileClose(from), puts(ErrHeaderNotFound);
+            return;
+        }
+
+        if (fromMeta->type != SITE_FILE_TYPE_FILE) {
+            siteFileClose(from), puts(strerror(EISDIR));
+            return;
+        }
+
+        if ((e = siteFileOpenWrite(to, toPath))) {
+            siteFileClose(from), puts(e);
+            return;
+        }
+
+        while ((i = siteFileRead(from, buf, SB_DATA_SIZE))) {
+            if (i != -1) {
+                if (siteFileWrite(to, buf, i) != -1)
+                    continue;
+
+                siteFileClose(from), siteFileClose(to), puts(strerror(errno));
+                queueEntryArray->entry[i].state =
+                (char)((queueEntryArray->entry[i].state | QUEUE_STATE_FAILED) & ~QUEUE_STATE_QUEUED);
+                return;
+            } else if (siteFileAtEnd(from))
+                break;
+
+            siteFileClose(from), siteFileClose(to), puts(strerror(errno));
+            queueEntryArray->entry[i].state =
+            (char)((queueEntryArray->entry[i].state | QUEUE_STATE_FAILED) & ~QUEUE_STATE_QUEUED);
+            return;
+        }
+
+        siteFileClose(from), siteFileClose(to);
+        queueEntryArray->entry[i].state =
+        (char)((queueEntryArray->entry[i].state | QUEUE_STATE_FINISHED) & ~QUEUE_STATE_QUEUED);
     }
 }
 
@@ -616,11 +689,17 @@ static inline void ProcessCommand(char **args) {
                     toupper(args[0][4]) == 'E' && args[0][5] == '\0') {
                     switch (toupper(args[1][0])) {
                         case 'L':
-                            if (toupper(args[1][1]) == 'I' && toupper(args[1][2]) == 'S' && toupper(args[1][3]) == 'T') {
+                            if (toupper(args[1][1]) == 'I' && toupper(args[1][2]) == 'S' && toupper(args[1][3]) == 'T' && args[1][4] == '\0')
                                 QueueList();
-                                break;
-                            }
-                        /* TODO: Other subcommands */
+                            else
+                                goto processCommand_notFound;
+                            break;
+                        case 'S':
+                            if (toupper(args[1][1]) == 'T' && toupper(args[1][2]) == 'A' && toupper(args[1][3]) == 'R' && toupper(args[1][4]) == 'T' && args[1][5] == '\0')
+                                QueueStart();
+                            else
+                                goto processCommand_notFound;
+                            break;
                         default:
                             goto processCommand_notFound;
                     }
@@ -680,11 +759,11 @@ static inline void ProcessCommand(char **args) {
     }
     return;
 
-    processCommand_invalidId:
+processCommand_invalidId:
     puts("Invalid site. See currently valid sites with 'MOUNT'");
     return;
 
-    processCommand_notFound:
+processCommand_notFound:
     puts("Command not found. See valid commands with '?'");
 }
 

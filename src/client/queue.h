@@ -11,23 +11,23 @@ typedef enum QueueState {
     /**
      * This entry has not been attempted yet
      */
-    QUEUE_STATE_QUEUED,
+    QUEUE_STATE_QUEUED = 1 << 0,
     /**
      * This entry has been skipped for some reason
      */
-    QUEUE_STATE_SKIPPED,
+    QUEUE_STATE_SKIPPED = 1 << 1,
     /**
      * This entry has been successfully downloaded
      */
-    QUEUE_STATE_FINISHED,
+    QUEUE_STATE_FINISHED = 1 << 2,
     /**
      * This entry has failed to download
      */
-    QUEUE_STATE_FAILED,
+    QUEUE_STATE_FAILED = 1 << 3,
     /**
      * This entry should recursively act on subdirectories
      */
-    QUEUE_TYPE_RECURSIVE
+    QUEUE_TYPE_RECURSIVE = 1 << 4
 } QueueState;
 
 /**
