@@ -48,6 +48,16 @@ typedef struct QueueEntryArray {
     QueueEntry *entry;
 } QueueEntryArray;
 
+#pragma region Callbacks
+
+extern void (*queueCallbackStateChange)(QueueEntry *);
+
+extern void (*queueCallbackProgress)(QueueEntry *, PlatformFileOffset);
+
+extern void (*queueCallBackTotalSize)(QueueEntry *, PlatformFileOffset);
+
+#pragma endregion
+
 /**
  * Create or append QueueEntry to an QueueEntryArray
  * @param queueEntryArray In: A pointer to the array to append to or NULL to create a new one
@@ -77,5 +87,20 @@ const char *queueEntryNewFromPath(QueueEntry *self, SiteArray *array, const char
  * @param queueEntry The QueueEntry to free the internals of
  */
 void queueEntryFree(QueueEntry *queueEntry);
+
+/**
+ * Download the entry in no clobber mode
+ * @param entry The entry to do the download on
+ * @return NULL on success, user friendly error message otherwise
+ */
+const char *queueEntryDownloadNoClobber(QueueEntry *entry);
+
+/**
+ * Get the full URI of a site and path members of a QueueEntry
+ * @param site The site to get the beginning of the uri from
+ * @param path The path to get the end of the uri from
+ * @return A string of the URI on success otherwise NULL
+ */
+char *queueEntryGetUri(Site *site, char *path);
 
 #endif /* NEW_DL_QUEUE_H */

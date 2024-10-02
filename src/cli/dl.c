@@ -26,6 +26,10 @@
 SiteArray siteArray = {0};
 QueueEntryArray *queueEntryArray = NULL;
 
+PlatformFileOffset total = 0;
+
+#pragma region Static Helper Functions
+
 static inline void Copy(const char **argv) {
     const char *e;
     QueueEntry entry;
@@ -328,6 +332,67 @@ static inline void QueueHelp(void) {
     puts(help);
 }
 
+/**
+ * Get string length of the number
+ * @param number The number to get the string length of
+ * @return The length of the number as a string
+ */
+static inline int GetLongWidth(unsigned long number) {
+    int width = 0;
+
+    while (number > 0)
+        number /= 10, ++width;
+    return width;
+}
+
+static inline int GetOffsetWidth(PlatformFileOffset number) {
+    int width = 0;
+
+    while (number > 0)
+        number /= 10, ++width;
+    return width;
+}
+
+#pragma region Callback Functions
+
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnusedParameter"
+
+static inline void ProgressDumb(QueueEntry *entry, PlatformFileOffset progress) {
+    putc('.', stderr);
+}
+
+static inline void StateDumb(QueueEntry *entry) {
+    /* TODO: React to changes properly */
+    putc('\n', stderr);
+    total = 0;
+}
+
+static inline void ProgressSmart(QueueEntry *entry, PlatformFileOffset progress) {
+    int width;
+
+    if (total)
+        width = GetOffsetWidth(total), printf("%0*"PF_OFFSET"%0*"PF_OFFSET"\r", width, progress, width, total);
+    else
+        printf("%"PF_OFFSET"\r", progress);
+
+    fflush(stdout);
+}
+
+static inline void StateSmart(QueueEntry *entry) {
+    /* TODO: React to changes properly */
+    printf("\033[2K\r"), fflush(stdout); /* Clear the current line of any garbage */
+    total = 0;
+}
+
+static inline void TotalSize(QueueEntry *entry, PlatformFileOffset size) {
+    total = size;
+}
+
+#pragma clang diagnostic pop
+
+#pragma endregion
+
 static inline void QueueList(void) {
     unsigned long i;
     int width;
@@ -337,15 +402,7 @@ static inline void QueueList(void) {
         return;
     }
 
-    /* Get the width of the longest number */
-    {
-        unsigned long l = queueEntryArray->len;
-        width = 0;
-
-        while (l > 0)
-            l /= 10, ++width;
-    }
-
+    width = GetLongWidth(queueEntryArray->len);
     for (i = 0; i < queueEntryArray->len; ++i) {
         QueueEntry *entry = &queueEntryArray->entry[i];
         UriDetails d = uriDetailsNewFrom(siteWorkingDirectoryGet(entry->sourceSite));
@@ -386,74 +443,30 @@ ListQueue_LoopError1:
 
 static inline void QueueStart(void) {
     unsigned long i;
+    int width;
 
     if (!queueEntryArray) {
-        puts("No queue entries");
+        puts(ErrNoQueue);
         return;
     }
 
+    width = GetLongWidth(queueEntryArray->len);
     for (i = 0; i < queueEntryArray->len; ++i) {
-        const char *e, *fromPath, *toPath;
-        Site *from, *to;
-        SiteFileMeta *fromMeta, *toMeta;
-        char buf[SB_DATA_SIZE];
+        const char *e;
+        char *src, *dst;
 
-        if (!(queueEntryArray->entry[i].state & QUEUE_STATE_QUEUED))
+        if (!(src = queueEntryGetUri(queueEntryArray->entry[i].sourceSite, queueEntryArray->entry[i].sourcePath)))
             continue;
 
-        to = queueEntryArray->entry[i].destinationSite, toPath = queueEntryArray->entry[i].destinationPath;
-        if (!(toMeta = siteStatOpenMeta(to, toPath)))
-            continue;
-
-        /* A file exists, skip */
-        if (toMeta->type != SITE_FILE_TYPE_NOTHING) {
-            siteFileMetaFree(toMeta), free(toMeta);
+        if (!(dst = queueEntryGetUri(queueEntryArray->entry[i].destinationSite,
+                                     queueEntryArray->entry[i].destinationPath))) {
+            free(src);
             continue;
         }
-        siteFileMetaFree(toMeta), free(toMeta);
 
-        from = queueEntryArray->entry[i].sourceSite, fromPath = queueEntryArray->entry[i].sourcePath;
-        if ((e = siteFileOpenRead(from, fromPath, -1, -1))) {
-            puts(e);
-            return;
-        }
-
-        if (!(fromMeta = siteFileOpenMeta(from)) || fromMeta->type == SITE_FILE_TYPE_UNKNOWN || !fromMeta->name) {
-            siteFileClose(from), puts(ErrHeaderNotFound);
-            return;
-        }
-
-        if (fromMeta->type != SITE_FILE_TYPE_FILE) {
-            siteFileClose(from), puts(strerror(EISDIR));
-            return;
-        }
-
-        if ((e = siteFileOpenWrite(to, toPath))) {
-            siteFileClose(from), puts(e);
-            return;
-        }
-
-        while ((i = siteFileRead(from, buf, SB_DATA_SIZE))) {
-            if (i != -1) {
-                if (siteFileWrite(to, buf, i) != -1)
-                    continue;
-
-                siteFileClose(from), siteFileClose(to), puts(strerror(errno));
-                queueEntryArray->entry[i].state =
-                (char)((queueEntryArray->entry[i].state | QUEUE_STATE_FAILED) & ~QUEUE_STATE_QUEUED);
-                return;
-            } else if (siteFileAtEnd(from))
-                break;
-
-            siteFileClose(from), siteFileClose(to), puts(strerror(errno));
-            queueEntryArray->entry[i].state =
-            (char)((queueEntryArray->entry[i].state | QUEUE_STATE_FAILED) & ~QUEUE_STATE_QUEUED);
-            return;
-        }
-
-        siteFileClose(from), siteFileClose(to);
-        queueEntryArray->entry[i].state =
-        (char)((queueEntryArray->entry[i].state | QUEUE_STATE_FINISHED) & ~QUEUE_STATE_QUEUED);
+        printf("%*lu: %s -> %s\n", width, i, src, dst), free(src), free(dst);
+        if ((e = queueEntryDownloadNoClobber(&queueEntryArray->entry[i])))
+            printf("%*lu: %s\n", width, i, e);
     }
 }
 
@@ -483,6 +496,8 @@ static inline void StripBang(char **args) {
     --i, e = &args[i][strlen(&args[i][1]) + 1];
     memmove(&args[0][0], &args[0][1], e - &args[0][0]);
 }
+
+#pragma endregion
 
 static inline void ProcessCommand(char **args) {
     const char *str;
@@ -555,7 +570,8 @@ static inline void ProcessCommand(char **args) {
                     goto processCommand_notFound;
                 break;
             case 'E':
-                if (toupper(args[0][1]) == 'X' && toupper(args[0][2]) == 'I' && toupper(args[0][3]) == 'T' && args[0][4] == '\0') {
+                if (toupper(args[0][1]) == 'X' && toupper(args[0][2]) == 'I' && toupper(args[0][3]) == 'T' &&
+                    args[0][4] == '\0') {
                     siteArrayFree(&siteArray);
 #ifdef READLINE
                     clear_history();
@@ -641,7 +657,8 @@ static inline void ProcessCommand(char **args) {
                     if (siteWorkingDirectorySet(siteArrayActiveGet(&siteArray), args[1]))
                         puts(strerror(errno));
                 } else if ((toupper(args[0][1]) == 'P' && args[0][2] == '\0') ||
-                           (toupper(args[0][1]) == 'O' && toupper(args[0][2]) == 'P' && toupper(args[0][3]) == 'Y' && args[0][4] == '\0'))
+                           (toupper(args[0][1]) == 'O' && toupper(args[0][2]) == 'P' && toupper(args[0][3]) == 'Y' &&
+                            args[0][4] == '\0'))
                     Copy((const char **) args);
                 else
                     goto processCommand_notFound;
@@ -689,13 +706,15 @@ static inline void ProcessCommand(char **args) {
                     toupper(args[0][4]) == 'E' && args[0][5] == '\0') {
                     switch (toupper(args[1][0])) {
                         case 'L':
-                            if (toupper(args[1][1]) == 'I' && toupper(args[1][2]) == 'S' && toupper(args[1][3]) == 'T' && args[1][4] == '\0')
+                            if (toupper(args[1][1]) == 'I' && toupper(args[1][2]) == 'S' &&
+                                toupper(args[1][3]) == 'T' && args[1][4] == '\0')
                                 QueueList();
                             else
                                 goto processCommand_notFound;
                             break;
                         case 'S':
-                            if (toupper(args[1][1]) == 'T' && toupper(args[1][2]) == 'A' && toupper(args[1][3]) == 'R' && toupper(args[1][4]) == 'T' && args[1][5] == '\0')
+                            if (toupper(args[1][1]) == 'T' && toupper(args[1][2]) == 'A' &&
+                                toupper(args[1][3]) == 'R' && toupper(args[1][4]) == 'T' && args[1][5] == '\0')
                                 QueueStart();
                             else
                                 goto processCommand_notFound;
@@ -719,7 +738,8 @@ static inline void ProcessCommand(char **args) {
                 break;
             case 'X':
                 if ((toupper(args[0][1]) == 'C' && args[0][2] == '\0') ||
-                    (toupper(args[0][2]) == 'O' && toupper(args[0][3]) == 'P' && toupper(args[0][4]) == 'Y' && args[0][5] == '\0'))
+                    (toupper(args[0][2]) == 'O' && toupper(args[0][3]) == 'P' && toupper(args[0][4]) == 'Y' &&
+                     args[0][5] == '\0'))
                     XCopy((const char **) args);
                 else
                     goto processCommand_notFound;
@@ -741,14 +761,16 @@ static inline void ProcessCommand(char **args) {
                 break;
             case 'C':
                 if ((toupper(args[0][1]) == 'P' && args[0][2] == '\0') ||
-                    (toupper(args[0][1]) == 'O' && toupper(args[0][2]) == 'P' && toupper(args[0][3]) == 'Y' && args[0][4] == '\0'))
+                    (toupper(args[0][1]) == 'O' && toupper(args[0][2]) == 'P' && toupper(args[0][3]) == 'Y' &&
+                     args[0][4] == '\0'))
                     Copy((const char **) args);
                 else
                     goto processCommand_notFound;
                 break;
             case 'X':
                 if ((toupper(args[0][1]) == 'C' && args[0][2] == '\0') ||
-                    (toupper(args[0][2]) == 'O' && toupper(args[0][3]) == 'P' && toupper(args[0][4]) == 'Y' && args[0][5] == '\0'))
+                    (toupper(args[0][2]) == 'O' && toupper(args[0][3]) == 'P' && toupper(args[0][4]) == 'Y' &&
+                     args[0][5] == '\0'))
                     XCopy((const char **) args);
                 else
                     goto processCommand_notFound;
@@ -839,8 +861,18 @@ int main(int argc, char **argv) {
 
     platformConnectSignals(signalNoAction, NULL, NULL);
 
+    err = getenv("TERM");
+
+    if (err && strcmp(err, "dumb") != 0)
+        queueCallbackProgress = ProgressSmart, queueCallbackStateChange = StateSmart;
+    else
+        queueCallbackProgress = ProgressDumb, queueCallbackStateChange = StateDumb;
+
+    queueCallBackTotalSize = TotalSize;
+
 #ifndef _WIN32
-    if (isatty(fileno(stdout)))
+    /* Don't enter interactive mode unless a terminal is connected */
+    if (isatty(fileno(stdin)) && isatty(fileno(stdout)))
 #endif /* _WIN32 */
         InteractiveMode();
 
