@@ -322,12 +322,12 @@ void platformTimeStructToStr(PlatformTimeStruct *time, char *str);
 char platformTimeGetFromHttpStr(const char *str, PlatformTimeStruct *time);
 
 /**
- * Compare two time structures
+ * Compare two time structures to see which one has the later date
  * @param t1 In: The first time structure to compare
  * @param t2 In: The second time structure
- * @return zero when time structures have different times, other when identical
+ * @return 0 when there is no time difference, 1 if t2 is newer than t1, -1 if t2 is older than t1
  */
-int platformTimeStructEquals(PlatformTimeStruct *t1, PlatformTimeStruct *t2);
+int platformTimeStructCompare(PlatformTimeStruct *t1, PlatformTimeStruct *t2);
 
 /**
  * Open a directory path in a platform portable way

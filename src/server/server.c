@@ -118,7 +118,7 @@ char handlePath(SOCKET clientSocket, const char *header, char *webPath) {
     if (!httpHeaderReadIfModifiedSince(header, &tm)) {
         PlatformTimeStruct mt;
         if (!platformGetTimeStruct(&st.st_mtime, &mt)) {
-            if (platformTimeStructEquals(&tm, &mt)) {
+            if (platformTimeStructCompare(&tm, &mt) <= 0) {
                 SendBuffer socketBuffer = sendBufferNew(clientSocket, 0);
 
                 httpHeaderWriteResponse(&socketBuffer, 304);

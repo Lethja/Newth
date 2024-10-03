@@ -285,9 +285,24 @@ void platformSleep(unsigned int ms) {
 #endif
 }
 
-int platformTimeStructEquals(PlatformTimeStruct *t1, PlatformTimeStruct *t2) {
-    return (t1->tm_year == t2->tm_year && t1->tm_mon == t2->tm_mon && t1->tm_mday == t2->tm_mday &&
-            t1->tm_hour == t2->tm_hour && t1->tm_min == t2->tm_min && t1->tm_sec == t2->tm_sec);
+int platformTimeStructCompare(PlatformTimeStruct *t1, PlatformTimeStruct *t2) {
+    int x;
+
+    if (t1->tm_year < t2->tm_year) return 1;
+    if (t1->tm_year > t2->tm_year) return -1;
+
+    x = ((t1->tm_mon * 31) + t1->tm_mday) - ((t2->tm_mon * 31) + t2->tm_mday);
+
+    if (x < 0) return 1;
+    if (x > 0) return -1;
+
+    x = ((t1->tm_hour * 3600) + (t1->tm_min * 60) + t1->tm_sec) -
+        ((t2->tm_hour * 3600) + (t2->tm_min * 60) + t2->tm_sec);
+
+    if (x < 0) return 1;
+    if (x > 0) return -1;
+
+    return 0;
 }
 
 char platformTimeGetFromHttpStr(const char *str, PlatformTimeStruct *time) {

@@ -848,9 +848,24 @@ void platformTimeStructToStr(PlatformTimeStruct *time, char *str) {
     SystemTimeToStr(time, str);
 }
 
-int platformTimeStructEquals(PlatformTimeStruct *t1, PlatformTimeStruct *t2) {
-    return (t1->wYear == t2->wYear && t1->wMonth == t2->wMonth && t1->wDay == t2->wDay && t1->wHour == t2->wHour &&
-            t1->wMinute == t2->wMinute && t1->wSecond == t2->wSecond);
+int platformTimeStructCompare(PlatformTimeStruct *t1, PlatformTimeStruct *t2) {
+    int x;
+
+    if (t1->tm_year < t2->tm_year) return 1;
+    if (t1->tm_year > t2->tm_year) return -1;
+
+    x = ((t1->tm_mon * 31) + t1->tm_mday) - ((t2->tm_mon * 31) + t2->tm_mday);
+
+    if (x < 0) return 1;
+    if (x > 0) return -1;
+
+    x = ((t1->tm_hour * 3600) + (t1->tm_min * 60) + t1->tm_sec) -
+        ((t2->tm_hour * 3600) + (t2->tm_min * 60) + t2->tm_sec);
+
+    if (x < 0) return 1;
+    if (x > 0) return -1;
+
+    return 0;
 }
 
 char platformTimeGetFromHttpStr(const char *str, PlatformTimeStruct *time) {

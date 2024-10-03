@@ -23,6 +23,8 @@
 
 #include <cmocka.h>
 
+#include <time.h>
+
 #pragma endregion
 
 /**
@@ -256,6 +258,72 @@ static void PathCombineStringUnixDividers(void **state) {
 
 #endif
 
+static void TimeCompareYear(void **state) {
+    PlatformTimeStruct t1, t2;
+
+    assert_null(platformTimeGetFromHttpStr("Mon, 16 Mar 1953 00:00:00 GMT", &t1));
+    assert_null(platformTimeGetFromHttpStr("Sun, 28 Dec 1969 00:00:00 GMT", &t2));
+
+    assert_int_equal(platformTimeStructCompare(&t1, &t1), 0);
+    assert_int_equal(platformTimeStructCompare(&t1, &t2), 1);
+    assert_int_equal(platformTimeStructCompare(&t2, &t1), -1);
+}
+
+static void TimeCompareMonth(void **state) {
+    PlatformTimeStruct t1, t2;
+
+    assert_null(platformTimeGetFromHttpStr("Thu, 24 Feb 1955 00:00:00 GMT", &t1));
+    assert_null(platformTimeGetFromHttpStr("Fri, 28 Oct 1955 00:00:00 GMT", &t2));
+
+    assert_int_equal(platformTimeStructCompare(&t1, &t1), 0);
+    assert_int_equal(platformTimeStructCompare(&t1, &t2), 1);
+    assert_int_equal(platformTimeStructCompare(&t2, &t1), -1);
+}
+
+static void TimeCompareDay(void **state) {
+    PlatformTimeStruct t1, t2;
+
+    assert_null(platformTimeGetFromHttpStr("Tue, 25 Dec 2001 00:00:00 GMT", &t1));
+    assert_null(platformTimeGetFromHttpStr("Wen, 26 Dec 2001 00:00:00 GMT", &t2));
+
+    assert_int_equal(platformTimeStructCompare(&t1, &t1), 0);
+    assert_int_equal(platformTimeStructCompare(&t1, &t2), 1);
+    assert_int_equal(platformTimeStructCompare(&t2, &t1), -1);
+}
+
+static void TimeCompareHour(void **state) {
+    PlatformTimeStruct t1, t2;
+
+    assert_null(platformTimeGetFromHttpStr("Sat, 01 Jan 2000 00:00:00 GMT", &t1));
+    assert_null(platformTimeGetFromHttpStr("Sat, 01 Jan 2000 01:00:00 GMT", &t2));
+
+    assert_int_equal(platformTimeStructCompare(&t1, &t1), 0);
+    assert_int_equal(platformTimeStructCompare(&t1, &t2), 1);
+    assert_int_equal(platformTimeStructCompare(&t2, &t1), -1);
+}
+
+static void TimeCompareMinute(void **state) {
+    PlatformTimeStruct t1, t2;
+
+    assert_null(platformTimeGetFromHttpStr("Sat, 01 Jan 2000 00:00:00 GMT", &t1));
+    assert_null(platformTimeGetFromHttpStr("Sat, 01 Jan 2000 00:01:00 GMT", &t2));
+
+    assert_int_equal(platformTimeStructCompare(&t1, &t1), 0);
+    assert_int_equal(platformTimeStructCompare(&t1, &t2), 1);
+    assert_int_equal(platformTimeStructCompare(&t2, &t1), -1);
+}
+
+static void TimeCompareSecond(void **state) {
+    PlatformTimeStruct t1, t2;
+
+    assert_null(platformTimeGetFromHttpStr("Sat, 01 Jan 2000 00:00:00 GMT", &t1));
+    assert_null(platformTimeGetFromHttpStr("Sat, 01 Jan 2000 00:00:01 GMT", &t2));
+
+    assert_int_equal(platformTimeStructCompare(&t1, &t1), 0);
+    assert_int_equal(platformTimeStructCompare(&t1, &t2), 1);
+    assert_int_equal(platformTimeStructCompare(&t2, &t1), -1);
+}
+
 #pragma clang diagnostic pop
 
 const struct CMUnitTest platformTest[] = {
@@ -277,7 +345,13 @@ const struct CMUnitTest platformTest[] = {
     cmocka_unit_test(StringToArgvPaddingEnd),
     cmocka_unit_test(StringToArgvPaddingMiddle),
     cmocka_unit_test(StringToArgvPaddingStart),
-    cmocka_unit_test(TemporaryPath)
+    cmocka_unit_test(TemporaryPath),
+    cmocka_unit_test(TimeCompareDay),
+    cmocka_unit_test(TimeCompareHour),
+    cmocka_unit_test(TimeCompareMinute),
+    cmocka_unit_test(TimeCompareMonth),
+    cmocka_unit_test(TimeCompareSecond),
+    cmocka_unit_test(TimeCompareYear),
 };
 
 #endif /* NEW_TH_TEST_PLATFORM_H */
