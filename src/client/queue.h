@@ -89,11 +89,18 @@ const char *queueEntryNewFromPath(QueueEntry *self, SiteArray *array, const char
 void queueEntryFree(QueueEntry *queueEntry);
 
 /**
- * Download the entry in no clobber mode
+ * Download the entry in no clobber mode (existing files won't be overwritten)
  * @param entry The entry to do the download on
  * @return NULL on success, user friendly error message otherwise
  */
 const char *queueEntryDownloadNoClobber(QueueEntry *entry);
+
+/**
+ * Download the entry in update mode (only newer files will be overwritten)
+ * @param entry The entry to do the download on
+ * @return NULL on success, user friendly error message otherwise
+ */
+const char *queueEntryDownloadUpdate(QueueEntry *entry);
 
 /**
  * Get the full URI of a site and path members of a QueueEntry

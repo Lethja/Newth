@@ -470,6 +470,35 @@ static inline void QueueStart(void) {
     }
 }
 
+static inline void QueueUpdate(void) {
+    unsigned long i;
+    int width;
+
+    if (!queueEntryArray) {
+        puts(ErrNoQueue);
+        return;
+    }
+
+    width = GetLongWidth(queueEntryArray->len);
+    for (i = 0; i < queueEntryArray->len; ++i) {
+        const char *e;
+        char *src, *dst;
+
+        if (!(src = queueEntryGetUri(queueEntryArray->entry[i].sourceSite, queueEntryArray->entry[i].sourcePath)))
+            continue;
+
+        if (!(dst = queueEntryGetUri(queueEntryArray->entry[i].destinationSite,
+                                     queueEntryArray->entry[i].destinationPath))) {
+            free(src);
+            continue;
+        }
+
+        printf("%*lu: %s -> %s\n", width, i, src, dst), free(src), free(dst);
+        if ((e = queueEntryDownloadUpdate(&queueEntryArray->entry[i])))
+            printf("%*lu: %s\n", width, i, e);
+    }
+}
+
 /**
  * Shifts every byte in the args array back one so that '!' is removed, pointers are also adjusted to this change
  * @param args The args created by platformArgvConvertString() to remove the first character from
@@ -716,6 +745,14 @@ static inline void ProcessCommand(char **args) {
                             if (toupper(args[1][1]) == 'T' && toupper(args[1][2]) == 'A' &&
                                 toupper(args[1][3]) == 'R' && toupper(args[1][4]) == 'T' && args[1][5] == '\0')
                                 QueueStart();
+                            else
+                                goto processCommand_notFound;
+                            break;
+                        case 'U':
+                            if (toupper(args[1][1]) == 'P' && toupper(args[1][2]) == 'D' &&
+                                toupper(args[1][3]) == 'A' && toupper(args[1][4]) == 'T' &&
+                                toupper(args[1][5]) == 'E' && args[1][6] == '\0')
+                                QueueUpdate();
                             else
                                 goto processCommand_notFound;
                             break;

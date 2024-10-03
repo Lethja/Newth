@@ -177,12 +177,12 @@ const char *queueEntryDownloadNoClobber(QueueEntry *entry) {
             }
 
             siteFileClose(from), siteFileClose(to);
-            goto queueEntryStart_Failed;
+            goto queueEntryNoClobber_Failed;
         } else if (siteFileAtEnd(from))
             break;
 
         siteFileClose(from), siteFileClose(to);
-        goto queueEntryStart_Failed;
+        goto queueEntryNoClobber_Failed;
     }
 
     siteFileClose(from), siteFileClose(to);
@@ -193,7 +193,99 @@ const char *queueEntryDownloadNoClobber(QueueEntry *entry) {
 
     return NULL;
 
-queueEntryStart_Failed:
+queueEntryNoClobber_Failed:
+    siteFileClose(from), siteFileClose(to);
+    entry->state = (char) ((entry->state | QUEUE_STATE_FAILED) & ~QUEUE_STATE_QUEUED);
+
+    if (queueCallbackStateChange)
+        queueCallbackStateChange(entry);
+
+    return strerror(errno);
+}
+
+const char *queueEntryDownloadUpdate(QueueEntry *entry) {
+    const char *e, *fromPath, *toPath;
+    Site *from, *to;
+    SiteFileMeta *fromMeta, *toMeta;
+    SOCK_BUF_TYPE i;
+    char buf[SB_DATA_SIZE];
+    time_t last;
+
+    if (!(entry->state & QUEUE_STATE_QUEUED))
+        return ErrQueueEntryNotReady;
+
+    to = entry->destinationSite, toPath = entry->destinationPath;
+    if (!(toMeta = siteStatOpenMeta(to, toPath)))
+        return ErrUnableToResolvePath;
+
+    from = entry->sourceSite, fromPath = entry->sourcePath;
+
+    /* A file exists, check if source is newer */
+    if (toMeta->type != SITE_FILE_TYPE_NOTHING) {
+        if ((fromMeta = siteStatOpenMeta(from, fromPath)) && fromMeta->type != SITE_FILE_TYPE_NOTHING) {
+            if (platformTimeStructCompare(toMeta->modifiedDate, fromMeta->modifiedDate) >= 0) {
+                entry->state = (char) ((entry->state | QUEUE_STATE_FINISHED) & ~QUEUE_STATE_QUEUED);
+                siteFileMetaFree(fromMeta), free(fromMeta);
+                return NULL;
+            }
+            siteFileMetaFree(fromMeta), free(fromMeta);
+        }
+    }
+    siteFileMetaFree(toMeta), free(toMeta);
+
+    if ((e = siteFileOpenRead(from, fromPath, -1, -1)))
+        return e;
+
+    if (!(fromMeta = siteFileOpenMeta(from)) || fromMeta->type == SITE_FILE_TYPE_UNKNOWN || !fromMeta->name) {
+        siteFileClose(from);
+        return ErrHeaderNotFound;
+    }
+
+    if (fromMeta->type != SITE_FILE_TYPE_FILE) {
+        siteFileClose(from);
+        return strerror(EISDIR);
+    }
+
+    if ((e = siteFileOpenWrite(to, toPath))) {
+        siteFileClose(from);
+        return e;
+    }
+
+    if (queueCallbackProgress)
+        last = time(NULL);
+
+    if (queueCallBackTotalSize)
+        queueCallBackTotalSize(entry, fromMeta->length);
+
+    while ((i = siteFileRead(from, buf, SB_DATA_SIZE))) {
+        if (i != -1) {
+            time_t now = time(NULL);
+
+            if (siteFileWrite(to, buf, i) != -1) {
+                if (queueCallbackProgress && now > last)
+                    queueCallbackProgress(entry, (PlatformFileOffset) i), last = now;
+
+                continue;
+            }
+
+            siteFileClose(from), siteFileClose(to);
+            goto queueEntryUpdate_Failed;
+        } else if (siteFileAtEnd(from))
+            break;
+
+        siteFileClose(from), siteFileClose(to);
+        goto queueEntryUpdate_Failed;
+    }
+
+    siteFileClose(from), siteFileClose(to);
+    entry->state = (char) ((entry->state | QUEUE_STATE_FINISHED) & ~QUEUE_STATE_QUEUED);
+
+    if (queueCallbackStateChange)
+        queueCallbackStateChange(entry);
+
+    return NULL;
+
+queueEntryUpdate_Failed:
     siteFileClose(from), siteFileClose(to);
     entry->state = (char) ((entry->state | QUEUE_STATE_FAILED) & ~QUEUE_STATE_QUEUED);
 
