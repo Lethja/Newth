@@ -470,6 +470,35 @@ static inline void QueueStart(void) {
     }
 }
 
+static inline void QueueMirror(void) {
+    unsigned long i;
+    int width;
+
+    if (!queueEntryArray) {
+        puts(ErrNoQueue);
+        return;
+    }
+
+    width = GetLongWidth(queueEntryArray->len);
+    for (i = 0; i < queueEntryArray->len; ++i) {
+        const char *e;
+        char *src, *dst;
+
+        if (!(src = queueEntryGetUri(queueEntryArray->entry[i].sourceSite, queueEntryArray->entry[i].sourcePath)))
+            continue;
+
+        if (!(dst = queueEntryGetUri(queueEntryArray->entry[i].destinationSite,
+                                     queueEntryArray->entry[i].destinationPath))) {
+            free(src);
+            continue;
+        }
+
+        printf("%*lu: %s -> %s\n", width, i, src, dst), free(src), free(dst);
+        if ((e = queueEntryDownloadMirror(&queueEntryArray->entry[i])))
+            printf("%*lu: %s\n", width, i, e);
+    }
+}
+
 static inline void QueueUpdate(void) {
     unsigned long i;
     int width;
@@ -738,6 +767,13 @@ static inline void ProcessCommand(char **args) {
                             if (toupper(args[1][1]) == 'I' && toupper(args[1][2]) == 'S' &&
                                 toupper(args[1][3]) == 'T' && args[1][4] == '\0')
                                 QueueList();
+                            else
+                                goto processCommand_notFound;
+                            break;
+                        case 'M':
+                            if (toupper(args[1][1]) == 'I' && toupper(args[1][2]) == 'R' && toupper(args[1][3]) == 'R'
+                                && toupper(args[1][4]) == 'O' && toupper(args[1][5]) == 'R' && args[1][6] == '\0')
+                                QueueMirror();
                             else
                                 goto processCommand_notFound;
                             break;

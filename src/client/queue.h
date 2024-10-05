@@ -96,6 +96,13 @@ void queueEntryFree(QueueEntry *queueEntry);
 const char *queueEntryDownloadNoClobber(QueueEntry *entry);
 
 /**
+ * Download the entry in mirror mode (all existing files are overwritten)
+ * @param entry The entry to do the download on
+ * @return NULL on success, user friendly error message otherwise
+ */
+const char *queueEntryDownloadMirror(QueueEntry *entry);
+
+/**
  * Download the entry in update mode (only newer files will be overwritten)
  * @param entry The entry to do the download on
  * @return NULL on success, user friendly error message otherwise
