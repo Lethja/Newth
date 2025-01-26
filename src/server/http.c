@@ -19,7 +19,7 @@ static inline void AsciiToHex(char ascii, char out[8]) {
     if (isalnum(ascii))
         out[0] = ascii, out[1] = '\0';
     else
-        sprintf(out, "%%%x", ascii);
+        sprintf(out, "%%%x", (unsigned char) ascii);
 }
 
 /**
