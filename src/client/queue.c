@@ -300,7 +300,7 @@ const char *queueEntryDownloadUpdate(QueueEntry *entry) {
 
     from = entry->sourceSite, fromPath = entry->sourcePath;
 
-    /* A file exists, check if source is newer */
+    /* A file exists, check if the source is newer */
     if (toMeta->type != SITE_FILE_TYPE_NOTHING) {
         if ((fromMeta = siteStatOpenMeta(from, fromPath)) && fromMeta->type != SITE_FILE_TYPE_NOTHING) {
             if (platformTimeStructCompare(toMeta->modifiedDate, fromMeta->modifiedDate) >= 0) {
