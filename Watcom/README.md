@@ -175,6 +175,10 @@ On a typical DOS installation of Open Watcom run the following to enable the bui
 > Tip: `wcc`, `wlink` & `wmake` should now be valid commands
 > if this isn't the case check the directories in the script and modify them as necessary.
 
+> Tip: Open Watcom for DOS is built with DOS4GW extender which prints its copyright notice every time a program starts.
+> This can get particular nuisance in where the copyright notice will print continuously. 
+> Run `SET DOS4G=QUIET` to prevent the DOS4GW copyright notice from being displayed every time a command runs. 
+
 ## Configuring Watt32 for linking with Newth
 
 Newth on DOS depends on Watt32. The Watt32s folder should be extracted on symlinked
