@@ -1,80 +1,79 @@
-CC=wcc
-WATT_32=watt32s
+CC = *wcc
+LD = *wlink
+
+WATT_32_DIR = watt32s
+WATT_32_LIB = wattcpwl.lib
+
+COMMON_CFLAGS = -q -dWATT32=1 -bt=dos -ml -0 -i="$(WATT_32_DIR)/inc" -d0 -osr -zc -dNDEBUG=1
+DL_CFLAGS = $(COMMON_CFLAGS) -dPLATFORM_SYS_ARGV=1 -dPLATFORM_SYS_EXEC=1 -dPLATFORM_SYS_WRITE=1
+TH_CFLAGS = $(COMMON_CFLAGS) -dPLATFORM_NET_ADAPTER=1 -dPLATFORM_NET_LISTEN=1 -dPLATFORM_SYS_ARGV=1
+
+DL_LFLAGS = OPT st=9216 FILE {$(DL_OBJ)} LIBP $(WATT_32_DIR)/lib LIBF $(WATT_32_LIB) SYS dos
+TH_LFLAGS = OPT st=4608 FILE {$(TH_OBJ)} LIBP $(WATT_32_DIR)/lib LIBF $(WATT_32_LIB) SYS dos
+
+DL_OBJ = o/hex.o o/signal.o dlo/err.o dlo/doswatb.o dlo/io.o dlo/platform.o dlo/queue.o dlo/recvbufr.o dlo/site.o dlo/file.o dlo/http.o dlo/uri.o dlo/xml.o dlo/dl.o
+TH_OBJ = o/hex.o o/signal.o tho/doswatb.o tho/event.o tho/http.o tho/platform.o tho/poll.o tho/routine.o tho/server.o tho/sendbufr.o tho/th.o
 
 all: .SYMBOLIC dl.exe th.exe
 
-dl.exe: flag.lnk dldef.lnk err.o doswatbd.o hex.o io.o plat_dl.o queue.o recvbufr.o signal.o site.o s_file.o s_http.o uri.o xml.o dl.o dllnk.lnk
-	wlink NAME $@ @dllnk.lnk
+dl.exe: $(WATT_32_DIR)/lib/$(WATT_32_LIB) o dlo $(DL_OBJ)
+	$(LD) NAME $@ $(DL_LFLAGS)
 
-th.exe: flag.lnk thdef.lnk doswatbt.o event.o hex.o http.o plat_th.o poll.o routine.o signal.o server.o sendbufr.o th.o thlnk.lnk
-	wlink NAME $@ @thlnk.lnk
+th.exe: $(WATT_32_DIR)/lib/$(WATT_32_LIB) o tho $(TH_OBJ)
+	$(LD) NAME $@ $(TH_LFLAGS)
 
-flag.lnk:
-	%write flag.lnk -q -dWATT32=1 -bt=dos -ml -0 -i="$(WATT_32)/inc" -d0 -osr -zc -dNDEBUG=1
+o/hex.o: ../../src/common/hex.c
+	$(CC) $(COMMON_CFLAGS) -fo="$@" $<
+o/signal.o: ../../src/common/signal.c
+	$(CC) $(COMMON_CFLAGS) -fo="$@" $<
 
-dldef.lnk:
-	%write dldef.lnk -dPLATFORM_SYS_ARGV=1 -dPLATFORM_SYS_EXEC=1 -dPLATFORM_SYS_WRITE=1
+dlo/dl.o: ../../src/cli/dl.c
+	$(CC) $(DL_CFLAGS) -fo="$@" $<
+dlo/doswatb.o: ../../src/platform/doswatb.c
+	$(CC) $(DL_CFLAGS) -fo="$@" $<
+dlo/file.o: ../../src/client/site/file.c
+	$(CC) $(DL_CFLAGS) -fo="$@" $<
+dlo/http.o: ../../src/client/site/http.c
+	$(CC) $(DL_CFLAGS) -fo="$@" $<
+dlo/platform.o: ../../src/platform/platform.c
+	$(CC) $(DL_CFLAGS) -fo="$@" $<
+dlo/err.o: ../../src/client/err.c
+	$(CC) $(COMMON_CFLAGS) -fo="$@" $<
+dlo/io.o: ../../src/client/io.c
+	$(CC) $(COMMON_CFLAGS) -fo="$@" $<
+dlo/queue.o: ../../src/client/queue.c
+	$(CC) $(COMMON_CFLAGS) -fo="$@" $<
+dlo/recvbufr.o: ../../src/client/recvbufr.c
+	$(CC) $(COMMON_CFLAGS) -fo="$@" $<
+dlo/site.o: ../../src/client/site.c
+	$(CC) $(COMMON_CFLAGS) -fo="$@" $<
+dlo/uri.o: ../../src/client/uri.c
+	$(CC) $(COMMON_CFLAGS) -fo="$@" $<
+dlo/xml.o: ../../src/client/xml.c
+	$(CC) $(COMMON_CFLAGS) -fo="$@" $<
 
-thdef.lnk:
-	%write thdef.lnk -dPLATFORM_NET_ADAPTER=1 -dPLATFORM_NET_LISTEN=1 -dPLATFORM_SYS_ARGV=1
+tho/routine.o: ../../src/server/routine.c
+	$(CC) $(TH_CFLAGS) -fo="$@" $<
+tho/doswatb.o: ../../src/platform/doswatb.c
+	$(CC) $(TH_CFLAGS) -fo="$@" $<
+tho/platform.o: ../../src/platform/platform.c
+	$(CC) $(TH_CFLAGS) -fo="$@" $<
+tho/poll.o: ../../src/server/mltiplex/poll.c
+	$(CC) $(TH_CFLAGS) -fo="$@" $<
+tho/th.o: ../../src/cli/th.c
+	$(CC) $(TH_CFLAGS) -fo="$@" $<
+tho/server.o: ../../src/server/server.c
+	$(CC)  $(COMMON_CFLAGS) -fo="$@" $<
+tho/sendbufr.o: ../../src/server/sendbufr.c
+	$(CC)  $(COMMON_CFLAGS) -fo="$@" $<
+tho/event.o: ../../src/server/event.c
+	$(CC)  $(COMMON_CFLAGS) -fo="$@" $<
+tho/http.o: ../../src/server/http.c
+	$(CC)  $(COMMON_CFLAGS) -fo="$@" $<
 
-dllnk.lnk:
-	%write dllnk.lnk SYS  dos
-	%write dllnk.lnk OPT  st=9216
-	%write dllnk.lnk FILE err.o,doswatbd.o,hex.o,io.o,plat_dl.o,queue.o,recvbufr.o,signal.o,site.o,s_file.o,s_http.o,uri.o,xml.o,dl.o
-	%write dllnk.lnk LIBP $(WATT_32)/lib/
-	%write dllnk.lnk LIBF wattcpwl.lib
-
-thlnk.lnk:
-	%write thlnk.lnk SYS  dos
-	%write thlnk.lnk OPT  st=4608
-	%write thlnk.lnk FILE doswatbt.o,event.o,hex.o,http.o,plat_th.o,poll.o,routine.o,signal.o,server.o,sendbufr.o,th.o
-	%write thlnk.lnk LIBP $(WATT_32)/lib/
-	%write thlnk.lnk LIBF wattcpwl.lib
-
-err.o: ../../src/client/err.c
-	$(CC) @flag.lnk -fo="$@" $<
-dl.o: ../../src/cli/dl.c
-	$(CC) @flag.lnk @dldef.lnk -fo="$@" $<
-doswatbd.o: ../../src/platform/doswatb.c
-	$(CC) @flag.lnk @dldef.lnk -fo="$@" $<
-doswatbt.o: ../../src/platform/doswatb.c
-	$(CC) @flag.lnk @thdef.lnk -fo="$@" $<
-event.o: ../../src/server/event.c
-	$(CC) @flag.lnk -fo="$@" $<
-hex.o: ../../src/common/hex.c
-	$(CC) @flag.lnk -fo="$@" $<
-http.o: ../../src/server/http.c
-	$(CC) @flag.lnk -fo="$@" $<
-io.o: ../../src/client/io.c
-	$(CC) @flag.lnk -fo="$@" $<
-queue.o: ../../src/client/queue.c
-	$(CC) @flag.lnk -fo="$@" $<
-recvbufr.o: ../../src/client/recvbufr.c
-	$(CC) @flag.lnk -fo="$@" $<
-site.o: ../../src/client/site.c
-	$(CC) @flag.lnk -fo="$@" $<
-s_file.o: ../../src/client/site/file.c
-	$(CC) @flag.lnk @dldef.lnk -fo="$@" $<
-s_http.o: ../../src/client/site/http.c
-	$(CC) @flag.lnk @dldef.lnk -fo="$@" $<
-routine.o: ../../src/server/routine.c
-	$(CC) @flag.lnk @thdef.lnk -fo="$@" $<
-server.o: ../../src/server/server.c
-	$(CC) @flag.lnk -fo="$@" $<
-sendbufr.o: ../../src/server/sendbufr.c
-	$(CC) @flag.lnk -fo="$@" $<
-signal.o: ../../src/common/signal.c
-	$(CC) @flag.lnk -fo="$@" $<
-plat_dl.o: ../../src/platform/platform.c
-	$(CC) @flag.lnk @dldef.lnk -fo="$@" $<
-plat_th.o: ../../src/platform/platform.c
-	$(CC) @flag.lnk @thdef.lnk -fo="$@" $<
-poll.o: ../../src/server/mltiplex/poll.c
-	$(CC) @flag.lnk @thdef.lnk -fo="$@" $<
-th.o: ../../src/cli/th.c
-	$(CC) @flag.lnk @thdef.lnk -fo="$@" $<
-uri.o: ../../src/client/uri.c
-	$(CC) @flag.lnk -fo="$@" $<
-xml.o: ../../src/client/xml.c
-	$(CC) @flag.lnk -fo="$@" $<
+tho:
+	mkdir tho
+dlo:
+	mkdir dlo
+o:
+	mkdir o
