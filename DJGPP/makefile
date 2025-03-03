@@ -1,7 +1,7 @@
 CC=gcc
-CFLAGS = -Wall -Wno-unknown-pragmas -O3 -s -Iwatt32s/inc
+CFLAGS = -Wall -Wno-unknown-pragmas -O3 -s -I../Watt32s/inc
 
-LIB_WATT = watt32s/lib/libwatt.a
+LIB_WATT = ../Watt32s/lib/libwatt.a
 
 DEF = -DWATT32=1 -DNDEBUG=1
 SRC = ../src/common/hex.c ../src/common/signal.c ../src/platform/doswatb.c ../src/platform/platform.c

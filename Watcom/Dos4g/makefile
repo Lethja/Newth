@@ -1,7 +1,7 @@
 CC = *wcc386
 LD = *wlink
 
-WATT_32_DIR = watt32s
+WATT_32_DIR = ../../watt32s
 WATT_32_LIB = wattcpwf.lib
 
 COMMON_CFLAGS = -q -dWATT32=1 -bt=dos -mf -3 -i="$(WATT_32_DIR)/inc" -d0 -osr -zc -dNDEBUG=1

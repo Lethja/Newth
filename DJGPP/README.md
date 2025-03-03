@@ -121,13 +121,15 @@ export DJDIR=/opt/djgpp/i586-pc-msdosdjgpp
 
 ## Configuring Watt32 for linking with Newth
 
-Newth on DOS depends on Watt32. The Watt32s folder should be extracted on symlinked
-into the directory containing `makefile` so that it looks like so.
+Newth on DOS depends on Watt32.
+The `Watt32s` folder is a Git submodule to this library and can be built in place.
+If your development machine doesn't have access to Git, then the Watt32 sources should be extracted on symlinked
+into the `Watt32s` folder so that it looks like so.
 
 ```
 DJGPP\makefile
-DJGPP\Watt32s\inc
-DJGPP\Watt32s\lib
+Watt32s\inc
+Watt32s\lib
 ```
 
 Newth depends on BSD-like networking API, and compiling for DOS is no exception.

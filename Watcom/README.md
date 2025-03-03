@@ -181,16 +181,16 @@ On a typical DOS installation of Open Watcom run the following to enable the bui
 
 ## Configuring Watt32 for linking with Newth
 
-Newth on DOS depends on Watt32. The Watt32s folder should be extracted on symlinked
-into the directory containing `makefile` so that it looks like so.
+Newth on DOS depends on Watt32. 
+The `Watt32s` folder is a Git submodule to this library and can be built in place. 
+If your development machine doesn't have access to Git, then the Watt32 sources should be extracted on symlinked
+into the `Watt32s` folder so that it looks like so.
 
 ```
+Watt32s\inc
+Watt32s\lib
 Watcom\Dos16\makefile
-Watcom\Dos16\Watt32s\inc
-Watcom\Dos16\Watt32s\lib
 Watcom\Dos4g\makefile
-Watcom\Dos4g\Watt32s\inc
-Watcom\Dos4g\Watt32s\lib
 ```
 
 Newth depends on BSD-like networking API, and compiling for DOS is no exception.
@@ -219,9 +219,10 @@ To do this `Watt32s\src\config.h` has to be manually modified like so:
  #undef USE_FSEXT
 ```
 
-> Caution: some versions of watt-32 have a broken implementation of DHCP that can cause an infinite loop.
+> Caution: some versions of Watt-32 have a broken implementation of DHCP that can cause an infinite loop.
 > On a real DOS this means it could very well lock up the computer with no option but to hard reset.
-> If in doubt leave `USE_DHCP` undefined. Most DHCP servers are backwards compatible with BOOTP.
+> If not using the Git submodule and in doubt leave `USE_DHCP` undefined. 
+> Most DHCP servers are backwards compatible with BOOTP.
 
 ## Build Newth
 
