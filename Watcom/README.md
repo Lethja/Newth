@@ -195,28 +195,33 @@ Watcom\Dos4g\makefile
 
 Newth depends on BSD-like networking API, and compiling for DOS is no exception.
 For Newth to link to Watt32 correctly `USE_BSD_API` must be defined when building Watt32 library.
+It's optional but a good idea to also define `USE_BOOTP` and/or `USE_DHCP`
+so that Newth can configure its IP address automatically.
 
-To do this `Watt32s\src\config.h` has to be manually modified like so:
+To do this, apply the [Watt32s.pat](../Watt32s.pat) patch file:
 
-```diff
- #undef USE_DEBUG
- #undef USE_MULTICAST
- #undef USE_BIND
--#undef USE_BSD_API
-+#define USE_BSD_API
- #undef USE_BSD_FATAL
--#undef USE_BOOTP
--#undef USE_DHCP
-+#define USE_BOOTP
-+#define USE_DHCP
- #undef USE_RARP
- #undef USE_GEOIP
- #undef USE_IPV6
- #undef USE_LANGUAGE
- #undef USE_FRAGMENTS
- #undef USE_STATISTICS
- #undef USE_STACKWALKER
- #undef USE_FSEXT
+| GNU Patch                                      | DifPat                                       |
+|------------------------------------------------|----------------------------------------------|
+| `patch ../Watt32s/src/config.h ../Watt32s.pat` | `pat ..\Watt32s.pat ..\Watt32s\src\config.h` |
+
+Alternatively, edit `Watt32s\src\config.h` manually so it reads like:
+
+```c
+#undef USE_DEBUG
+#undef USE_MULTICAST
+#undef USE_BIND
+#define USE_BSD_API
+#undef USE_BSD_FATAL
+#define USE_BOOTP
+#define USE_DHCP
+#undef USE_RARP
+#undef USE_GEOIP
+#undef USE_IPV6
+#undef USE_LANGUAGE
+#undef USE_FRAGMENTS
+#undef USE_STATISTICS
+#undef USE_STACKWALKER
+#undef USE_FSEXT
 ```
 
 > Caution: some versions of Watt-32 have a broken implementation of DHCP that can cause an infinite loop.
