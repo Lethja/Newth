@@ -43,3 +43,11 @@ Each build environment has its own folder and references the same source code wi
 | [VC6](VC6/README.md)           | Microsoft Visual Studio C++ 6 | Windows 95 (80386)                  |
 | [Watcom](Watcom/README.md)     | Open Watcom 1.9               | DOS 2 (8086)                        |
 | [Zig](Zig/README.md)           | Zig                           | Anything `zig cc` can cross-compile |
+
+# See also
+
+Retro computer enthusiasts might be interested in [FujiNet](https://fujinet.online/) 
+for hardware-accelerated networking solutions for several retro computer systems.
+
+Projects that do not require supporting older operating systems 
+may find [libmicrohttpd](https://www.gnu.org/software/libmicrohttpd/) to be a useful HTTP server library.
