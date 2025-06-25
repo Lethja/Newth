@@ -323,7 +323,8 @@ static inline void MountList(void) {
 }
 
 static inline void QueueHelp(void) {
-    const char *help = " QUEUE LIST   - List all queue entries\n"
+    const char *help = " QUEUE CLEAR  - Clear all entries from the queue\n"
+                       " QUEUE LIST   - List all queue entries\n"
                        " QUEUE START  - Download queue entries, do not overwrite existing\n"
                        " QUEUE UPDATE - Download queue entries, overwrite existing if newer\n"
                        " QUEUE MIRROR - Download queue entries, overwrite existing\n"
@@ -392,6 +393,11 @@ static inline void TotalSize(QueueEntry *entry, PlatformFileOffset size) {
 #pragma clang diagnostic pop
 
 #pragma endregion
+
+static inline void QueueClear(void) {
+    if (queueEntryArray)
+        queueEntryArrayFree(&queueEntryArray);
+}
 
 static inline void QueueList(void) {
     unsigned long i;
@@ -763,6 +769,13 @@ static inline void ProcessCommand(char **args) {
                 if (toupper(args[0][1]) == 'U' && toupper(args[0][2]) == 'E' && toupper(args[0][3]) == 'U' &&
                     toupper(args[0][4]) == 'E' && args[0][5] == '\0') {
                     switch (toupper(args[1][0])) {
+                        case 'C':
+                            if (toupper(args[1][1]) == 'L' && toupper(args[1][2]) == 'E' &&
+                                toupper(args[1][3]) == 'A' && toupper(args[1][4]) == 'R' && args[1][5] == '\0')
+                                QueueClear();
+                            else
+                                goto processCommand_notFound;
+                            break;
                         case 'L':
                             if (toupper(args[1][1]) == 'I' && toupper(args[1][2]) == 'S' &&
                                 toupper(args[1][3]) == 'T' && args[1][4] == '\0')
