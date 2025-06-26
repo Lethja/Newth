@@ -59,32 +59,24 @@ const char *queueEntryNewFromPath(QueueEntry *self, SiteArray *array, const char
 
 const char *queueEntryArrayRemove(QueueEntryArray **queueEntryArray, QueueEntry *entry) {
     QueueEntryArray *array = *queueEntryArray;
-    const char * NoEntry = "No such entry";
-    size_t i;
+    size_t i, m;
 
-    if (!array || !array->entry)
-        return NoEntry;
+    if (!array || !array->entry || (i = EntrySearchNth(array, entry)) == -1)
+        return "No such entry";
 
-    for (i = 0; i < array->len; ++i) {
-        if (&array->entry[i] == entry) {
-            size_t m = array->len - 1;
+    m = array->len - 1, queueEntryFree(&array->entry[i]);
+    if (m) {
+        for (; i < m; ++i)
+            array->entry[i] = array->entry[i + 1];
 
-            queueEntryFree(&array->entry[i]);
-            if (m) {
-                for (; i < m; ++i)
-                    array->entry[i] = array->entry[i + 1];
+        if (platformHeapResize((void **) &array->entry, sizeof(QueueEntry), m))
+            return strerror(errno);
 
-                if (platformHeapResize((void **) &array->entry, sizeof(QueueEntry), m))
-                    return strerror(errno);
-            } else
-                free(array->entry), array->entry = NULL;
+        array->len = m;
+    } else
+        queueEntryArrayFree(queueEntryArray);
 
-            --array->len;
-            return NULL;
-        }
-    }
-
-    return NoEntry;
+    return NULL;
 }
 
 const char *queueEntryArrayAppend(QueueEntryArray **queueEntryArray, QueueEntry *entry) {
