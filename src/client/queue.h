@@ -73,6 +73,14 @@ const char *queueEntryArrayAppend(QueueEntryArray **queueEntryArray, QueueEntry 
 void queueEntryArrayFree(QueueEntryArray **queueEntryArray);
 
 /**
+ * Remove a entry by element
+ * @param queueEntryArray The array to remove the element from
+ * @param entry The entry to remove
+ * @return NULL on success, user friendly error message otherwise
+ */
+const char *queueEntryArrayRemove(QueueEntryArray **queueEntryArray, QueueEntry *entry);
+
+/**
  * Fill a QueueEntry given user input paths and a SiteArray
  * @param self Out: The QueueEntry to fill
  * @param array In: The SiteArray the QueueEntry will be a member of

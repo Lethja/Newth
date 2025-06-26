@@ -52,6 +52,36 @@ const char *queueEntryNewFromPath(QueueEntry *self, SiteArray *array, const char
     return NULL;
 }
 
+const char *queueEntryArrayRemove(QueueEntryArray **queueEntryArray, QueueEntry *entry) {
+    QueueEntryArray *array = *queueEntryArray;
+    const char * NoEntry = "No such entry";
+    size_t i;
+
+    if (!array || !array->entry)
+        return NoEntry;
+
+    for (i = 0; i < array->len; ++i) {
+        if (&array->entry[i] == entry) {
+            size_t m = array->len - 1;
+
+            queueEntryFree(&array->entry[i]);
+            if (m) {
+                for (; i < m; ++i)
+                    array->entry[i] = array->entry[i + 1];
+
+                if (platformHeapResize((void **) &array->entry, sizeof(void *), m))
+                    return strerror(errno);
+            } else
+                free(array->entry), array->entry = NULL;
+
+            --array->len;
+            return NULL;
+        }
+    }
+
+    return NoEntry;
+}
+
 const char *queueEntryArrayAppend(QueueEntryArray **queueEntryArray, QueueEntry *entry) {
     QueueEntryArray *array = *queueEntryArray;
 
