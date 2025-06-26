@@ -69,11 +69,11 @@ const char *queueEntryArrayAppend(QueueEntryArray **queueEntryArray, QueueEntry 
 /**
  * Find a queue index or sub uri(s)
  * @param array The QueueEntryArray to search in
- * @param found The QueueEntryArray to store finds in, this should be set to null on the first query
+ * @param found The QueueEntryArray to store finds in, the source pointer should be set to null on the first query
  * @param search The string or string number to search for
  * @return NULL on success, user friendly error message otherwise
  */
-const char *queueEntryArrayFind(QueueEntryArray *array, QueueEntryArray ***found, const char *search);
+const char *queueEntryArrayFind(QueueEntryArray *array, QueueEntryArray **found, const char *search);
 
 /**
  * Free the entry array and its elements

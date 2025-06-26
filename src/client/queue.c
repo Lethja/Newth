@@ -112,12 +112,12 @@ const char *queueEntryArrayAppend(QueueEntryArray **queueEntryArray, QueueEntry 
     return NULL;
 }
 
-const char *queueEntryArrayFind(QueueEntryArray *array, QueueEntryArray ***found, const char *search) {
+const char *queueEntryArrayFind(QueueEntryArray *array, QueueEntryArray **found, const char *search) {
     size_t i;
 
     if ((i = strtol(search, NULL, 10)) && !errno) {
         if (i < array->len)
-            return queueEntryArrayAppend(*found, &array->entry[i]);
+            return queueEntryArrayAppend(found, &array->entry[i]);
     } else {
         const char *e;
         for (i = 0; i < array->len; ++i) {
@@ -126,7 +126,7 @@ const char *queueEntryArrayFind(QueueEntryArray *array, QueueEntryArray ***found
                     entry->destinationSite, entry->destinationPath);
 
             if ((src && platformStringFindNeedle(src, search)) || (dst && platformStringFindNeedle(dst, search))) {
-                if ((e = queueEntryArrayAppend(*found, entry))) {
+                if ((e = queueEntryArrayAppend(found, entry))) {
                     if (src)
                         free(src);
                     if (dst)
