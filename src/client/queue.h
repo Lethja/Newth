@@ -82,6 +82,13 @@ const char *queueEntryArrayFind(QueueEntryArray *array, QueueEntryArray ***found
 void queueEntryArrayFree(QueueEntryArray **queueEntryArray);
 
 /**
+ * Free the entry array without freeing the contained elements.
+ * @param queueEntryArray In-Out: A double pointer to an entry array to free from memory, the value will be set to NULL
+ * @remark This will cause memory leaks if you don't know what you're doing. If in doubt try queueEntryArrayFree() first.
+ */
+void queueEntryArrayFreeArrayOnly(QueueEntryArray **queueEntryArray);
+
+/**
  * Remove a entry by element
  * @param queueEntryArray The array to remove the element from
  * @param entry The entry to remove

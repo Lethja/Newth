@@ -143,17 +143,26 @@ void queueEntryFree(QueueEntry *queueEntry) {
 
 void queueEntryArrayFree(QueueEntryArray **queueEntryArray) {
     QueueEntryArray *a;
+    size_t i;
     if (!queueEntryArray || !*queueEntryArray)
         return;
 
     a = *queueEntryArray;
-    if (a->entry) {
-        size_t i;
+    if (a->entry)
         for (i = 0; i < a->len; ++i)
             queueEntryFree(&a->entry[i]);
 
+    queueEntryArrayFreeArrayOnly(queueEntryArray);
+}
+
+void queueEntryArrayFreeArrayOnly(QueueEntryArray **queueEntryArray) {
+    QueueEntryArray *a;
+    if (!queueEntryArray || !*queueEntryArray)
+        return;
+
+    a = *queueEntryArray;
+    if (a->entry)
         free(a->entry);
-    }
 
     free(a), *queueEntryArray = NULL;
 }
