@@ -69,7 +69,7 @@ const char *queueEntryArrayRemove(QueueEntryArray **queueEntryArray, QueueEntry 
                 for (; i < m; ++i)
                     array->entry[i] = array->entry[i + 1];
 
-                if (platformHeapResize((void **) &array->entry, sizeof(void *), m))
+                if (platformHeapResize((void **) &array->entry, sizeof(QueueEntry), m))
                     return strerror(errno);
             } else
                 free(array->entry), array->entry = NULL;
