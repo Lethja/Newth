@@ -112,6 +112,28 @@ const char *queueEntryArrayAppend(QueueEntryArray **queueEntryArray, QueueEntry 
     return NULL;
 }
 
+const char *queueEntryArrayFind(QueueEntryArray *array, QueueEntryArray ***found, const char *search) {
+    size_t i;
+
+    if ((i = strtol(search, NULL, 10)) && !errno) {
+        if (i < array->len)
+            return queueEntryArrayAppend(*found, &array->entry[i]);
+    } else {
+        const char *e;
+        for (i = 0; i < array->len; ++i) {
+            QueueEntry *entry = &array->entry[i];
+            char *src = queueEntryGetUri(entry->sourceSite, entry->sourcePath), *dst = queueEntryGetUri(
+                    entry->destinationSite, entry->destinationPath);
+
+            if ((src && platformStringFindNeedle(src, search)) || (dst && platformStringFindNeedle(dst, search)))
+                if ((e = queueEntryArrayAppend(*found, entry)))
+                    return e;
+        }
+    }
+
+    return NULL;
+}
+
 void queueEntryFree(QueueEntry *queueEntry) {
     if (queueEntry->destinationPath)
         free(queueEntry->destinationPath);
