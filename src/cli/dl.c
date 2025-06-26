@@ -856,6 +856,55 @@ static inline void ProcessCommand(char **args) {
                 else
                     goto processCommand_notFound;
                 break;
+            case 'Q':
+                if (toupper(args[0][1]) == 'U' && toupper(args[0][2]) == 'E' && toupper(args[0][3]) == 'U' &&
+                    toupper(args[0][4]) == 'E' && args[0][5] == '\0') {
+                    switch (toupper(args[1][0])) {
+                        case 'F':
+                            if (toupper(args[1][1]) == 'I' && toupper(args[1][2]) == 'N' &&
+                                toupper(args[1][3]) == 'D' && args[1][4] == '\0') {
+                                const char *err;
+                                QueueEntryArray *searchQuery = NULL;
+                                size_t v;
+
+                                for (v = 2; args[v] != NULL; ++v) {
+                                    if ((err = queueEntryArrayFind(queueEntryArray, &searchQuery, &args[v][0]))) {
+                                        puts(err), queueEntryArrayFreeArrayOnly(&searchQuery);
+                                        return;
+                                    }
+                                }
+
+                                QueueList(searchQuery, "No results found");
+                                queueEntryArrayFreeArrayOnly(&searchQuery);
+                                break;
+                            }
+                        case 'R':
+                            if (toupper(args[1][1]) == 'E' && toupper(args[1][2]) == 'M' &&
+                                toupper(args[1][3]) == 'O' &&
+                                toupper(args[1][4]) == 'V' && toupper(args[1][5]) == 'E' && args[1][6] == '\0') {
+                                const char *err;
+                                QueueEntryArray *searchQuery = NULL;
+                                size_t v;
+
+                                for (v = 2; args[v] != NULL; ++v) {
+                                    if ((err = queueEntryArrayFind(queueEntryArray, &searchQuery, &args[v][0]))) {
+                                        puts(err);
+                                        return;
+                                    }
+                                }
+
+                                for (v = 0; v < searchQuery->len; ++v)
+                                    queueEntryArrayRemove(&queueEntryArray, &searchQuery->entry[v]);
+
+                                queueEntryArrayFreeArrayOnly(&searchQuery);
+                                break;
+                            }
+                        default:
+                            goto processCommand_notFound;
+                    }
+                } else
+                    goto processCommand_notFound;
+                break;
             case 'X':
                 if ((toupper(args[0][1]) == 'C' && args[0][2] == '\0') ||
                     (toupper(args[0][2]) == 'O' && toupper(args[0][3]) == 'P' && toupper(args[0][4]) == 'Y' &&
