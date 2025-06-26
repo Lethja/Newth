@@ -399,18 +399,18 @@ static inline void QueueClear(void) {
         queueEntryArrayFree(&queueEntryArray);
 }
 
-static inline void QueueList(void) {
+static inline void QueueList(QueueEntryArray *entryArray, const char *noEntries) {
     unsigned long i;
     int width;
 
-    if (!queueEntryArray) {
-        puts("No queue entries");
+    if (!entryArray) {
+        puts(noEntries);
         return;
     }
 
-    width = GetLongWidth(queueEntryArray->len);
-    for (i = 0; i < queueEntryArray->len; ++i) {
-        QueueEntry *entry = &queueEntryArray->entry[i];
+    width = GetLongWidth(entryArray->len);
+    for (i = 0; i < entryArray->len; ++i) {
+        QueueEntry *entry = &entryArray->entry[i];
         UriDetails d = uriDetailsNewFrom(siteWorkingDirectoryGet(entry->sourceSite));
         char *src, *dst;
 
@@ -779,7 +779,7 @@ static inline void ProcessCommand(char **args) {
                         case 'L':
                             if (toupper(args[1][1]) == 'I' && toupper(args[1][2]) == 'S' &&
                                 toupper(args[1][3]) == 'T' && args[1][4] == '\0')
-                                QueueList();
+                                QueueList(queueEntryArray, "No queue entries");
                             else
                                 goto processCommand_notFound;
                             break;
