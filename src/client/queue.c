@@ -13,17 +13,22 @@ void (*queueCallBackTotalSize)(QueueEntry *, PlatformFileOffset) = NULL;
 
 #pragma endregion
 
-static inline QueueEntry *EntrySearch(QueueEntryArray *array, QueueEntry *entry) {
+static inline size_t EntrySearchNth(QueueEntryArray *array, QueueEntry *entry) {
     size_t i;
 
     for (i = 0; i < array->len; ++i) {
         QueueEntry *it = &array->entry[i];
         if (it->destinationSite == entry->destinationSite && it->sourceSite == entry->sourceSite &&
             strcmp(it->destinationPath, entry->destinationPath) == 0 && strcmp(it->sourcePath, entry->sourcePath) == 0)
-            return it;
+            return i;
     }
 
-    return NULL;
+    return -1;
+}
+
+static inline QueueEntry *EntrySearch(QueueEntryArray *array, QueueEntry *entry) {
+    size_t i = EntrySearchNth(array, entry);
+    return i == -1 ? NULL : &array->entry[i];
 }
 
 const char *queueEntryNewFromPath(QueueEntry *self, SiteArray *array, const char *source, const char *destination) {
