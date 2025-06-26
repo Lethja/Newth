@@ -125,9 +125,19 @@ const char *queueEntryArrayFind(QueueEntryArray *array, QueueEntryArray ***found
             char *src = queueEntryGetUri(entry->sourceSite, entry->sourcePath), *dst = queueEntryGetUri(
                     entry->destinationSite, entry->destinationPath);
 
-            if ((src && platformStringFindNeedle(src, search)) || (dst && platformStringFindNeedle(dst, search)))
-                if ((e = queueEntryArrayAppend(*found, entry)))
+            if ((src && platformStringFindNeedle(src, search)) || (dst && platformStringFindNeedle(dst, search))) {
+                if ((e = queueEntryArrayAppend(*found, entry))) {
+                    if (src)
+                        free(src);
+                    if (dst)
+                        free(dst);
                     return e;
+                }
+            }
+            if (src)
+                free(src);
+            if (dst)
+                free(dst);
         }
     }
 
