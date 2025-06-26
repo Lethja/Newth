@@ -280,8 +280,10 @@ static inline const char *MountSite(const char *parameter) {
     Site site;
     const char *err;
 
-    if (!details.host)
+    if (!details.host) {
+        uriDetailsFree(&details);
         return ErrAddressNotUnderstood;
+    }
 
     switch (uriDetailsGetScheme(&details)) {
         case SCHEME_HTTP:
@@ -293,6 +295,7 @@ static inline const char *MountSite(const char *parameter) {
             break;
         default:
         case SCHEME_UNKNOWN:
+            uriDetailsFree(&details);
             return ErrSchemeNotRecognized;
     }
 
