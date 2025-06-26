@@ -326,13 +326,15 @@ static inline void MountList(void) {
 }
 
 static inline void QueueHelp(void) {
-    const char *help = " QUEUE CLEAR  - Clear all entries from the queue\n"
-                       " QUEUE LIST   - List all queue entries\n"
+    const char *help = " QUEUE LIST   - List all queue entries\n"
+                       " QUEUE FIND   - List queue entries by queue id or uri matching\n"
+                       " QUEUE LOAD   - Load queue from a local file\n"
+                       " QUEUE SAVE   - Save queue to a local file\n"
+                       " QUEUE CLEAR  - Remove all entries from the queue\n"
+                       " QUEUE REMOVE - Remove entries by queue id or uri matching\n"
                        " QUEUE START  - Download queue entries, do not overwrite existing\n"
                        " QUEUE UPDATE - Download queue entries, overwrite existing if newer\n"
-                       " QUEUE MIRROR - Download queue entries, overwrite existing\n"
-                       " QUEUE LOAD   - Load queue from a local file\n"
-                       " QUEUE SAVE   - Save queue to a local file\n";
+                       " QUEUE MIRROR - Download queue entries, overwrite existing\n";
     puts(help);
 }
 
