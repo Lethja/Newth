@@ -67,13 +67,12 @@ extern void (*queueCallBackTotalSize)(QueueEntry *, PlatformFileOffset);
 const char *queueEntryArrayAppend(QueueEntryArray **queueEntryArray, QueueEntry *entry);
 
 /**
- * Find a queue index or sub uri(s)
- * @param array The QueueEntryArray to search in
- * @param found The QueueEntryArray to store finds in, the source pointer should be set to null on the first query
- * @param search The string or string number to search for
- * @return NULL on success, user friendly error message otherwise
+ * Search for an exact entry index inside an array
+ * @param array The array to search in
+ * @param entry The entry to find in the array
+ * @return The position in the array that the entry is or -1 when not found
  */
-const char *queueEntryArrayFind(QueueEntryArray *array, QueueEntryArray **found, const char *search);
+size_t queueEntryArrayFindNth(QueueEntryArray *array, QueueEntry *entry);
 
 /**
  * Free the entry array and its elements
@@ -95,6 +94,15 @@ void queueEntryArrayFreeArrayOnly(QueueEntryArray **queueEntryArray);
  * @return NULL on success, user friendly error message otherwise
  */
 const char *queueEntryArrayRemove(QueueEntryArray **queueEntryArray, QueueEntry *entry);
+
+/**
+ * Find a queue index or part of a source/destination uri
+ * @param array The QueueEntryArray to search in
+ * @param found The QueueEntryArray to store finds in, the source pointer should be set to null on the first query
+ * @param search The string or string number to search for
+ * @return NULL on success, user friendly error message otherwise
+ */
+const char *queueEntryArraySearch(QueueEntryArray *array, QueueEntryArray **found, const char *search);
 
 /**
  * Fill a QueueEntry given user input paths and a SiteArray

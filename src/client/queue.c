@@ -13,7 +13,7 @@ void (*queueCallBackTotalSize)(QueueEntry *, PlatformFileOffset) = NULL;
 
 #pragma endregion
 
-static inline size_t EntrySearchNth(QueueEntryArray *array, QueueEntry *entry) {
+size_t queueEntryArrayFindNth(QueueEntryArray *array, QueueEntry *entry) {
     size_t i;
 
     for (i = 0; i < array->len; ++i) {
@@ -27,7 +27,7 @@ static inline size_t EntrySearchNth(QueueEntryArray *array, QueueEntry *entry) {
 }
 
 static inline QueueEntry *EntrySearch(QueueEntryArray *array, QueueEntry *entry) {
-    size_t i = EntrySearchNth(array, entry);
+    size_t i = queueEntryArrayFindNth(array, entry);
     return i == -1 ? NULL : &array->entry[i];
 }
 
@@ -61,7 +61,7 @@ const char *queueEntryArrayRemove(QueueEntryArray **queueEntryArray, QueueEntry 
     QueueEntryArray *array = *queueEntryArray;
     size_t i, m;
 
-    if (!array || !array->entry || (i = EntrySearchNth(array, entry)) == -1)
+    if (!array || !array->entry || (i = queueEntryArrayFindNth(array, entry)) == -1)
         return "No such entry";
 
     m = array->len - 1, queueEntryFree(&array->entry[i]);
@@ -109,7 +109,7 @@ const char *queueEntryArrayAppend(QueueEntryArray **queueEntryArray, QueueEntry 
     return NULL;
 }
 
-const char *queueEntryArrayFind(QueueEntryArray *array, QueueEntryArray **found, const char *search) {
+const char *queueEntryArraySearch(QueueEntryArray *array, QueueEntryArray **found, const char *search) {
     size_t i;
 
     if ((i = strtol(search, NULL, 10)) && !errno) {
