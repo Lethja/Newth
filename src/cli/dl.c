@@ -404,35 +404,60 @@ static inline void QueueClear(void) {
         queueEntryArrayFree(&queueEntryArray);
 }
 
-static inline void QueueList(QueueEntryArray *entryArray, const char *noEntries) {
+static inline void QueueList(QueueEntryArray *entryArray, QueueEntryArray *maskArray, const char *noEntries) {
     unsigned long i;
     int width;
 
-    if (!entryArray) {
+    if (!entryArray || (maskArray && !maskArray->len)) {
         puts(noEntries);
         return;
     }
 
     width = GetLongWidth(entryArray->len);
-    for (i = 0; i < entryArray->len; ++i) {
-        QueueEntry *entry = &entryArray->entry[i];
-        char *src, *dst;
+    if (maskArray) {
+        for (i = 0; i < maskArray->len; ++i) {
+            QueueEntry *entry = &maskArray->entry[i];
+            char *src, *dst;
+            size_t j;
 
-        if (!(src = queueEntryGetUri(entry->sourceSite, entry->sourcePath)))
-            goto ListQueue_LoopError1;
+            if (!(src = queueEntryGetUri(entry->sourceSite, entry->sourcePath)))
+                goto ListQueue_Loop1Error1;
 
-        if (!(dst = queueEntryGetUri(entry->destinationSite, entry->destinationPath)))
-            goto ListQueue_LoopError2;
+            if (!(dst = queueEntryGetUri(entry->destinationSite, entry->destinationPath)))
+                goto ListQueue_Loop1Error2;
 
-        printf(" %*ld: " QUEUE_PRINT, width, i, entry->state & QUEUE_TYPE_RECURSIVE ? "XCOPY" : "COPY", src, dst);
-        free(src), free(dst);
-        continue;
+            j = queueEntryArrayFindNth(entryArray, entry);
+            printf(" %*ld: " QUEUE_PRINT, width, j, entry->state & QUEUE_TYPE_RECURSIVE ? "XCOPY" : "COPY", src, dst);
+            free(src), free(dst);
+            continue;
 
-ListQueue_LoopError2:
-        free(src);
+            ListQueue_Loop1Error2:
+            free(src);
 
-ListQueue_LoopError1:
-        printf("%lu: data corruption\n", i);
+            ListQueue_Loop1Error1:
+            printf("%lu: data corruption\n", i);
+        }
+    } else {
+        for (i = 0; i < entryArray->len; ++i) {
+            QueueEntry *entry = &entryArray->entry[i];
+            char *src, *dst;
+
+            if (!(src = queueEntryGetUri(entry->sourceSite, entry->sourcePath)))
+                goto ListQueue_Loop2Error1;
+
+            if (!(dst = queueEntryGetUri(entry->destinationSite, entry->destinationPath)))
+                goto ListQueue_Loop2Error2;
+
+            printf(" %*ld: " QUEUE_PRINT, width, i, entry->state & QUEUE_TYPE_RECURSIVE ? "XCOPY" : "COPY", src, dst);
+            free(src), free(dst);
+            continue;
+
+            ListQueue_Loop2Error2:
+            free(src);
+
+            ListQueue_Loop2Error1:
+            printf("%lu: data corruption\n", i);
+        }
     }
 }
 
@@ -768,7 +793,7 @@ static inline void ProcessCommand(char **args) {
                         case 'L':
                             if (toupper(args[1][1]) == 'I' && toupper(args[1][2]) == 'S' &&
                                 toupper(args[1][3]) == 'T' && args[1][4] == '\0')
-                                QueueList(queueEntryArray, "No queue entries");
+                                QueueList(queueEntryArray, NULL, "No queue entries");
                             else
                                 goto processCommand_notFound;
                             break;
@@ -854,13 +879,13 @@ static inline void ProcessCommand(char **args) {
                                 size_t v;
 
                                 for (v = 2; args[v] != NULL; ++v) {
-                                    if ((err = queueEntryArrayFind(queueEntryArray, &searchQuery, &args[v][0]))) {
+                                    if ((err = queueEntryArraySearch(queueEntryArray, &searchQuery, &args[v][0]))) {
                                         puts(err), queueEntryArrayFreeArrayOnly(&searchQuery);
                                         return;
                                     }
                                 }
 
-                                QueueList(searchQuery, "No results found");
+                                QueueList(queueEntryArray, searchQuery, "No results found");
                                 queueEntryArrayFreeArrayOnly(&searchQuery);
                                 break;
                             }
@@ -873,7 +898,7 @@ static inline void ProcessCommand(char **args) {
                                 size_t v;
 
                                 for (v = 2; args[v] != NULL; ++v) {
-                                    if ((err = queueEntryArrayFind(queueEntryArray, &searchQuery, &args[v][0]))) {
+                                    if ((err = queueEntryArraySearch(queueEntryArray, &searchQuery, &args[v][0]))) {
                                         puts(err);
                                         return;
                                     }
