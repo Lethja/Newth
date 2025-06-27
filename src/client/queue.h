@@ -44,7 +44,7 @@ typedef struct QueueEntry {
  * An array of queue entries to be used with the QueueEntryArray set of functions
  */
 typedef struct QueueEntryArray {
-    size_t len;
+    unsigned long len;
     QueueEntry *entry;
 } QueueEntryArray;
 
@@ -72,7 +72,7 @@ const char *queueEntryArrayAppend(QueueEntryArray **queueEntryArray, QueueEntry 
  * @param entry The entry to find in the array
  * @return The position in the array that the entry is or -1 when not found
  */
-size_t queueEntryArrayFindNth(QueueEntryArray *array, QueueEntry *entry);
+unsigned long queueEntryArrayFindNth(QueueEntryArray *array, QueueEntry *entry);
 
 /**
  * Free the entry array and its elements
