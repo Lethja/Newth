@@ -416,27 +416,12 @@ static inline void QueueList(QueueEntryArray *entryArray, const char *noEntries)
     width = GetLongWidth(entryArray->len);
     for (i = 0; i < entryArray->len; ++i) {
         QueueEntry *entry = &entryArray->entry[i];
-        UriDetails d = uriDetailsNewFrom(siteWorkingDirectoryGet(entry->sourceSite));
         char *src, *dst;
 
-        if (d.path)
-            free(d.path);
-
-        d.path = entry->sourcePath;
-        src = uriDetailsCreateString(&d), d.path = NULL, uriDetailsFree(&d);
-
-        if (!src)
+        if (!(src = queueEntryGetUri(entry->sourceSite, entry->sourcePath)))
             goto ListQueue_LoopError1;
 
-        d = uriDetailsNewFrom(siteWorkingDirectoryGet(entry->destinationSite));
-
-        if (d.path)
-            free(d.path);
-
-        d.path = entry->destinationPath;
-        dst = uriDetailsCreateString(&d), d.path = NULL, uriDetailsFree(&d);
-
-        if (!dst)
+        if (!(dst = queueEntryGetUri(entry->destinationSite, entry->destinationPath)))
             goto ListQueue_LoopError2;
 
         printf(" %*ld: " QUEUE_PRINT, width, i, entry->state & QUEUE_TYPE_RECURSIVE ? "XCOPY" : "COPY", src, dst);
@@ -447,7 +432,6 @@ ListQueue_LoopError2:
         free(src);
 
 ListQueue_LoopError1:
-        uriDetailsFree(&d);
         printf("%lu: data corruption\n", i);
     }
 }
