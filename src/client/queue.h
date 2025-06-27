@@ -101,6 +101,7 @@ const char *queueEntryArrayRemove(QueueEntryArray **queueEntryArray, QueueEntry 
  * @param found The QueueEntryArray to store finds in, the source pointer should be set to null on the first query
  * @param search The string or string number to search for
  * @return NULL on success, user friendly error message otherwise
+ * @remark Even when an error occurs, found might be allocated to the heap in a incomplete state
  */
 const char *queueEntryArraySearch(QueueEntryArray *array, QueueEntryArray **found, const char *search);
 
