@@ -120,7 +120,7 @@ const char *queueEntryArraySearch(QueueEntryArray *array, QueueEntryArray **foun
         for (i = 0; i < array->len; ++i) {
             QueueEntry *entry = &array->entry[i];
             char *src = queueEntryGetUri(entry->sourceSite, entry->sourcePath), *dst = queueEntryGetUri(
-                    entry->destinationSite, entry->destinationPath);
+                        entry->destinationSite, entry->destinationPath);
 
             if ((src && platformStringFindNeedle(src, search)) || (dst && platformStringFindNeedle(dst, search))) {
                 if ((e = queueEntryArrayAppend(found, entry))) {
@@ -341,7 +341,7 @@ const char *queueEntryDownloadMirror(QueueEntry *entry) {
 
     return NULL;
 
-    queueEntryDownloadMirror_Failed:
+queueEntryDownloadMirror_Failed:
     siteFileClose(from), siteFileClose(to);
     entry->state = (char) ((entry->state | QUEUE_STATE_FAILED) & ~QUEUE_STATE_QUEUED);
 

@@ -431,10 +431,10 @@ static inline void QueueList(QueueEntryArray *entryArray, QueueEntryArray *maskA
             free(src), free(dst);
             continue;
 
-            ListQueue_Loop1Error2:
+ListQueue_Loop1Error2:
             free(src);
 
-            ListQueue_Loop1Error1:
+ListQueue_Loop1Error1:
             printf("%lu: data corruption\n", i);
         }
     } else {
@@ -452,10 +452,10 @@ static inline void QueueList(QueueEntryArray *entryArray, QueueEntryArray *maskA
             free(src), free(dst);
             continue;
 
-            ListQueue_Loop2Error2:
+ListQueue_Loop2Error2:
             free(src);
 
-            ListQueue_Loop2Error1:
+ListQueue_Loop2Error1:
             printf("%lu: data corruption\n", i);
         }
     }
