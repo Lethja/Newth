@@ -1,0 +1,45 @@
+name: Newth
+
+on: push
+
+jobs:
+  Autotools:
+    name: Autotools Tarball
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Autotools Project Environment
+        run: |
+          cd Autotool
+          mv autoconf.ac configure.ac 
+          ln -s ../src 
+          ln -s ../test
+          rm *.md
+
+      - name: Install Autotools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y autoconf autoconf-archive automake gcc libtool make
+
+      - name: Run Autotools
+        run: |
+          autoreconf -fi
+
+      - name: Configure Project
+        run: |
+          ./configure
+
+      - name: Distribute Project
+        run: |
+          make distcheck
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: 'Autotools'
+          path: |
+            newth-*.tar.*
+          compression-level: 0
