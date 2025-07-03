@@ -21,10 +21,10 @@ jobs:
           ln -s ../test
           rm *.md
 
-      - name: Install Autotools
+      - name: Install Autotools & Project Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y autoconf autoconf-archive automake gcc libtool make
+          sudo apt-get install -y autoconf autoconf-archive automake gcc libreadline-dev libtool make
 
       - name: Run Autotools
         working-directory: Autotool
