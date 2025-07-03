@@ -326,16 +326,22 @@ static inline void MountList(void) {
 }
 
 static inline void QueueHelp(void) {
-    const char *help = " QUEUE LIST   - List all queue entries\n"
-                       " QUEUE FIND   - List queue entries by queue id or uri matching\n"
-                       " QUEUE LOAD   - Load queue from a local file\n"
-                       " QUEUE SAVE   - Save queue to a local file\n"
-                       " QUEUE CLEAR  - Remove all entries from the queue\n"
-                       " QUEUE REMOVE - Remove entries by queue id or uri matching\n"
-                       " QUEUE START  - Download queue entries, do not overwrite existing\n"
-                       " QUEUE UPDATE - Download queue entries, overwrite existing if newer\n"
-                       " QUEUE MIRROR - Download queue entries, overwrite existing\n";
-    puts(help);
+    const char *help[][2] = {
+            {"QUEUE LIST", "List all queue entries"},
+            {"QUEUE FIND (#|...)", "List queue entries by queue id or uri matching"},
+            {"QUEUE LOAD", "Load queue from a local file"},
+            {"QUEUE SAVE", "Save queue to a local file"},
+            {"QUEUE CLEAR", "Remove all entries from the queue"},
+            {"QUEUE REMOVE (#|...)", "Remove entries by queue id or uri matching"},
+            {"QUEUE START", "Download queue entries, do not overwrite existing"},
+            {"QUEUE UPDATE", "Download queue entries, overwrite existing if newer"},
+            {"QUEUE MIRROR", "Download queue entries, overwrite existing"},
+    };
+    const size_t m = sizeof(help) / sizeof(help[0]);
+    size_t i;
+
+    for (i = 0; i < m; ++i)
+        printf(" %-20s - %s\n", help[i][0], help[i][1]);
 }
 
 /**
