@@ -78,8 +78,16 @@ AC_ARG_WITH(
 AS_IF(
     [test "x$with_readline" != "xno"],
     [
-    AC_DEFINE(READLINE)
-    PKG_CHECK_MODULES([readline], [readline], [have_readline=yes], [have_readline=no])
+        PKG_CHECK_MODULES
+        (
+            [readline],
+            [readline],
+            [
+                have_readline=yes
+                AC_DEFINE([READLINE], [1], [Defined if readline is available])
+            ],
+            [have_readline=no]
+        )
     ]
 )
 
