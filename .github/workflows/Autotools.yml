@@ -13,8 +13,10 @@ jobs:
 
       - name: Setup Autotools Project Environment
         run: |
+          export FAKETIME=$(TZ=UTC0 git show --quiet --date='format-local:%Y%m%d%H%M%S' --format="%cd")
           cd Autotool
-          mv autoconf.ac configure.ac 
+          mv autoconf.ac configure.ac
+          sed -i "s/\(AC_INIT(\[Newth\],\)\[0\]/\1[$FAKETIME]/" configure.ac
           ln -s ../src 
           ln -s ../test
           rm *.md
