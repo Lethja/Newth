@@ -43,7 +43,7 @@ dl_CFLAGS = -DPLATFORM_SYS_ARGV=1 -DPLATFORM_SYS_EXEC=1 -DPLATFORM_SYS_WRITE=1
 
 if READLINE
     dl_CFLAGS += ${readline_CFLAGS}
-    dl_LDFLAGS = ${readline_LIBS}
+    dl_LDADD = ${readline_LIBS}
 endif
 
 th_SOURCES = src/cli/th.c src/common/defines.h \
