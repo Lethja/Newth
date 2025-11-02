@@ -4,22 +4,22 @@
 #include "../platform/platform.h"
 
 enum SiteFileType {
-    /**
-     * @brief A regular file that can be read and written to
-     */
-    SITE_FILE_TYPE_FILE = 4,
-    /**
-     * @brief A directory (a.k.a folder) that may contain files and/or other directories
-     */
-    SITE_FILE_TYPE_DIRECTORY = 2,
-    /**
-     * @brief The path does not exist
-     */
-    SITE_FILE_TYPE_NOTHING = 1,
-    /**
-     * @brief The path either has not been checked or is not a file or directory
-     */
-    SITE_FILE_TYPE_UNKNOWN = 0
+	/**
+	 * @brief A regular file that can be read and written to
+	 */
+	SITE_FILE_TYPE_FILE = 4,
+	/**
+	 * @brief A directory (a.k.a folder) that may contain files and/or other directories
+	 */
+	SITE_FILE_TYPE_DIRECTORY = 2,
+	/**
+	 * @brief The path does not exist
+	 */
+	SITE_FILE_TYPE_NOTHING = 1,
+	/**
+	 * @brief The path either has not been checked or is not a file or directory
+	 */
+	SITE_FILE_TYPE_UNKNOWN = 0
 };
 
 /**
@@ -27,53 +27,53 @@ enum SiteFileType {
  * @brief Contains metadata about a site path
  */
 typedef struct SiteFileMeta {
-    /**
-     * @brief The date that a file was modified or 0 when unknown
-     */
-    PlatformTimeStruct *modifiedDate;
+	/**
+	 * @brief The date that a file was modified or 0 when unknown
+	 */
+	PlatformTimeStruct *modifiedDate;
 
-    /**
-     * @brief The length of a file in bytes or 0 when unknown
-     */
-    PlatformFileOffset length;
+	/**
+	 * @brief The length of a file in bytes or 0 when unknown
+	 */
+	PlatformFileOffset length;
 
-    /**
-     * @brief The preferred name to use if the file is to be referenced or copied. NULL when unknown
-     * @remark Circumstances may make fileName either point it's own heap allocation or within fullPath.
-     * Do not manually modify
-     */
-    char *name;
+	/**
+	 * @brief The preferred name to use if the file is to be referenced or copied. NULL when unknown
+	 * @remark Circumstances may make fileName either point it's own heap allocation or within fullPath.
+	 * Do not manually modify
+	 */
+	char *name;
 
-    /**
-     * @brief The full path relative to the site uri
-     */
-    char *path;
+	/**
+	 * @brief The full path relative to the site uri
+	 */
+	char *path;
 
-    /**
-     * @brief The type (a.k.a mode) of this file entry
-     * @ref SiteFileType
-     */
-    char type;
+	/**
+	 * @brief The type (a.k.a mode) of this file entry
+	 * @ref SiteFileType
+	 */
+	char type;
 } SiteFileMeta;
 
 #include "site/file.h"
 #include "site/http.h"
 
 enum SiteType {
-    SITE_FILE, SITE_HTTP
+	SITE_FILE, SITE_HTTP
 };
 
 typedef struct Site {
-    int type;
-    union site {
-        FileSite file;
-        HttpSite http;
-    } site;
+	int type;
+	union site {
+		FileSite file;
+		HttpSite http;
+	} site;
 } Site;
 
 typedef struct SiteArray {
-    long len, activeRead, activeWrite;
-    Site *array;
+	long len, activeRead, activeWrite;
+	Site *array;
 } SiteArray;
 
 #pragma region Site Array

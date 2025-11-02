@@ -16,65 +16,65 @@ typedef int (__stdcall *WsControlProc)(DWORD, DWORD, LPVOID, LPDWORD, LPVOID, LP
 #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 
 typedef struct IFEntry {
-    ULONG if_index;
-    ULONG if_type;
-    ULONG if_mtu;
-    ULONG if_speed;
-    ULONG if_physaddrlen;
-    UCHAR if_physaddr[MAX_PHYSADDR_SIZE];
-    ULONG if_adminstatus;
-    ULONG if_operstatus;
-    ULONG if_lastchange;
-    ULONG if_inoctets;
-    ULONG if_inucastpkts;
-    ULONG if_innucastpkts;
-    ULONG if_indiscards;
-    ULONG if_inerrors;
-    ULONG if_inunknownprotos;
-    ULONG if_outoctets;
-    ULONG if_outucastpkts;
-    ULONG if_outnucastpkts;
-    ULONG if_outdiscards;
-    ULONG if_outerrors;
-    ULONG if_outqlen;
-    ULONG if_descrlen;
-    UCHAR if_descr[1];
+	ULONG if_index;
+	ULONG if_type;
+	ULONG if_mtu;
+	ULONG if_speed;
+	ULONG if_physaddrlen;
+	UCHAR if_physaddr[MAX_PHYSADDR_SIZE];
+	ULONG if_adminstatus;
+	ULONG if_operstatus;
+	ULONG if_lastchange;
+	ULONG if_inoctets;
+	ULONG if_inucastpkts;
+	ULONG if_innucastpkts;
+	ULONG if_indiscards;
+	ULONG if_inerrors;
+	ULONG if_inunknownprotos;
+	ULONG if_outoctets;
+	ULONG if_outucastpkts;
+	ULONG if_outnucastpkts;
+	ULONG if_outdiscards;
+	ULONG if_outerrors;
+	ULONG if_outqlen;
+	ULONG if_descrlen;
+	UCHAR if_descr[1];
 } IFEntry;
 
 typedef struct IPSNMPInfo {
-    ULONG ipsi_forwarding;
-    ULONG ipsi_defaultttl;
-    ULONG ipsi_inreceives;
-    ULONG ipsi_inhdrerrors;
-    ULONG ipsi_inaddrerrors;
-    ULONG ipsi_forwdatagrams;
-    ULONG ipsi_inunknownprotos;
-    ULONG ipsi_indiscards;
-    ULONG ipsi_indelivers;
-    ULONG ipsi_outrequests;
-    ULONG ipsi_routingdiscards;
-    ULONG ipsi_outdiscards;
-    ULONG ipsi_outnoroutes;
-    ULONG ipsi_reasmtimeout;
-    ULONG ipsi_reasmreqds;
-    ULONG ipsi_reasmoks;
-    ULONG ipsi_reasmfails;
-    ULONG ipsi_fragoks;
-    ULONG ipsi_fragfails;
-    ULONG ipsi_fragcreates;
-    ULONG ipsi_numif;
-    ULONG ipsi_numaddr;
-    ULONG ipsi_numroutes;
+	ULONG ipsi_forwarding;
+	ULONG ipsi_defaultttl;
+	ULONG ipsi_inreceives;
+	ULONG ipsi_inhdrerrors;
+	ULONG ipsi_inaddrerrors;
+	ULONG ipsi_forwdatagrams;
+	ULONG ipsi_inunknownprotos;
+	ULONG ipsi_indiscards;
+	ULONG ipsi_indelivers;
+	ULONG ipsi_outrequests;
+	ULONG ipsi_routingdiscards;
+	ULONG ipsi_outdiscards;
+	ULONG ipsi_outnoroutes;
+	ULONG ipsi_reasmtimeout;
+	ULONG ipsi_reasmreqds;
+	ULONG ipsi_reasmoks;
+	ULONG ipsi_reasmfails;
+	ULONG ipsi_fragoks;
+	ULONG ipsi_fragfails;
+	ULONG ipsi_fragcreates;
+	ULONG ipsi_numif;
+	ULONG ipsi_numaddr;
+	ULONG ipsi_numroutes;
 } IPSNMPInfo;
 
 typedef struct IPAddrEntry {
-    ULONG iae_addr;
-    ULONG iae_index;
-    ULONG iae_mask;
-    ULONG iae_bcastaddr;
-    ULONG iae_reasmsize;
-    USHORT iae_context;
-    USHORT iae_pad;
+	ULONG iae_addr;
+	ULONG iae_index;
+	ULONG iae_mask;
+	ULONG iae_bcastaddr;
+	ULONG iae_reasmsize;
+	USHORT iae_context;
+	USHORT iae_pad;
 } IPAddrEntry;
 
 #define    MAX_TDI_ENTITIES 4096
@@ -91,20 +91,20 @@ typedef struct IPAddrEntry {
 #define    CL_NL_IP 0x303
 
 typedef struct TDIEntityID {
-    ULONG tei_entity;
-    ULONG tei_instance;
+	ULONG tei_entity;
+	ULONG tei_instance;
 } TDIEntityID;
 
 typedef struct _TDIObjectID { /* NOLINT(bugprone-reserved-identifier) */
-    TDIEntityID toi_entity;
-    ULONG toi_class;
-    ULONG toi_type;
-    ULONG toi_id;
+	TDIEntityID toi_entity;
+	ULONG toi_class;
+	ULONG toi_type;
+	ULONG toi_id;
 } TDIObjectID;
 
 typedef struct _TCP_REQUEST_QUERY_INFORMATION_EX { /* NOLINT(bugprone-reserved-identifier) */
-    TDIObjectID ID;
-    ULONG_PTR Context[CONTEXT_SIZE / sizeof(ULONG_PTR)];
+	TDIObjectID ID;
+	ULONG_PTR Context[CONTEXT_SIZE / sizeof(ULONG_PTR)];
 } TCP_REQUEST_QUERY_INFORMATION_EX, *PTCP_REQUEST_QUERY_INFORMATION_EX;
 
 #pragma clang diagnostic pop
@@ -114,47 +114,47 @@ typedef struct _TCP_REQUEST_QUERY_INFORMATION_EX { /* NOLINT(bugprone-reserved-i
 #pragma region Network interface collection
 
 typedef struct NIC {
-    ULONG index;
-    char *desc;
+	ULONG index;
+	char *desc;
 } NIC;
 
 static NIC *networkInterfaces = NULL;
 static size_t networkInterfacesSize = 0;
 
 static void nicAdd(ULONG index, char *desc) {
-    size_t i = networkInterfacesSize;
-    ++networkInterfacesSize;
-    if (networkInterfacesSize) {
-        void *tmp = realloc(networkInterfaces, sizeof(NIC) * networkInterfacesSize);
-        if (tmp)
-            networkInterfaces = tmp;
-    } else {
-        networkInterfaces = malloc(sizeof(NIC) * networkInterfacesSize);
+	size_t i = networkInterfacesSize;
+	++networkInterfacesSize;
+	if (networkInterfacesSize) {
+		void *tmp = realloc(networkInterfaces, sizeof(NIC) * networkInterfacesSize);
+		if (tmp)
+			networkInterfaces = tmp;
+	} else {
+		networkInterfaces = malloc(sizeof(NIC) * networkInterfacesSize);
 
-        if (!networkInterfaces)
-            return;
-    }
+		if (!networkInterfaces)
+			return;
+	}
 
-    networkInterfaces[i].desc = desc;
-    networkInterfaces[i].index = index;
+	networkInterfaces[i].desc = desc;
+	networkInterfaces[i].index = index;
 }
 
 static char *nicFind(ULONG index) {
-    size_t i;
-    for (i = 0; i < networkInterfacesSize; ++i) {
-        if (networkInterfaces[i].index == index)
-            return networkInterfaces[i].desc;
-    }
-    return NULL;
+	size_t i;
+	for (i = 0; i < networkInterfacesSize; ++i) {
+		if (networkInterfaces[i].index == index)
+			return networkInterfaces[i].desc;
+	}
+	return NULL;
 }
 
 static void nicFree(void) {
-    size_t i;
-    for (i = 0; i < networkInterfacesSize; ++i)
-        free(networkInterfaces[i].desc);
-    if (networkInterfaces)
-        free(networkInterfaces), networkInterfaces = NULL;
-    networkInterfacesSize = 0;
+	size_t i;
+	for (i = 0; i < networkInterfacesSize; ++i)
+		free(networkInterfaces[i].desc);
+	if (networkInterfaces)
+		free(networkInterfaces), networkInterfaces = NULL;
+	networkInterfacesSize = 0;
 }
 
 #pragma endregion
@@ -163,218 +163,218 @@ HMODULE wsock32;
 WsControlProc WsControlFunc;
 
 static void wSock1Free(void) {
-    if (wsock32)
-        FreeLibrary(wsock32);
+	if (wsock32)
+		FreeLibrary(wsock32);
 }
 
 void *wSock1Available(void) {
-    wsock32 = LoadLibrary("wsock32.dll");
-    if (wsock32) {
-        LINEDBG;
-        WsControlFunc = (WsControlProc) GetProcAddress(wsock32, "WsControl");
-        return &wSock1Free;
-    }
+	wsock32 = LoadLibrary("wsock32.dll");
+	if (wsock32) {
+		LINEDBG;
+		WsControlFunc = (WsControlProc) GetProcAddress(wsock32, "WsControl");
+		return &wSock1Free;
+	}
 
-    LINEDBG;
-    return NULL;
+	LINEDBG;
+	return NULL;
 }
 
 WSADATA WSAData;
 
 AdapterAddressArray *
 wSock1GetAdapterInformation(void (arrayAdd)(AdapterAddressArray *, const char *, sa_family_t, char *)) {
-    if (WsControlFunc) {
-        int result;
-        TCP_REQUEST_QUERY_INFORMATION_EX tcpRequestQueryInfoEx;
-        TDIEntityID *entityIds;
-        DWORD tcpRequestBufSize, entityIdsBufSize, entityCount, ifCount, i;
-        AdapterAddressArray *array = NULL;
+	if (WsControlFunc) {
+		int result;
+		TCP_REQUEST_QUERY_INFORMATION_EX tcpRequestQueryInfoEx;
+		TDIEntityID *entityIds;
+		DWORD tcpRequestBufSize, entityIdsBufSize, entityCount, ifCount, i;
+		AdapterAddressArray *array = NULL;
 
-        LINEDBG;
+		LINEDBG;
 
-        result = WSAStartup(MAKEWORD(1, 1), &WSAData);
-        if (result) {
-            fprintf(stderr, "WSAStartup failed (%d)\n", result);
-            FreeLibrary(wsock32);
-            return NULL;
-        }
+		result = WSAStartup(MAKEWORD(1, 1), &WSAData);
+		if (result) {
+			fprintf(stderr, "WSAStartup failed (%d)\n", result);
+			FreeLibrary(wsock32);
+			return NULL;
+		}
 
-        memset(&tcpRequestQueryInfoEx, 0, sizeof(tcpRequestQueryInfoEx));
-        tcpRequestQueryInfoEx.ID.toi_entity.tei_entity = GENERIC_ENTITY;
-        tcpRequestQueryInfoEx.ID.toi_entity.tei_instance = 0;
-        tcpRequestQueryInfoEx.ID.toi_class = INFO_CLASS_GENERIC;
-        tcpRequestQueryInfoEx.ID.toi_type = INFO_TYPE_PROVIDER;
-        tcpRequestQueryInfoEx.ID.toi_id = ENTITY_LIST_ID;
+		memset(&tcpRequestQueryInfoEx, 0, sizeof(tcpRequestQueryInfoEx));
+		tcpRequestQueryInfoEx.ID.toi_entity.tei_entity = GENERIC_ENTITY;
+		tcpRequestQueryInfoEx.ID.toi_entity.tei_instance = 0;
+		tcpRequestQueryInfoEx.ID.toi_class = INFO_CLASS_GENERIC;
+		tcpRequestQueryInfoEx.ID.toi_type = INFO_TYPE_PROVIDER;
+		tcpRequestQueryInfoEx.ID.toi_id = ENTITY_LIST_ID;
 
-        tcpRequestBufSize = sizeof(tcpRequestQueryInfoEx);
+		tcpRequestBufSize = sizeof(tcpRequestQueryInfoEx);
 
-        entityIdsBufSize = MAX_TDI_ENTITIES * sizeof(TDIEntityID);
+		entityIdsBufSize = MAX_TDI_ENTITIES * sizeof(TDIEntityID);
 
-        entityIds = (TDIEntityID *) calloc(entityIdsBufSize, 1);
+		entityIds = (TDIEntityID *) calloc(entityIdsBufSize, 1);
 
-        result = WsControlFunc(IPPROTO_TCP, WSCTL_TCP_QUERY_INFORMATION, &tcpRequestQueryInfoEx, &tcpRequestBufSize,
-                               entityIds, &entityIdsBufSize);
+		result = WsControlFunc(IPPROTO_TCP, WSCTL_TCP_QUERY_INFORMATION, &tcpRequestQueryInfoEx, &tcpRequestBufSize,
+		                       entityIds, &entityIdsBufSize);
 
-        if (result) {
-            LINEDBG;
-            WSACleanup();
-            FreeLibrary(wsock32);
-            return NULL;
-        }
+		if (result) {
+			LINEDBG;
+			WSACleanup();
+			FreeLibrary(wsock32);
+			return NULL;
+		}
 
-        LINEDBG;
+		LINEDBG;
 
-        entityCount = entityIdsBufSize / sizeof(TDIEntityID);
-        ifCount = 0;
+		entityCount = entityIdsBufSize / sizeof(TDIEntityID);
+		ifCount = 0;
 
-        /* print out the interface info for the generic interfaces */
-        for (i = 0; i < entityCount; i++) {
-            if (entityIds[i].tei_entity == IF_ENTITY) {
-                ULONG entityType;
-                DWORD entityTypeSize;
-                ++ifCount;
+		/* print out the interface info for the generic interfaces */
+		for (i = 0; i < entityCount; i++) {
+			if (entityIds[i].tei_entity == IF_ENTITY) {
+				ULONG entityType;
+				DWORD entityTypeSize;
+				++ifCount;
 
-                /* see if the interface supports snmp mib-2 info */
-                memset(&tcpRequestQueryInfoEx, 0, sizeof(tcpRequestQueryInfoEx));
-                tcpRequestQueryInfoEx.ID.toi_entity = entityIds[i];
-                tcpRequestQueryInfoEx.ID.toi_class = INFO_CLASS_GENERIC;
-                tcpRequestQueryInfoEx.ID.toi_type = INFO_TYPE_PROVIDER;
-                tcpRequestQueryInfoEx.ID.toi_id = ENTITY_TYPE_ID;
+				/* see if the interface supports snmp mib-2 info */
+				memset(&tcpRequestQueryInfoEx, 0, sizeof(tcpRequestQueryInfoEx));
+				tcpRequestQueryInfoEx.ID.toi_entity = entityIds[i];
+				tcpRequestQueryInfoEx.ID.toi_class = INFO_CLASS_GENERIC;
+				tcpRequestQueryInfoEx.ID.toi_type = INFO_TYPE_PROVIDER;
+				tcpRequestQueryInfoEx.ID.toi_id = ENTITY_TYPE_ID;
 
 
-                entityTypeSize = sizeof(entityType);
+				entityTypeSize = sizeof(entityType);
 
-                result = WsControlFunc(IPPROTO_TCP, WSCTL_TCP_QUERY_INFORMATION, &tcpRequestQueryInfoEx,
-                                       &tcpRequestBufSize, &entityType, &entityTypeSize);
+				result = WsControlFunc(IPPROTO_TCP, WSCTL_TCP_QUERY_INFORMATION, &tcpRequestQueryInfoEx,
+				                       &tcpRequestBufSize, &entityType, &entityTypeSize);
 
-                if (result) {
-                    fprintf(stderr, "%s(%d) WsControlFunc failed (%d)\n", __FILE__, __LINE__, WSAGetLastError());
-                    WSACleanup();
-                    FreeLibrary(wsock32);
-                    return NULL;
-                }
+				if (result) {
+					fprintf(stderr, "%s(%d) WsControlFunc failed (%d)\n", __FILE__, __LINE__, WSAGetLastError());
+					WSACleanup();
+					FreeLibrary(wsock32);
+					return NULL;
+				}
 
-                if (entityType == IF_MIB) { /* Supports MIB-2 interface. */
-                    DWORD ifEntrySize;
-                    IFEntry *ifEntry;
-                    char *desc = NULL;
+				if (entityType == IF_MIB) { /* Supports MIB-2 interface. */
+					DWORD ifEntrySize;
+					IFEntry *ifEntry;
+					char *desc = NULL;
 
-                    /* get snmp mib-2 info */
-                    tcpRequestQueryInfoEx.ID.toi_class = INFO_CLASS_PROTOCOL;
-                    tcpRequestQueryInfoEx.ID.toi_id = IF_MIB_STATS_ID;
+					/* get snmp mib-2 info */
+					tcpRequestQueryInfoEx.ID.toi_class = INFO_CLASS_PROTOCOL;
+					tcpRequestQueryInfoEx.ID.toi_id = IF_MIB_STATS_ID;
 
-                    /* note: win95 winipcfg use 130 for MAX_IFDESCR_LEN while
-                    ddk\src\network\wshsmple\SMPLETCP.H defines it as 256
-                    we are trying to dup the winipcfg parameters for now */
-                    ifEntrySize = sizeof(IFEntry) + 128 + 1;
-                    ifEntry = (IFEntry *) calloc(ifEntrySize, 1);
+					/* note: win95 winipcfg use 130 for MAX_IFDESCR_LEN while
+					ddk\src\network\wshsmple\SMPLETCP.H defines it as 256
+					we are trying to dup the winipcfg parameters for now */
+					ifEntrySize = sizeof(IFEntry) + 128 + 1;
+					ifEntry = (IFEntry *) calloc(ifEntrySize, 1);
 
-                    result = WsControlFunc(IPPROTO_TCP, WSCTL_TCP_QUERY_INFORMATION, &tcpRequestQueryInfoEx,
-                                           &tcpRequestBufSize, ifEntry, &ifEntrySize);
+					result = WsControlFunc(IPPROTO_TCP, WSCTL_TCP_QUERY_INFORMATION, &tcpRequestQueryInfoEx,
+					                       &tcpRequestBufSize, ifEntry, &ifEntrySize);
 
-                    if (result) {
-                        fprintf(stderr, "%s(%d) WsControlFunc failed (%d)\n", __FILE__, __LINE__, WSAGetLastError());
-                        WSACleanup();
-                        FreeLibrary(wsock32);
-                        return NULL;
-                    }
+					if (result) {
+						fprintf(stderr, "%s(%d) WsControlFunc failed (%d)\n", __FILE__, __LINE__, WSAGetLastError());
+						WSACleanup();
+						FreeLibrary(wsock32);
+						return NULL;
+					}
 
-                    /* print interface index and description */
-                    *(ifEntry->if_descr + ifEntry->if_descrlen) = 0;
-                    desc = malloc(ifEntry->if_descrlen);
+					/* print interface index and description */
+					*(ifEntry->if_descr + ifEntry->if_descrlen) = 0;
+					desc = malloc(ifEntry->if_descrlen);
 
-                    if (!desc)
-                        continue;
+					if (!desc)
+						continue;
 
-                    strncpy(desc, (char *) ifEntry->if_descr, ifEntry->if_descrlen);
-                    nicAdd(ifEntry->if_index, desc);
-                }
-            }
-        }
+					strncpy(desc, (char *) ifEntry->if_descr, ifEntry->if_descrlen);
+					nicAdd(ifEntry->if_index, desc);
+				}
+			}
+		}
 
-        /* find the ip interface */
-        for (i = 0; i < entityCount; i++) {
+		/* find the ip interface */
+		for (i = 0; i < entityCount; i++) {
 
-            if (entityIds[i].tei_entity == CL_NL_ENTITY) {
-                ULONG entityType;
-                DWORD entityTypeSize;
+			if (entityIds[i].tei_entity == CL_NL_ENTITY) {
+				ULONG entityType;
+				DWORD entityTypeSize;
 
-                /* get ip interface info */
-                memset(&tcpRequestQueryInfoEx, 0, sizeof(tcpRequestQueryInfoEx));
-                tcpRequestQueryInfoEx.ID.toi_entity = entityIds[i];
-                tcpRequestQueryInfoEx.ID.toi_class = INFO_CLASS_GENERIC;
-                tcpRequestQueryInfoEx.ID.toi_type = INFO_TYPE_PROVIDER;
-                tcpRequestQueryInfoEx.ID.toi_id = ENTITY_TYPE_ID;
+				/* get ip interface info */
+				memset(&tcpRequestQueryInfoEx, 0, sizeof(tcpRequestQueryInfoEx));
+				tcpRequestQueryInfoEx.ID.toi_entity = entityIds[i];
+				tcpRequestQueryInfoEx.ID.toi_class = INFO_CLASS_GENERIC;
+				tcpRequestQueryInfoEx.ID.toi_type = INFO_TYPE_PROVIDER;
+				tcpRequestQueryInfoEx.ID.toi_id = ENTITY_TYPE_ID;
 
-                entityTypeSize = sizeof(entityType);
+				entityTypeSize = sizeof(entityType);
 
-                result = WsControlFunc(IPPROTO_TCP, WSCTL_TCP_QUERY_INFORMATION, &tcpRequestQueryInfoEx,
-                                       &tcpRequestBufSize, &entityType, &entityTypeSize);
+				result = WsControlFunc(IPPROTO_TCP, WSCTL_TCP_QUERY_INFORMATION, &tcpRequestQueryInfoEx,
+				                       &tcpRequestBufSize, &entityType, &entityTypeSize);
 
-                if (result) {
-                    fprintf(stderr, "%s(%d) WsControlFunc failed (%d)\n", __FILE__, __LINE__, WSAGetLastError());
-                    WSACleanup();
-                    FreeLibrary(wsock32);
-                    return NULL;
-                }
+				if (result) {
+					fprintf(stderr, "%s(%d) WsControlFunc failed (%d)\n", __FILE__, __LINE__, WSAGetLastError());
+					WSACleanup();
+					FreeLibrary(wsock32);
+					return NULL;
+				}
 
-                if (entityType == CL_NL_IP) {   /* Entity implements IP. */
-                    DWORD ipAddrEntryBufSize, j;
-                    IPAddrEntry *ipAddrEntry;
+				if (entityType == CL_NL_IP) {   /* Entity implements IP. */
+					DWORD ipAddrEntryBufSize, j;
+					IPAddrEntry *ipAddrEntry;
 
-                    /* get ip address list */
-                    tcpRequestQueryInfoEx.ID.toi_class = INFO_CLASS_PROTOCOL;
-                    tcpRequestQueryInfoEx.ID.toi_id = IP_MIB_ADDRTABLE_ENTRY_ID;
+					/* get ip address list */
+					tcpRequestQueryInfoEx.ID.toi_class = INFO_CLASS_PROTOCOL;
+					tcpRequestQueryInfoEx.ID.toi_id = IP_MIB_ADDRTABLE_ENTRY_ID;
 
-                    ipAddrEntryBufSize = sizeof(IPAddrEntry) * ifCount;
-                    ipAddrEntry = (IPAddrEntry *) calloc(ipAddrEntryBufSize, 1);
+					ipAddrEntryBufSize = sizeof(IPAddrEntry) * ifCount;
+					ipAddrEntry = (IPAddrEntry *) calloc(ipAddrEntryBufSize, 1);
 
-                    result = WsControlFunc(IPPROTO_TCP, WSCTL_TCP_QUERY_INFORMATION, &tcpRequestQueryInfoEx,
-                                           &tcpRequestBufSize, ipAddrEntry, &ipAddrEntryBufSize);
+					result = WsControlFunc(IPPROTO_TCP, WSCTL_TCP_QUERY_INFORMATION, &tcpRequestQueryInfoEx,
+					                       &tcpRequestBufSize, ipAddrEntry, &ipAddrEntryBufSize);
 
-                    if (result) {
-                        fprintf(stderr, "%s(%d) WsControlFunc failed (%d)\n", __FILE__, __LINE__, WSAGetLastError());
-                        WSACleanup();
-                        FreeLibrary(wsock32);
-                        return NULL;
-                    }
+					if (result) {
+						fprintf(stderr, "%s(%d) WsControlFunc failed (%d)\n", __FILE__, __LINE__, WSAGetLastError());
+						WSACleanup();
+						FreeLibrary(wsock32);
+						return NULL;
+					}
 
-                    if (ifCount)
-                        array = malloc(sizeof(AdapterAddressArray)), array->size = 0;
+					if (ifCount)
+						array = malloc(sizeof(AdapterAddressArray)), array->size = 0;
 
-                    if (!array) {
-                        WSACleanup();
-                        FreeLibrary(wsock32);
-                        return NULL;
-                    }
+					if (!array) {
+						WSACleanup();
+						FreeLibrary(wsock32);
+						return NULL;
+					}
 
-                    /* Add ip address if interface is found */
-                    for (j = 0; j < ifCount; j++) {
-                        char *nicStr = nicFind(ipAddrEntry[j].iae_index);
-                        /* If the interface index was found then this adapter and IP address are valid matches */
-                        if (nicStr) {
-                            char addrStr[INET_ADDRSTRLEN];
-                            unsigned char *addr = (unsigned char *) &ipAddrEntry[j].iae_addr;
-                            if (*addr != 127) { /* Not loop-back interface */
-                                sprintf(addrStr, "%d.%d.%d.%d", addr[0], addr[1], addr[2], addr[3]);
-                                arrayAdd(array, nicStr, 0, addrStr);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        nicFree();
+					/* Add ip address if interface is found */
+					for (j = 0; j < ifCount; j++) {
+						char *nicStr = nicFind(ipAddrEntry[j].iae_index);
+						/* If the interface index was found then this adapter and IP address are valid matches */
+						if (nicStr) {
+							char addrStr[INET_ADDRSTRLEN];
+							unsigned char *addr = (unsigned char *) &ipAddrEntry[j].iae_addr;
+							if (*addr != 127) { /* Not loop-back interface */
+								sprintf(addrStr, "%d.%d.%d.%d", addr[0], addr[1], addr[2], addr[3]);
+								arrayAdd(array, nicStr, 0, addrStr);
+							}
+						}
+					}
+				}
+			}
+		}
+		nicFree();
 
-        LINEDBG;
+		LINEDBG;
 
-        if (array) {
-            if (array->size)
-                return array;
-            else
-                free(array);
-        }
-    }
+		if (array) {
+			if (array->size)
+				return array;
+			else
+				free(array);
+		}
+	}
 
-    return NULL;
+	return NULL;
 }

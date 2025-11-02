@@ -10,7 +10,7 @@
 #include <time.h>
 
 typedef enum httpType {
-    httpGet, httpHead, httpPost, httpUnknown
+	httpGet, httpHead, httpPost, httpUnknown
 } httpType;
 
 /* Hint to the client that this server should have it's TCP connection closed each request */

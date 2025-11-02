@@ -4,56 +4,56 @@
 #include "../platform/platform.h"
 
 enum RecvBufferOptions {
-    RECV_BUFFER_DATA_LENGTH_UNKNOWN = 0,
-    RECV_BUFFER_DATA_LENGTH_CHUNK = 1,
-    RECV_BUFFER_DATA_LENGTH_KNOWN = 2,
-    RECV_BUFFER_DATA_LENGTH_TOKEN = 4,
-    RECV_BUFFER_DATA_LENGTH_COMPLETE = 8
+	RECV_BUFFER_DATA_LENGTH_UNKNOWN = 0,
+	RECV_BUFFER_DATA_LENGTH_CHUNK = 1,
+	RECV_BUFFER_DATA_LENGTH_KNOWN = 2,
+	RECV_BUFFER_DATA_LENGTH_TOKEN = 4,
+	RECV_BUFFER_DATA_LENGTH_COMPLETE = 8
 };
 
 typedef struct RecvBufferLengthChunk {
-    PlatformFileOffset next, total;
+	PlatformFileOffset next, total;
 } RecvBufferLengthChunk;
 
 typedef struct RecvBufferLengthKnown {
-    PlatformFileOffset escape, total;
+	PlatformFileOffset escape, total;
 } RecvBufferLengthKnown;
 
 typedef struct RecvBufferLengthUnknown {
-    PlatformFileOffset escape, limit;
+	PlatformFileOffset escape, limit;
 } RecvBufferLengthUnknown;
 
 typedef struct RecvBufferLengthToken {
-    const char *token;
-    PlatformFileOffset length;
+	const char *token;
+	PlatformFileOffset length;
 } RecvBufferLengthToken;
 
 typedef union RecvBufferLength {
-    RecvBufferLengthChunk chunk;
-    RecvBufferLengthKnown known;
-    RecvBufferLengthToken token;
-    RecvBufferLengthUnknown unknown;
+	RecvBufferLengthChunk chunk;
+	RecvBufferLengthKnown known;
+	RecvBufferLengthToken token;
+	RecvBufferLengthUnknown unknown;
 } RecvBufferLength;
 
 typedef struct SocketAddress {
-    union address {
-        struct sockaddr sock;
-        struct sockaddr_in ipv4;
+	union address {
+		struct sockaddr sock;
+		struct sockaddr_in ipv4;
 #ifdef ENABLE_IPV6
-        struct sockaddr_in6 ipv6;
+		struct sockaddr_in6 ipv6;
 #endif
-        struct sockaddr_storage storage;
-    } address;
-    unsigned short scheme, state;
+		struct sockaddr_storage storage;
+	} address;
+	unsigned short scheme, state;
 } SocketAddress;
 
 typedef struct RecvBuffer {
-    char *buffer;
-    size_t idx, len, max;
-    SocketAddress serverAddress;
-    SOCKET serverSocket;
-    int options;
-    union RecvBufferLength length;
+	char *buffer;
+	size_t idx, len, max;
+	SocketAddress serverAddress;
+	SOCKET serverSocket;
+	int options;
+	union RecvBufferLength length;
 } RecvBuffer;
 
 /**

@@ -40,7 +40,7 @@ ssize_t __wrap_send(int fd, const void *buf, size_t n, int flags);
 #define    ENOMEM      12  /* Out of memory */
 
 enum mockOptions {
-    MOCK_ALLOC_NO_MEMORY = 1, MOCK_CONNECT = 2, MOCK_RECEIVE = 4, MOCK_SEND = 8, MOCK_RECEIVE_COUNT = 16, MOCK_SEND_COUNT = 32
+	MOCK_ALLOC_NO_MEMORY = 1, MOCK_CONNECT = 2, MOCK_RECEIVE = 4, MOCK_SEND = 8, MOCK_RECEIVE_COUNT = 16, MOCK_SEND_COUNT = 32
 };
 
 extern int mockOptions, mockConnectError, mockSendError, mockErrorReset, mockReceiveError;

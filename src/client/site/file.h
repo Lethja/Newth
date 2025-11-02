@@ -2,9 +2,9 @@
 #define NEW_DL_FILE_H
 
 typedef struct FileSite {
-    char *fullUri;
-    PlatformFile file;
-    SiteFileMeta meta;
+	char *fullUri;
+	PlatformFile file;
+	SiteFileMeta meta;
 } FileSite;
 
 void fileSiteSchemeFree(FileSite *self);

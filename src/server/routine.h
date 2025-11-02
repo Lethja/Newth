@@ -6,39 +6,39 @@
 #include "sendbufr.h"
 
 enum state {
-    TYPE_ROUTINE = 1,
-    TYPE_ROUTINE_DIR = 2,
-    TYPE_ROUTINE_FILE = 4,
-    STATE_CONTINUE = 8,
-    STATE_DEFER = 16,
-    STATE_FLUSH = 32,
-    STATE_FINISH = 64,
-    STATE_FAIL = 128
+	TYPE_ROUTINE = 1,
+	TYPE_ROUTINE_DIR = 2,
+	TYPE_ROUTINE_FILE = 4,
+	STATE_CONTINUE = 8,
+	STATE_DEFER = 16,
+	STATE_FLUSH = 32,
+	STATE_FINISH = 64,
+	STATE_FAIL = 128
 };
 
 typedef struct FileRoutine {
-    FILE *file;
-    PlatformFileOffset start, end;
+	FILE *file;
+	PlatformFileOffset start, end;
 } FileRoutine;
 
 typedef struct DirectoryRoutine {
-    size_t count;
-    PlatformDir *directory;
+	size_t count;
+	PlatformDir *directory;
 } DirectoryRoutine;
 
 typedef struct Routine {
-    unsigned char state;
-    SendBuffer socketBuffer;
-    char webPath[FILENAME_MAX];
-    union {
-        struct FileRoutine file;
-        struct DirectoryRoutine dir;
-    } type;
+	unsigned char state;
+	SendBuffer socketBuffer;
+	char webPath[FILENAME_MAX];
+	union {
+		struct FileRoutine file;
+		struct DirectoryRoutine dir;
+	} type;
 } Routine;
 
 typedef struct RoutineArray {
-    size_t size;
-    Routine *array;
+	size_t size;
+	Routine *array;
 } RoutineArray;
 
 /**

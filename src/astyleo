@@ -9,7 +9,7 @@
 -Q      # Only print out file names that are actually changed
 -r      # Recursive
 -S      # Indent switches
--s      # Indent with spaces
+-t      # Indent with tabs
 -xg     # Padding after comma
 -xj     # Remove braces from single arguments
 -xt0    # Don't indent multi-line conditionals

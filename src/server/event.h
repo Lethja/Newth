@@ -4,10 +4,10 @@
 #include "../platform/platform.h"
 
 typedef struct eventHttpRespond {
-    SOCKET *clientSocket;
-    short *response;
-    const char *path;
-    char *type;
+	SOCKET *clientSocket;
+	short *response;
+	const char *path;
+	char *type;
 } eventHttpRespond;
 
 void eventHttpRespondSetCallback(void (*callback)(eventHttpRespond *));

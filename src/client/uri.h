@@ -5,11 +5,11 @@
 #include "../platform/platform.h"
 
 typedef enum UriScheme {
-    SCHEME_FILE = 1, SCHEME_HTTP = 80, SCHEME_HTTPS = 443, SCHEME_FTP = 21, SCHEME_FTPS = 990, SCHEME_UNKNOWN = 0
+	SCHEME_FILE = 1, SCHEME_HTTP = 80, SCHEME_HTTPS = 443, SCHEME_FTP = 21, SCHEME_FTPS = 990, SCHEME_UNKNOWN = 0
 } UriScheme;
 
 typedef struct UriDetails {
-    char *scheme, *host, *path, *port, *query;
+	char *scheme, *host, *path, *port, *query;
 } UriDetails;
 
 /**

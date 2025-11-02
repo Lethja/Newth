@@ -27,8 +27,8 @@ typedef off_t PlatformFileOffset;
 typedef FILE *PlatformFile;
 
 typedef struct PlatformDir {
-    DIR *dir;
-    char *path;
+	DIR *dir;
+	char *path;
 } PlatformDir;
 
 #define PLATFORM_SELECT_MAX_TIMEOUT 60

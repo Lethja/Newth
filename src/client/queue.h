@@ -8,26 +8,26 @@
  * The state of a QueueEntry
  */
 typedef enum QueueState {
-    /**
-     * This entry has not been attempted yet
-     */
-    QUEUE_STATE_QUEUED = 1 << 0,
-    /**
-     * This entry has been skipped for some reason
-     */
-    QUEUE_STATE_SKIPPED = 1 << 1,
-    /**
-     * This entry has been successfully downloaded
-     */
-    QUEUE_STATE_FINISHED = 1 << 2,
-    /**
-     * This entry has failed to download
-     */
-    QUEUE_STATE_FAILED = 1 << 3,
-    /**
-     * This entry should recursively act on subdirectories
-     */
-    QUEUE_TYPE_RECURSIVE = 1 << 4
+	/**
+	 * This entry has not been attempted yet
+	 */
+	QUEUE_STATE_QUEUED = 1 << 0,
+	/**
+	 * This entry has been skipped for some reason
+	 */
+	QUEUE_STATE_SKIPPED = 1 << 1,
+	/**
+	 * This entry has been successfully downloaded
+	 */
+	QUEUE_STATE_FINISHED = 1 << 2,
+	/**
+	 * This entry has failed to download
+	 */
+	QUEUE_STATE_FAILED = 1 << 3,
+	/**
+	 * This entry should recursively act on subdirectories
+	 */
+	QUEUE_TYPE_RECURSIVE = 1 << 4
 } QueueState;
 
 /**
@@ -36,16 +36,16 @@ typedef enum QueueState {
  * for both source and destination as well as state flags for this entry.
  */
 typedef struct QueueEntry {
-    Site *sourceSite, *destinationSite;
-    char *sourcePath, *destinationPath, state;
+	Site *sourceSite, *destinationSite;
+	char *sourcePath, *destinationPath, state;
 } QueueEntry;
 
 /**
  * An array of queue entries to be used with the QueueEntryArray set of functions
  */
 typedef struct QueueEntryArray {
-    unsigned long len;
-    QueueEntry *entry;
+	unsigned long len;
+	QueueEntry *entry;
 } QueueEntryArray;
 
 #pragma region Callbacks

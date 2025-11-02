@@ -50,23 +50,23 @@
 #define ADAPTER_NAME_LENGTH 512
 
 typedef struct Address {
-    sa_family_t type;
-    char address[INET6_ADDRSTRLEN];
+	sa_family_t type;
+	char address[INET6_ADDRSTRLEN];
 } Address;
 
 typedef struct AddressArray {
-    size_t size;
-    Address *array;
+	size_t size;
+	Address *array;
 } AddressArray;
 
 typedef struct Adapter {
-    char name[ADAPTER_NAME_LENGTH];
-    AddressArray addresses;
+	char name[ADAPTER_NAME_LENGTH];
+	AddressArray addresses;
 } NetworkAdapter;
 
 typedef struct AdapterAddressArray {
-    size_t size;
-    NetworkAdapter *adapter;
+	size_t size;
+	NetworkAdapter *adapter;
 } AdapterAddressArray;
 
 /**

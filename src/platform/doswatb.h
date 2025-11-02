@@ -55,8 +55,8 @@ typedef struct stat PlatformFileStat;
 typedef FILE *PlatformFile;
 
 typedef struct PlatformDir {
-    DIR *dir;
-    char *path;
+	DIR *dir;
+	char *path;
 } PlatformDir;
 
 typedef int nfds_t;
