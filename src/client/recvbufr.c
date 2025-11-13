@@ -287,7 +287,7 @@ void recvBufferFailFree(RecvBuffer *self) {
 }
 
 const char *recvBufferFetch(RecvBuffer *self, char *buf, PlatformFileOffset pos, size_t len) {
-	if (self->buffer) {
+	if (self->buffer && len) {
 		size_t l = (size_t) (self->len - pos);
 		if (l < len)
 			memcpy(buf, &self->buffer[pos], l), buf[l] = '\0';
