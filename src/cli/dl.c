@@ -63,6 +63,13 @@ static inline void Copy(const char **argv) {
 				char *p;
 
 				p = u.path ? uriPathAbsoluteAppend(u.path, l) : NULL;
+
+				/*
+				 * uriPathLast might have returned its own heap allocation or pointed to a substring inside 's'.
+				 * To determine this, check if l is within the bounds of s.
+				 * If it isn't, then it's a heap allocation and needs to be freed.
+				 */
+
 				if (l < s || l > &s[strlen(s) + 1])
 					free(l);
 
@@ -131,6 +138,14 @@ static inline void XCopy(const char **argv) {
 				char *p;
 
 				p = u.path ? uriPathAbsoluteAppend(u.path, l) : NULL;
+
+				/*
+				 * uriPathLast might have returned its own heap allocation or pointed to a substring inside 's'.
+				 * To determine this, check if l is within the bounds of s.
+				 * If it isn't, then it's a heap allocation and needs to be freed.
+				 */
+
+
 				if (l < s || l > &s[strlen(s) + 1])
 					free(l);
 
