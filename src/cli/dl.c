@@ -589,10 +589,17 @@ static inline void StripBang(char **args) {
 	char *e;
 	size_t i = 1;
 
+    /*
+     * Count the number of elements and subtract each element pointer by one byte.
+     * This will resynchronize each element with its string after memmove is called later in the function.
+     */
 	while (args[i])
 		args[i] = args[i] - 1, ++i;
 
+    /* Get the total byte size of the 2d array */
 	--i, e = &args[i][strlen(&args[i][1]) + 1];
+
+    /* Shift the entire array back one byte */
 	memmove(&args[0][0], &args[0][1], e - &args[0][0]);
 }
 
