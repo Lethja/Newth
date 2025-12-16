@@ -851,16 +851,16 @@ void platformTimeStructToStr(PlatformTimeStruct *time, char *str) {
 int platformTimeStructCompare(PlatformTimeStruct *t1, PlatformTimeStruct *t2) {
 	int x;
 
-	if (t1->tm_year < t2->tm_year) return 1;
-	if (t1->tm_year > t2->tm_year) return -1;
+	if (t1->wYear < t2->wYear) return 1;
+	if (t1->wYear > t2->wYear) return -1;
 
-	x = ((t1->tm_mon * 31) + t1->tm_mday) - ((t2->tm_mon * 31) + t2->tm_mday);
+	x = ((t1->wMonth * 31) + t1->wDay) - ((t2->wMonth * 31) + t2->wDay);
 
 	if (x < 0) return 1;
 	if (x > 0) return -1;
 
-	x = ((t1->tm_hour * 3600) + (t1->tm_min * 60) + t1->tm_sec) -
-	    ((t2->tm_hour * 3600) + (t2->tm_min * 60) + t2->tm_sec);
+	x = ((t1->wHour * 3600) + (t1->wMinute * 60) + t1->wSecond) -
+	    ((t2->wHour * 3600) + (t2->wMinute * 60) + t2->wSecond);
 
 	if (x < 0) return 1;
 	if (x > 0) return -1;
