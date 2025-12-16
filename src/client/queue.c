@@ -195,7 +195,7 @@ const char *queueEntryDownloadNoClobber(QueueEntry *entry) {
 	SiteFileMeta *fromMeta, *toMeta;
 	SOCK_BUF_TYPE i;
 	char buf[SB_DATA_SIZE];
-	time_t last;
+	time_t last = 0;
 
 	if (!(entry->state & QUEUE_STATE_QUEUED))
 		return ErrQueueEntryNotReady;
@@ -280,7 +280,7 @@ const char *queueEntryDownloadMirror(QueueEntry *entry) {
 	SiteFileMeta *fromMeta, *toMeta;
 	SOCK_BUF_TYPE i;
 	char buf[SB_DATA_SIZE];
-	time_t last;
+	time_t last = 0;
 
 	if (!(entry->state & QUEUE_STATE_QUEUED))
 		return ErrQueueEntryNotReady;
@@ -360,7 +360,7 @@ const char *queueEntryDownloadUpdate(QueueEntry *entry) {
 	SiteFileMeta *fromMeta, *toMeta;
 	SOCK_BUF_TYPE i;
 	char buf[SB_DATA_SIZE];
-	time_t last;
+	time_t last = 0;
 
 	if (!(entry->state & QUEUE_STATE_QUEUED))
 		return ErrQueueEntryNotReady;
