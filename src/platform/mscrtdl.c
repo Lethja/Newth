@@ -487,37 +487,53 @@ char platformDirEntryIsDirectory(PlatformDirEntry *entry, PlatformDir *self, Pla
 #pragma region File Functions
 
 int platformFileStat(const char *path, PlatformFileStat *stat) {
-	WIN32_FILE_ATTRIBUTE_DATA fad;
+    WIN32_FIND_DATA fd;
+    HANDLE hFind = FindFirstFile(path, &fd);
 
-	if (GetFileAttributesEx(path, GetFileExInfoStandard, &fad)) {
-		HANDLE handle = CreateFile(path, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
-		                           fad.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY ? FILE_FLAG_BACKUP_SEMANTICS : 0,
-		                           NULL);
+    if (hFind != INVALID_HANDLE_VALUE) {
+	HANDLE handle;
 
-		if (handle != INVALID_HANDLE_VALUE) {
-			LARGE_INTEGER li;
+        FindClose(hFind);
+        handle = CreateFile(
+            path,
+            0,
+            FILE_SHARE_READ | FILE_SHARE_WRITE,
+            NULL,
+            OPEN_EXISTING,
+            fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY ? FILE_FLAG_BACKUP_SEMANTICS : 0,
+            NULL
+        );
 
-			GetFileTime(handle, NULL, NULL, &stat->st_mtime);
-			CloseHandle(handle);
+        if (handle != INVALID_HANDLE_VALUE) {
+            LARGE_INTEGER li;
 
-			if (stat->st_mtime.dwHighDateTime == 0 && stat->st_mtime.dwLowDateTime == 0)
-				GetSystemTimeAsFileTime(&stat->st_mtime); /* Avoid a false 304 condition */
+            GetFileTime(handle, NULL, NULL, &stat->st_mtime);
+            CloseHandle(handle);
 
-			li.LowPart = fad.nFileSizeLow, li.HighPart = fad.nFileSizeHigh, stat->st_size = li.QuadPart;
-			stat->st_mode =
-			fad.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL;
+            if (stat->st_mtime.dwHighDateTime == 0 &&
+                stat->st_mtime.dwLowDateTime == 0)
+                GetSystemTimeAsFileTime(&stat->st_mtime);
 
-			return 0;
-		} else if (fad.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) { /* Might be a FAT partition directory */
-			stat->st_mode = FILE_ATTRIBUTE_DIRECTORY;
-			stat->st_size = 0;
-			GetSystemTimeAsFileTime(&stat->st_mtime); /* Avoid a false 304 condition */
-			return 0;
-		}
-	}
+            li.LowPart  = fd.nFileSizeLow;
+            li.HighPart = fd.nFileSizeHigh;
+            stat->st_size = li.QuadPart;
 
-	errno = GetLastError();
-	return 1;
+            stat->st_mode =
+                fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY
+                    ? FILE_ATTRIBUTE_DIRECTORY
+                    : FILE_ATTRIBUTE_NORMAL;
+
+            return 0;
+        } else if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+            stat->st_mode = FILE_ATTRIBUTE_DIRECTORY;
+            stat->st_size = 0;
+            GetSystemTimeAsFileTime(&stat->st_mtime);
+            return 0;
+        }
+    }
+
+    errno = GetLastError();
+    return 1;
 }
 
 static void
