@@ -1,54 +1,60 @@
 CC=wcc386
 
+!ifdef __UNIX__
+WATCOM=$$WATCOM
+!else
+WATCOM=%WATCOM%
+!endif
+
 # Default building process
 all: .SYMBOLIC dl.exe th.exe
 
-dl.exe: release_dl err.o mscrtdbd.o hex.o io.o plat_dl.o queue.o recvbufr.o signal.o site.o s_file.o s_http.o uri.o xml.o dl.o
+dl.exe: release_dl err.o mscrtdbd.o hex.o io.o plat_dl.o queue.o recvbufr.o signal.o site.o s_file.o s_http.o uri.o xml.o dl.o wsock95.lib
     %write link.lnk NAME $@
     %write link.lnk SYS  nt
     %write link.lnk OPT  st=9216
     %write link.lnk FILE err.o,mscrtdbd.o,hex.o,io.o,plat_dl.o,queue.o,recvbufr.o,signal.o,site.o,s_file.o,s_http.o,uri.o,xml.o,dl.o
-    %write link.lnk LIBF wsock32.lib
+    %write link.lnk LIBF wsock95.lib
     wlink @link.lnk
 
-dldbg.exe: debug_dl err.o mscrtdbd.o hex.o io.o plat_dl.o queue.o recvbufr.o signal.o site.o s_file.o s_http.o uri.o xml.o dl.o
+dldbg.exe: debug_dl err.o mscrtdbd.o hex.o io.o plat_dl.o queue.o recvbufr.o signal.o site.o s_file.o s_http.o uri.o xml.o dl.o wsock95.lib
     %write link.lnk NAME $@
     %write link.lnk SYS  nt
     %write link.lnk OPT  st=9216
     %write link.lnk FILE err.o,mscrtdbd.o,hex.o,io.o,plat_dl.o,queue.o,recvbufr.o,signal.o,site.o,s_file.o,s_http.o,uri.o,xml.o,dl.o
-    %write link.lnk LIBF wsock32.lib
+    %write link.lnk LIBF wsock95.lib
     wlink @link.lnk
 
-dlwlk.exe: walk_dl err.o mscrtdbd.o hex.o io.o plat_dl.o queue.o recvbufr.o signal.o site.o s_file.o s_http.o uri.o xml.o dl.o
+dlwlk.exe: walk_dl err.o mscrtdbd.o hex.o io.o plat_dl.o queue.o recvbufr.o signal.o site.o s_file.o s_http.o uri.o xml.o dl.o wsock95.lib
     %write link.lnk NAME $@
     %write link.lnk SYS  nt
     %write link.lnk OPT  st=9216
     %write link.lnk FILE err.o,mscrtdbd.o,hex.o,io.o,plat_dl.o,queue.o,recvbufr.o,site.o,s_file.o,s_http.o,uri.o,xml.o,dl.o
-    %write link.lnk LIBF wsock32.lib
+    %write link.lnk LIBF wsock95.lib
     wlink @link.lnk
 
-th.exe: release_th mscrtdbt.o event.o hex.o http.o plat_th.o select.o routine.o signal.o server.o sendbufr.o th.o wsipv6.o wsock1.o wsock2.o
+th.exe: release_th mscrtdbt.o event.o hex.o http.o plat_th.o select.o routine.o signal.o server.o sendbufr.o th.o wsipv6.o wsock1.o wsock2.o wsock95.lib
     %write link.lnk NAME $@
     %write link.lnk SYS  nt
     %write link.lnk OPT  st=4608
     %write link.lnk FILE mscrtdbt.o,event.o,hex.o,http.o,plat_th.o,select.o,routine.o,signal.o,server.o,sendbufr.o,th.o,wsipv6.o,wsock1.o,wsock2.o
-    %write link.lnk LIBF wsock32.lib
+    %write link.lnk LIBF wsock95.lib
     wlink @link.lnk
 
-thdbg.exe: debug_th mscrtdbt.o event.o hex.o http.o plat_th.o select.o routine.o signal.o server.o sendbufr.o th.o wsipv6.o wsock1.o wsock2.o
+thdbg.exe: debug_th mscrtdbt.o event.o hex.o http.o plat_th.o select.o routine.o signal.o server.o sendbufr.o th.o wsipv6.o wsock1.o wsock2.o wsock95.lib
     %write link.lnk NAME $@
     %write link.lnk SYS  nt
     %write link.lnk OPT  st=4608
     %write link.lnk FILE mscrtdbt.o,event.o,hex.o,http.o,plat_th.o,select.o,routine.o,signal.o,server.o,sendbufr.o,th.o,wsipv6.o,wsock1.o,wsock2.o
-    %write link.lnk LIBF wsock32.lib
+    %write link.lnk LIBF wsock95.lib
     wlink @link.lnk
 
-thwlk.exe: walk_th mscrtdbt.o event.o hex.o http.o plat_th.o select.o routine.o signal.o server.o sendbufr.o th.o wsipv6.o wsock1.o wsock2.o
+thwlk.exe: walk_th mscrtdbt.o event.o hex.o http.o plat_th.o select.o routine.o signal.o server.o sendbufr.o th.o wsipv6.o wsock1.o wsock2.o wsock95.lib
     %write link.lnk NAME $@
     %write link.lnk SYS  nt
     %write link.lnk OPT  st=4608
     %write link.lnk FILE mscrtdbt.o,event.o,hex.o,http.o,plat_th.o,select.o,routine.o,signal.o,server.o,sendbufr.o,th.o,wsipv6.o,wsock1.o,wsock2.o
-    %write link.lnk LIBF wsock32.lib
+    %write link.lnk LIBF wsock95.lib
     wlink @link.lnk
 
 dbg: .SYMBOLIC dldbg.exe thdbg.exe
@@ -107,7 +113,9 @@ wsock1.o: ../../src/platform/winsock/wsock1.c
     $(CC) @flag.lnk -fo="$@" "../../src/platform/winsock/wsock1.c"
 wsock2.o: ../../src/platform/winsock/wsock2.c
     $(CC) @flag.lnk -fo="$@" "../../src/platform/winsock/wsock2.c"
-
+wsock95.lib:
+    wlib -q -n -o wsock95.lib +$(WATCOM)/lib386/nt/wsock32.lib
+    wlib -q -o wsock95.lib -_AcceptEx@32 -_GetAcceptExSockaddrs@32
 
 walk_dl: .SYMBOLIC
     %write flag.lnk -q -bt=nt -3 -d3 -db -dDBGHALT=1 -dPLATFORM_SYS_ARGV=1 -dPLATFORM_SYS_EXEC=1 -dPLATFORM_SYS_WRITE=1
