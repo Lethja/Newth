@@ -10,10 +10,14 @@
     * [Installing SvarDOS package manager onto another DOS (optional)](#installing-svardos-package-manager-onto-another-dos-optional)
 * [Building Newth](#building-newth)
   * [Setup Watcom build environment](#setup-watcom-build-environment)
-  * [Configuring Watt32 for linking with Newth](#configuring-watt32-for-linking-with-newth)
   * [Build Newth](#build-newth)
-    * [Build for 16-bit (Real Mode)](#build-for-16-bit-real-mode)
-    * [Build for 32-bit (DOS4GW)](#build-for-32-bit-dos4gw)
+    * [Build for DOS](#build-for-dos)
+      * [Configuring Watt32 for linking with Newth](#configuring-watt32-for-linking-with-newth)
+      * [Build for 16-bit (Real Mode)](#build-for-16-bit-real-mode)
+      * [Build for 32-bit (DOS4GW)](#build-for-32-bit-dos4gw)
+    * [Build for Windows](#build-for-windows)
+      * [Configuring Open Watcom for linking to Win32](#configuring-open-watcom-for-linking-to-win32)
+      * [Build for Win32](#build-for-win32)
 * [After building](#after-building)
   * [Compress binary (optional)](#compress-binary-optional)
   * [Create diskette image (optional)](#create-diskette-image-optional)
@@ -177,12 +181,16 @@ On a typical DOS installation of Open Watcom run the following to enable the bui
 
 > Tip: Open Watcom for DOS is built with DOS4GW extender which prints its copyright notice every time a program starts.
 > This can get particular nuisance in where the copyright notice will print continuously. 
-> Run `SET DOS4G=QUIET` to prevent the DOS4GW copyright notice from being displayed every time a command runs. 
+> Run `SET DOS4G=QUIET` to prevent the DOS4GW copyright notice from being displayed every time a command runs.
 
-## Configuring Watt32 for linking with Newth
+## Build Newth
 
-Newth on DOS depends on Watt32. 
-The `Watt32s` folder is a Git submodule to this library and can be built in place. 
+### Build for DOS
+
+#### Configuring Watt32 for linking with Newth
+
+Newth on DOS depends on Watt32 for its networking backend.
+The `Watt32s` folder is a Git submodule to this library and can be built in place.
 If your development machine doesn't have access to Git, then the Watt32 sources should be extracted on symlinked
 into the `Watt32s` folder so that it looks like so.
 
@@ -226,26 +234,44 @@ Alternatively, edit `Watt32s\src\config.h` manually so it reads like:
 
 > Caution: some versions of Watt-32 have a broken implementation of DHCP that can cause an infinite loop.
 > On a real DOS this means it could very well lock up the computer with no option but to hard reset.
-> If not using the Git submodule and in doubt leave `USE_DHCP` undefined. 
+> If not using the Git submodule and in doubt leave `USE_DHCP` undefined.
 > Most DHCP servers are backwards compatible with BOOTP.
 
-## Build Newth
-
-### Build for 16-bit (Real Mode)
+#### Build for 16-bit (Real Mode)
 
 From the `Dos16` directory run `wmake` to build the project.
 Two self-contained 16-bit binaries called `DL.EXE` and `TH.EXE` will be made and can be run from any path
 (including a floppy diskette) on any DOS 2.0 or later computer.
 
-### Build for 32-bit (DOS4GW)
+#### Build for 32-bit (DOS4GW)
 
 From the `Dos4g` directory run `wmake` to build the project.
-Two 32-bit binary called `DL.EXE` and `TH.EXE` will be made and can be run from any path (including a floppy diskette)
+Two 32-bit binaries called `DL.EXE` and `TH.EXE` will be made and can be run from any path (including a floppy diskette)
 on any DOS 4.0 or later computer with an i386 compatible CPU.
 
 `DOS4GW.EXE` will need to either exist in a `%PATH%` directory
 or the same directory as the binaries for the programs to function.
 To put a copy of `DOS4GW.EXE` in the same directory as `DL.EXE` and `TH.EXE` run `COPY %WATCOM%\BINW\DOS4GW.EXE .`.
+
+### Build for Windows
+
+#### Configuring Open Watcom for linking to Win32
+Newth on Windows depends on a small number of Win32 libraries as well as Winsock 1.1 or later for its networking backend.
+Even though Open Watcom can dynamically link to these dependencies 
+without any third party libraries, it still needs to be told where to look.
+This can be achieved by appending the platform-specific header files to the `INCLUDE` enviroment variable.
+
+| Build Platform | Command                            |
+|----------------|------------------------------------|
+| POSIX          | `INCLUDE=$WATCOM/h:$WATCOM/h/nt`   |
+| DOS/NT         | `INCLUDE=%WATCOM%\h;%WATCOM%\h\nt` |
+
+#### Build for Win32
+With the enviroment variable setup: 
+from the `WinNT` directory run `wmake` to build the project.
+Two 32-bit PE binaries call `DL.EXE` and `TH.EXE` will be made 
+that can be run from any path on Windows 95 or later
+on any PC with a 80386-compatible processor. 
 
 # After building
 
@@ -261,10 +287,13 @@ substantially less disk space with UPX compression so that it fits comfortably o
 | DOS4GW    | `UPX DL.EXE --best`               | 5¼-inch QD (720k)  |
 | DOS4GW    | `UPX DL.EXE TH.EXE --best`        | 5¼-inch HD (1200k) |
 
+> Note: While Windows 95 binaries can also be compressed with UPX, 
+> they tend to be so small in their uncompressed state that it is not deemed necessary.
+
 ## Create diskette image (optional)
 
 On a real DOS machines it makes sense to directly copy the new binaries onto a newly formatted diskette.
-Conversely, when cross compiling or distributing over the Internet,
+Conversely, when cross-compiling or distributing over the Internet,
 it may make more sense to distribute as a floppy disk
 image so that users can make their own disks locally.
 This can be achieved with GNU Mtools.
